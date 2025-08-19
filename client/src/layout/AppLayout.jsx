@@ -4,12 +4,14 @@ import Topbar from "./Topbar";
 
 export default function AppLayout() {
   return (
-    <div className="flex h-screen">
-      <Sidebar />
-
-      <Topbar />
-
-      <main className="flex-1 p-6 overflow-y-auto">
+    <div className="h-screen grid grid-cols-[200px_1fr] grid-rows-[60px_1fr] max-w-[200rem] mx-auto">
+      <section className="col-start-2 col-end-3 row-start-1 row-end-2 border-b border-gray-200">
+        <Topbar />
+      </section>
+      <section className="col-start-1 col-end-2 row-start-1 row-end-3 border-r border-gray-200">
+        <Sidebar />
+      </section>
+      <main className="">
         <Outlet />
       </main>
     </div>
