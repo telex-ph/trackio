@@ -1,5 +1,5 @@
 import App from "../App";
-import MainLayout from "../layout/MainLayout";
+import AppLayout from "../layout/AppLayout";
 import Dashboard from "../pages/Dashboard";
 import Tracking from "../pages/Tracking";
 import { createBrowserRouter, Navigate } from "react-router-dom";
@@ -11,7 +11,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/",
-    element: <MainLayout />,
+    element: <AppLayout />,
     children: [
       {
         index: true, // when path === "/"
