@@ -1,10 +1,17 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { RouterProvider } from "react-router-dom";
 
-createRoot(document.getElementById('root')).render(
+import "./index.css";
+import { Button, ThemeProvider } from "flowbite-react";
+import flowbiteTheme from "./theme/flowbiteTheme";
+import router from "./router/router.jsx";
+
+
+createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <App />
-  </StrictMode>,
-)
+    <ThemeProvider theme={flowbiteTheme}>
+      <RouterProvider router={router} />
+    </ThemeProvider>
+  </StrictMode>
+);
