@@ -1,4 +1,3 @@
-
 import { msalInstance } from "../config/msalConfig";
 
 export const microsoftLogin = async () => {
@@ -22,6 +21,22 @@ export const getProfile = async (accessToken) => {
   });
   const data = await response.json();
   console.log(data);
+
+  return data;
+};
+
+// TODO: Hindi pa gumagana, need ng account ni ma'am
+export const checkRole = async (id, accessToken) => {
+  const response = await fetch(
+    `https://graph.microsoft.com/v1.0/users/${id}/memberOf`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+  const data = await response.json();
+  return data;
 };
 
 export const getProfilePicture = async (accessToken) => {
@@ -42,7 +57,7 @@ export const getProfilePicture = async (accessToken) => {
     const blob = await response.blob();
     const imageUrl = URL.createObjectURL(blob);
 
-    return imageUrl;  
+    return imageUrl;
   } catch (error) {
     console.error(error);
     return null;
