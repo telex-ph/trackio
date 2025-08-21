@@ -1,4 +1,4 @@
-import { accordionTheme } from "flowbite-react";
+
 import { msalInstance } from "../config/msalConfig";
 
 export const microsoftLogin = async () => {
