@@ -1,30 +1,31 @@
 import React, { useState } from "react";
 import { Button } from "flowbite-react";
-import {
-  checkRole,
-  getProfile,
-  getProfilePicture,
-  microsoftLogin,
-} from "../auth/AuthService";
+import { getMicrosoftUser, microsoftLogin } from "../auth/authService";
+import api from "../utils/axios";
 
 const Login = () => {
-  const [profileUrl, setProfileUrl] = useState();
-
   const handleLoginClick = async () => {
-    const response = await microsoftLogin();
+    // Calling Microsoft Authentication page
+    const microsoftResponse = await microsoftLogin();
 
-    console.log(response.accessToken);
-    const user = await getProfile(response.accessToken);
-    const url = await getProfilePicture(response.accessToken);
+    // Fetching user information from his/her Microsoft account
+    const microsoftUser = await getMicrosoftUser(microsoftResponse.accessToken);
 
-    setProfileUrl(url);
+    const user = {
+      id: microsoftUser.id,
+      email: microsoftUser.mail,
+      firstName: microsoftUser.givenName,
+      lastName: microsoftUser.surname,
+      jobTitle: microsoftUser.jobTitle,
+    };
+    // TODO: check tenantId, disallow users that is not part of the organization (telex, callnovo)
+    const loginResponse = await api.post("/auth/login", user);
+    console.log(loginResponse);
   };
 
   return (
     <div>
       <Button onClick={handleLoginClick}>Login</Button>
-
-      <img src={profileUrl} />
     </div>
   );
 };
