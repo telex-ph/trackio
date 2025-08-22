@@ -1,13 +1,34 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "flowbite-react";
-import { getProfile, microsoftLogin } from "../auth/AuthService";
+import { getMicrosoftUser, microsoftLogin } from "../auth/authService";
+import api from "../utils/axios";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
-  const handleLoginClick = async () => {
-    const response = await microsoftLogin();
+  const navigate = useNavigate();
 
-    console.log(response.accessToken);
-    await getProfile(response.accessToken);
+  const handleLoginClick = async () => {
+    // Calling Microsoft Authentication page
+    const microsoftResponse = await microsoftLogin();
+
+    // Fetching user information from his/her Microsoft account
+    const microsoftUser = await getMicrosoftUser(microsoftResponse.accessToken);
+
+    const user = {
+      id: microsoftUser.id,
+      email: microsoftUser.mail,
+      firstName: microsoftUser.givenName,
+      lastName: microsoftUser.surname,
+      jobTitle: microsoftUser.jobTitle,
+    };
+    // TODO: check tenantId, disallow users that is not part o the organization (telex, callnovo)
+    // TODO: improve this later
+    const loginResponse = await api.post("/auth/create-token", user);
+    // console.log(loginResponse);
+
+    if (loginResponse.status === 200) {
+      navigate("/dashboard");
+    }
   };
 
   return (
