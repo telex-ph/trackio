@@ -1,6 +1,6 @@
 import * as jose from "jose";
 
-export const login = async (req, res) => {
+export const createToken = async (req, res) => {
   const user = req.body;
 
   // Importing the private key (PKCS8 format) for RS256 signing
