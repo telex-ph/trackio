@@ -1,5 +1,14 @@
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "./hooks/useAuth";
+
 function App() {
-  return <>{/* Dito mangyayari ang authentication/authorization */}</>;
+  const { isLoading, user } = useAuth();
+
+  if (isLoading) {
+    return <p>Loading...</p>;
+  }
+
+  return user ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
 export default App;
