@@ -2,8 +2,11 @@ import React, { useState } from "react";
 import { Button } from "flowbite-react";
 import { getMicrosoftUser, microsoftLogin } from "../auth/authService";
 import api from "../utils/axios";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
+  const navigate = useNavigate();
+
   const handleLoginClick = async () => {
     // Calling Microsoft Authentication page
     const microsoftResponse = await microsoftLogin();
@@ -18,9 +21,14 @@ const Login = () => {
       lastName: microsoftUser.surname,
       jobTitle: microsoftUser.jobTitle,
     };
-    // TODO: check tenantId, disallow users that is not part of the organization (telex, callnovo)
-    const loginResponse = await api.post("/auth/login", user);
-    console.log(loginResponse);
+    // TODO: check tenantId, disallow users that is not part o the organization (telex, callnovo)
+    // TODO: improve this later
+    const loginResponse = await api.post("/auth/create-token", user);
+    // console.log(loginResponse);
+
+    if (loginResponse.status === 200) {
+      navigate("/dashboard");
+    }
   };
 
   return (
