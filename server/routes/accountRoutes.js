@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { test } from "../controllers/testCotroller.js";
 import { verifyJWT } from "../middlewares/verifyJWT.js";
 import { handleExpiredToken } from "../middlewares/handleExpiredToken.js";
+import { getAccounts } from "../controllers/accountControllers.js";
 const router = Router();
 
-router.get("/test", verifyJWT, handleExpiredToken, test);
+router.get("/get-accounts", verifyJWT, handleExpiredToken, getAccounts);
 
 export default router;

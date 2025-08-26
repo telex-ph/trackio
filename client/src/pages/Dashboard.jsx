@@ -1,15 +1,15 @@
 import { Button } from "flowbite-react";
-import axios from "axios";
+import api from "../utils/axios";
 
 const Dashboard = () => {
-  const testBackend = async () => {
-    const response = await axios.get("http://localhost:3000/test");
-    console.log(response.data);
+  const getAccounts = async () => {
+    const data = await api.get("/accounts/get-accounts");
+    console.log(data);
   };
 
   return (
     <div>
-      <Button onClick={testBackend}>Dashboard</Button>
+      <Button onClick={getAccounts}>Dashboard</Button>
     </div>
   );
 };
