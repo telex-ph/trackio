@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { Button } from "flowbite-react";
-import { getMicrosoftUser, microsoftLogin } from "../auth/authService";
+import {
+  checkRole,
+  getMicrosoftUser,
+  microsoftLogin,
+} from "../auth/authService";
 import api from "../utils/axios";
 import { useNavigate } from "react-router-dom";
 
@@ -25,6 +29,10 @@ const Login = () => {
     // TODO: improve this later
     const loginResponse = await api.post("/auth/create-token", user);
     // console.log(loginResponse);
+
+    const role = await checkRole(user.id, microsoftResponse.accessToken);
+
+    console.log("role: ", role);
 
     if (loginResponse.status === 200) {
       navigate("/dashboard");

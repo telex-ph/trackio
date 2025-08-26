@@ -21,27 +21,6 @@ app.use(
   })
 );
 
-// import { generateKeyPairSync } from "crypto";
-// import fs from "fs";
-
-// const { publicKey, privateKey } = generateKeyPairSync("rsa", {
-//   modulusLength: 2048,
-//   publicKeyEncoding: {
-//     type: "spki",
-//     format: "pem",
-//   },
-//   privateKeyEncoding: {
-//     type: "pkcs8",
-//     format: "pem",
-//   },
-// });
-
-// // Save to files or environment
-// fs.writeFileSync("private.pem", privateKey);
-// fs.writeFileSync("public.pem", publicKey);
-
-// console.log("Keys generated!");
-
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/test", testRoutes);
