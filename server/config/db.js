@@ -17,7 +17,7 @@ let dbInstance = null;
 const connectDB = async () => {
   if (!dbInstance) {
     await client.connect();
-    dbInstance = client.db("sample_mflix");
+    dbInstance = client.db("peeply");
     console.log("Database connected");
   }
   return dbInstance;
