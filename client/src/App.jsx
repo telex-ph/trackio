@@ -5,7 +5,7 @@ function App() {
   const { isLoading, user } = useAuth();
 
   if (isLoading) {
-    return <p>Loading...</p>;
+    return <p>Load...</p>;
   }
 
   return user ? <Outlet /> : <Navigate to="/login" replace />;
