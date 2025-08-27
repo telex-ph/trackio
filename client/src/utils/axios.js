@@ -11,7 +11,6 @@ const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    console.log(error.response);
     const code = error.response?.data?.code;
 
     if (code === "ACCESS_TOKEN_EXPIRED") {
@@ -22,6 +21,8 @@ api.interceptors.response.use(
         console.error("Refresh token failed:", refreshError);
         return Promise.reject(refreshError);
       }
+    } else if (code === "REFRESH_TOKEN_EXPIRED") {
+      location.replace("/login");
     }
     return Promise.reject(error);
   }

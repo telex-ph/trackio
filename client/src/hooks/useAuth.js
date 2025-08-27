@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import api from "../utils/axios";
-import { useNavigate } from "react-router-dom";
 
 export const useAuth = () => {
   const [user, setUser] = useState(null);
