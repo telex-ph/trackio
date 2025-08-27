@@ -1,14 +1,16 @@
 import * as jose from "jose";
+import fs from "fs/promises";
+
+// Reading the PEM Keys
+const privatePEM = await fs.readFile("./keys/private.pem", "utf8");
+const publicPEM = await fs.readFile("./keys/public.pem", "utf8");
 
 // Creation of access and refresh token
 export const createToken = async (req, res) => {
   const user = req.body;
 
   // Importing the private key (PKCS8 format) for RS256 signing
-  const privateKey = await jose.importPKCS8(
-    process.env.JWT_SECRET_PRIVATE_KEY,
-    "RS256"
-  );
+  const privateKey = await jose.importPKCS8(privatePEM, "RS256");
 
   // Access token (short exp date)
   const accessToken = await new jose.SignJWT({ user })
@@ -55,18 +57,13 @@ export const createNewToken = async (req, res) => {
   }
 
   try {
-    const publicKey = await jose.importSPKI(
-      process.env.JWT_SECRET_PUBLIC_KEY,
-      "RS256"
-    );
+    const publicKey = await jose.importSPKI(publicPEM, "RS256");
 
     const { payload: user } = await jose.jwtVerify(token, publicKey);
 
     // Importing the private key (PKCS8 format) for RS256 signing
-    const privateKey = await jose.importPKCS8(
-      process.env.JWT_SECRET_PRIVATE_KEY,
-      "RS256"
-    );
+    const privateKey = await jose.importPKCS8(privatePEM, "RS256");
+
     // Signing JWT with the payload/user
     // Access token (short exp date)
     const accessToken = await new jose.SignJWT({ user })

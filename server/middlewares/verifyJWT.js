@@ -1,4 +1,5 @@
 import * as jose from "jose";
+import fs from "fs/promises";
 
 export const verifyJWT = async (req, res, next) => {
   const token = req.cookies?.accessToken;
@@ -8,10 +9,10 @@ export const verifyJWT = async (req, res, next) => {
   }
 
   try {
-    const publicKey = await jose.importSPKI(
-      process.env.JWT_SECRET_PUBLIC_KEY,
-      "RS256"
-    );
+    // Reading public PEM keys
+    const publicPEM = await fs.readFile("./keys/public.pem", "utf8");
+
+    const publicKey = await jose.importSPKI(publicPEM, "RS256");
 
     const { payload } = await jose.jwtVerify(token, publicKey);
     req.user = payload;
