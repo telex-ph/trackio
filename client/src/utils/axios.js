@@ -8,20 +8,23 @@ const api = axios.create({
 });
 
 // TODO: Implement later
-// api.interceptors.response.use(
-//   (response) => response,
-//   async (error) => {
-//     if (error.response?.status === 401) {
-//       try {
-//         await api.get("/api/refresh-token");
-//         return api(error.config);
-//       } catch (refreshError) {
-//         console.error("Refresh token failed:", refreshError);
-//         return Promise.reject(refreshError);
-//       }
-//     }
-//     return Promise.reject(error);
-//   }
-// );
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    console.log(error.response);
+    const code = error.response?.data?.code;
+
+    if (code === "ACCESS_TOKEN_EXPIRED") {
+      try {
+        await api.post("/auth/create-new-token");
+        return api(error.config);
+      } catch (refreshError) {
+        console.error("Refresh token failed:", refreshError);
+        return Promise.reject(refreshError);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;
