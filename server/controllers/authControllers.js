@@ -17,14 +17,14 @@ export const createToken = async (req, res) => {
     .setProtectedHeader({ alg: "RS256" })
     // .setExpirationTime("15m")
     // TODO: change this to 15m in production
-    .setExpirationTime("10s")
+    .setExpirationTime("15m")
     .sign(privateKey);
 
   // Refresh Token (longer expiration, we use this to generate new access tokn)
   const refreshToken = await new jose.SignJWT({ user })
     .setProtectedHeader({ alg: "RS256" })
     // TODO: change this to 30d in production
-    .setExpirationTime("30s")
+    .setExpirationTime("30d")
     .sign(privateKey);
 
   // Setting cookies as httpOnly (not accessible by JavaScript)
@@ -70,7 +70,7 @@ export const createNewToken = async (req, res) => {
       .setProtectedHeader({ alg: "RS256" })
       // .setExpirationTime("15m")
       // TODO: change this to 15m in production
-      .setExpirationTime("10s")
+      .setExpirationTime("15m")
       .sign(privateKey);
 
     // Setting cookies as httpOnly (not accessible by JavaScript)
