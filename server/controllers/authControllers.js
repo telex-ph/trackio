@@ -13,7 +13,7 @@ export const createToken = async (req, res) => {
   const privateKey = await jose.importPKCS8(privatePEM, "RS256");
 
   // Access token (short exp date)
-  const accessToken = await new jose.SignJWT({ user })
+  const accessToken = await new jose.SignJWT(user)
     .setProtectedHeader({ alg: "RS256" })
     // .setExpirationTime("15m")
     // TODO: change this to 15m in production
@@ -21,7 +21,7 @@ export const createToken = async (req, res) => {
     .sign(privateKey);
 
   // Refresh Token (longer expiration, we use this to generate new access tokn)
-  const refreshToken = await new jose.SignJWT({ user })
+  const refreshToken = await new jose.SignJWT(user)
     .setProtectedHeader({ alg: "RS256" })
     // TODO: change this to 30d in production
     .setExpirationTime("30d")
@@ -66,7 +66,7 @@ export const createNewToken = async (req, res) => {
 
     // Signing JWT with the payload/user
     // Access token (short exp date)
-    const accessToken = await new jose.SignJWT({ user })
+    const accessToken = await new jose.SignJWT(user)
       .setProtectedHeader({ alg: "RS256" })
       // .setExpirationTime("15m")
       // TODO: change this to 15m in production
