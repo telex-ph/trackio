@@ -15,7 +15,27 @@ import ellipse from "../assets/shapes/ellipse.svg";
 
 const Login = () => {
   const navigate = useNavigate();
+  const [data, setData] = useState({
+    email: "",
+    password: "",
+  });
   const [isShowPassword, setIsShowPassword] = useState(false);
+
+  const handleLoginClick = async (e) => {
+    e.preventDefault();
+
+    try {
+      const user = await api.post("/auth/log-in", data);
+      if (user) {
+        const loginResponse = await api.post("/auth/create-token", user);
+        if (loginResponse.status === 200) {
+          navigate("/dashboard");
+        }
+      }
+    } catch (error) {
+      console.error("Error: ", error);
+    }
+  };
 
   const handleMicrosoftClick = async () => {
     // Calling Microsoft Authentication page
@@ -45,6 +65,15 @@ const Login = () => {
     }
   };
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+
+    setData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
   const handleEyeClick = () => {
     setIsShowPassword((prev) => !prev);
   };
@@ -69,7 +98,10 @@ const Login = () => {
             All fields are required. Make sure your details are correct.
           </p>
         </div>
-        <form className="flex flex-col gap-4 w-full">
+        <form
+          className="flex flex-col gap-4 w-full"
+          onSubmit={handleLoginClick}
+        >
           <div>
             <div className="mb-2 block">
               <Label htmlFor="email" className="text-light">
@@ -79,8 +111,10 @@ const Login = () => {
             <TextInput
               id="email"
               type="email"
+              name="email"
               placeholder="harrypotter@telexph.com"
               required
+              onChange={handleInputChange}
             />
           </div>
           <div>
@@ -92,6 +126,8 @@ const Login = () => {
             <div className="flex items-stretch gap-2">
               <TextInput
                 id="password"
+                name="password"
+                onChange={handleInputChange}
                 type={isShowPassword ? "text" : "password"}
                 required
                 className="flex-1"
