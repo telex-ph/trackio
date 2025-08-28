@@ -29,7 +29,9 @@ export const getMicrosoftUser = async (accessToken) => {
     const data = await response.json();
 
     return data;
-  } catch (error) {}
+  } catch (error) {
+    console.log("Error fetching Microsoft user: ", error);
+  }
 };
 
 // TODO:s Hindi pa gumagana, need ng account ni ma'am
