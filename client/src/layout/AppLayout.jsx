@@ -4,7 +4,7 @@ import Topbar from "./Topbar";
 
 export default function AppLayout() {
   return (
-    <div className="h-screen grid grid-cols-[200px_1fr] grid-rows-[60px_1fr] max-w-[200rem] mx-auto">
+    <div className="h-screen grid grid-cols-[auto_1fr] grid-rows-[60px_1fr] max-w-[200rem] mx-auto">
       <section className="col-start-2 col-end-3 row-start-1 row-end-2 border-b border-gray-200">
         <Topbar />
       </section>
