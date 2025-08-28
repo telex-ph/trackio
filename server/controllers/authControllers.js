@@ -1,9 +1,24 @@
 import * as jose from "jose";
 import fs from "fs/promises";
+import User from "../model/User.js";
 
 // Reading the PEM Keys
 const privatePEM = await fs.readFile("./keys/private.pem", "utf8");
 const publicPEM = await fs.readFile("./keys/public.pem", "utf8");
+
+// Login
+export const login = async (req, res) => {
+  const { email, password } = req.body;
+  const user = new User();
+
+  try {
+    const response = await user.login(email, password);
+    res.status(200).json(response);
+  } catch (error) {
+    console.error("Login error:", error.message);
+    res.status(400).json({ error: error.message });
+  }
+};
 
 // Creation of access and refresh token
 export const createToken = async (req, res) => {

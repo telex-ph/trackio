@@ -16,8 +16,25 @@
   font-style: normal;
 }
 
-:root {
+body {
   font-family: "Poppins", sans-serif;
   font-size: 0.875rem;
   color: rgb(43, 43, 43);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.text-light {
+  color: rgb(95, 95, 95);
+}
+.border-light {
+  border-width: 1px;
+  border-color: rgb(209, 213, 219);
+}
+.container-light {
+  background-color: rgb(249, 250, 251);
 }
