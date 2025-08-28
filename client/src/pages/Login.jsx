@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Label, TextInput, Checkbox } from "flowbite-react";
+import { Button, Label, TextInput, Checkbox, Alert } from "flowbite-react";
+import { HiInformationCircle } from "react-icons/hi";
+
 import {
   checkRole,
   getMicrosoftUser,
@@ -20,6 +22,10 @@ const Login = () => {
     password: "",
   });
   const [isShowPassword, setIsShowPassword] = useState(false);
+  const [error, setError] = useState({
+    message: "",
+    hasError: false,
+  });
 
   const handleLoginClick = async (e) => {
     e.preventDefault();
@@ -33,6 +39,13 @@ const Login = () => {
         }
       }
     } catch (error) {
+      setError({
+        message: error.response?.data
+          ? "Oops! We couldn't log you in. Please check your email and password."
+          : error.message,
+        hasError: true,
+      });
+      setData({ email: "", password: "" });
       console.error("Error: ", error);
     }
   };
@@ -68,6 +81,8 @@ const Login = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
+    setError({ hasError: false, message: "" });
+
     setData((prev) => ({
       ...prev,
       [name]: value,
@@ -98,10 +113,18 @@ const Login = () => {
             All fields are required. Make sure your details are correct.
           </p>
         </div>
+
         <form
           className="flex flex-col gap-4 w-full"
           onSubmit={handleLoginClick}
         >
+          {error.hasError && (
+            <Alert color="failure" icon={HiInformationCircle}>
+              {/* <span className="font-medium">Info alert!</span> Change a few
+              things up and try submitting again. */}
+              <span>{error.message}</span>
+            </Alert>
+          )}
           <div>
             <div className="mb-2 block">
               <Label htmlFor="email" className="text-light">
@@ -115,6 +138,7 @@ const Login = () => {
               placeholder="harrypotter@telexph.com"
               required
               onChange={handleInputChange}
+              value={data.email}
             />
           </div>
           <div>
@@ -131,6 +155,7 @@ const Login = () => {
                 type={isShowPassword ? "text" : "password"}
                 required
                 className="flex-1"
+                value={data.password}
               />
               <div className="flex items-center justify-center p-2 border border-light container-light rounded-lg cursor-pointer">
                 {isShowPassword ? (
