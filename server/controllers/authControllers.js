@@ -94,6 +94,26 @@ export const createNewToken = async (req, res) => {
   }
 };
 
+export const deleteToken = async (req, res) => {
+  res.cookie("accessToken", "", {
+    httpOnly: true,
+    sameSite: "Lax",
+    secure: false,
+    path: "/",
+    expires: new Date(0),
+  });
+
+  res.cookie("refreshToken", "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    path: "/",
+    expires: new Date(0),
+  });
+
+  res.json({ message: "Logged out successfully", isLoggedOut: true });
+};
+
 export const getAuthUser = (req, res) => {
   res.status(200).json(req.user);
 };

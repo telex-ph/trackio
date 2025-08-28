@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   createNewToken,
   createToken,
+  deleteToken,
   getAuthUser,
   getStatus,
 } from "../controllers/authControllers.js";
@@ -14,6 +15,9 @@ router.post("/create-token", createToken);
 
 // Creation of access token USING REFRESH TOKEN
 router.post("/create-new-token", createNewToken);
+
+// Deletion of tokes / logout
+router.get("/delete-token", deleteToken);
 
 // Get the currently authenticated user info
 router.get("/get-auth-user", verifyJWT, handleExpiredToken, getAuthUser);
