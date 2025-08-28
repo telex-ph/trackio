@@ -3,6 +3,7 @@ import {
   createNewToken,
   createToken,
   getAuthUser,
+  getStatus,
 } from "../controllers/authControllers.js";
 import { verifyJWT } from "../middlewares/verifyJWT.js";
 import { handleExpiredToken } from "../middlewares/handleExpiredToken.js";
@@ -16,5 +17,8 @@ router.post("/create-new-token", createNewToken);
 
 // Get the currently authenticated user info
 router.get("/get-auth-user", verifyJWT, handleExpiredToken, getAuthUser);
+
+// Check if the user is still valid
+router.get("/status", verifyJWT, handleExpiredToken, getStatus);
 
 export default router;
