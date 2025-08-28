@@ -24,23 +24,31 @@ export const Sidebar = () => {
         <img src={peeply} alt="Peeply" className="w-28 h-auto" />
         <IoIosArrowDropleftCircle className="size-7 text-[#470905bc] absolute  right-0" />
       </div>
-      <hr className="text-gray-200" />
+      <hr className="text-gray-2s00" />
       <SidebarItems className="pt-4">
         <SidebarItemGroup>
           <SidebarItem icon={BiSolidDashboard}>
             <NavLink to={"/dashboard"}>Dashboard</NavLink>
           </SidebarItem>
           <SidebarCollapse icon={BiSolidBookOpen} label="Attendance">
-            <SidebarItem href="#">Basic Logs</SidebarItem>
-            <SidebarItem>Late</SidebarItem>
-            <SidebarItem>Overtime</SidebarItem>
-            <SidebarItem>Undertime</SidebarItem>
+            <SidebarItem href="#">
+              <NavLink to={"/attendance/basic-logs"}>Basic Logs</NavLink>
+            </SidebarItem>
+            <SidebarItem>
+              <NavLink to={"/attendance/late"}>Late</NavLink>
+            </SidebarItem>
+            <SidebarItem>
+              <NavLink to={"/attendance/overtime"}>Overtime</NavLink>
+            </SidebarItem>
+            <SidebarItem>
+              <NavLink to={"/attendance/undertime"}>Undertime</NavLink>
+            </SidebarItem>
           </SidebarCollapse>
           <SidebarItem icon={BiSolidBell}>
-            <NavLink to={"/tracking"}>Schedule</NavLink>
+            <NavLink to={"/schedule"}>Schedule</NavLink>
           </SidebarItem>
           <SidebarItem icon={BiSolidBookBookmark}>
-            <NavLink to={"/tracking"}>Performance</NavLink>
+            <NavLink to={"/performance"}>Performance</NavLink>
           </SidebarItem>
         </SidebarItemGroup>
       </SidebarItems>
