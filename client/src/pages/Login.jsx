@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "flowbite-react";
 import {
   checkRole,
@@ -6,7 +7,6 @@ import {
   microsoftLogin,
 } from "../auth/authService";
 import api from "../utils/axios";
-import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -38,6 +38,16 @@ const Login = () => {
       navigate("/dashboard");
     }
   };
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const response = await api.get("/auth/status");
+      if (response.data.isValid) {
+        navigate("/dashboard");
+      }
+    };
+    fetchUser();
+  }, []);
 
   return (
     <div>

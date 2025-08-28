@@ -94,6 +94,43 @@ export const createNewToken = async (req, res) => {
   }
 };
 
+export const deleteToken = async (req, res) => {
+  res.cookie("accessToken", "", {
+    httpOnly: true,
+    sameSite: "Lax",
+    secure: false,
+    path: "/",
+    expires: new Date(0),
+  });
+
+  res.cookie("refreshToken", "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    path: "/",
+    expires: new Date(0),
+  });
+
+  res.json({ message: "Logged out successfully", isLoggedOut: true });
+};
+
 export const getAuthUser = (req, res) => {
   res.status(200).json(req.user);
+};
+
+export const getStatus = (req, res) => {
+  const user = req.user;
+  const now = Math.floor(Date.now() / 1000);
+
+  if (!user) {
+    return res
+      .status(401)
+      .json({ isValid: false, message: "User does not exist" });
+  } else if (user.exp < now) {
+    return res
+      .status(401)
+      .json({ isValid: false, message: "Invalid or expired token" });
+  } else {
+    return res.status(200).json({ isValid: true, message: "Valid user" });
+  }
 };
