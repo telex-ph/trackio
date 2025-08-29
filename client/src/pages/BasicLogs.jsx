@@ -99,14 +99,14 @@ const BasicLogs = () => {
       headerName: "Time In",
       field: "timeIn",
       sortable: true,
-      filter: true,
+      filter: false,
       flex: 1,
     },
     {
       headerName: "Time Out",
       field: "timeOut",
       sortable: true,
-      filter: true,
+      filter: false,
       flex: 1,
     },
     {

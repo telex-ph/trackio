@@ -7,7 +7,6 @@ import Login from "../pages/Login";
 import Overtime from "../pages/Overtime";
 import Performance from "../pages/Performance";
 import Schedule from "../pages/Schedule";
-import Tracking from "../pages/Tracking";
 import Undertime from "../pages/Undertime";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
