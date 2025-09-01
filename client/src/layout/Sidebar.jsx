@@ -27,28 +27,35 @@ export const Sidebar = () => {
       <hr className="text-gray-2s00" />
       <SidebarItems className="pt-4">
         <SidebarItemGroup>
-          <SidebarItem icon={BiSolidDashboard}>
-            <NavLink to={"/dashboard"}>Dashboard</NavLink>
+          <SidebarItem icon={BiSolidDashboard} as={NavLink} to="/dashboard">
+            Dashboard
           </SidebarItem>
+
           <SidebarCollapse icon={BiSolidBookOpen} label="Attendance">
-            <SidebarItem href="#">
-              <NavLink to={"/attendance/basic-logs"}>Basic Logs</NavLink>
+            <SidebarItem as={NavLink} to="/attendance/basic-logs">
+              Basic Logs
             </SidebarItem>
-            <SidebarItem>
-              <NavLink to={"/attendance/late"}>Late</NavLink>
+            <SidebarItem as={NavLink} to="/attendance/late">
+              Late
             </SidebarItem>
-            <SidebarItem>
-              <NavLink to={"/attendance/overtime"}>Overtime</NavLink>
+            <SidebarItem as={NavLink} to="/attendance/overtime">
+              Overtime
             </SidebarItem>
-            <SidebarItem>
-              <NavLink to={"/attendance/undertime"}>Undertime</NavLink>
+            <SidebarItem as={NavLink} to="/attendance/undertime">
+              Undertime
             </SidebarItem>
           </SidebarCollapse>
-          <SidebarItem icon={BiSolidBell}>
-            <NavLink to={"/schedule"}>Schedule</NavLink>
+
+          <SidebarItem icon={BiSolidBell} as={NavLink} to="/schedule">
+            Schedule
           </SidebarItem>
-          <SidebarItem icon={BiSolidBookBookmark}>
-            <NavLink to={"/performance"}>Performance</NavLink>
+
+          <SidebarItem
+            icon={BiSolidBookBookmark}
+            as={NavLink}
+            to="/performance"
+          >
+            Performance
           </SidebarItem>
         </SidebarItemGroup>
       </SidebarItems>
