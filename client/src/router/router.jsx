@@ -19,6 +19,22 @@ import TeamLeaderUndertime from "../pages/team-leader/TeamLeaderUndertime";
 import TeamLeaderSchedule from "../pages/team-leader/TeamLeaderSchedule";
 import TeamLeaderPerformance from "../pages/team-leader/TeamLeaderPerformance";
 
+// Admin Routes
+import AdminProtectedRoute from "./AdminProtectedRoutes";
+import AdminDashboard from "../pages/admin/AdminDashboard";
+import AdminTimeIn from "../pages/admin/AdminTimeIn";
+import AdminTimeOut from "../pages/admin/AdminTimeOut";
+import AdminAbsentees from "../pages/admin/AdminAbsentees";
+import AdminEmployeeStatus from "../pages/admin/AdminEmployeeStatus";
+import AdminLate from "../pages/admin/AdminLate";
+import AdminOnBreak from "../pages/admin/AdminOnBreak";
+import AdminOnLunch from "../pages/admin/AdminOnLunch";
+import AdminUndertime from "../pages/admin/AdminUndertime";
+import AdminBioBreak from "../pages/admin/AdminBioBreak";
+import AdminMeeting from "../pages/admin/AdminMeeting";
+import AdminHistory from "../pages/admin/AdminHistory";
+import AdminSchedule from "../pages/admin/AdminSchedule";
+
 // Global Routes
 import NotFound from "../pages/global/NotFound";
 import Login from "../pages/global/Login";
@@ -38,6 +54,41 @@ const router = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
+          // Agent Routes
+          {
+            element: <AdminProtectedRoute />,
+            path: "admin",
+            children: [
+              { index: true, element: <Navigate to="dashboard" replace /> },
+              { path: "dashboard", element: <AdminDashboard /> },
+              {
+                path: "tracking",
+                children: [
+                  {
+                    index: true,
+                    element: <Navigate to="time-in" replace />,
+                  },
+                  { path: "time-in", element: <AdminTimeIn /> },
+                  { path: "time-out", element: <AdminTimeOut /> },
+                  { path: "absentees", element: <AdminAbsentees /> },
+                  { path: "employee-status", element: <AdminEmployeeStatus /> },
+                ],
+              },
+              {
+                path: "monitoring",
+                children: [
+                  { path: "late", element: <AdminLate /> },
+                  { path: "on-break", element: <AdminOnBreak /> },
+                  { path: "on-lunch", element: <AdminOnLunch /> },
+                  { path: "undertime", element: <AdminUndertime /> },
+                  { path: "bio-break", element: <AdminBioBreak /> },
+                  { path: "meeting", element: <AdminMeeting /> },
+                ],
+              },
+              { path: "history", element: <AdminHistory /> },
+              { path: "schedule", element: <AdminSchedule /> },
+            ],
+          },
           // Team Leader Routes
           {
             element: <TeamLeaderProtectedRoutes />,

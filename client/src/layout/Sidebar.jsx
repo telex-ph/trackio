@@ -66,6 +66,60 @@ const TeamLeaderSidebar = () => {
   );
 };
 
+const AdminSidebar = () => {
+  return (
+    <SidebarItemGroup>
+      <SidebarItem icon={LayoutGrid} as={NavLink} to="/admin/dashboard">
+        Dashboard
+      </SidebarItem>
+
+      <SidebarCollapse icon={BookOpenText} label="Tracking">
+        <SidebarItem as={NavLink} to="/admin/tracking/time-in">
+          Time In
+        </SidebarItem>
+        <SidebarItem as={NavLink} to="/admin/tracking/time-out">
+          Time Out
+        </SidebarItem>
+        <SidebarItem as={NavLink} to="/admin/tracking/absentees">
+          Absentees
+        </SidebarItem>
+        <SidebarItem as={NavLink} to="/admin/tracking/employee-status">
+          Employee Status
+        </SidebarItem>
+      </SidebarCollapse>
+
+      <SidebarCollapse icon={BookOpenText} label="Monitoring">
+        <SidebarItem as={NavLink} to="/admin/monitoring/late">
+          Late
+        </SidebarItem>
+        <SidebarItem as={NavLink} to="/admin/monitoring/on-break">
+          On Break
+        </SidebarItem>
+        <SidebarItem as={NavLink} to="/admin/monitoring/on-lunch">
+          On Lunch
+        </SidebarItem>
+        <SidebarItem as={NavLink} to="/admin/monitoring/undertime">
+          Undertime
+        </SidebarItem>
+        <SidebarItem as={NavLink} to="/admin/monitoring/bio-break">
+          Bio Break
+        </SidebarItem>
+        <SidebarItem as={NavLink} to="/admin/monitoring/meeting">
+          Meeting
+        </SidebarItem>
+      </SidebarCollapse>
+
+      <SidebarItem icon={Bell} as={NavLink} to="/admin/history">
+        History
+      </SidebarItem>
+
+      <SidebarItem icon={NotebookTabs} as={NavLink} to="/admin/schedule">
+        Schedule
+      </SidebarItem>
+    </SidebarItemGroup>
+  );
+};
+
 export const Sidebar = () => {
   return (
     <Side>
@@ -80,6 +134,8 @@ export const Sidebar = () => {
         <AgentSidebar />
         {/* Team Leaders' Sidebar */}
         <TeamLeaderSidebar />
+        {/* Admin' Sidebar */}
+        <AdminSidebar />
       </SidebarItems>
     </Side>
   );

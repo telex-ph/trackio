@@ -1,9 +1,20 @@
-import React from 'react'
+import { Navigate, Outlet } from "react-router-dom";
+import Roles from "../enum/roles.enum";
+import { useAuth } from "../hooks/useAuth";
 
-const AdminProtectedRoutes = () => {
-  return (
-    <div>AdminProtectedRoutes</div>
-  )
-}
+const AdminProtectedRoute = () => {
+  const { isLoading, user } = useAuth();
 
-export default AdminProtectedRoutes
+  if (isLoading) {
+    return <p>Loading...</p>;
+  }
+
+  switch (user.role) {
+    case Roles.ADMIN:
+      return <Outlet />;
+    default:
+      return <Navigate to={"/unauthorized"} replace />;
+  }
+};
+
+export default AdminProtectedRoute;
