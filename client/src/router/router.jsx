@@ -1,14 +1,19 @@
 import App from "../App";
 import AppLayout from "../layout/AppLayout";
-import BasicLogs from "../pages/BasicLogs";
-import Dashboard from "../pages/Dashboard";
-import Late from "../pages/Late";
-import Login from "../pages/Login";
-import Overtime from "../pages/Overtime";
-import Performance from "../pages/Performance";
-import Schedule from "../pages/Schedule";
-import Undertime from "../pages/Undertime";
+import TeamLeaderDashboard from "../pages/team-leader/TeamLeaderDashboard";
+import TeamLeaderBasicLogs from "../pages/team-leader/TeamLeaderBasicLogs";
+import TeamLeaderLate from "../pages/team-leader/TeamLeaderLate";
+import TeamLeaderOvertime from "../pages/team-leader/TeamLeaderOvertime";
+import TeamLeaderUndertime from "../pages/team-leader/TeamLeaderUndertime";
+import TeamLeaderSchedule from "../pages/team-leader/TeamLeaderSchedule";
+import TeamLeaderPerformance from "../pages/team-leader/TeamLeaderPerformance";
+
+import TeamLeaderProtectedRoutes from "./TeamLeaderProtectedRoutes";
+
 import { createBrowserRouter, Navigate } from "react-router-dom";
+import NotFound from "../pages/global/NotFound";
+import Login from "../pages/global/Login";
+import Unauthorized from "../pages/global/Unauthorized";
 
 const router = createBrowserRouter([
   {
@@ -20,25 +25,34 @@ const router = createBrowserRouter([
     element: <App />,
     children: [
       {
-        path: "/",
         element: <AppLayout />,
         children: [
-          { index: true, element: <Navigate to="dashboard" replace /> },
-          { path: "dashboard", element: <Dashboard /> },
           {
-            path: "attendance",
+            element: <TeamLeaderProtectedRoutes />,
             children: [
-              { index: true, element: <Navigate to="basic-logs" replace /> },
-              { path: "basic-logs", element: <BasicLogs /> },
-              { path: "late", element: <Late /> },
-              { path: "overtime", element: <Overtime /> },
-              { path: "undertime", element: <Undertime /> },
+              { index: true, element: <Navigate to="dashboard" replace /> },
+              { path: "dashboard", element: <TeamLeaderDashboard /> },
+              {
+                path: "attendance",
+                children: [
+                  {
+                    index: true,
+                    element: <Navigate to="basic-logs" replace />,
+                  },
+                  { path: "basic-logs", element: <TeamLeaderBasicLogs /> },
+                  { path: "late", element: <TeamLeaderLate /> },
+                  { path: "overtime", element: <TeamLeaderOvertime /> },
+                  { path: "undertime", element: <TeamLeaderUndertime /> },
+                ],
+              },
+              { path: "schedule", element: <TeamLeaderSchedule /> },
+              { path: "performance", element: <TeamLeaderPerformance /> },
             ],
           },
-          { path: "schedule", element: <Schedule /> },
-          { path: "performance", element: <Performance /> },
         ],
       },
+      { path: "/unauthorized", element: <Unauthorized /> },
+      { path: "*", element: <NotFound /> },
     ],
   },
 ]);

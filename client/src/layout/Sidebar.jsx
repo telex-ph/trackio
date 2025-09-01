@@ -8,12 +8,6 @@ import {
   SidebarItemGroup,
   SidebarItems,
 } from "flowbite-react";
-import {
-  BiSolidDashboard,
-  BiSolidBookOpen,
-  BiSolidBell,
-  BiSolidBookBookmark,
-} from "react-icons/bi";
 import { IoIosArrowDropleftCircle } from "react-icons/io";
 import { LayoutGrid, BookOpenText, Bell, NotebookTabs } from "lucide-react";
 
@@ -28,30 +22,30 @@ export const Sidebar = () => {
       <hr className="text-gray-2s00" />
       <SidebarItems className="pt-4">
         <SidebarItemGroup>
-          <SidebarItem icon={LayoutGrid} as={NavLink} to="/dashboard">
+          <SidebarItem icon={LayoutGrid} as={NavLink} to="dashboard">
             Dashboard
           </SidebarItem>
 
           <SidebarCollapse icon={BookOpenText} label="Attendance">
-            <SidebarItem as={NavLink} to="/attendance/basic-logs">
+            <SidebarItem as={NavLink} to="attendance/basic-logs">
               Basic Logs
             </SidebarItem>
-            <SidebarItem as={NavLink} to="/attendance/late">
+            <SidebarItem as={NavLink} to="attendance/late">
               Late
             </SidebarItem>
-            <SidebarItem as={NavLink} to="/attendance/overtime">
+            <SidebarItem as={NavLink} to="attendance/overtime">
               Overtime
             </SidebarItem>
-            <SidebarItem as={NavLink} to="/attendance/undertime">
+            <SidebarItem as={NavLink} to="attendance/undertime">
               Undertime
             </SidebarItem>
           </SidebarCollapse>
 
-          <SidebarItem icon={Bell} as={NavLink} to="/schedule">
+          <SidebarItem icon={Bell} as={NavLink} to="schedule">
             Schedule
           </SidebarItem>
 
-          <SidebarItem icon={NotebookTabs} as={NavLink} to="/performance">
+          <SidebarItem icon={NotebookTabs} as={NavLink} to="performance">
             Performance
           </SidebarItem>
         </SidebarItemGroup>

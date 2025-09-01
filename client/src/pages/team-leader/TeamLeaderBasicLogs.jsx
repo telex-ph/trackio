@@ -1,7 +1,7 @@
 import React from "react";
-import Table from "../components/Table";
+import Table from "../../components/Table";
 
-const BasicLogs = () => {
+const TeamLeaderBasicLogs = () => {
   // Mock Data
   const data = [
     {
@@ -126,4 +126,4 @@ const BasicLogs = () => {
   );
 };
 
-export default BasicLogs;
+export default TeamLeaderBasicLogs;

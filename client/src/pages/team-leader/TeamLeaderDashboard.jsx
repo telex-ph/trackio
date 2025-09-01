@@ -1,7 +1,7 @@
 import { Button } from "flowbite-react";
-import api from "../utils/axios";
+import api from "../../utils/axios";
 
-const Dashboard = () => {
+const TeamLeaderDashboard = () => {
   const getAccounts = async () => {
     const data = await api.get("/accounts/get-accounts");
     console.log(data);
@@ -9,9 +9,9 @@ const Dashboard = () => {
 
   return (
     <div>
-      <Button onClick={getAccounts}>Dashboard</Button>
+      <Button onClick={getAccounts}>TeamLeader Dashboard</Button>
     </div>
   );
 };
 
-export default Dashboard;
+export default TeamLeaderDashboard;

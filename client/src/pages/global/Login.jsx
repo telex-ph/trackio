@@ -7,12 +7,12 @@ import {
   checkRole,
   getMicrosoftUser,
   microsoftLogin,
-} from "../auth/authService";
-import api from "../utils/axios";
+} from "../../auth/authService";
+import api from "../../utils/axios";
 import { Eye, EyeClosed } from "lucide-react";
-import microsoftLogo from "../assets/logos/microsoft.svg";
-import telexLogo from "../assets/logos/telex.png";
-import ellipse from "../assets/shapes/ellipse.svg";
+import microsoftLogo from "../../assets/logos/microsoft.svg";
+import telexLogo from "../../assets/logos/telex.png";
+import ellipse from "../../assets/shapes/ellipse.svg";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -44,7 +44,6 @@ const Login = () => {
           : error.message,
         hasError: true,
       });
-      setData({ email: "", password: "" });
       console.error("Error: ", error);
     }
   };
