@@ -108,7 +108,7 @@ const Login = () => {
       <div className="flex-1 flex gap-10 flex-col justify-start p-8 lg:p-24">
         <div className="flex flex-col gap-2">
           <img src={telexLogo} alt="Telex PH" className="size-20 z-10" />
-          <h1 className="text-3xl font-bold">Login</h1>
+          <h1 className="font-bold">Login</h1>
           <p className="text-light">
             All fields are required. Make sure your details are correct.
           </p>
