@@ -1,11 +1,13 @@
-import React from "react";
 import { Navigate, Outlet } from "react-router-dom";
-import { useStore } from "../store/useStore";
 import Roles from "../enum/roles.enum";
+import { useAuth } from "../hooks/useAuth";
 
 const TeamLeaderProtectedRoutes = () => {
-  const user = useStore((state) => state.user);
+  const { isLoading, user } = useAuth();
 
+  if (isLoading) {
+    return <p>Loading...</p>;
+  }
   switch (user.role) {
     case Roles.TEAM_LEADER:
       return <Outlet />;
