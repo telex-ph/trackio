@@ -22,7 +22,7 @@ export const login = async (req, res) => {
 
 // Creation of access and refresh token
 export const createToken = async (req, res) => {
-  const user = req.body.data;
+  const user = req.body;
 
   // Importing the private key (PKCS8 format) for RS256 signing
   const privateKey = await jose.importPKCS8(privatePEM, "RS256");
