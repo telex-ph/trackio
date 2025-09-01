@@ -11,6 +11,61 @@ import {
 import { IoIosArrowDropleftCircle } from "react-icons/io";
 import { LayoutGrid, BookOpenText, Bell, NotebookTabs } from "lucide-react";
 
+const AgentSidebar = () => {
+  return (
+    <SidebarItemGroup>
+      <SidebarItem icon={LayoutGrid} as={NavLink} to="/agent/dashboard">
+        Dashboard
+      </SidebarItem>
+
+      <SidebarItem icon={Bell} as={NavLink} to="/agent/attendance">
+        Attendance
+      </SidebarItem>
+
+      <SidebarItem icon={NotebookTabs} as={NavLink} to="/agent/coaching">
+        Coaching
+      </SidebarItem>
+    </SidebarItemGroup>
+  );
+};
+
+const TeamLeaderSidebar = () => {
+  return (
+    <SidebarItemGroup>
+      <SidebarItem icon={LayoutGrid} as={NavLink} to="/team-leader/dashboard">
+        Dashboard
+      </SidebarItem>
+
+      <SidebarCollapse icon={BookOpenText} label="Attendance">
+        <SidebarItem as={NavLink} to="/team-leader/attendance/basic-logs">
+          Basic Logs
+        </SidebarItem>
+        <SidebarItem as={NavLink} to="/team-leader/attendance/late">
+          Late
+        </SidebarItem>
+        <SidebarItem as={NavLink} to="/team-leader/attendance/overtime">
+          Overtime
+        </SidebarItem>
+        <SidebarItem as={NavLink} to="/team-leader/attendance/undertime">
+          Undertime
+        </SidebarItem>
+      </SidebarCollapse>
+
+      <SidebarItem icon={Bell} as={NavLink} to="/team-leader/schedule">
+        Schedule
+      </SidebarItem>
+
+      <SidebarItem
+        icon={NotebookTabs}
+        as={NavLink}
+        to="/team-leader/performance"
+      >
+        Performance
+      </SidebarItem>
+    </SidebarItemGroup>
+  );
+};
+
 export const Sidebar = () => {
   return (
     <Side>
@@ -21,34 +76,10 @@ export const Sidebar = () => {
       </div>
       <hr className="text-gray-2s00" />
       <SidebarItems className="pt-4">
-        <SidebarItemGroup>
-          <SidebarItem icon={LayoutGrid} as={NavLink} to="dashboard">
-            Dashboard
-          </SidebarItem>
-
-          <SidebarCollapse icon={BookOpenText} label="Attendance">
-            <SidebarItem as={NavLink} to="attendance/basic-logs">
-              Basic Logs
-            </SidebarItem>
-            <SidebarItem as={NavLink} to="attendance/late">
-              Late
-            </SidebarItem>
-            <SidebarItem as={NavLink} to="attendance/overtime">
-              Overtime
-            </SidebarItem>
-            <SidebarItem as={NavLink} to="attendance/undertime">
-              Undertime
-            </SidebarItem>
-          </SidebarCollapse>
-
-          <SidebarItem icon={Bell} as={NavLink} to="schedule">
-            Schedule
-          </SidebarItem>
-
-          <SidebarItem icon={NotebookTabs} as={NavLink} to="performance">
-            Performance
-          </SidebarItem>
-        </SidebarItemGroup>
+        {/* Agents' Sidebar */}
+        <AgentSidebar />
+        {/* Team Leaders' Sidebar */}
+        <TeamLeaderSidebar />
       </SidebarItems>
     </Side>
   );

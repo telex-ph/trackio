@@ -2,7 +2,7 @@ import { Navigate, Outlet } from "react-router-dom";
 import Roles from "../enum/roles.enum";
 import { useAuth } from "../hooks/useAuth";
 
-const TeamLeaderProtectedRoutes = () => {
+const AgentProtectedRoute = () => {
   const { isLoading, user } = useAuth();
 
   if (isLoading) {
@@ -10,11 +10,11 @@ const TeamLeaderProtectedRoutes = () => {
   }
 
   switch (user.role) {
-    case Roles.TEAM_LEADER:
+    case Roles.AGENT:
       return <Outlet />;
     default:
       return <Navigate to={"/unauthorized"} replace />;
   }
 };
 
-export default TeamLeaderProtectedRoutes;
+export default AgentProtectedRoute;

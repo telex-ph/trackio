@@ -30,11 +30,13 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      const user = await api.post("/auth/log-in", data);
+      const response = await api.post("/auth/log-in", data);
+      const user = response.data;
+
       if (user) {
         const loginResponse = await api.post("/auth/create-token", user);
         if (loginResponse.status === 200) {
-          navigate("/dashboard");
+          navigate(`/${user.role}/dashboard`);
         }
       }
     } catch (error) {
