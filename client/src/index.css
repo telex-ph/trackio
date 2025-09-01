@@ -16,12 +16,40 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: "Lato";
+  src: url("assets/fonts/Lato-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Lato";
+  src: url("assets/fonts/Lato-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Manrope";
+  src: url("assets/fonts/Manrope-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Manrope";
+  src: url("assets/fonts/Manrope-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
 *,
 *::before,
 *::after {
   box-sizing: border-box;
-  font-family: "Poppins", sans-serif;
-  font-size: 0.875rem;
+  font-family: "Manrope", sans-serif;
+  font-size: 0.899rem;
 }
 
 h1 {

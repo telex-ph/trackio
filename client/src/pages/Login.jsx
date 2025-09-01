@@ -9,8 +9,7 @@ import {
   microsoftLogin,
 } from "../auth/authService";
 import api from "../utils/axios";
-import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import { Eye, EyeClosed } from "lucide-react";
 import microsoftLogo from "../assets/logos/microsoft.svg";
 import telexLogo from "../assets/logos/telex.png";
 import ellipse from "../assets/shapes/ellipse.svg";
@@ -159,15 +158,9 @@ const Login = () => {
               />
               <div className="flex items-center justify-center p-2 border border-light container-light rounded-lg cursor-pointer">
                 {isShowPassword ? (
-                  <RemoveRedEyeIcon
-                    className="text-light"
-                    onClick={handleEyeClick}
-                  />
+                  <Eye className="text-light" onClick={handleEyeClick} />
                 ) : (
-                  <VisibilityOffIcon
-                    className="text-light"
-                    onClick={handleEyeClick}
-                  />
+                  <EyeClosed className="text-light" onClick={handleEyeClick} />
                 )}
               </div>
             </div>

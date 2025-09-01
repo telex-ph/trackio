@@ -15,6 +15,7 @@ import {
   BiSolidBookBookmark,
 } from "react-icons/bi";
 import { IoIosArrowDropleftCircle } from "react-icons/io";
+import { LayoutGrid, BookOpenText, Bell, NotebookTabs } from "lucide-react";
 
 export const Sidebar = () => {
   return (
@@ -27,11 +28,11 @@ export const Sidebar = () => {
       <hr className="text-gray-2s00" />
       <SidebarItems className="pt-4">
         <SidebarItemGroup>
-          <SidebarItem icon={BiSolidDashboard} as={NavLink} to="/dashboard">
+          <SidebarItem icon={LayoutGrid} as={NavLink} to="/dashboard">
             Dashboard
           </SidebarItem>
 
-          <SidebarCollapse icon={BiSolidBookOpen} label="Attendance">
+          <SidebarCollapse icon={BookOpenText} label="Attendance">
             <SidebarItem as={NavLink} to="/attendance/basic-logs">
               Basic Logs
             </SidebarItem>
@@ -46,15 +47,11 @@ export const Sidebar = () => {
             </SidebarItem>
           </SidebarCollapse>
 
-          <SidebarItem icon={BiSolidBell} as={NavLink} to="/schedule">
+          <SidebarItem icon={Bell} as={NavLink} to="/schedule">
             Schedule
           </SidebarItem>
 
-          <SidebarItem
-            icon={BiSolidBookBookmark}
-            as={NavLink}
-            to="/performance"
-          >
+          <SidebarItem icon={NotebookTabs} as={NavLink} to="/performance">
             Performance
           </SidebarItem>
         </SidebarItemGroup>
