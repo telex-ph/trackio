@@ -1,7 +1,7 @@
 const Roles = Object.freeze({
+  AGENT: "agent",
+  TEAM_LEADER: "team-leader",
   ADMIN: "admin",
-  TEAM_LEADER: "team_leader",
-  EMPLOYEE: "employee",
 });
 
 export default Roles;
