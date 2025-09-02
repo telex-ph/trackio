@@ -1,5 +1,4 @@
 import telex from "../assets/logos/telex.svg";
-import peeply from "../assets/logos/peeply.svg";
 import { Button } from "flowbite-react";
 import api from "../utils/axios";
 import { useNavigate } from "react-router-dom";
@@ -17,10 +16,7 @@ const Topbar = () => {
   };
 
   return (
-    <nav className="flex h-full justify-between items-center p-5">
-      <div className="flex gap-5 items-center">
-        <img src={peeply} />
-      </div>
+    <nav className="flex h-full justify-end items-center p-5">
       <div className="flex gap-3">
         <img src={telex} />
         <Button onClick={handleLogoutBtn}>Logout</Button>

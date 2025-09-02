@@ -1,6 +1,5 @@
 import { NavLink } from "react-router-dom";
-import peeply from "../assets/logos/peeply.svg";
-import eye from "../assets/logos/eye.svg";
+import trackio from "../assets/logos/trackio.svg";
 import {
   Sidebar as Side,
   SidebarCollapse,
@@ -8,7 +7,7 @@ import {
   SidebarItemGroup,
   SidebarItems,
 } from "flowbite-react";
-import { IoIosArrowDropleftCircle } from "react-icons/io";
+import { SquareArrowLeft } from "lucide-react";
 import { LayoutGrid, BookOpenText, Bell, NotebookTabs } from "lucide-react";
 
 const AgentSidebar = () => {
@@ -123,12 +122,11 @@ const AdminSidebar = () => {
 export const Sidebar = () => {
   return (
     <Side>
-      <div className="flex items-start justify-center gap-2 pb-4 relative">
-        <img src={eye} alt="Eye" className="w-8 h-auto" />
-        <img src={peeply} alt="Peeply" className="w-28 h-auto" />
-        <IoIosArrowDropleftCircle className="size-7 text-[#470905bc] absolute  right-0" />
+      <div className="flex items-center justify-center gap-2 pb-4 relative">
+        <img src={trackio} alt="Eye" className="w-48 h-auto" />
+        {/* <img src={peeply} alt="Peeply" className="w-28 h-auto" /> */}
+        <SquareArrowLeft size={22} className="text-[#6B7280] cursor-pointer" />
       </div>
-      <hr className="text-gray-2s00" />
       <SidebarItems className="pt-4">
         {/* Agents' Sidebar */}
         <AgentSidebar />
