@@ -8,7 +8,7 @@ export default function AppLayout() {
       <section className="col-start-2 col-end-3 row-start-1 row-end-2 border-b border-gray-200">
         <Topbar />
       </section>
-      <section className="col-start-1 col-end-2 row-start-1 row-end-3 border-r border-gray-200">
+      <section className="col-start-1 col-end-2 row-start-1 row-end-3 border-r border-l border-gray-200">
         <Sidebar />
       </section>
       <main className="">
