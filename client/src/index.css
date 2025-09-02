@@ -53,7 +53,7 @@
 }
 
 h1 {
-  font-size: 2em;
+  font-size: 2.5em;
 }
 h2 {
   font-size: 1.5em;
@@ -69,6 +69,14 @@ h5 {
 }
 h6 {
   font-size: 0.67em;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 700;
 }
 
 .text-light {
