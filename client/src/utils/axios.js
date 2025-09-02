@@ -7,11 +7,15 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// TODO: Implement later
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const code = error.response?.data?.code;
+
+    // Prevent infinite loops: don't refresh token on login page
+    if (window.location.pathname === "/login") {
+      return Promise.reject(error);
+    }
 
     if (code === "ACCESS_TOKEN_EXPIRED") {
       try {

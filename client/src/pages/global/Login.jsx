@@ -25,6 +25,7 @@ const Login = () => {
     message: "",
     hasError: false,
   });
+  const [loading, setLoading] = useState(true);
 
   const handleLoginClick = async (e) => {
     e.preventDefault();
@@ -95,13 +96,21 @@ const Login = () => {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const response = await api.get("/auth/status");
-      if (response.data.isValid) {
-        navigate("/dashboard");
+      try {
+        const response = await api.get("/auth/status");
+        // if (response.data.isValid) {
+        //   navigate("/dashboard");
+        // }
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchUser();
   }, []);
+
+  // if (loading) return <p>Checking authentication...</p>;
 
   return (
     <section className="flex h-screen">
