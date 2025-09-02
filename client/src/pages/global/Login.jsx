@@ -98,9 +98,12 @@ const Login = () => {
     const fetchUser = async () => {
       try {
         const response = await api.get("/auth/status");
-        // if (response.data.isValid) {
-        //   navigate("/dashboard");
-        // }
+        const user = response.data.user;
+        const isValid = response.data.isValid;
+
+        if (isValid && user) {
+          navigate(`/${user.role}/dashboard`);
+        }
       } catch (error) {
         console.log(error);
       } finally {
