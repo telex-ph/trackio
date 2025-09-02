@@ -1,6 +1,5 @@
 import { MongoClient, ServerApiVersion } from "mongodb";
 
-
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -17,7 +16,7 @@ let dbInstance = null;
 const connectDB = async () => {
   if (!dbInstance) {
     await client.connect();
-    dbInstance = client.db("peeply");
+    dbInstance = client.db("trackio");
     console.log("Database connected");
   }
   return dbInstance;

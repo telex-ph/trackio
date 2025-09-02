@@ -122,12 +122,7 @@ const AdminSidebar = () => {
 export const Sidebar = () => {
   return (
     <Side>
-      <div className="flex items-center justify-center gap-2 pb-4 relative">
-        <img src={trackio} alt="Eye" className="w-48 h-auto" />
-        {/* <img src={peeply} alt="Peeply" className="w-28 h-auto" /> */}
-        <SquareArrowLeft size={22} className="text-[#6B7280] cursor-pointer" />
-      </div>
-      <SidebarItems className="pt-4">
+      <SidebarItems>
         {/* Agents' Sidebar */}
         <AgentSidebar />
         {/* Team Leaders' Sidebar */}
