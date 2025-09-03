@@ -14,7 +14,7 @@ function App() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p>Loading...</p>
+        <p>Load...</p>
       </div>
     );
   }
