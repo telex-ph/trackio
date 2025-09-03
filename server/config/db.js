@@ -15,9 +15,13 @@ let dbInstance = null;
 
 const connectDB = async () => {
   if (!dbInstance) {
-    await client.connect();
-    dbInstance = client.db("trackio");
-    console.log("Database connected");
+    try {
+      await client.connect();
+      dbInstance = client.db("trackio");
+      console.log("Database connected");
+    } catch (error) {
+      console.log(error);
+    }
   }
   return dbInstance;
 };
