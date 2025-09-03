@@ -5,15 +5,18 @@ import { useEffect } from "react";
 
 function App() {
   const { isLoading, user } = useAuth();
-  // Will store the user to zustand
   const setUser = useStore((state) => state.setUser);
 
   useEffect(() => {
     if (user) setUser(user);
-  }, [user]);
+  }, [user, setUser]);
 
   if (isLoading) {
-    return <p>Loading...</p>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p>Loading...</p>
+      </div>
+    );
   }
 
   return user ? <Outlet /> : <Navigate to="/login" replace />;

@@ -13,7 +13,7 @@ const ServerTime = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setTime(DateTime.now().setZone("Asia/Manila")); // ✅ keep using Luxon
+      setTime(DateTime.now().setZone("Asia/Manila"));
     }, 1000);
     return () => clearInterval(interval);
   }, []);

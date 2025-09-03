@@ -18,7 +18,7 @@ const AgentSidebar = () => {
         className={({ isActive }) =>
           `flex items-center gap-2 px-3 py-2 rounded-lg ${
             isActive
-              ? "bg-blue-500 text-white"
+              ? "bg-[#B37C7C] text-white"
               : "text-gray-700 hover:bg-gray-100"
           }`
         }
@@ -32,7 +32,7 @@ const AgentSidebar = () => {
         className={({ isActive }) =>
           `flex items-center gap-2 px-3 py-2 rounded-lg ${
             isActive
-              ? "bg-blue-500 text-white"
+              ? "bg-[#B37C7C] text-white"
               : "text-gray-700 hover:bg-gray-100"
           }`
         }
@@ -46,7 +46,7 @@ const AgentSidebar = () => {
         className={({ isActive }) =>
           `flex items-center gap-2 px-3 py-2 rounded-lg ${
             isActive
-              ? "bg-blue-500 text-white"
+              ? "bg-[#B37C7C] text-white"
               : "text-gray-700 hover:bg-gray-100"
           }`
         }
@@ -186,7 +186,7 @@ const AdminSidebar = () => {
           className={({ isActive }) =>
             `block px-3 py-2 rounded-lg ${
               isActive
-                ? "bg-blue-500 text-white"
+                ? "bg-[#B37C7C] text-white"
                 : "text-gray-700 hover:bg-gray-100"
             }`
           }
@@ -198,7 +198,7 @@ const AdminSidebar = () => {
           className={({ isActive }) =>
             `block px-3 py-2 rounded-lg ${
               isActive
-                ? "bg-blue-500 text-white"
+                ? "bg-[#B37C7C] text-white"
                 : "text-gray-700 hover:bg-gray-100"
             }`
           }
@@ -210,7 +210,7 @@ const AdminSidebar = () => {
           className={({ isActive }) =>
             `block px-3 py-2 rounded-lg ${
               isActive
-                ? "bg-blue-500 text-white"
+                ? "bg-[#B37C7C] text-white"
                 : "text-gray-700 hover:bg-gray-100"
             }`
           }
@@ -222,7 +222,7 @@ const AdminSidebar = () => {
           className={({ isActive }) =>
             `block px-3 py-2 rounded-lg ${
               isActive
-                ? "bg-blue-500 text-white"
+                ? "bg-[#B37C7C] text-white"
                 : "text-gray-700 hover:bg-gray-100"
             }`
           }
@@ -249,7 +249,7 @@ const AdminSidebar = () => {
             className={({ isActive }) =>
               `block px-3 py-2 rounded-lg ${
                 isActive
-                  ? "bg-blue-500 text-white"
+                  ? "bg-[#B37C7C] text-white"
                   : "text-gray-700 hover:bg-gray-100"
               }`
             }
@@ -264,7 +264,7 @@ const AdminSidebar = () => {
         className={({ isActive }) =>
           `flex items-center gap-2 px-3 py-2 rounded-lg ${
             isActive
-              ? "bg-blue-500 text-white"
+              ? "bg-[#B37C7C] text-white"
               : "text-gray-700 hover:bg-gray-100"
           }`
         }
@@ -278,7 +278,7 @@ const AdminSidebar = () => {
         className={({ isActive }) =>
           `flex items-center gap-2 px-3 py-2 rounded-lg ${
             isActive
-              ? "bg-blue-500 text-white"
+              ? "bg-[#B37C7C] text-white"
               : "text-gray-700 hover:bg-gray-100"
           }`
         }
