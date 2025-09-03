@@ -1,12 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "flowbite-react";
 import { Square } from "lucide-react";
+import { useEffect } from "react";
+import Table from "../../components/Table";
+import ServerTime from "../../components/ServerTime";
 
 const AgentAttendance = () => {
   return (
     <div>
       <section className="flex gap-5">
-        <section className="flex items-center flex-1 p-5 container-light border-light rounded-md">
+        <section className="flex items-center gap-5 flex-1 p-5 container-light border-light rounded-md">
           <div className="flex-1">
             <h1>WORKING HOURS COUNTER</h1>
           </div>
@@ -31,31 +34,7 @@ const AgentAttendance = () => {
             </span>
           </div>
         </section>
-        <section className="flex items-center flex-1 p-5 container-light border-light rounded-md">
-          <div className="flex-1">
-            <h1>SERVER TIME</h1>
-          </div>
-          <div className="grid grid-cols-3 gap-2 [&>*]:text-center">
-            <span>
-              <h1 className="bg-white border-light text-light rounded-md">
-                01
-              </h1>
-              <span className="text-light">Hours</span>
-            </span>
-            <span>
-              <h1 className="bg-white border-light text-light rounded-md">
-                28
-              </h1>
-              <span className="text-light">Minutes</span>
-            </span>
-            <span>
-              <h1 className="bg-white border-light text-light rounded-md">
-                42
-              </h1>
-              <span className="text-light">Seconds</span>
-            </span>
-          </div>
-        </section>
+        <ServerTime />
       </section>
       <section className="grid grid-cols-5 gap-4 pt-5">
         <div className="flex flex-col gap-2 container-light border-light rounded-md p-5">

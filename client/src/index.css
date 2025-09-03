@@ -51,24 +51,28 @@
   font-family: "Manrope", sans-serif;
   font-size: 0.899rem;
 }
-
 h1 {
-  font-size: 2.5em;
+  font-size: clamp(1.8rem, 2.5vw, 2.1rem);
 }
+
 h2 {
-  font-size: 1.5em;
+  font-size: clamp(1.3rem, 2vw, 1.4rem);
 }
+
 h3 {
-  font-size: 1.17em;
+  font-size: clamp(1.1rem, 1.8vw, 1.15rem);
 }
+
 h4 {
-  font-size: 1em;
+  font-size: clamp(1rem, 1.5vw, 1rem); /* stays stable */
 }
+
 h5 {
-  font-size: 0.83em;
+  font-size: clamp(0.8rem, 1.2vw, 0.82rem);
 }
+
 h6 {
-  font-size: 0.67em;
+  font-size: clamp(0.7rem, 1vw, 0.65rem);
 }
 h1,
 h2,
