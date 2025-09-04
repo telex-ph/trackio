@@ -9,10 +9,8 @@ const publicPEM = await fs.readFile("./keys/public.pem", "utf8");
 // Login
 export const login = async (req, res) => {
   const { email, password } = req.body;
-  const user = new User();
-
   try {
-    const response = await user.login(email, password);
+    const response = await User.login(email, password);
     res.status(200).json(response);
   } catch (error) {
     console.error("Login error:", error.message);
@@ -130,7 +128,23 @@ export const deleteToken = async (req, res) => {
 };
 
 export const getAuthUser = (req, res) => {
-  res.status(200).json(req.user);
+  try {
+    // Check if user exists (should be set by auth middleware)
+    if (!req.user) {
+      return res.status(401).json({
+        message: "User not authenticated",
+      });
+    }
+
+    // Remove sensitive fields before sending response
+    const user = req.user;
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error getting authenticated user:", error);
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
 };
 
 export const getStatus = (req, res) => {

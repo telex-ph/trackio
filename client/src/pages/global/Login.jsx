@@ -113,7 +113,7 @@ const Login = () => {
     fetchUser();
   }, []);
 
-  // if (loading) return <p>Checking authentication...</p>;
+  if (loading) return <p>Checking authentication...</p>;
 
   return (
     <section className="flex h-screen">
