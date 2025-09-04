@@ -130,7 +130,23 @@ export const deleteToken = async (req, res) => {
 };
 
 export const getAuthUser = (req, res) => {
-  res.status(200).json(req.user);
+  try {
+    // Check if user exists (should be set by auth middleware)
+    if (!req.user) {
+      return res.status(401).json({
+        message: "User not authenticated",
+      });
+    }
+
+    // Remove sensitive fields before sending response
+    const user = req.user;
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error getting authenticated user:", error);
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
 };
 
 export const getStatus = (req, res) => {
