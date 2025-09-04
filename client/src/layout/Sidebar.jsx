@@ -2,7 +2,6 @@ import { NavLink } from "react-router-dom";
 import {
   Sidebar as Side,
   SidebarCollapse,
-  SidebarItem,
   SidebarItemGroup,
   SidebarItems,
 } from "flowbite-react";
@@ -10,82 +9,96 @@ import { LayoutGrid, BookOpenText, Bell, NotebookTabs } from "lucide-react";
 import { useStore } from "../store/useStore";
 import Role from "../enum/roles.enum";
 
-const AgentSidebar = () => {
+// Agent Sidebar
+const AgentSidebar = ({ isCollapsed }) => {
   return (
     <SidebarItemGroup>
       <NavLink
         to="/agent/dashboard"
         className={({ isActive }) =>
           `flex items-center gap-2 px-3 py-2 rounded-lg ${
-            isActive
-              ? "bg-[#B37C7C] text-white"
-              : "text-gray-700 hover:bg-gray-100"
+            isActive ? "bg-[#B37C7C] text-white" : "text-gray-700"
           }`
         }
       >
-        <LayoutGrid className="w-5 h-5" />
-        <span>Dashboard</span>
+        <LayoutGrid
+          className={`transition-all duration-300 ${
+            isCollapsed ? "w-7 h-7" : "w-5 h-5"
+          }`}
+        />
+        {!isCollapsed && <span>Dashboard</span>}
       </NavLink>
 
       <NavLink
         to="/agent/attendance"
         className={({ isActive }) =>
           `flex items-center gap-2 px-3 py-2 rounded-lg ${
-            isActive
-              ? "bg-[#B37C7C] text-white"
-              : "text-gray-700 hover:bg-gray-100"
+            isActive ? "bg-[#B37C7C] text-white" : "text-gray-700"
           }`
         }
       >
-        <Bell className="w-5 h-5" />
-        <span>Attendance</span>
+        <Bell
+          className={`transition-all duration-300 ${
+            isCollapsed ? "w-7 h-7" : "w-5 h-5"
+          }`}
+        />
+        {!isCollapsed && <span>Attendance/Logs</span>}
       </NavLink>
 
       <NavLink
         to="/agent/coaching"
         className={({ isActive }) =>
           `flex items-center gap-2 px-3 py-2 rounded-lg ${
-            isActive
-              ? "bg-[#B37C7C] text-white"
-              : "text-gray-700 hover:bg-gray-100"
+            isActive ? "bg-[#B37C7C] text-white" : "text-gray-700"
           }`
         }
       >
-        <NotebookTabs className="w-5 h-5" />
-        <span>Coaching</span>
+        <NotebookTabs
+          className={`transition-all duration-300 ${
+            isCollapsed ? "w-7 h-7" : "w-5 h-5"
+          }`}
+        />
+        {!isCollapsed && <span>Meeting/Coaching</span>}
       </NavLink>
     </SidebarItemGroup>
   );
 };
 
-const TeamLeaderSidebar = () => {
+// Team Leader Sidebar
+const TeamLeaderSidebar = ({ isCollapsed }) => {
   return (
     <SidebarItemGroup>
       <NavLink
         to="/team-leader/dashboard"
         className={({ isActive }) =>
           `flex items-center gap-2 px-3 py-2 rounded-lg ${
-            isActive
-              ? "bg-[#B37C7C] text-white"
-              : "text-gray-700 hover:bg-gray-100"
+            isActive ? "bg-[#B37C7C] text-white" : "text-gray-700"
           }`
         }
       >
-        <LayoutGrid className="w-5 h-5" />
-        <span>Dashboard</span>
+        <LayoutGrid
+          className={`transition-all duration-300 ${
+            isCollapsed ? "w-7 h-7" : "w-5 h-5"
+          }`}
+        />
+        {!isCollapsed && <span>Dashboard</span>}
       </NavLink>
 
       <SidebarCollapse
-        icon={() => <BookOpenText className="w-5 h-5 ml-1" />}
-        label="Attendance"
+        icon={() => (
+          <BookOpenText
+            className={`transition-all duration-300 ${
+              isCollapsed ? "w-7 h-7 ml-0" : "w-5 h-5 ml-1"
+            }`}
+          />
+        )}
+        label={!isCollapsed ? "Attendance" : ""}
       >
         <NavLink
           to="/team-leader/attendance/basic-logs"
           className={({ isActive }) =>
             `block px-3 py-2 rounded-lg ${
-              isActive
-                ? "bg-[#B37C7C] text-white"
-                : "text-gray-700 hover:bg-gray-100"
+              isActive ? "bg-[#B37C7C] text-white" : "text-gray-700"
             }`
           }
         >
@@ -95,9 +108,7 @@ const TeamLeaderSidebar = () => {
           to="/team-leader/attendance/late"
           className={({ isActive }) =>
             `block px-3 py-2 rounded-lg ${
-              isActive
-                ? "bg-[#B37C7C] text-white"
-                : "text-gray-700 hover:bg-gray-100"
+              isActive ? "bg-[#B37C7C] text-white" : "text-gray-700"
             }`
           }
         >
@@ -107,9 +118,7 @@ const TeamLeaderSidebar = () => {
           to="/team-leader/attendance/overtime"
           className={({ isActive }) =>
             `block px-3 py-2 rounded-lg ${
-              isActive
-                ? "bg-[#B37C7C] text-white"
-                : "text-gray-700 hover:bg-gray-100"
+              isActive ? "bg-[#B37C7C] text-white" : "text-gray-700"
             }`
           }
         >
@@ -119,9 +128,7 @@ const TeamLeaderSidebar = () => {
           to="/team-leader/attendance/undertime"
           className={({ isActive }) =>
             `block px-3 py-2 rounded-lg ${
-              isActive
-                ? "bg-[#B37C7C] text-white"
-                : "text-gray-700 hover:bg-gray-100"
+              isActive ? "bg-[#B37C7C] text-white" : "text-gray-700"
             }`
           }
         >
@@ -133,61 +140,72 @@ const TeamLeaderSidebar = () => {
         to="/team-leader/schedule"
         className={({ isActive }) =>
           `flex items-center gap-2 px-3 py-2 rounded-lg ${
-            isActive
-              ? "bg-[#B37C7C] text-white"
-              : "text-gray-700 hover:bg-gray-100"
+            isActive ? "bg-[#B37C7C] text-white" : "text-gray-700"
           }`
         }
       >
-        <Bell className="w-5 h-5" />
-        <span>Schedule</span>
+        <Bell
+          className={`transition-all duration-300 ${
+            isCollapsed ? "w-7 h-7" : "w-5 h-5"
+          }`}
+        />
+        {!isCollapsed && <span>Schedule</span>}
       </NavLink>
 
       <NavLink
         to="/team-leader/performance"
         className={({ isActive }) =>
           `flex items-center gap-2 px-3 py-2 rounded-lg ${
-            isActive
-              ? "bg-[#B37C7C] text-white"
-              : "text-gray-700 hover:bg-gray-100"
+            isActive ? "bg-[#B37C7C] text-white" : "text-gray-700"
           }`
         }
       >
-        <NotebookTabs className="w-5 h-5" />
-        <span>Performance</span>
+        <NotebookTabs
+          className={`transition-all duration-300 ${
+            isCollapsed ? "w-7 h-7" : "w-5 h-5"
+          }`}
+        />
+        {!isCollapsed && <span>Performance</span>}
       </NavLink>
     </SidebarItemGroup>
   );
 };
 
-const AdminSidebar = () => {
+// Admin Sidebar
+const AdminSidebar = ({ isCollapsed }) => {
   return (
     <SidebarItemGroup>
       <NavLink
         to="/admin/dashboard"
         className={({ isActive }) =>
           `flex items-center gap-2 px-3 py-2 rounded-lg ${
-            isActive
-              ? "bg-[#B37C7C] text-white"
-              : "text-gray-700 hover:bg-gray-100"
+            isActive ? "bg-[#B37C7C] text-white" : "text-gray-700"
           }`
         }
       >
-        <LayoutGrid className="w-5 h-5" />
-        <span>Dashboard</span>
+        <LayoutGrid
+          className={`transition-all duration-300 ${
+            isCollapsed ? "w-7 h-7" : "w-5 h-5"
+          }`}
+        />
+        {!isCollapsed && <span>Dashboard</span>}
       </NavLink>
 
       <SidebarCollapse
-        icon={() => <BookOpenText className="w-5 h-5 ml-1" />}
-        label="Tracking"
+        icon={() => (
+          <BookOpenText
+            className={`transition-all duration-300 ${
+              isCollapsed ? "w-7 h-7 ml-0" : "w-5 h-5 ml-1"
+            }`}
+          />
+        )}
+        label={!isCollapsed ? "Tracking" : ""}
       >
         <NavLink
           to="/admin/tracking/time-in"
           className={({ isActive }) =>
             `block px-3 py-2 rounded-lg ${
-              isActive
-                ? "bg-[#B37C7C] text-white"
-                : "text-gray-700 hover:bg-gray-100"
+              isActive ? "bg-[#B37C7C] text-white" : "text-gray-700"
             }`
           }
         >
@@ -197,9 +215,7 @@ const AdminSidebar = () => {
           to="/admin/tracking/time-out"
           className={({ isActive }) =>
             `block px-3 py-2 rounded-lg ${
-              isActive
-                ? "bg-[#B37C7C] text-white"
-                : "text-gray-700 hover:bg-gray-100"
+              isActive ? "bg-[#B37C7C] text-white" : "text-gray-700"
             }`
           }
         >
@@ -209,9 +225,7 @@ const AdminSidebar = () => {
           to="/admin/tracking/absentees"
           className={({ isActive }) =>
             `block px-3 py-2 rounded-lg ${
-              isActive
-                ? "bg-[#B37C7C] text-white"
-                : "text-gray-700 hover:bg-gray-100"
+              isActive ? "bg-[#B37C7C] text-white" : "text-gray-700"
             }`
           }
         >
@@ -221,9 +235,7 @@ const AdminSidebar = () => {
           to="/admin/tracking/employee-status"
           className={({ isActive }) =>
             `block px-3 py-2 rounded-lg ${
-              isActive
-                ? "bg-[#B37C7C] text-white"
-                : "text-gray-700 hover:bg-gray-100"
+              isActive ? "bg-[#B37C7C] text-white" : "text-gray-700"
             }`
           }
         >
@@ -232,8 +244,14 @@ const AdminSidebar = () => {
       </SidebarCollapse>
 
       <SidebarCollapse
-        icon={() => <BookOpenText className="w-5 h-5 ml-1" />}
-        label="Monitoring"
+        icon={() => (
+          <BookOpenText
+            className={`transition-all duration-300 ${
+              isCollapsed ? "w-7 h-7 ml-0" : "w-5 h-5 ml-1"
+            }`}
+          />
+        )}
+        label={!isCollapsed ? "Monitoring" : ""}
       >
         {[
           ["late", "Late"],
@@ -248,13 +266,11 @@ const AdminSidebar = () => {
             to={`/admin/monitoring/${path}`}
             className={({ isActive }) =>
               `block px-3 py-2 rounded-lg ${
-                isActive
-                  ? "bg-[#B37C7C] text-white"
-                  : "text-gray-700 hover:bg-gray-100"
+                isActive ? "bg-[#B37C7C] text-white" : "text-gray-700"
               }`
             }
           >
-            {label}
+            {!isCollapsed && label}
           </NavLink>
         ))}
       </SidebarCollapse>
@@ -263,67 +279,70 @@ const AdminSidebar = () => {
         to="/admin/history"
         className={({ isActive }) =>
           `flex items-center gap-2 px-3 py-2 rounded-lg ${
-            isActive
-              ? "bg-[#B37C7C] text-white"
-              : "text-gray-700 hover:bg-gray-100"
+            isActive ? "bg-[#B37C7C] text-white" : "text-gray-700"
           }`
         }
       >
-        <Bell className="w-5 h-5" />
-        <span>History</span>
+        <Bell
+          className={`transition-all duration-300 ${
+            isCollapsed ? "w-7 h-7" : "w-5 h-5"
+          }`}
+        />
+        {!isCollapsed && <span>History</span>}
       </NavLink>
 
       <NavLink
         to="/admin/schedule"
         className={({ isActive }) =>
           `flex items-center gap-2 px-3 py-2 rounded-lg ${
-            isActive
-              ? "bg-[#B37C7C] text-white"
-              : "text-gray-700 hover:bg-gray-100"
+            isActive ? "bg-[#B37C7C] text-white" : "text-gray-700"
           }`
         }
       >
-        <NotebookTabs className="w-5 h-5" />
-        <span>Schedule</span>
+        <NotebookTabs
+          className={`transition-all duration-300 ${
+            isCollapsed ? "w-7 h-7" : "w-5 h-5"
+          }`}
+        />
+        {!isCollapsed && <span>Schedule</span>}
       </NavLink>
     </SidebarItemGroup>
   );
 };
 
-export const Sidebar = () => {
+// Sidebar Component
+export const Sidebar = ({ isCollapsed }) => {
   const user = useStore((state) => state.user);
 
-  // Display the sidebar base on the role
   const displaySidebar = () => {
     switch (user.role) {
       case Role.AGENT:
-        return <AgentSidebar />;
+        return <AgentSidebar isCollapsed={isCollapsed} />;
       case Role.TEAM_LEADER:
-        return <TeamLeaderSidebar />;
+        return <TeamLeaderSidebar isCollapsed={isCollapsed} />;
       case Role.ADMIN:
-        return <AdminSidebar />;
+        return <AdminSidebar isCollapsed={isCollapsed} />;
       default:
         return <></>;
     }
   };
 
   return (
-    <aside className="flex flex-col h-full justify-between container-light overflow-x-hidden">
-      <Side>
-        <SidebarItems>
-          {/* Agents' Sidebar */}
-          {/* <AgentSidebar /> */}
-          {/* Team Leaders' Sidebar */}
-          {/* <TeamLeaderSidebar /> */}
-          {/* Admin' Sidebar */}
-          {/* <AdminSidebar /> */}
-          {displaySidebar()}
-        </SidebarItems>
+    <aside
+      className={`flex flex-col h-full justify-between bg-[#ffffff] overflow-x-hidden transition-all duration-300 ${
+        isCollapsed ? "w-16" : "w-64"
+      }`}
+    >
+      <Side collapsed={isCollapsed}>
+        <SidebarItems>{displaySidebar()}</SidebarItems>
       </Side>
-      <section className="bg-white border-light m-5 p-4 text-center rounded-md">
-        <p className="font-bold">Shift Schedule:</p>
-        <p className="text-light">9:00 AM. - 6:00 PM.</p>
-      </section>
+
+      {!isCollapsed && (
+        <section className="bg-white border border-gray-200 m-2 p-2 text-center rounded-md">
+          <p className="font-bold">Shift Schedule:</p>
+          <p className="text-gray-600">9:00 AM - 6:00 PM</p>
+        </section>
+      )}
     </aside>
   );
 };
