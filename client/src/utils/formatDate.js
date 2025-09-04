@@ -1,9 +1,10 @@
+import { DateTime } from "luxon";
+
 const formatDate = (date) => {
-  return new Date(date).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  });
+  if (!date) return "---";
+
+  return DateTime.fromISO(date).toFormat("hh:mm a"); 
+  // Example output: "03:45 PM"
 };
 
 export default formatDate;
