@@ -37,7 +37,7 @@ class Attendance {
   }
 
   // Get the user that matches with the id
-  static async getOne(id) {
+  static async getById(id) {
     if (!id) {
       throw new Error("ID is required");
     }
@@ -70,6 +70,25 @@ class Attendance {
       ])
       .toArray();
     return attendances;
+  }
+
+  // Update specific fields by
+  static async updateById(id, fields) {
+    if (!id) {
+      throw new Error("ID is required");
+    }
+
+    if (!fields) {
+      throw new Error("Field/s is required");
+    }
+
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+    const result = await collection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: fields }
+    );
+    return result;
   }
 }
 
