@@ -9,10 +9,8 @@ const publicPEM = await fs.readFile("./keys/public.pem", "utf8");
 // Login
 export const login = async (req, res) => {
   const { email, password } = req.body;
-  const user = new User();
-
   try {
-    const response = await user.login(email, password);
+    const response = await User.login(email, password);
     res.status(200).json(response);
   } catch (error) {
     console.error("Login error:", error.message);
