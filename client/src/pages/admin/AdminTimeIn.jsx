@@ -6,15 +6,15 @@ const AdminTimeIn = () => {
   const [data, setData] = useState([]);
 
   useEffect(() => {
-    const fetchAttendance = async () => {
+    const fetchAttendances = async () => {
       try {
-        const response = await api.get("/attendance/get-attendance");
+        const response = await api.get("/attendance/get-attendances");
         const attendance = response.data;
 
         const formattedData = attendance.map((item) => {
           const timeIn = item.timeIn
             ? new Date(item.timeIn).toLocaleTimeString([], {
-              hour: "2-digit",
+                hour: "2-digit",
                 minute: "2-digit",
                 hour12: true,
               })
@@ -34,7 +34,7 @@ const AdminTimeIn = () => {
       }
     };
 
-    fetchAttendance();
+    fetchAttendances();
   }, []);
 
   // Columns

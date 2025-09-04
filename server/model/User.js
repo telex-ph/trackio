@@ -1,9 +1,9 @@
 import connectDB from "../config/db.js";
 
 class User {
-  #collection = "users";
+  static #collection = "users";
 
-  async login(_email, password) {
+  static async login(_email, password) {
     const db = await connectDB();
     const user = await db
       .collection(this.#collection)
