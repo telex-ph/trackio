@@ -1,12 +1,12 @@
 import telex from "../assets/logos/telex.svg";
+import trackio from "../assets/logos/trackio.svg";
 import { Button } from "flowbite-react";
 import api from "../utils/axios";
 import { useNavigate } from "react-router-dom";
-import trackio from "../assets/logos/trackio.svg";
-import { SquareArrowLeft } from "lucide-react";
 import { useStore } from "../store/useStore";
+import { Menu } from "lucide-react";
 
-const Topbar = () => {
+const Topbar = ({ toggleSidebar, isCollapsed }) => {
   const navigator = useNavigate();
   const user = useStore((state) => state.user);
 
@@ -20,26 +20,28 @@ const Topbar = () => {
   };
 
   return (
-    <nav className="flex h-full justify-between items-center p-5 bg-[#571A1A]">
-      <div className="flex items-center justify-center gap-2 relative">
-        <img src={trackio} alt="Eye" className="w-48 h-auto" />
-        {/* <img src={peeply} alt="Peeply" className="w-28 h-auto" /> */}
-        {/* <SquareArrowLeft size={22} className="text-[#6B7280] cursor-pointer" /> */}
+    <nav className="flex h-full justify-between items-center p-5 bg-[#571A1A] text-white">
+      {/* Left Section: Logo + Hamburger */}
+      <div className="flex items-center">
+        <img src={trackio} alt="TRACKIO" className="w-45 h-auto" />
+        <button onClick={toggleSidebar} className="p-2 ml-6">
+          <Menu className="w-6 h-6" />
+        </button>
       </div>
-      <div className="flex  text-white">
-        <img src={telex} className="w-14 h-auto" />
+
+      {/* Right Section: TELEX Info + Logout */}
+      <div className="flex items-center gap-2">
+        <img src={telex} alt="TELEX" className="w-12 h-auto" />
         <div className="flex flex-col">
           <span className="font-bold">TELEX</span>
-          <span>
-            {user.role
-              ? user.role
-                  .split(/[\s-]/)
-                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                  .join(" ")
-              : ""}
-          </span>
+          <span className="text-sm">Employee Account</span>
         </div>
-        <Button onClick={handleLogoutBtn}>Logout</Button>
+        <Button
+          onClick={handleLogoutBtn}
+          className="ml-4 bg-white text-[#571A1A] hover:bg-gray-200"
+        >
+          Logout
+        </Button>
       </div>
     </nav>
   );
