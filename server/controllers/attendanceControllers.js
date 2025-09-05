@@ -1,6 +1,20 @@
 import connectDB from "../config/db.js";
 import Attendance from "../model/Attendance.js";
 
+export const addAttendance = async (req, res) => {
+  const id = req.params.id;
+  try {
+    const result = await Attendance.timeIn(id);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error adding user's attendance:", error);
+    res.status(500).json({
+      message: "Failed to add attendance",
+      error: error.message,
+    });
+  }
+};  
+
 export const getAttendances = async (req, res) => {
   try {
     const result = await Attendance.getAll();

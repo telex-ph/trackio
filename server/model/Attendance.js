@@ -90,6 +90,48 @@ class Attendance {
     );
     return result;
   }
+
+  static async timeIn(id) {
+    if (!id) {
+      throw new Error("ID is required");
+    }
+
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+
+    const now = DateTime.utc();
+
+    // Get start and end of today (UTC)
+    const startOfDay = now.startOf("day").toJSDate();
+    const endOfDay = now.endOf("day").toJSDate();
+
+    // Check if user already has a record today
+    const existing = await collection.findOne({
+      userId: new ObjectId(id),
+      shiftDate: { $gte: startOfDay, $lte: endOfDay },
+    });
+
+    if (existing) {
+      throw new Error("Attendance already recorded for today.");
+    }
+
+    // Fix the status logic - if current time is after shift start, you're late
+    // TODO: add a shiftStart at the users collection then pass it here
+    // const status = now <= shift.shiftStart ? "On Time" : "Late";
+    const status = "On Time";
+
+    const result = await collection.insertOne({
+      userId: new ObjectId(id),
+      shiftDate: now.toJSDate(),
+      shiftStart: now.toJSDate(),
+      timeIn: now.toJSDate(),
+      status,
+      createdAt: now.toJSDate(),
+      updatedAt: now.toJSDate(),
+    });
+
+    return result;
+  }
 }
 
 export default Attendance;
