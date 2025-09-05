@@ -69,8 +69,13 @@ const AgentAttendance = () => {
         <WorkingTime timeIn={attendance?.timeIn} />
         <ServerTime />
       </section>
-      <section className="grid grid-cols-5 gap-4 pt-5">
+      <section className="grid grid-cols-5 gap-4 pt-5"> 
+        {/* TODO: improve this */}
         <TimeBox
+          // This is needed since, we dont want them to 
+          // break/lunch/timeout uncless they have timed in 
+          timeIn={attendance?.timeIn}
+          timeOut={attendance?.timeOut}
           isTwoBtn={false}
           title={"Time In"}
           startTime={attendance?.timeIn}
@@ -80,6 +85,8 @@ const AgentAttendance = () => {
           btnClick={() => addAttendance(user._id)}
         />
         <TimeBox
+          timeIn={attendance?.timeIn}
+          timeOut={attendance?.timeOut}
           isTwoBtn={true}
           title={"1st Break"}
           startTime={attendance?.firstBreakStart}
@@ -91,6 +98,8 @@ const AgentAttendance = () => {
           btnClick={updateAttendance}
         />
         <TimeBox
+          timeIn={attendance?.timeIn}
+          timeOut={attendance?.timeOut}
           isTwoBtn={true}
           title={"Lunch"}
           startTime={attendance?.lunchStart}
@@ -102,6 +111,8 @@ const AgentAttendance = () => {
           btnClick={updateAttendance}
         />
         <TimeBox
+          timeIn={attendance?.timeIn}
+          timeOut={attendance?.timeOut}
           isTwoBtn={true}
           title={"2nd Break"}
           startTime={attendance?.secondBreakStart}
@@ -113,6 +124,8 @@ const AgentAttendance = () => {
           btnClick={updateAttendance}
         />
         <TimeBox
+          timeIn={attendance?.timeIn}
+          timeOut={attendance?.timeOut}
           isTwoBtn={false}
           title={"Time Out"}
           startTime={attendance?.timeOut}

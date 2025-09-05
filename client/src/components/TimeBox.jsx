@@ -5,6 +5,8 @@ import formatDate from "../utils/formatDate";
 import toast from "react-hot-toast";
 
 const TimeBox = ({
+  timeIn,
+  timeOut,
   isTwoBtn,
   title,
   startTime = null,
@@ -21,27 +23,46 @@ const TimeBox = ({
     const startDT = DateTime.fromJSDate(new Date(start));
     const endDT = DateTime.fromJSDate(new Date(end));
 
-    if (!startDT.isValid || !endDT.isValid) return "0:0:0";
+    if (!startDT.isValid || !endDT.isValid) return "0h 0m 0s";
 
     const interval = Interval.fromDateTimes(startDT, endDT);
     const duration = interval.toDuration(["hours", "minutes", "seconds"]);
 
-    return `${Math.floor(duration.hours)}:${Math.floor(
+    return `${Math.floor(duration.hours)}h ${Math.floor(
       duration.minutes
-    )}:${Math.floor(duration.seconds)}`;
+    )}m ${Math.floor(duration.seconds)}s`;
   };
+
+  let isStartDisabled = false;
+  let isEndDisabled = false;
+
+  // Disallow buttons
+  if ((!timeIn && title !== "Time In") || startTime || timeOut) {
+    isStartDisabled = true;
+  }
+  if ((!timeIn && title !== "Time In") || endTime || timeOut) {
+    isEndDisabled = true;
+  }
 
   return (
     <div className="flex flex-col gap-2 container-light border-light rounded-md p-5">
       <span>{title}</span>
       <div className="flex gap-3">
         <Button
-          className={`flex-1 bg-[#${bgColor}] text-[#${textColor}] hover:bg-[#${textColor}] hover:text-white font-bold ${
-            startTime && "cursor-not-allowed"
-          }`}
+          className={`flex-1 bg-[#${bgColor}] text-[#${textColor}] hover:bg-[#${textColor}] hover:text-white font-bold
+          ${isStartDisabled ? "cursor-not-allowed" : "cursor-pointer"}
+          `}
           onClick={() => {
-            if (startTime) {
-              toast.error("Oops! This has already been marked.");
+            if (isStartDisabled) {
+              if (!timeIn) {
+                toast.error(
+                  "Please clock in first before performing this action."
+                );
+              } else if (timeOut) {
+                toast.error("You have already clocked out for today.");
+              } else {
+                toast.error("This action has already been recorded.");
+              }
               return;
             }
             btnClick(fieldOne);
@@ -52,11 +73,19 @@ const TimeBox = ({
         {isTwoBtn && (
           <Button
             className={`bg-red-500 hover:bg-red-700 p-2 ${
-              endTime && "cursor-not-allowed"
+              isEndDisabled && "cursor-not-allowed"
             }`}
             onClick={() => {
-              if (endTime) {
-                toast.error("Oops! This has already been marked.");
+              if (isEndDisabled) {
+                if (!timeIn) {
+                  toast.error(
+                    "Please clock in first before performing this action."
+                  );
+                } else if (timeOut) {
+                  toast.error("You have already clocked out for today.");
+                } else {
+                  toast.error("This action has already been recorded.");
+                }
                 return;
               }
               btnClick(fieldTwo);
