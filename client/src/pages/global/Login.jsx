@@ -16,24 +16,31 @@ import ellipse from "../../assets/shapes/ellipse.svg";
 
 const Login = () => {
   const navigate = useNavigate();
-  const [data, setData] = useState({
-    email: "",
-    password: "",
-  });
+  const [data, setData] = useState({ email: "", password: "" });
   const [isShowPassword, setIsShowPassword] = useState(false);
-  const [error, setError] = useState({
-    message: "",
-    hasError: false,
-  });
+  const [error, setError] = useState({ message: "", hasError: false });
   const [loading, setLoading] = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
+
+  // Splash screen (1s)
+  useEffect(() => {
+    const timer = setTimeout(() => setShowSplash(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setError({ hasError: false, message: "" });
+    setData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEyeClick = () => setIsShowPassword((prev) => !prev);
 
   const handleLoginClick = async (e) => {
     e.preventDefault();
-
     try {
       const response = await api.post("/auth/log-in", data);
       const user = response.data;
-
       if (user) {
         const loginResponse = await api.post("/auth/create-token", user);
         if (loginResponse.status === 200) {
@@ -52,10 +59,7 @@ const Login = () => {
   };
 
   const handleMicrosoftClick = async () => {
-    // Calling Microsoft Authentication page
     const microsoftResponse = await microsoftLogin();
-
-    // Fetching user information from his/her Microsoft account
     const microsoftUser = await getMicrosoftUser(microsoftResponse.accessToken);
 
     const user = {
@@ -65,45 +69,22 @@ const Login = () => {
       lastName: microsoftUser.surname,
       jobTitle: microsoftUser.jobTitle,
     };
-    // TODO: check tenantId, disallow users that is not part o the organization (telex, callnovo)
-    // TODO: improve this later
+
     const loginResponse = await api.post("/auth/create-token", user);
-    // console.log(loginResponse);
-
     const role = await checkRole(user.id, microsoftResponse.accessToken);
-
     console.log("role: ", role);
 
-    if (loginResponse.status === 200) {
-      navigate("/dashboard");
-    }
+    if (loginResponse.status === 200) navigate("/dashboard");
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-
-    setError({ hasError: false, message: "" });
-
-    setData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleEyeClick = () => {
-    setIsShowPassword((prev) => !prev);
-  };
-
+  // Check auth status
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const response = await api.get("/auth/status");
         const user = response.data.user;
         const isValid = response.data.isValid;
-
-        if (isValid && user) {
-          navigate(`/${user.role}/dashboard`);
-        }
+        if (isValid && user) navigate(`/${user.role}/dashboard`);
       } catch (error) {
         console.log(error);
       } finally {
@@ -113,11 +94,31 @@ const Login = () => {
     fetchUser();
   }, []);
 
+  if (showSplash) {
+  return (
+    <div className="flex items-center justify-center h-screen splash-bg">
+      <div className="flex flex-col items-center gap-4 animate-fadeIn">
+        <img
+          src={telexLogo}
+          alt="Telex PH"
+          className="w-72 h-72 md:w-80 md:h-80 animate-bounceShadow"
+        />
+        <div className="translate-x-4 md:translate-x-2">
+          <p className="text-white text-2xl md:text-4xl font-semibold animate-pulse">
+            Business Support Services Inc.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
   if (loading) return <p>Checking authentication...</p>;
 
   return (
     <section className="flex h-screen">
-      <div className="flex-1 flex gap-10 flex-col justify-start p-8 lg:p-24">
+      {/* Left Side */}
+      <div className="flex-1 flex flex-col justify-center p-8 lg:p-24 gap-10">
         <div className="flex flex-col gap-2">
           <img src={telexLogo} alt="Telex PH" className="size-20 z-10" />
           <h1 className="font-bold">Login</h1>
@@ -132,17 +133,14 @@ const Login = () => {
         >
           {error.hasError && (
             <Alert color="failure" icon={HiInformationCircle}>
-              {/* <span className="font-medium">Info alert!</span> Change a few
-              things up and try submitting again. */}
               <span>{error.message}</span>
             </Alert>
           )}
+
           <div>
-            <div className="mb-2 block">
-              <Label htmlFor="email" className="text-light">
-                Email
-              </Label>
-            </div>
+            <Label htmlFor="email" className="text-light mb-2 block">
+              Email
+            </Label>
             <TextInput
               id="email"
               type="email"
@@ -153,12 +151,11 @@ const Login = () => {
               value={data.email}
             />
           </div>
+
           <div>
-            <div className="mb-2 block">
-              <Label htmlFor="password" className="text-light">
-                Password
-              </Label>
-            </div>
+            <Label htmlFor="password" className="text-light mb-2 block">
+              Password
+            </Label>
             <div className="flex items-stretch gap-2">
               <TextInput
                 id="password"
@@ -178,6 +175,7 @@ const Login = () => {
               </div>
             </div>
           </div>
+
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Checkbox id="remember" />
@@ -185,13 +183,28 @@ const Login = () => {
                 Remember me
               </Label>
             </div>
-            <p className="underline text-sm">Forgot Password?</p>
+            <p
+              className="underline text-sm cursor-pointer text-light"
+              onClick={() => navigate("/forgot-password")}
+            >
+              Forgot Password?
+            </p>
           </div>
+
           <Button type="submit" className="bg-[#470905] hover:bg-[#470905]">
             Log In
           </Button>
         </form>
-        <hr className="text-gray-300" />
+
+        {/* OR separator */}
+        <div className="relative flex items-center my-4">
+          <hr className="flex-grow border-gray-300" />
+          <span className="absolute px-2 text-gray-500 bg-white left-1/2 -translate-x-1/2">
+            OR
+          </span>
+        </div>
+
+        {/* Microsoft login */}
         <Button
           type="button"
           className="flex items-center justify-center border border-light container-light rounded-md w-full gap-2 p-2"
@@ -201,13 +214,18 @@ const Login = () => {
           <span className="text-sm text-light ">Continue with Microsoft</span>
         </Button>
       </div>
-      <div className="flex-1 hidden lg:flex justify-center gap-2 items-center flex-col bg-[#470905] relative rounded-l-lg p-24 overflow-hidden">
-        <img src={ellipse} className="absolute -top-64 -right-65" />
+
+      {/* Right Side */}
+      <div className="flex-1 hidden lg:flex justify-center items-center flex-col bg-[#470905] relative rounded-l-lg p-24 overflow-hidden">
+        <img
+          src={ellipse}
+          className="absolute -top-64 -right-65"
+          alt="Background Shape"
+        />
         <div className="z-10">
           <img src={telexLogo} alt="Telex PH" className="w-full h-full" />
         </div>
-
-        <p className="text-2xl text-white text-center">
+        <p className="text-4xl md:text-5xl text-white text-center font-semibold">
           Business Support Services Inc.
         </p>
       </div>
