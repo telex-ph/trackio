@@ -45,8 +45,10 @@ export const createToken = async (req, res) => {
     httpOnly: true,
     // sameSite: "None",
     // secure: false,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    // secure: process.env.NODE_ENV === "production",
+    // sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    secure: false, // Always false (works over HTTP)
+    sameSite: "Lax", // Always Lax (more permissive)
   });
 
   // Setting cookies as httpOnly (not accessible by JavaScript)
@@ -54,8 +56,10 @@ export const createToken = async (req, res) => {
     httpOnly: true,
     // sameSite: "None",
     // secure: false,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    // secure: process.env.NODE_ENV === "production",
+    // sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    secure: false, // Always false (works over HTTP)
+    sameSite: "Lax", // Always Lax (more permissive)
   });
 
   res.status(200).json({ message: "Sucessfully authenticated" });
@@ -91,8 +95,10 @@ export const createNewToken = async (req, res) => {
       httpOnly: true,
       // sameSite: "None",
       // secure: false,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      // secure: process.env.NODE_ENV === "production",
+      // sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      secure: false, // Always false (works over HTTP)
+      sameSite: "Lax", // Always Lax (more permissive)
     });
     return res.json({ message: "New access token created" });
   } catch (error) {
@@ -110,16 +116,20 @@ export const createNewToken = async (req, res) => {
 export const deleteToken = async (req, res) => {
   res.cookie("accessToken", "", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    // secure: process.env.NODE_ENV === "production",
+    // sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    secure: false, // Always false (works over HTTP)
+    sameSite: "Lax", // Always Lax (more permissive)
     path: "/",
     expires: new Date(0),
   });
 
   res.cookie("refreshToken", "", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    // secure: process.env.NODE_ENV === "production",
+    // sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    secure: false, // Always false (works over HTTP)
+    sameSite: "Lax", // Always Lax (more permissive)
     path: "/",
     expires: new Date(0),
   });
