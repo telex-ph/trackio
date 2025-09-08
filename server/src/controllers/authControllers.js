@@ -43,19 +43,19 @@ export const createToken = async (req, res) => {
   // Setting cookies as httpOnly (not accessible by JavaScript)
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
-    // sameSite: "Lax",
+    // sameSite: "None",
     // secure: false,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "None",
   });
 
   // Setting cookies as httpOnly (not accessible by JavaScript)
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    // sameSite: "Lax",
+    // sameSite: "None",
     // secure: false,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "None",
   });
 
   res.status(200).json({ message: "Sucessfully authenticated" });
@@ -89,10 +89,10 @@ export const createNewToken = async (req, res) => {
     // Setting cookies as httpOnly (not accessible by JavaScript)
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      // sameSite: "Lax",
+      // sameSite: "None",
       // secure: false,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "None",
     });
     return res.json({ message: "New access token created" });
   } catch (error) {
@@ -111,7 +111,7 @@ export const deleteToken = async (req, res) => {
   res.cookie("accessToken", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "None",
     path: "/",
     expires: new Date(0),
   });
@@ -119,7 +119,7 @@ export const deleteToken = async (req, res) => {
   res.cookie("refreshToken", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "None",
     path: "/",
     expires: new Date(0),
   });
