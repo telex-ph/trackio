@@ -43,19 +43,19 @@ export const createToken = async (req, res) => {
   // Setting cookies as httpOnly (not accessible by JavaScript)
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
-    sameSite: "Lax",
-    secure: false,
-    // secure: process.env.NODE_ENV === "production", // if true; https connection is required
-    // sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // None means less strict, Lax is strict but no so strict
+    // sameSite: "Lax",
+    // secure: false,
+    secure: process.env.NODE_ENV === "production", // if true; https connection is required
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // None means less strict, Lax is strict but no so strict
   });
 
   // Setting cookies as httpOnly (not accessible by JavaScript)
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    sameSite: "Lax",
-    secure: false,
-    // secure: process.env.NODE_ENV === "production", // if true; https connection is required
-    // sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // None means less strict, Lax is strict but no so strict
+    // sameSite: "Lax",
+    // secure: false,
+    secure: process.env.NODE_ENV === "production", // if true; https connection is required
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // None means less strict, Lax is strict but no so strict
   });
 
   res.status(200).json({ message: "Sucessfully authenticated" });
@@ -89,10 +89,10 @@ export const createNewToken = async (req, res) => {
     // Setting cookies as httpOnly (not accessible by JavaScript)
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      sameSite: "Lax",
-      secure: false,
-      // secure: process.env.NODE_ENV === "production", // if true; https connection is required
-      // sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // None means less strict, Lax is strict but no so strict
+      // sameSite: "Lax",
+      // secure: false,
+      secure: process.env.NODE_ENV === "production", // if true; https connection is required
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // None means less strict, Lax is strict but no so strict
     });
     return res.json({ message: "New access token created" });
   } catch (error) {
