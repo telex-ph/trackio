@@ -45,8 +45,8 @@ export const createToken = async (req, res) => {
     httpOnly: true,
     // sameSite: "None",
     // secure: false,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    sameSite: "None",
+    secure: true,
     path: "/",
   });
 
@@ -55,8 +55,8 @@ export const createToken = async (req, res) => {
     httpOnly: true,
     // sameSite: "None",
     // secure: false,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    sameSite: "None",
+    secure: true,
     path: "/",
   });
 
@@ -93,8 +93,8 @@ export const createNewToken = async (req, res) => {
       httpOnly: true,
       // sameSite: "None",
       // secure: false,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      sameSite: "None",
+      secure: true,
       path: "/",
     });
     return res.json({ message: "New access token created" });
@@ -113,16 +113,16 @@ export const createNewToken = async (req, res) => {
 export const deleteToken = async (req, res) => {
   res.cookie("accessToken", "", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    sameSite: "None",
+    secure: true,
     path: "/",
     expires: new Date(0),
   });
 
   res.cookie("refreshToken", "", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    sameSite: "None",
+    secure: true,
     path: "/",
     expires: new Date(0),
   });
