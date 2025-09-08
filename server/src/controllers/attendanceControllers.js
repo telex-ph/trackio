@@ -13,11 +13,13 @@ export const addAttendance = async (req, res) => {
       error: error.message,
     });
   }
-};  
+};
 
 export const getAttendances = async (req, res) => {
+  const { startDate, endDate } = req.query;
+
   try {
-    const result = await Attendance.getAll();
+    const result = await Attendance.getAll(startDate, endDate);
     res.status(200).json(result);
   } catch (error) {
     console.error("Error fetching all users' attendance:", error);

@@ -6,25 +6,55 @@ class Attendance {
   static #collection = "attendances";
 
   // Get all attendance records
-  static async getAll() {
+  static async getAll(startDate = null, endDate = null) {
     const db = await connectDB();
     const collection = await db.collection(this.#collection);
 
+    const matchStage = {};
+    if (startDate && endDate) {
+      matchStage.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      };
+    } else if (startDate) {
+      matchStage.createdAt = { $gte: new Date(startDate) };
+    } else if (endDate) {
+      matchStage.createdAt = { $lte: new Date(endDate) };
+    }
+
     const attendances = await collection
       .aggregate([
-        {
-          $sort: { createdAt: -1 }, // sort by createdAt first
-        },
+        { $sort: { createdAt: -1 } },
+
+        // Filter by date range if provided
+        ...(Object.keys(matchStage).length > 0 ? [{ $match: matchStage }] : []),
+
+        // Lookup User
         {
           $lookup: {
-            from: "users", // the collection with user details
-            localField: "userId", // field in attendances
-            foreignField: "_id", // field in users
-            as: "user", // output array field
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
           },
         },
+        { $unwind: "$user" },
         {
-          $unwind: "$user", // convert user array to single object
+          $lookup: {
+            from: "groups",
+            localField: "user.groupId",
+            foreignField: "_id",
+            as: "group",
+          },
+        },
+        { $unwind: { path: "$group", preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: "accounts",
+            localField: "group.accountIds",
+            foreignField: "_id",
+            as: "accounts",
+          },
         },
         {
           $project: {

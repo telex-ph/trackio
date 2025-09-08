@@ -48,10 +48,15 @@ const TimeBox = ({
     <div className="flex flex-col gap-2 container-light border-light rounded-md p-5">
       <span>{title}</span>
       <div className="flex gap-3">
+        {/* TODO: implement the hovering */}
         <Button
-          className={`flex-1 bg-[#${bgColor}] text-[#${textColor}] hover:bg-[#${textColor}] hover:text-white font-bold
+          className={`flex-1 hover:bg-[#${textColor}] hover:text-white font-bold
           ${isStartDisabled ? "cursor-not-allowed" : "cursor-pointer"}
           `}
+          style={{
+            backgroundColor: `#${bgColor}`,
+            color: `#${textColor}`,
+          }}
           onClick={() => {
             if (isStartDisabled) {
               if (!timeIn) {

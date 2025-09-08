@@ -4,9 +4,10 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 
 // Routes imports
-import authRoutes from "./routes/authRoutes.js";
-import accountRoutes from "./routes/accountRoutes.js";
-import attendanceRoutes from "./routes/attendanceRoutes.js";
+import authRoutes from "../src/routes/authRoutes.js";
+import accountRoutes from "../src/routes/accountRoutes.js";
+import attendanceRoutes from "../src/routes/attendanceRoutes.js";
+
 
 const app = express();
 dotenv.config();

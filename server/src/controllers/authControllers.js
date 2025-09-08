@@ -3,8 +3,8 @@ import fs from "fs/promises";
 import User from "../model/User.js";
 
 // Reading the PEM Keys
-const privatePEM = await fs.readFile("./keys/private.pem", "utf8");
-const publicPEM = await fs.readFile("./keys/public.pem", "utf8");
+const privatePEM = await fs.readFile("./src/keys/private.pem", "utf8");
+const publicPEM = await fs.readFile("./src/keys/public.pem", "utf8");
 
 // Login
 export const login = async (req, res) => {
