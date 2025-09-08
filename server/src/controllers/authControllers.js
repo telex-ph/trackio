@@ -47,6 +47,7 @@ export const createToken = async (req, res) => {
     // secure: false,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    path: "/",
   });
 
   // Setting cookies as httpOnly (not accessible by JavaScript)
@@ -56,6 +57,7 @@ export const createToken = async (req, res) => {
     // secure: false,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    path: "/",
   });
 
   res.status(200).json({ message: "Sucessfully authenticated" });
@@ -92,7 +94,8 @@ export const createNewToken = async (req, res) => {
       // sameSite: "None",
       // secure: false,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "None",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      path: "/",
     });
     return res.json({ message: "New access token created" });
   } catch (error) {
