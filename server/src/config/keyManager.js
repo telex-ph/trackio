@@ -1,11 +1,11 @@
 import { generateKeyPairSync } from "crypto";
 import fs from "fs";
 
-const privatePath = "./keys/private.pem";
-const publicPath = "./keys/public.pem";
+const privatePath = "./src/keys/private.pem";
+const publicPath = "./src/keys/public.pem";
 
 if (!fs.existsSync(privatePath) || !fs.existsSync(publicPath)) {
-  fs.mkdirSync("./keys", { recursive: true });
+  fs.mkdirSync("./src/keys", { recursive: true });
 
   const { publicKey, privateKey } = generateKeyPairSync("rsa", {
     modulusLength: 2048,
