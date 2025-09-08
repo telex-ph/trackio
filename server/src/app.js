@@ -16,13 +16,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 
-const allowedOrigins =
-  process.env.NODE_ENV === "production"
-    ? ["https://trackio-frontend.vercel.app"]
-    : ["http://localhost:5173"];
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: ["http://localhost:5173", "https://trackio-frontend.vercel.app"],
     credentials: true,
   })
 );
