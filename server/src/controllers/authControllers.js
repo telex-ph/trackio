@@ -1,6 +1,7 @@
 import * as jose from "jose";
 import fs from "fs/promises";
 import User from "../model/User.js";
+import { readFile } from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
 
