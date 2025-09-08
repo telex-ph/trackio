@@ -8,7 +8,6 @@ import authRoutes from "../src/routes/authRoutes.js";
 import accountRoutes from "../src/routes/accountRoutes.js";
 import attendanceRoutes from "../src/routes/attendanceRoutes.js";
 
-
 const app = express();
 dotenv.config();
 
@@ -18,11 +17,10 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
     credentials: true,
   })
 );
-
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/accounts", accountRoutes);
