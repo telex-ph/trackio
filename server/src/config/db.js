@@ -6,6 +6,8 @@ dotenv.config();
 const client = new MongoClient(process.env.MONGO_URI, {
   serverApi: {
     version: ServerApiVersion.v1,
+    ssl: true,
+    tls: true,
     strict: true,
     deprecationErrors: true,
   },
