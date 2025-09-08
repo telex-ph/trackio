@@ -1,10 +1,20 @@
 import * as jose from "jose";
 import fs from "fs/promises";
 import User from "../model/User.js";
+import path from "path";
+import { fileURLToPath } from "url";
 
-// Reading the PEM Keys
-const privatePEM = await fs.readFile("./src/keys/private.pem", "utf8");
-const publicPEM = await fs.readFile("./src/keys/public.pem", "utf8");
+// Resolve current file directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Build absolute paths
+const privateKeyPath = path.join(__dirname, "../keys/private.pem");
+const publicKeyPath = path.join(__dirname, "../keys/public.pem");
+
+// Read PEMs
+const privatePEM = await readFile(privateKeyPath, "utf8");
+const publicPEM = await readFile(publicKeyPath, "utf8");
 
 // Login
 export const login = async (req, res) => {
