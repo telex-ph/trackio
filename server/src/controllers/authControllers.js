@@ -45,8 +45,8 @@ export const createToken = async (req, res) => {
     httpOnly: true,
     // sameSite: "Lax",
     // secure: false,
-    secure: process.env.NODE_ENV === "production", // if true; https connection is required
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // None means less strict, Lax is strict but no so strict
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
   });
 
   // Setting cookies as httpOnly (not accessible by JavaScript)
@@ -54,8 +54,8 @@ export const createToken = async (req, res) => {
     httpOnly: true,
     // sameSite: "Lax",
     // secure: false,
-    secure: process.env.NODE_ENV === "production", // if true; https connection is required
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // None means less strict, Lax is strict but no so strict
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
   });
 
   res.status(200).json({ message: "Sucessfully authenticated" });
@@ -91,8 +91,8 @@ export const createNewToken = async (req, res) => {
       httpOnly: true,
       // sameSite: "Lax",
       // secure: false,
-      secure: process.env.NODE_ENV === "production", // if true; https connection is required
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // None means less strict, Lax is strict but no so strict
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
     });
     return res.json({ message: "New access token created" });
   } catch (error) {
@@ -110,8 +110,8 @@ export const createNewToken = async (req, res) => {
 export const deleteToken = async (req, res) => {
   res.cookie("accessToken", "", {
     httpOnly: true,
-    sameSite: "Lax",
-    secure: false,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
     path: "/",
     expires: new Date(0),
   });
