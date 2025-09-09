@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useStore } from "../store/useStore";
 import { Menu, ChevronDown } from "lucide-react";
 import api from "../utils/axios";
+import Roles from "../enum/roles.enum";
 
 const Topbar = ({ toggleSidebar }) => {
   const navigator = useNavigate();
@@ -33,13 +34,13 @@ const Topbar = ({ toggleSidebar }) => {
     }
 
     switch (user.role) {
-      case "admin":
+      case Roles.ADMIN:
         navigator("/admin/account-settings");
         break;
-      case "team-leader":
+      case Roles.TEAM_LEADER:
         navigator("/team-leader/account-settings");
         break;
-      case "agent":
+      case Roles.AGENT:
         navigator("/agent/account-settings");
         break;
       default:
@@ -73,7 +74,9 @@ const Topbar = ({ toggleSidebar }) => {
         <img src={telex} alt="TELEX" className="w-12 h-auto" />
         <div className="flex flex-col">
           <span className="font-bold">{user?.name || "TELEX"}</span>
-          <span className="text-sm">{user?.role?.replace("-", " ") || "Employee Account"}</span>
+          <span className="text-sm">
+            {user?.role?.replace("-", " ") || "Employee Account"}
+          </span>
         </div>
 
         {/* Dropdown Toggle */}
