@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Label, TextInput, Alert } from "flowbite-react";
 import { HiInformationCircle } from "react-icons/hi";
 
 import telexLogo from "../../assets/logos/telex.png";
 import ellipse from "../../assets/shapes/ellipse.svg";
+import telexvid from "../../assets/video/telexvid.mp4"; // same video as login
 import api from "../../utils/axios";
 
 const ForgotPassword = () => {
@@ -13,6 +14,21 @@ const ForgotPassword = () => {
   const [error, setError] = useState({ message: "", hasError: false });
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Right side animation state
+  const [showVideo, setShowVideo] = useState(false);
+
+  // Toggle logo -> video -> logo
+  useEffect(() => {
+    let logoTimer;
+    if (!showVideo) {
+      // Show logo for 6s then switch to video
+      logoTimer = setTimeout(() => {
+        setShowVideo(true);
+      }, 6000);
+    }
+    return () => clearTimeout(logoTimer);
+  }, [showVideo]);
 
   const handleInputChange = (e) => {
     setError({ hasError: false, message: "" });
@@ -97,15 +113,42 @@ const ForgotPassword = () => {
         </p>
       </div>
 
-      {/* Right Side */}
-      <div className="flex-1 hidden lg:flex justify-center items-center flex-col bg-[#470905] relative rounded-l-lg p-24 overflow-hidden">
-        <img src={ellipse} className="absolute -top-64 -right-65" />
-        <div className="z-10">
-          <img src={telexLogo} alt="Telex PH" className="w-full h-full" />
+      {/* Right Side (with animation like Login) */}
+      <div className="flex-1 hidden lg:flex justify-center items-center flex-col bg-[#470905] relative rounded-l-lg p-24 overflow-hidden border border-[#582e2b]/40">
+        <img
+          src={ellipse}
+          className="absolute -top-64 -right-65"
+          alt="Background Shape"
+        />
+
+        {/* Logo + Title */}
+        <div
+          className={`absolute inset-0 flex flex-col items-center justify-center gap-6 transition-all duration-1500 ease-in-out ${
+            showVideo ? "opacity-0" : "opacity-100"
+          }`}
+        >
+          <img
+            src={telexLogo}
+            alt="Telex PH"
+            className="w-3/4 h-3/4 object-contain"
+          />
+          <p className="text-4xl md:text-5xl text-white text-center font-semibold">
+            Business Support Services Inc.
+          </p>
         </div>
-        <p className="text-2xl text-white text-center">
-          Business Support Services Inc.
-        </p>
+
+        {/* Video (play once, then back to logo) */}
+        {showVideo && (
+          <video
+            src={telexvid}
+            autoPlay
+            muted
+            className={`absolute inset-0 w-full h-full object-cover rounded-l-lg transition-all duration-1500 ease-in-out ${
+              showVideo ? "opacity-100" : "opacity-0"
+            }`}
+            onEnded={() => setShowVideo(false)} // balik sa logo
+          />
+        )}
       </div>
     </section>
   );

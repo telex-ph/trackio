@@ -13,6 +13,7 @@ import { Eye, EyeClosed } from "lucide-react";
 import microsoftLogo from "../../assets/logos/microsoft.svg";
 import telexLogo from "../../assets/logos/telex.png";
 import ellipse from "../../assets/shapes/ellipse.svg";
+import telexvid from "../../assets/video/telexvid.mp4";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -22,11 +23,28 @@ const Login = () => {
   const [loading, setLoading] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
 
-  // Splash screen (1s)
+  // Right side animation state
+  const [showVideo, setShowVideo] = useState(false);
+
+  // Splash screen (1.5s)
   useEffect(() => {
     const timer = setTimeout(() => setShowSplash(false), 1500);
     return () => clearTimeout(timer);
   }, []);
+
+  // Toggle logo -> video -> logo
+  useEffect(() => {
+    let logoTimer;
+
+    if (!showVideo) {
+      // Stay logo for 6s then switch to video
+      logoTimer = setTimeout(() => {
+        setShowVideo(true);
+      }, 6000);
+    }
+
+    return () => clearTimeout(logoTimer);
+  }, [showVideo]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -95,23 +113,23 @@ const Login = () => {
   }, []);
 
   if (showSplash) {
-  return (
-    <div className="flex items-center justify-center h-screen splash-bg">
-      <div className="flex flex-col items-center gap-4 animate-fadeIn">
-        <img
-          src={telexLogo}
-          alt="Telex PH"
-          className="w-72 h-72 md:w-80 md:h-80 animate-bounceShadow"
-        />
-        <div className="translate-x-4 md:translate-x-2">
-          <p className="text-white text-2xl md:text-4xl font-semibold animate-pulse">
-            Business Support Services Inc.
-          </p>
+    return (
+      <div className="flex items-center justify-center h-screen splash-bg">
+        <div className="flex flex-col items-center gap-4 animate-fadeIn">
+          <img
+            src={telexLogo}
+            alt="Telex PH"
+            className="w-72 h-72 md:w-80 md:h-80 animate-bounceShadow"
+          />
+          <div className="translate-x-4 md:translate-x-2">
+            <p className="text-white text-2xl md:text-4xl font-semibold animate-pulse">
+              Business Support Services Inc.
+            </p>
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   if (loading) return <p>Checking authentication...</p>;
 
@@ -216,18 +234,41 @@ const Login = () => {
       </div>
 
       {/* Right Side */}
-      <div className="flex-1 hidden lg:flex justify-center items-center flex-col bg-[#470905] relative rounded-l-lg p-24 overflow-hidden">
+      <div className="flex-1 hidden lg:flex justify-center items-center flex-col bg-[#470905] relative rounded-l-lg p-24 overflow-hidden border border-[#582e2b]/40">
         <img
           src={ellipse}
           className="absolute -top-64 -right-65"
           alt="Background Shape"
         />
-        <div className="z-10">
-          <img src={telexLogo} alt="Telex PH" className="w-full h-full" />
+
+        {/* Logo + Title */}
+        <div
+          className={`absolute inset-0 flex flex-col items-center justify-center gap-6 transition-all duration-1500 ease-in-out ${
+            showVideo ? "opacity-0" : "opacity-100"
+          }`}
+        >
+          <img
+            src={telexLogo}
+            alt="Telex PH"
+            className="w-3/4 h-3/4 object-contain"
+          />
+          <p className="text-4xl md:text-5xl text-white text-center font-semibold">
+            Business Support Services Inc.
+          </p>
         </div>
-        <p className="text-4xl md:text-5xl text-white text-center font-semibold">
-          Business Support Services Inc.
-        </p>
+
+        {/* Video (play once, then back to logo) */}
+        {showVideo && (
+          <video
+            src={telexvid}
+            autoPlay
+            muted
+            className={`absolute inset-0 w-full h-full object-cover rounded-l-lg transition-all duration-1500 ease-in-out ${
+              showVideo ? "opacity-100" : "opacity-0"
+            }`}
+            onEnded={() => setShowVideo(false)}
+          />
+        )}
       </div>
     </section>
   );
