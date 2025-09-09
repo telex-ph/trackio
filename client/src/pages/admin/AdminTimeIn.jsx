@@ -69,6 +69,13 @@ const AdminTimeIn = () => {
   // Columns
   const columns = [
     {
+      headerName: "ID",
+      field: "id",
+      sortable: true,
+      filter: true,
+      flex: 1,
+    },
+    {
       headerName: "Name",
       field: "name",
       sortable: true,
@@ -99,6 +106,20 @@ const AdminTimeIn = () => {
     {
       headerName: "Status",
       field: "status",
+      sortable: true,
+      filter: true,
+      flex: 1,
+    },
+    {
+      headerName: "Call Attempts",
+      field: "callAttempts",
+      sortable: true,
+      filter: true,
+      flex: 1,
+    },
+    {
+      headerName: "Action",
+      field: "action",
       sortable: true,
       filter: true,
       flex: 1,
