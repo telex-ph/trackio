@@ -45,8 +45,8 @@ export const createToken = async (req, res) => {
   // Setting cookies as httpOnly (not accessible by JavaScript)
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // true on Vercel
-    sameSite: "None", // ✅ must be None for cross-domain cookies
+    secure: process.env.NODE_ENV === "production", // HTTPS only in prod
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // dev fallback
     path: "/",
     maxAge: 15 * 60 * 1000, // 15 minutes
   });
@@ -54,8 +54,8 @@ export const createToken = async (req, res) => {
   // Setting cookies as httpOnly (not accessible by JavaScript)
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "None",
+    secure: process.env.NODE_ENV === "production", // HTTPS only in prod
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // dev fallback
     path: "/",
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
@@ -91,8 +91,8 @@ export const createNewToken = async (req, res) => {
     // Setting cookies as httpOnly (not accessible by JavaScript)
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "None",
+      secure: process.env.NODE_ENV === "production", // HTTPS only in prod
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // dev fallback
       path: "/",
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
@@ -114,8 +114,8 @@ export const deleteToken = async (req, res) => {
     httpOnly: true,
     // secure: process.env.NODE_ENV === "production",
     // sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "None",
+    secure: process.env.NODE_ENV === "production", // HTTPS only in prod
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // dev fallback
     path: "/",
     expires: new Date(0),
   });
@@ -124,8 +124,8 @@ export const deleteToken = async (req, res) => {
     httpOnly: true,
     // secure: process.env.NODE_ENV === "production",
     // sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "None",
+    secure: process.env.NODE_ENV === "production", // HTTPS only in prod
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // dev fallback
     path: "/",
     expires: new Date(0),
   });
