@@ -1,10 +1,6 @@
 import * as jose from "jose";
 import User from "../model/User.js";
 
-// Read PEMs
-// const privatePEM = await readFile(privateKeyPath, "utf8");
-// const publicPEM = await readFile(publicKeyPath, "utf8");
-
 const privatePEM = process.env.PRIVATE_KEY;
 const publicPEM = process.env.PUBLIC_KEY;
 
@@ -30,40 +26,31 @@ export const createToken = async (req, res) => {
   // Access token (short exp date)
   const accessToken = await new jose.SignJWT(user)
     .setProtectedHeader({ alg: "RS256" })
-    // .setExpirationTime("15m")
-    // TODO: change this to 15m in production
     .setExpirationTime("15m")
     .sign(privateKey);
 
-  // Refresh Token (longer expiration, we use this to generate new access tokn)
   const refreshToken = await new jose.SignJWT(user)
     .setProtectedHeader({ alg: "RS256" })
-    // TODO: change this to 30d in production
     .setExpirationTime("30d")
     .sign(privateKey);
 
-  // Setting cookies as httpOnly (not accessible by JavaScript)
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // HTTPS only in prod
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // dev fallback
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     path: "/",
-    maxAge: 15 * 60 * 1000, // 15 minutes
   });
 
-  // Setting cookies as httpOnly (not accessible by JavaScript)
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // HTTPS only in prod
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // dev fallback
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     path: "/",
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
 
   res.status(200).json({ message: "Sucessfully authenticated" });
 };
 
-// Generating new access token using refresh token
 export const createNewToken = async (req, res) => {
   const token = req.cookies?.refreshToken;
 
@@ -76,29 +63,22 @@ export const createNewToken = async (req, res) => {
 
     const { payload: user } = await jose.jwtVerify(token, publicKey);
 
-    // Importing the private key (PKCS8 format) for RS256 signing
     const privateKey = await jose.importPKCS8(privatePEM, "RS256");
 
-    // Signing JWT with the payload/user
-    // Access token (short exp date)
     const accessToken = await new jose.SignJWT(user)
       .setProtectedHeader({ alg: "RS256" })
-      // .setExpirationTime("15m")
-      // TODO: change this to 15m in production
       .setExpirationTime("15m")
       .sign(privateKey);
 
     // Setting cookies as httpOnly (not accessible by JavaScript)
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // HTTPS only in prod
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // dev fallback
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       path: "/",
-      maxAge: 15 * 60 * 1000, // 15 minutes
     });
     return res.json({ message: "New access token created" });
   } catch (error) {
-    // Refresh token expired, user needs to login again
     if (error.code === "ERR_JWT_EXPIRED") {
       return res.status(401).json({
         code: "REFRESH_TOKEN_EXPIRED",
@@ -112,20 +92,16 @@ export const createNewToken = async (req, res) => {
 export const deleteToken = async (req, res) => {
   res.cookie("accessToken", "", {
     httpOnly: true,
-    // secure: process.env.NODE_ENV === "production",
-    // sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    secure: process.env.NODE_ENV === "production", // HTTPS only in prod
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // dev fallback
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     path: "/",
     expires: new Date(0),
   });
 
   res.cookie("refreshToken", "", {
     httpOnly: true,
-    // secure: process.env.NODE_ENV === "production",
-    // sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    secure: process.env.NODE_ENV === "production", // HTTPS only in prod
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // dev fallback
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     path: "/",
     expires: new Date(0),
   });
@@ -135,14 +111,12 @@ export const deleteToken = async (req, res) => {
 
 export const getAuthUser = (req, res) => {
   try {
-    // Check if user exists (should be set by auth middleware)
     if (!req.user) {
       return res.status(401).json({
         message: "User not authenticated",
       });
     }
 
-    // Remove sensitive fields before sending response
     const user = req.user;
     res.status(200).json(user);
   } catch (error) {

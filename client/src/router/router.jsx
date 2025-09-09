@@ -60,10 +60,10 @@ const router = createBrowserRouter([
     path: "/",
     element: <App />,
     children: [
+      { index: true, element: <Navigate to="login" replace /> },
       {
         element: <AppLayout />,
         children: [
-          // Admin Routes
           {
             element: <AdminProtectedRoute />,
             path: "admin",
@@ -108,7 +108,10 @@ const router = createBrowserRouter([
               {
                 path: "attendance",
                 children: [
-                  { index: true, element: <Navigate to="basic-logs" replace /> },
+                  {
+                    index: true,
+                    element: <Navigate to="basic-logs" replace />,
+                  },
                   { path: "basic-logs", element: <TeamLeaderBasicLogs /> },
                   { path: "late", element: <TeamLeaderLate /> },
                   { path: "overtime", element: <TeamLeaderOvertime /> },
@@ -120,7 +123,10 @@ const router = createBrowserRouter([
               { path: "bio-break", element: <TeamLeaderBioBreak /> },
               { path: "coaching", element: <TeamLeaderCoaching /> },
               { path: "announcement", element: <TeamLeaderAnnouncement /> },
-              { path: "account-settings", element: <TeamLeaderAccountSettings /> },
+              {
+                path: "account-settings",
+                element: <TeamLeaderAccountSettings />,
+              },
             ],
           },
 
