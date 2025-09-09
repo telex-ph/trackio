@@ -5,8 +5,12 @@ import { ObjectId } from "mongodb";
 class Attendance {
   static #collection = "attendances";
 
-  // Get all attendance records
-  static async getAll(startDate = null, endDate = null) {
+  // Get all timed in attendance records
+  static async getAll({
+    startDate = null,
+    endDate = null,
+    status = "all",
+  } = {}) {
     const db = await connectDB();
     const collection = await db.collection(this.#collection);
 
@@ -20,6 +24,22 @@ class Attendance {
       matchStage.createdAt = { $gte: new Date(startDate) };
     } else if (endDate) {
       matchStage.createdAt = { $lte: new Date(endDate) };
+    }
+
+    // Apply status filter
+    switch (status) {
+      case "timeIn":
+        // Get the attendance who has not timed out yet / for time-in page
+        matchStage.timeOut = null;
+        break;
+      case "timeOut":
+        // Get the attendance who has already timed out / for time-out page
+        matchStage.timeOut = { $exists: true, $ne: null };
+        break;
+      case "all":
+      default:
+        // No timeOut filter → return everything
+        break;
     }
 
     const attendances = await collection
