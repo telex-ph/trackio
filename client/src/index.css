@@ -93,3 +93,35 @@ h6 {
 .container-light {
   background-color: rgb(249, 250, 251);
 }
+/* Splash background gradient animation */
+.splash-bg {
+  background: linear-gradient(135deg, #470905, #800000, #ff1a1a);
+  background-size: 400% 400%;
+  animation: gradientMove 6s ease infinite;
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Logo bounce shadow animation */
+@keyframes bounceShadow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+.animate-bounceShadow {
+  animation: bounceShadow 1.5s ease-in-out infinite;
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 1s ease forwards;
+}

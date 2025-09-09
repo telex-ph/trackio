@@ -4,11 +4,13 @@ import AppLayout from "../layout/AppLayout";
 // Routes Protection
 import TeamLeaderProtectedRoutes from "./TeamLeaderProtectedRoutes";
 import AgentProtectedRoute from "./AgentProtectedRoute";
+import AdminProtectedRoute from "./AdminProtectedRoutes";
 
 // Agent Routes
 import AgentDashboard from "../pages/agent/AgentDashboard";
 import AgentAttendance from "../pages/agent/AgentAttendance";
 import AgentCoaching from "../pages/agent/AgentCoaching";
+import AgentAccountSettings from "../pages/agent/AgentAccountSettings";
 
 // Team Leader Routes
 import TeamLeaderDashboard from "../pages/team-leader/TeamLeaderDashboard";
@@ -18,9 +20,12 @@ import TeamLeaderOvertime from "../pages/team-leader/TeamLeaderOvertime";
 import TeamLeaderUndertime from "../pages/team-leader/TeamLeaderUndertime";
 import TeamLeaderSchedule from "../pages/team-leader/TeamLeaderSchedule";
 import TeamLeaderPerformance from "../pages/team-leader/TeamLeaderPerformance";
+import TeamLeaderBioBreak from "../pages/team-leader/TeamLeaderBioBreak";
+import TeamLeaderCoaching from "../pages/team-leader/TeamLeaderCoaching";
+import TeamLeaderAnnouncement from "../pages/team-leader/TeamLeaderAnnouncement";
+import TeamLeaderAccountSettings from "../pages/team-leader/TeamLeaderAccountSettings";
 
 // Admin Routes
-import AdminProtectedRoute from "./AdminProtectedRoutes";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import AdminTimeIn from "../pages/admin/AdminTimeIn";
 import AdminTimeOut from "../pages/admin/AdminTimeOut";
@@ -34,19 +39,23 @@ import AdminBioBreak from "../pages/admin/AdminBioBreak";
 import AdminMeeting from "../pages/admin/AdminMeeting";
 import AdminHistory from "../pages/admin/AdminHistory";
 import AdminSchedule from "../pages/admin/AdminSchedule";
+import AdminAnnouncement from "../pages/admin/AdminAnnouncement";
+import AdminAccountSettings from "../pages/admin/AdminAccountSettings";
 
 // Global Routes
 import NotFound from "../pages/global/NotFound";
 import Login from "../pages/global/Login";
 import Unauthorized from "../pages/global/Unauthorized";
+import ForgotPassword from "../pages/global/ForgotPassword";
 
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
 const router = createBrowserRouter([
-  {
-    path: "login",
-    element: <Login />,
-  },
+  // Public Routes
+  { path: "login", element: <Login /> },
+  { path: "forgot-password", element: <ForgotPassword /> },
+
+  // Protected App Routes
   {
     path: "/",
     element: <App />,
@@ -54,7 +63,7 @@ const router = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
-          // Agent Routes
+          // Admin Routes
           {
             element: <AdminProtectedRoute />,
             path: "admin",
@@ -64,10 +73,7 @@ const router = createBrowserRouter([
               {
                 path: "tracking",
                 children: [
-                  {
-                    index: true,
-                    element: <Navigate to="time-in" replace />,
-                  },
+                  { index: true, element: <Navigate to="time-in" replace /> },
                   { path: "time-in", element: <AdminTimeIn /> },
                   { path: "time-out", element: <AdminTimeOut /> },
                   { path: "absentees", element: <AdminAbsentees /> },
@@ -87,8 +93,11 @@ const router = createBrowserRouter([
               },
               { path: "history", element: <AdminHistory /> },
               { path: "schedule", element: <AdminSchedule /> },
+              { path: "announcement", element: <AdminAnnouncement /> },
+              { path: "account-settings", element: <AdminAccountSettings /> },
             ],
           },
+
           // Team Leader Routes
           {
             element: <TeamLeaderProtectedRoutes />,
@@ -99,10 +108,7 @@ const router = createBrowserRouter([
               {
                 path: "attendance",
                 children: [
-                  {
-                    index: true,
-                    element: <Navigate to="basic-logs" replace />,
-                  },
+                  { index: true, element: <Navigate to="basic-logs" replace /> },
                   { path: "basic-logs", element: <TeamLeaderBasicLogs /> },
                   { path: "late", element: <TeamLeaderLate /> },
                   { path: "overtime", element: <TeamLeaderOvertime /> },
@@ -111,8 +117,13 @@ const router = createBrowserRouter([
               },
               { path: "schedule", element: <TeamLeaderSchedule /> },
               { path: "performance", element: <TeamLeaderPerformance /> },
+              { path: "bio-break", element: <TeamLeaderBioBreak /> },
+              { path: "coaching", element: <TeamLeaderCoaching /> },
+              { path: "announcement", element: <TeamLeaderAnnouncement /> },
+              { path: "account-settings", element: <TeamLeaderAccountSettings /> },
             ],
           },
+
           // Agent Routes
           {
             element: <AgentProtectedRoute />,
@@ -122,10 +133,13 @@ const router = createBrowserRouter([
               { path: "dashboard", element: <AgentDashboard /> },
               { path: "attendance", element: <AgentAttendance /> },
               { path: "coaching", element: <AgentCoaching /> },
+              { path: "account-settings", element: <AgentAccountSettings /> },
             ],
           },
         ],
       },
+
+      // Misc Routes
       { path: "/unauthorized", element: <Unauthorized /> },
       { path: "*", element: <NotFound /> },
     ],
