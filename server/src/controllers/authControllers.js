@@ -26,12 +26,12 @@ export const createToken = async (req, res) => {
   // Access token (short exp date)
   const accessToken = await new jose.SignJWT(user)
     .setProtectedHeader({ alg: "RS256" })
-    .setExpirationTime("15m")
+    .setExpirationTime("5s")
     .sign(privateKey);
 
   const refreshToken = await new jose.SignJWT(user)
     .setProtectedHeader({ alg: "RS256" })
-    .setExpirationTime("30d")
+    .setExpirationTime("30s")
     .sign(privateKey);
 
   res.cookie("accessToken", accessToken, {
@@ -39,7 +39,8 @@ export const createToken = async (req, res) => {
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     path: "/",
-    maxAge: 15 * 60 * 1000,
+    // maxAge: 3 * 1000, // 3000 ms = 3 seconds
+    // maxAge: 15 * 60 * 1000,
   });
 
   res.cookie("refreshToken", refreshToken, {
@@ -47,7 +48,9 @@ export const createToken = async (req, res) => {
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     path: "/",
-    maxAge: 30 * 24 * 60 * 60 * 1000,
+    // maxAge: 10 * 1000,
+    // maxAge: 15 * 1000,
+    // maxAge: 30 * 24 * 60 * 60 * 1000,
   });
 
   res.status(200).json({ message: "Sucessfully authenticated" });
@@ -69,7 +72,7 @@ export const createNewToken = async (req, res) => {
 
     const accessToken = await new jose.SignJWT(user)
       .setProtectedHeader({ alg: "RS256" })
-      .setExpirationTime("15m")
+      .setExpirationTime("5s")
       .sign(privateKey);
 
     // Setting cookies as httpOnly (not accessible by JavaScript)
@@ -78,7 +81,8 @@ export const createNewToken = async (req, res) => {
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       path: "/",
-      maxAge: 15 * 60 * 1000,
+      // maxAge: 3 * 1000,
+      // maxAge: 15 * 60 * 1000,
     });
     return res.json({ message: "New access token created" });
   } catch (error) {
