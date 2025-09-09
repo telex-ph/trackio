@@ -49,8 +49,8 @@ export const createToken = async (req, res) => {
     // secure: false,
     // secure: process.env.NODE_ENV === "production",
     // sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    secure: false, // Always false (works over HTTP)
-    sameSite: "Lax", // Always Lax (more permissive)
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
   });
 
   // Setting cookies as httpOnly (not accessible by JavaScript)
@@ -60,8 +60,8 @@ export const createToken = async (req, res) => {
     // secure: false,
     // secure: process.env.NODE_ENV === "production",
     // sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    secure: false, // Always false (works over HTTP)
-    sameSite: "Lax", // Always Lax (more permissive)
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
   });
 
   res.status(200).json({ message: "Sucessfully authenticated" });
@@ -99,8 +99,8 @@ export const createNewToken = async (req, res) => {
       // secure: false,
       // secure: process.env.NODE_ENV === "production",
       // sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-      secure: false, // Always false (works over HTTP)
-      sameSite: "Lax", // Always Lax (more permissive)
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
     });
     return res.json({ message: "New access token created" });
   } catch (error) {
@@ -120,8 +120,8 @@ export const deleteToken = async (req, res) => {
     httpOnly: true,
     // secure: process.env.NODE_ENV === "production",
     // sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    secure: false, // Always false (works over HTTP)
-    sameSite: "Lax", // Always Lax (more permissive)
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
     path: "/",
     expires: new Date(0),
   });
@@ -130,8 +130,8 @@ export const deleteToken = async (req, res) => {
     httpOnly: true,
     // secure: process.env.NODE_ENV === "production",
     // sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    secure: false, // Always false (works over HTTP)
-    sameSite: "Lax", // Always Lax (more permissive)
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
     path: "/",
     expires: new Date(0),
   });
