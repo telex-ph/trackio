@@ -10,9 +10,7 @@ export const verifyJWT = async (req, res, next) => {
 
   try {
     // Reading public PEM keys
-    const publicPEM = await fs.readFile("./src/keys/public.pem", "utf8");
-
-    const publicKey = await jose.importSPKI(publicPEM, "RS256");
+    const publicKey = process.env.PUBLIC_KEY;
 
     const { payload } = await jose.jwtVerify(token, publicKey);
     req.user = payload;
