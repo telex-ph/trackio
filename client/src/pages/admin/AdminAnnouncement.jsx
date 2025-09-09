@@ -12,7 +12,7 @@ import {
   Edit,
 } from "lucide-react";
 
-const TeamLeaderAnnouncement = () => {
+const AdminAnnouncement = () => {
   const [announcements, setAnnouncements] = useState([
     {
       id: "1",
@@ -633,4 +633,4 @@ const TeamLeaderAnnouncement = () => {
   );
 };
 
-export default TeamLeaderAnnouncement;
+export default AdminAnnouncement;

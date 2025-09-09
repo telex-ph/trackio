@@ -87,6 +87,13 @@ const AdminTimeIn = () => {
   // Columns
   const columns = [
     {
+      headerName: "ID",
+      field: "id",
+      sortable: true,
+      filter: true,
+      flex: 1,
+    },
+    {
       headerName: "Name",
       field: "name",
       sortable: true,
