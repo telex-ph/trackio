@@ -1,5 +1,9 @@
 import { NavLink } from "react-router-dom";
-import { Sidebar as Side, SidebarItemGroup, SidebarItems } from "flowbite-react";
+import {
+  Sidebar as Side,
+  SidebarItemGroup,
+  SidebarItems,
+} from "flowbite-react";
 import {
   LayoutGrid,
   BookOpenText,
@@ -20,6 +24,7 @@ import {
   Sun,
   Moon,
   Video,
+  AlarmClockCheck,
 } from "lucide-react";
 import { useStore } from "../store/useStore";
 import Role from "../enum/roles.enum";
@@ -69,7 +74,7 @@ const SidebarLink = ({ to, icon: Icon, label, isCollapsed }) => (
       }`
     }
   >
-    <Icon className="w-5 h-5" /> {/* Fixed icon size */}
+    <Icon className="w-5 h-5" />
     {!isCollapsed && <span className="font-medium">{label}</span>}
   </NavLink>
 );
@@ -77,45 +82,94 @@ const SidebarLink = ({ to, icon: Icon, label, isCollapsed }) => (
 // Agent Sidebar
 const AgentSidebar = ({ isCollapsed }) => (
   <SidebarItemGroup className="space-y-1">
-    <SidebarLink to="/agent/dashboard" icon={LayoutGrid} label="Dashboard" isCollapsed={isCollapsed} />
-    <SidebarLink to="/agent/attendance" icon={Bell} label="Attendance/Logs" isCollapsed={isCollapsed} />
-    <SidebarLink to="/agent/coaching" icon={NotebookTabs} label="Meeting/Coaching" isCollapsed={isCollapsed} />
+    <SidebarLink
+      to="/agent/dashboard"
+      icon={LayoutGrid}
+      label="Dashboard"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
+      to="/agent/attendance"
+      icon={Bell}
+      label="Attendance/Logs"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
+      to="/agent/coaching"
+      icon={NotebookTabs}
+      label="Meeting/Coaching"
+      isCollapsed={isCollapsed}
+    />
   </SidebarItemGroup>
 );
 
 // Team Leader Sidebar
 const TeamLeaderSidebar = ({ isCollapsed }) => (
   <SidebarItemGroup className="space-y-1">
-    <SidebarLink to="/team-leader/dashboard" icon={LayoutGrid} label="Dashboard" isCollapsed={isCollapsed} />
+    <SidebarLink
+      to="/team-leader/dashboard"
+      icon={LayoutGrid}
+      label="Dashboard"
+      isCollapsed={isCollapsed}
+    />
 
     <CustomCollapse
       icon={<BookOpenText className="w-5 h-5" />}
       label="Attendance"
       isCollapsed={isCollapsed}
     >
-      {["Basic Logs", "Late", "Overtime", "Undertime"].map((item) => (
+      {[
+        { path: "basic-logs", label: "Basic Logs", Icon: FileText },
+        { path: "late", label: "Late", Icon: AlertTriangle },
+        { path: "overtime", label: "Overtime", Icon: AlarmClockCheck },
+        { path: "undertime", label: "Undertime", Icon: Clock },
+      ].map(({ path, label, Icon }) => (
         <SidebarLink
-          key={item}
-          to={`/team-leader/attendance/${item.toLowerCase().replace(" ", "-")}`}
-          icon={FileText}
-          label={item}
+          key={path}
+          to={`/team-leader/attendance/${path}`}
+          icon={Icon}
+          label={label}
           isCollapsed={isCollapsed}
         />
       ))}
     </CustomCollapse>
 
-    <SidebarLink to="/team-leader/bio-break" icon={Coffee} label="Bio Break" isCollapsed={isCollapsed} />
-    <SidebarLink to="/team-leader/coaching" icon={Video} label="Coaching" isCollapsed={isCollapsed} />
-    <SidebarLink to="/team-leader/schedule" icon={Calendar} label="Schedule" isCollapsed={isCollapsed} />
-    <SidebarLink to="/team-leader/performance" icon={BarChart} label="Performance" isCollapsed={isCollapsed} />
-    <SidebarLink to="/team-leader/announcement" icon={Megaphone} label="Announcement" isCollapsed={isCollapsed} />
+    <SidebarLink
+      to="/team-leader/coaching"
+      icon={Video}
+      label="Coaching"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
+      to="/team-leader/schedule"
+      icon={Calendar}
+      label="Schedule"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
+      to="/team-leader/performance"
+      icon={BarChart}
+      label="Performance"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
+      to="/team-leader/announcement"
+      icon={Megaphone}
+      label="Announcement"
+      isCollapsed={isCollapsed}
+    />
   </SidebarItemGroup>
 );
 
 // Admin Sidebar
 const AdminSidebar = ({ isCollapsed }) => (
   <SidebarItemGroup className="space-y-1">
-    <SidebarLink to="/admin/dashboard" icon={LayoutGrid} label="Dashboard" isCollapsed={isCollapsed} />
+    <SidebarLink
+      to="/admin/dashboard"
+      icon={LayoutGrid}
+      label="Dashboard"
+      isCollapsed={isCollapsed}
+    />
 
     <CustomCollapse
       icon={<Clock className="w-5 h-5" />}
@@ -128,7 +182,13 @@ const AdminSidebar = ({ isCollapsed }) => (
         { path: "absentees", label: "Absentees", Icon: Users },
         { path: "employee-status", label: "Employee Status", Icon: UserCheck },
       ].map(({ path, label, Icon }) => (
-        <SidebarLink key={path} to={`/admin/tracking/${path}`} icon={Icon} label={label} isCollapsed={isCollapsed} />
+        <SidebarLink
+          key={path}
+          to={`/admin/tracking/${path}`}
+          icon={Icon}
+          label={label}
+          isCollapsed={isCollapsed}
+        />
       ))}
     </CustomCollapse>
 
@@ -145,13 +205,34 @@ const AdminSidebar = ({ isCollapsed }) => (
         { path: "bio-break", label: "Bio Break", Icon: Moon },
         { path: "meeting", label: "Meeting", Icon: Video },
       ].map(({ path, label, Icon }) => (
-        <SidebarLink key={path} to={`/admin/monitoring/${path}`} icon={Icon} label={label} isCollapsed={isCollapsed} />
+        <SidebarLink
+          key={path}
+          to={`/admin/monitoring/${path}`}
+          icon={Icon}
+          label={label}
+          isCollapsed={isCollapsed}
+        />
       ))}
     </CustomCollapse>
 
-    <SidebarLink to="/admin/history" icon={FileText} label="History" isCollapsed={isCollapsed} />
-    <SidebarLink to="/admin/schedule" icon={Calendar} label="Schedule" isCollapsed={isCollapsed} />
-    <SidebarLink to="/admin/announcement" icon={Megaphone} label="Announcement" isCollapsed={isCollapsed} />
+    <SidebarLink
+      to="/admin/history"
+      icon={FileText}
+      label="History"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
+      to="/admin/schedule"
+      icon={Calendar}
+      label="Schedule"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
+      to="/admin/announcement"
+      icon={Megaphone}
+      label="Announcement"
+      isCollapsed={isCollapsed}
+    />
   </SidebarItemGroup>
 );
 
