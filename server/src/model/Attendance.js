@@ -29,13 +29,16 @@ class Attendance {
     // Apply status filter
     switch (status) {
       case "timeIn":
-        // Get the attendance who has not timed out yet / for time-in page
+        // Get the attendance record of those who have not timed out yet / for time-in page
         matchStage.timeOut = null;
         break;
       case "timeOut":
-        // Get the attendance who has already timed out / for time-out page
+        // Get the attendance records of those who have already timed out / for time-out page
         matchStage.timeOut = { $exists: true, $ne: null };
         break;
+      // Get the attendance who were of those who where late / for late page
+      case "late":
+        matchStage.status = "Late";
       case "all":
       default:
         // No timeOut filter → return everything
