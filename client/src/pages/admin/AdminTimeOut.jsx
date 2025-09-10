@@ -57,6 +57,11 @@ const AdminTimeOut = () => {
                 .setZone("Asia/Manila")
                 .toFormat("hh:mm a")
             : "Not Logged In";
+          const createdAt = item.createdAt
+            ? DateTime.fromISO(item.createdAt)
+                .setZone("Asia/Manila")
+                .toFormat("yyyy-MM-dd")
+            : "Not Logged In";
 
           const accounts = item.accounts.map((acc) => acc.name).join(",");
 
@@ -65,6 +70,7 @@ const AdminTimeOut = () => {
             name: `${item.user.firstName} ${item.user.lastName}`,
             email: item.user.email,
             timeOut,
+            date: createdAt,
             status: item.status || "-",
             accounts: accounts,
           };
@@ -87,6 +93,13 @@ const AdminTimeOut = () => {
       sortable: true,
       filter: true,
       flex: 1,
+    },
+    {
+      headerName: "Date",
+      field: "date",
+      sortable: true,
+      filter: true,
+      flex: 2,
     },
     {
       headerName: "Name",
