@@ -53,11 +53,19 @@ const AdminTimeIn = () => {
           },
         });
 
+        console.log(response.data);
+
         const formattedData = response.data.map((item) => {
           const timeIn = item.timeIn
             ? DateTime.fromISO(item.timeIn)
                 .setZone("Asia/Manila")
                 .toFormat("hh:mm a")
+            : "Not Logged In";
+
+          const createdAt = item.createdAt
+            ? DateTime.fromISO(item.createdAt)
+                .setZone("Asia/Manila")
+                .toFormat("yyyy-MM-dd")
             : "Not Logged In";
 
           const accounts = item.accounts.map((acc) => acc.name).join(",");
@@ -67,6 +75,7 @@ const AdminTimeIn = () => {
             name: `${item.user.firstName} ${item.user.lastName}`,
             email: item.user.email,
             timeIn,
+            date: createdAt,
             status: item.status || "-",
             accounts,
           };
@@ -94,6 +103,13 @@ const AdminTimeIn = () => {
       sortable: true,
       filter: true,
       flex: 1,
+    },
+    {
+      headerName: "Date",
+      field: "date",
+      sortable: true,
+      filter: true,
+      flex: 2,
     },
     {
       headerName: "Name",
