@@ -53,8 +53,6 @@ const AdminTimeIn = () => {
           },
         });
 
-        console.log(response.data);
-
         const formattedData = response.data.map((item) => {
           const timeIn = item.timeIn
             ? DateTime.fromISO(item.timeIn)
