@@ -7,14 +7,14 @@ import { ChevronRight } from "lucide-react";
 
 const AdminTimeOut = () => {
   const [data, setData] = useState([]);
+
+  const fmt = "hh:mm a";
+  const zone = "Asia/Manila";
+
   // Initialize with today in PH time
   const [dateRange, setDateRange] = useState({
-    startDate: DateTime.now()
-      .setZone("Asia/Manila")
-      .startOf("day")
-      .toUTC()
-      .toISO(),
-    endDate: DateTime.now().setZone("Asia/Manila").endOf("day").toUTC().toISO(),
+    startDate: DateTime.now().setZone(zone).startOf("day").toUTC().toISO(),
+    endDate: DateTime.now().setZone(zone).endOf("day").toUTC().toISO(),
   });
 
   // handle date picker changes
@@ -23,16 +23,8 @@ const AdminTimeOut = () => {
 
     const isoDate =
       field === "startDate"
-        ? DateTime.fromJSDate(date)
-            .setZone("Asia/Manila")
-            .startOf("day")
-            .toUTC()
-            .toISO()
-        : DateTime.fromJSDate(date)
-            .setZone("Asia/Manila")
-            .endOf("day")
-            .toUTC()
-            .toISO();
+        ? DateTime.fromJSDate(date).setZone(zone).startOf("day").toUTC().toISO()
+        : DateTime.fromJSDate(date).setZone(zone).endOf("day").toUTC().toISO();
 
     setDateRange((prev) => ({
       ...prev,
@@ -53,13 +45,11 @@ const AdminTimeOut = () => {
 
         const formattedData = response.data.map((item) => {
           const timeOut = item.timeOut
-            ? DateTime.fromISO(item.timeOut)
-                .setZone("Asia/Manila")
-                .toFormat("hh:mm a")
+            ? DateTime.fromISO(item.timeOut).setZone(zone).toFormat(fmt)
             : "Not Logged In";
           const createdAt = item.createdAt
             ? DateTime.fromISO(item.createdAt)
-                .setZone("Asia/Manila")
+                .setZone(zone)
                 .toFormat("yyyy-MM-dd")
             : "Not Logged In";
 
@@ -160,7 +150,8 @@ const AdminTimeOut = () => {
           <h2>Time Out</h2>
         </div>
         <p className="text-light">
-          Any updates will reflect on the admin account profile.
+          This page displays employee attendance records within the selected
+          date range, providing an overview of time out activities.
         </p>
       </section>
       <section className="flex gap-4 mb-4">
@@ -168,7 +159,7 @@ const AdminTimeOut = () => {
           <label className="block text-sm font-medium mb-1">Start Date</label>
           <Datepicker
             value={DateTime.fromISO(dateRange.startDate)
-              .setZone("Asia/Manila")
+              .setZone(zone)
               .toJSDate()}
             onChange={(date) => handleDatePicker(date, "startDate")}
           />
@@ -176,9 +167,7 @@ const AdminTimeOut = () => {
         <div>
           <label className="block text-sm font-medium mb-1">End Date</label>
           <Datepicker
-            value={DateTime.fromISO(dateRange.endDate)
-              .setZone("Asia/Manila")
-              .toJSDate()}
+            value={DateTime.fromISO(dateRange.endDate).setZone(zone).toJSDate()}
             onChange={(date) => handleDatePicker(date, "endDate")}
           />
         </div>
