@@ -26,12 +26,12 @@ export const createToken = async (req, res) => {
   // Access token (short exp date)
   const accessToken = await new jose.SignJWT(user)
     .setProtectedHeader({ alg: "RS256" })
-    .setExpirationTime("10s")
+    .setExpirationTime("15m")
     .sign(privateKey);
 
   const refreshToken = await new jose.SignJWT(user)
     .setProtectedHeader({ alg: "RS256" })
-    .setExpirationTime("30s")
+    .setExpirationTime("30d")
     .sign(privateKey);
 
   res.cookie("accessToken", accessToken, {
@@ -67,7 +67,7 @@ export const createNewToken = async (req, res) => {
 
     const accessToken = await new jose.SignJWT(user)
       .setProtectedHeader({ alg: "RS256" })
-      .setExpirationTime("10s")
+      .setExpirationTime("15m")
       .sign(privateKey);
 
     // Setting cookies as httpOnly (not accessible by JavaScript)
