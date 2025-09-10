@@ -76,6 +76,7 @@ const Login = () => {
     }
   };
 
+  // TODO: remove this since in microsoft azure, we cannot get thier shifts
   const handleMicrosoftClick = async () => {
     const microsoftResponse = await microsoftLogin();
     const microsoftUser = await getMicrosoftUser(microsoftResponse.accessToken);
