@@ -1,71 +1,391 @@
-import React from "react";
-import Table from "../../components/Table"; // your reusable Table component
-import { Trash2, Edit } from "lucide-react"; // action icons
+import React, { useEffect, useState } from "react";
+import Table from "../../components/Table";
+import { DateTime } from "luxon";
+import { Datepicker } from "flowbite-react";
+import {
+  ChevronRight,
+  FileText,
+  CheckCircle,
+  CalendarDays,
+  Upload,
+  Eye,
+  Trash2,
+} from "lucide-react";
+import TableAction from "../../components/TableAction";
+import Modal from "../../components/TableModal";
+import TableEmployeeDetails from "../../components/TableEmployeeDetails";
 
 const AdminAbsentees = () => {
-  // Mock Data
-  const data = [
-    {
-      id: "ADM001",
-      name: "John Doe",
-      email: "john.doe@example.com",
-      account: "JDoe123",
-      status: "Absent",
-      validity: "Invalid",
-    },
-    {
-      id: "ADM002",
-      name: "Jane Smith",
-      email: "jane.smith@example.com",
-      account: "JSmith456",
-      status: "Absent",
-      validity: "Valid",
-    },
-    {
-      id: "ADM003",
-      name: "Mark Johnson",
-      email: "mark.johnson@example.com",
-      account: "MJohn789",
-      status: "Absent",
-      validity: "Invalid",
-    },
-  ];
+  const [data, setData] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
 
-  // Columns
+  const [previewFile, setPreviewFile] = useState(null); // for file preview modal
+
+  const [dateRange, setDateRange] = useState({
+    startDate: DateTime.now()
+      .setZone("Asia/Manila")
+      .startOf("day")
+      .toUTC()
+      .toISO(),
+    endDate: DateTime.now().setZone("Asia/Manila").endOf("day").toUTC().toISO(),
+  });
+
+  const handleDatePicker = (date, field) => {
+    if (!date) return;
+    const isoDate =
+      field === "startDate"
+        ? DateTime.fromJSDate(date)
+            .setZone("Asia/Manila")
+            .startOf("day")
+            .toUTC()
+            .toISO()
+        : DateTime.fromJSDate(date)
+            .setZone("Asia/Manila")
+            .endOf("day")
+            .toUTC()
+            .toISO();
+    setDateRange((prev) => ({ ...prev, [field]: isoDate }));
+  };
+
+  useEffect(() => {
+    const sampleData = [
+      {
+        id: "ADM001",
+        name: "John Doe",
+        email: "john.doe@example.com",
+        accounts: ["JDoe123"],
+        status: "Absent",
+        validity: "Invalid",
+        absentDate: "2025-09-05",
+        remarks: "Did not submit valid excuse letter.",
+        attachments: [
+          {
+            name: "medicalcertificate.jpg",
+            size: "500kb",
+            url: "https://via.placeholder.com/600x400.png?text=Medical+Proof",
+          },
+        ],
+        role: "Software Engineer",
+        department: "IT",
+        phone: "09123456789",
+      },
+      {
+        id: "ADM002",
+        name: "Jane Smith",
+        email: "jane.smith@example.com",
+        accounts: ["JSmith456"],
+        status: "Absent",
+        validity: "Valid",
+        absentDate: "2025-09-07",
+        remarks: "Family emergency (approved).",
+        attachments: [],
+        role: "HR Specialist",
+        department: "HR",
+        phone: "09987654321",
+      },
+    ];
+    setData(sampleData);
+  }, []);
+
+  const actionClicked = (rowData) => {
+    setSelectedRow(rowData);
+    setIsModalOpen(true);
+  };
+
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const newAttachment = {
+      name: file.name,
+      size: `${(file.size / 1024).toFixed(1)}kb`,
+      url: URL.createObjectURL(file),
+    };
+    setSelectedRow((prev) => ({
+      ...prev,
+      attachments: [...(prev.attachments || []), newAttachment],
+    }));
+  };
+
+  const handleDeleteFile = (fileName) => {
+    setSelectedRow((prev) => ({
+      ...prev,
+      attachments: prev.attachments.filter((f) => f.name !== fileName),
+    }));
+  };
+
   const columns = [
     { headerName: "ID", field: "id", sortable: true, filter: true, flex: 1 },
-    { headerName: "Name", field: "name", sortable: true, filter: true, flex: 2 },
-    { headerName: "Email Address", field: "email", sortable: true, filter: true, flex: 2 },
-    { headerName: "Account", field: "account", sortable: true, filter: true, flex: 1 },
-    { headerName: "Status", field: "status", sortable: true, filter: true, flex: 1 },
-    { headerName: "Valid / Invalid", field: "validity", sortable: true, filter: true, flex: 1 },
+    {
+      headerName: "Name",
+      field: "name",
+      sortable: true,
+      filter: true,
+      flex: 2,
+    },
+    {
+      headerName: "Email",
+      field: "email",
+      sortable: true,
+      filter: true,
+      flex: 2,
+    },
+    {
+      headerName: "Account",
+      field: "accounts",
+      sortable: true,
+      filter: true,
+      flex: 1,
+      cellRenderer: (params) =>
+        Array.isArray(params.value) ? params.value.join(", ") : params.value,
+    },
+    {
+      headerName: "Status",
+      field: "status",
+      sortable: true,
+      filter: true,
+      flex: 1,
+    },
+    {
+      headerName: "Valid / Invalid",
+      field: "validity",
+      sortable: true,
+      filter: true,
+      flex: 1,
+    },
     {
       headerName: "Action",
       field: "action",
       flex: 1,
-      renderCell: (row) => (
-        <div className="flex gap-2">
-          <button
-            className="p-1 rounded hover:bg-yellow-200"
-            onClick={() => alert(`Edit ${row.name}`)}
-          >
-            <Edit className="w-5 h-5 text-blue-500" />
-          </button>
-          <button
-            className="p-1 rounded hover:bg-red-200"
-            onClick={() => alert(`Delete ${row.name}`)}
-          >
-            <Trash2 className="w-5 h-5 text-red-500" />
-          </button>
-        </div>
+      cellRenderer: (params) => (
+        <TableAction action={() => actionClicked(params.data)} />
       ),
+      filter: false,
     },
   ];
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Admin Absentees</h2>
-      <Table data={data} columns={columns} />
+      {/* Page Header */}
+      <section className="flex flex-col mb-2">
+        <div className="flex items-center gap-1">
+          <h2>Tracking</h2> <ChevronRight className="w-6 h-6" />{" "}
+          <h2>Absentees</h2>
+        </div>
+        <p className="text-light">
+          Any updates will reflect on the admin account profile.
+        </p>
+      </section>
+
+      {/* Date Picker */}
+      <section className="flex gap-4 mb-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Start Date</label>
+          <Datepicker
+            value={DateTime.fromISO(dateRange.startDate)
+              .setZone("Asia/Manila")
+              .toJSDate()}
+            onChange={(date) => handleDatePicker(date, "startDate")}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">End Date</label>
+          <Datepicker
+            value={DateTime.fromISO(dateRange.endDate)
+              .setZone("Asia/Manila")
+              .toJSDate()}
+            onChange={(date) => handleDatePicker(date, "endDate")}
+          />
+        </div>
+      </section>
+
+      {/* Table */}
+      <Table columns={columns} data={data} />
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Employee Absentee Details"
+        editable={true}
+        onSave={() => {
+          // Save changes to data
+          setData((prev) =>
+            prev.map((item) =>
+              item.id === selectedRow.id ? selectedRow : item
+            )
+          );
+        }}
+      >
+        {(isEditing) =>
+          selectedRow && (
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+              {/* Employee Details */}
+              <div className="xl:col-span-1 space-y-6">
+                <TableEmployeeDetails employee={selectedRow} />
+              </div>
+
+              {/* Absentee Details */}
+              <div className="xl:col-span-2 space-y-6">
+                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  {/* Date Absent & Validity */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div className="bg-white rounded-xl p-4 border border-gray-200">
+                      <p className="text-xs font-bold text-gray-500 uppercase mb-2">
+                        Date Absent
+                      </p>
+                      <p className="text-gray-900 font-semibold">
+                        {DateTime.fromISO(selectedRow.absentDate).toFormat(
+                          "MMMM dd, yyyy"
+                        )}
+                      </p>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 border border-gray-200">
+                      <p className="text-xs font-bold text-gray-500 uppercase mb-2">
+                        Validity
+                      </p>
+                      <span
+                        className={`inline-block px-4 py-2 rounded-lg text-lg font-bold ${
+                          selectedRow.validity?.toLowerCase() === "valid"
+                            ? "bg-green-100 text-green-800 border border-green-300"
+                            : "bg-red-100 text-red-800 border border-red-500"
+                        }`}
+                      >
+                        {selectedRow.validity}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Attendance Status */}
+                  <div className="bg-white rounded-xl p-4 border border-gray-200 mb-6">
+                    <p className="text-xs font-bold text-gray-500 uppercase mb-2">
+                      Attendance Status
+                    </p>
+                    <p className="text-gray-900 font-semibold">
+                      {selectedRow.status}
+                    </p>
+                  </div>
+
+                  {/* Daily Notes */}
+                  <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <FileText className="w-5 h-5 text-gray-600" />
+                      <h4 className="text-lg font-bold text-gray-900">
+                        Daily Notes
+                      </h4>
+                    </div>
+                    <textarea
+                      className={`w-full border rounded-lg p-3 font-medium resize-none focus:outline-none focus:ring-2 ${
+                        isEditing
+                          ? "border-blue-500 bg-white"
+                          : "border-gray-300 bg-gray-50"
+                      }`}
+                      rows={4}
+                      value={selectedRow.remarks}
+                      onChange={(e) =>
+                        setSelectedRow((prev) => ({
+                          ...prev,
+                          remarks: e.target.value,
+                        }))
+                      }
+                      disabled={!isEditing}
+                      placeholder="Enter daily notes here..."
+                    />
+                  </div>
+
+                  {/* Upload Supporting Document */}
+                  {isEditing && (
+                    <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
+                      <p className="text-sm font-bold text-gray-500 uppercase mb-3">
+                        Upload Supporting Document
+                      </p>
+                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                        <Upload className="w-6 h-6 text-gray-500 mb-2" />
+                        <p className="text-gray-500 text-sm">
+                          Drag your file(s) or{" "}
+                          <span className="text-blue-600">Browse files</span>
+                        </p>
+                        <input
+                          type="file"
+                          className="hidden"
+                          onChange={handleFileUpload}
+                          accept="image/*,application/pdf"
+                        />
+                      </label>
+                    </div>
+                  )}
+
+                  {/* View Supporting Documents */}
+                  {selectedRow.attachments &&
+                    selectedRow.attachments.length > 0 && (
+                      <div className="bg-white rounded-xl p-6 border border-gray-200">
+                        <p className="text-sm font-bold text-gray-500 uppercase mb-3">
+                          View Supporting Document
+                        </p>
+                        {selectedRow.attachments.map((file, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between p-3 border rounded-lg mb-2"
+                          >
+                            <div>
+                              <p className="font-semibold">{file.name}</p>
+                              <p className="text-xs text-gray-500">
+                                {file.size}
+                              </p>
+                            </div>
+                            <div className="flex gap-3">
+                              <button
+                                className="text-blue-600"
+                                onClick={() => setPreviewFile(file.url)}
+                              >
+                                <Eye className="w-5 h-5" />
+                              </button>
+                              {isEditing && (
+                                <button
+                                  className="text-red-500"
+                                  onClick={() => handleDeleteFile(file.name)}
+                                >
+                                  <Trash2 className="w-5 h-5" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                </div>
+              </div>
+            </div>
+          )
+        }
+      </Modal>
+
+      {/* File Preview Modal */}
+      <Modal
+        isOpen={!!previewFile}
+        onClose={() => setPreviewFile(null)}
+        title="Document Preview"
+      >
+        {
+          (/* isEditing */) =>
+            previewFile && (
+              <div className="flex justify-center">
+                {previewFile.endsWith(".pdf") ? (
+                  <iframe
+                    src={previewFile}
+                    className="w-full h-[80vh] rounded-lg"
+                    title="PDF Preview"
+                  />
+                ) : (
+                  <img
+                    src={previewFile}
+                    alt="Preview"
+                    className="max-h-[80vh] object-contain rounded-lg"
+                  />
+                )}
+              </div>
+            )
+        }
+      </Modal>
     </div>
   );
 };
