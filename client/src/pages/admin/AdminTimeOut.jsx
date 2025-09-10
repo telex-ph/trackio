@@ -7,9 +7,14 @@ import { ChevronRight } from "lucide-react";
 
 const AdminTimeOut = () => {
   const [data, setData] = useState([]);
+  // Initialize with today in PH time
   const [dateRange, setDateRange] = useState({
-    startDate: DateTime.utc().startOf("day").toISO(),
-    endDate: DateTime.utc().endOf("day").toISO(),
+    startDate: DateTime.now()
+      .setZone("Asia/Manila")
+      .startOf("day")
+      .toUTC()
+      .toISO(),
+    endDate: DateTime.now().setZone("Asia/Manila").endOf("day").toUTC().toISO(),
   });
 
   // handle date picker changes
@@ -18,8 +23,16 @@ const AdminTimeOut = () => {
 
     const isoDate =
       field === "startDate"
-        ? DateTime.fromJSDate(date).toUTC().startOf("day").toISO()
-        : DateTime.fromJSDate(date).toUTC().endOf("day").toISO();
+        ? DateTime.fromJSDate(date)
+            .setZone("Asia/Manila")
+            .startOf("day")
+            .toUTC()
+            .toISO()
+        : DateTime.fromJSDate(date)
+            .setZone("Asia/Manila")
+            .endOf("day")
+            .toUTC()
+            .toISO();
 
     setDateRange((prev) => ({
       ...prev,
@@ -34,24 +47,24 @@ const AdminTimeOut = () => {
           params: {
             startDate: dateRange.startDate,
             endDate: dateRange.endDate,
+            status: "timeOut",
           },
         });
 
         const formattedData = response.data.map((item) => {
           const timeOut = item.timeOut
-            ? new Date(item.timeOut).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: true,
-              })
-            : "Not Logged Out";
+            ? DateTime.fromISO(item.timeOut)
+                .setZone("Asia/Manila")
+                .toFormat("hh:mm a")
+            : "Not Logged In";
 
           const accounts = item.accounts.map((acc) => acc.name).join(",");
 
           return {
+            id: item.user._id,
             name: `${item.user.firstName} ${item.user.lastName}`,
             email: item.user.email,
-            timeOut: timeOut,
+            timeOut,
             status: item.status || "-",
             accounts: accounts,
           };
@@ -130,20 +143,31 @@ const AdminTimeOut = () => {
     <div>
       <section className="flex flex-col mb-2">
         <div className="flex items-center gap-1">
-          <h2>Tracking</h2> <ChevronRight className="w-6 h-6" /> <h2>Time Out</h2>
+          <h2>Tracking</h2> <ChevronRight className="w-6 h-6" />{" "}
+          <h2>Time Out</h2>
         </div>
-        <p className="text-light">Any updates will reflect on the admin account profile.</p>
+        <p className="text-light">
+          Any updates will reflect on the admin account profile.
+        </p>
       </section>
       <section className="flex gap-4 mb-4">
         <div>
           <label className="block text-sm font-medium mb-1">Start Date</label>
           <Datepicker
+            value={DateTime.fromISO(dateRange.startDate)
+              .setZone("Asia/Manila")
+              .toJSDate()}
             onChange={(date) => handleDatePicker(date, "startDate")}
           />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">End Date</label>
-          <Datepicker onChange={(date) => handleDatePicker(date, "endDate")} />
+          <Datepicker
+            value={DateTime.fromISO(dateRange.endDate)
+              .setZone("Asia/Manila")
+              .toJSDate()}
+            onChange={(date) => handleDatePicker(date, "endDate")}
+          />
         </div>
       </section>
 

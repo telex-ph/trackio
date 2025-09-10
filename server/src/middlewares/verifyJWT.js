@@ -1,29 +1,24 @@
 import * as jose from "jose";
-import fs from "fs/promises";
 
 export const verifyJWT = async (req, res, next) => {
-  const token = req.cookies?.accessToken;
+  const accessToken = req.cookies?.accessToken;
 
-  if (!token) {
-    return res.status(401).json({ message: "No access token found" });
+  if (!accessToken) {
+    return res
+      .status(401)
+      .json({ code: "NO_ACCESS_TOKEN", message: "No access token found" });
   }
 
   try {
-    // Reading public PEM keys
     const publicPEM = process.env.PUBLIC_KEY;
-
-    // Convert PEM string → CryptoKey
     const publicKey = await jose.importSPKI(publicPEM, "RS256");
 
-    // Verify with CryptoKey
-    const { payload } = await jose.jwtVerify(token, publicKey);
+    const { payload } = await jose.jwtVerify(accessToken, publicKey);
     req.user = payload;
     next();
   } catch (error) {
-    if (error.code === "ERR_JWT_EXPIRED") {
-      req.user = null;
-      req.tokenExpired = true;
-      return next();
+    if (error instanceof jose.errors.JWTExpired) {
+      return res.status(401).json({ code: "ACCESS_TOKEN_EXPIRED" });
     }
     console.error("JWT verification error:", error);
     return res.status(403).json({ message: "Invalid access token" });

@@ -49,6 +49,7 @@ const AdminTimeIn = () => {
           params: {
             startDate: dateRange.startDate,
             endDate: dateRange.endDate,
+            status: "timeIn",
           },
         });
 
@@ -62,6 +63,7 @@ const AdminTimeIn = () => {
           const accounts = item.accounts.map((acc) => acc.name).join(",");
 
           return {
+            id: item.user._id,
             name: `${item.user.firstName} ${item.user.lastName}`,
             email: item.user.email,
             timeIn,
