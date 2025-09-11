@@ -57,17 +57,17 @@ export const getAttendance = async (req, res) => {
 
 export const updateAttendance = async (req, res) => {
   try {
-    const data = req.body;
+    const { id, fields, status } = req.body;
     // Convert any string dates back to JS Date, since the date from the frontend
     // becomes string
-    Object.keys(data.fields).forEach((key) => {
-      const value = data.fields[key];
+    Object.keys(fields).forEach((key) => {
+      const value = fields[key];
       if (typeof value === "string" && !isNaN(Date.parse(value))) {
-        data.fields[key] = new Date(value);
+        fields[key] = new Date(value);
       }
     });
 
-    const response = await Attendance.updateById(data.id, data.fields);
+    const response = await Attendance.updateById(id, fields, status);
     res.status(200).json(response);
   } catch (error) {
     console.error("Error updating user attendance: ", error);
