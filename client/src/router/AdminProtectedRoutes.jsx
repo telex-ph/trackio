@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from "react-router-dom";
-import Roles from "../enum/roles.enum";
+import Roles from "../constants/roles";
 import { useAuth } from "../hooks/useAuth";
 
 const AdminProtectedRoute = () => {

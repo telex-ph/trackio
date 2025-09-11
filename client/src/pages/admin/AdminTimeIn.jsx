@@ -87,13 +87,21 @@ const AdminTimeIn = () => {
 
           const accounts = item.accounts.map((acc) => acc.name).join(",");
 
+          // Checking if the user is on time or not
+          const nowUtc = DateTime.utc();
+          const shiftUtc = DateTime.fromJSDate(item.shiftStart).toUTC();
+          const nowMinutes = nowUtc.hour * 60 + nowUtc.minute;
+          const shiftMinutes = shiftUtc.hour * 60 + shiftUtc.minute;
+
+          const punctuality = nowMinutes <= shiftMinutes ? "On Time" : "Late";
+
           return {
             id: item.user._id,
+            date: createdAt,
             name: `${item.user.firstName} ${item.user.lastName}`,
             email: item.user.email,
             timeIn,
-            date: createdAt,
-            status: item.status || "-",
+            punctuality,
             accounts,
           };
         });
@@ -152,8 +160,8 @@ const AdminTimeIn = () => {
       flex: 1,
     },
     {
-      headerName: "Status",
-      field: "status",
+      headerName: "Punctuality",
+      field: "punctuality",
       sortable: true,
       filter: true,
       flex: 1,

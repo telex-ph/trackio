@@ -25,7 +25,7 @@ const AgentAttendance = () => {
     }
   };
 
-  const updateAttendance = async (field) => {
+  const updateAttendance = async (field, newStatus) => {
     // Get the current time in UTC since Mongodb accepts UTC format
     // Using the attendance._id;
     const now = DateTime.utc().toJSDate();

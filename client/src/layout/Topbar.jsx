@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useStore } from "../store/useStore";
 import { Menu, ChevronDown } from "lucide-react";
 import api from "../utils/axios";
-import Roles from "../enum/roles.enum";
+import Roles from "../constants/roles";
 
 const Topbar = ({ toggleSidebar }) => {
   const navigator = useNavigate();

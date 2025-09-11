@@ -27,7 +27,7 @@ import {
   AlarmClockCheck,
 } from "lucide-react";
 import { useStore } from "../store/useStore";
-import Role from "../enum/roles.enum";
+import Role from "../constants/roles";
 import { useState } from "react";
 
 // Custom Collapse with fixed icon size and arrow
