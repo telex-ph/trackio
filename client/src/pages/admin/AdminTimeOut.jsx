@@ -161,15 +161,8 @@ const AdminTimeOut = () => {
       flex: 1,
     },
     {
-      headerName: "Status",
-      field: "status",
-      sortable: true,
-      filter: true,
-      flex: 1,
-    },
-    {
-      headerName: "Call Attempts",
-      field: "callAttempts",
+      headerName: "Punctuality",
+      field: "punctuality",
       sortable: true,
       filter: true,
       flex: 1,
