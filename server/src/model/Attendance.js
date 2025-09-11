@@ -29,13 +29,16 @@ class Attendance {
     // Apply status filter
     switch (status) {
       case "timeIn":
-        // Get the attendance who has not timed out yet / for time-in page
+        // Get the attendance record of those who have not timed out yet / for time-in page
         matchStage.timeOut = null;
         break;
       case "timeOut":
-        // Get the attendance who has already timed out / for time-out page
+        // Get the attendance records of those who have already timed out / for time-out page
         matchStage.timeOut = { $exists: true, $ne: null };
         break;
+      // Get the attendance who were of those who where late / for late page
+      case "late":
+        matchStage.status = "Late";
       case "all":
       default:
         // No timeOut filter → return everything
@@ -101,7 +104,7 @@ class Attendance {
         {
           $match: {
             userId: new ObjectId(id),
-            shiftStart: {
+            shiftDate: {
               $gte: now.startOf("day"),
               $lte: now.endOf("day"),
             },
@@ -141,7 +144,7 @@ class Attendance {
     return result;
   }
 
-  static async timeIn(id) {
+  static async timeIn(id, shiftStart, shiftEnd) {
     if (!id) {
       throw new Error("ID is required");
     }
@@ -165,15 +168,22 @@ class Attendance {
       throw new Error("Attendance already recorded for today.");
     }
 
-    // Fix the status logic - if current time is after shift start, you're late
-    // TODO: add a shiftStart at the users collection then pass it here
-    // const status = now <= shift.shiftStart ? "On Time" : "Late";
-    const status = "On Time";
+    // if current time is after shift start, you're late
+    // Extract only HH:mm from both
+    const nowUtc = DateTime.utc();
+    const shiftUtc = DateTime.fromJSDate(shiftStart).toUTC();
+
+    const nowMinutes = nowUtc.hour * 60 + nowUtc.minute;
+    const shiftMinutes = shiftUtc.hour * 60 + shiftUtc.minute;
+
+    const status = nowMinutes <= shiftMinutes ? "On Time" : "Late";
+    // const status = nowMinutes <= shiftMinutes ? "On Time" : "Late";
 
     const result = await collection.insertOne({
       userId: new ObjectId(id),
       shiftDate: now.toJSDate(),
-      shiftStart: now.toJSDate(),
+      shiftStart,
+      shiftEnd,
       timeIn: now.toJSDate(),
       status,
       createdAt: now.toJSDate(),

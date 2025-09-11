@@ -26,6 +26,8 @@ class User {
       groupId,
       teamLeaderId,
       createdAt,
+      shiftStart,
+      shiftEnd,
     } = user;
     return {
       _id,
@@ -36,6 +38,8 @@ class User {
       groupId,
       teamLeaderId,
       createdAt,
+      shiftStart,
+      shiftEnd,
     };
   }
 }

@@ -1,10 +1,21 @@
 import connectDB from "../config/db.js";
 import Attendance from "../model/Attendance.js";
+import { DateTime } from "luxon";
 
 export const addAttendance = async (req, res) => {
   const id = req.params.id;
+  const shiftStartStr = req.body.shiftStart;
+  const shiftEndStr = req.body.shiftEnd;
+
+  const shiftStart = DateTime.fromISO(shiftStartStr, {
+    zone: "utc",
+  }).toJSDate();
+  const shiftEnd = DateTime.fromISO(shiftEndStr, {
+    zone: "utc",
+  }).toJSDate();
+
   try {
-    const result = await Attendance.timeIn(id);
+    const result = await Attendance.timeIn(id, shiftStart, shiftEnd);
     res.status(200).json(result);
   } catch (error) {
     console.error("Error adding user's attendance:", error);

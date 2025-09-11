@@ -11,9 +11,12 @@ const AgentAttendance = () => {
   const [attendance, setAttendance] = useState();
   const [loading, setLoading] = useState(true);
 
-  const addAttendance = async (userId) => {
+  const addAttendance = async (userId, shiftStart, shiftEnd) => {
     try {
-      const result = await api.post(`/attendance/add-attendance/${userId}`);
+      const result = await api.post(`/attendance/add-attendance/${userId}`, {
+        shiftStart,
+        shiftEnd,
+      });
       console.log(result.data);
       await fetchAttendance();
     } catch (error) {
@@ -69,11 +72,11 @@ const AgentAttendance = () => {
         <WorkingTime timeIn={attendance?.timeIn} />
         <ServerTime />
       </section>
-      <section className="grid grid-cols-5 gap-4 pt-5"> 
+      <section className="grid grid-cols-5 gap-4 pt-5">
         {/* TODO: improve this */}
         <TimeBox
-          // This is needed since, we dont want them to 
-          // break/lunch/timeout uncless they have timed in 
+          // This is needed since, we dont want them to
+          // break/lunch/timeout uncless they have timed in
           timeIn={attendance?.timeIn}
           timeOut={attendance?.timeOut}
           isTwoBtn={false}
@@ -82,7 +85,9 @@ const AgentAttendance = () => {
           fieldOne={"timeIn"}
           bgColor={"C2E6E1"}
           textColor={"00B69B"}
-          btnClick={() => addAttendance(user._id)}
+          btnClick={() =>
+            addAttendance(user._id, user.shiftStart, user.shiftEnd)
+          }
         />
         <TimeBox
           timeIn={attendance?.timeIn}
