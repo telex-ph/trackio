@@ -39,6 +39,7 @@ export const createToken = async (req, res) => {
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     path: "/",
+    maxAge: 15 * 60 * 1000, // 15 minutes
   });
 
   res.cookie("refreshToken", refreshToken, {
@@ -46,6 +47,7 @@ export const createToken = async (req, res) => {
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     path: "/",
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
 
   res.status(200).json({ message: "Sucessfully authenticated" });
@@ -76,6 +78,7 @@ export const createNewToken = async (req, res) => {
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       path: "/",
+      maxAge: 15 * 60 * 1000, // 15 minutes
     });
     return res.json({ message: "New access token created" });
   } catch (error) {
