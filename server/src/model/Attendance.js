@@ -38,7 +38,9 @@ class Attendance {
         break;
       // Get the attendance who were of those who where late / for late page
       case "late":
-        matchStage.status = "Late";
+        matchStage.$expr = {
+          $gt: ["$timeIn", "$shiftStart"], // timeIn > shiftStart → late
+        };
       case "all":
       default:
         // No timeOut filter → return everything
@@ -49,7 +51,7 @@ class Attendance {
       .aggregate([
         { $sort: { createdAt: -1 } },
 
-        // Filter by date range if provided
+        // Filter
         ...(Object.keys(matchStage).length > 0 ? [{ $match: matchStage }] : []),
 
         // Lookup User
