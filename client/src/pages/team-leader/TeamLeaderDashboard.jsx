@@ -735,10 +735,18 @@ const TeamLeaderDashboard = () => {
         </div>
       </div>
 
-      {/* Employee Detail Modal */}
+      {/* Employee Detail Modal Overlay */}
       {selectedEmployee && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Blurred and dimmed background */}
+          <div
+            className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+            onClick={() => setSelectedEmployee(null)}
+          ></div>
+
+          {/* Modal Content */}
+          <div className="relative bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-lg z-10">
+            {/* Header */}
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-gray-900">
                 Employee Details
@@ -751,8 +759,11 @@ const TeamLeaderDashboard = () => {
               </button>
             </div>
 
+            {/* Main Content */}
             <div className="grid grid-cols-2 gap-6">
+              {/* Left Column */}
               <div>
+                {/* Avatar & Name */}
                 <div className="flex items-center space-x-4 mb-6">
                   <img
                     src={selectedEmployee.avatar}
@@ -780,6 +791,7 @@ const TeamLeaderDashboard = () => {
                   </div>
                 </div>
 
+                {/* Today's Schedule */}
                 <div className="space-y-4">
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h5 className="font-semibold text-gray-800 mb-3">
@@ -807,6 +819,7 @@ const TeamLeaderDashboard = () => {
                     </div>
                   </div>
 
+                  {/* Time Deviations */}
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h5 className="font-semibold text-gray-800 mb-3">
                       Time Deviations
@@ -841,7 +854,9 @@ const TeamLeaderDashboard = () => {
                 </div>
               </div>
 
+              {/* Right Column */}
               <div>
+                {/* Current Status */}
                 <div className="bg-blue-50 p-4 rounded-lg mb-4">
                   <h5 className="font-semibold text-gray-800 mb-2">
                     Current Status
@@ -849,7 +864,7 @@ const TeamLeaderDashboard = () => {
                   <div className="space-y-2">
                     {selectedEmployee.breakStatus && (
                       <div className="flex items-center text-sm">
-                        <Coffee className="w-4 h-4 text-blue-600 mr-2" />{" "}
+                        <Coffee className="w-4 h-4 text-blue-600 mr-2" />
                         <span className="text-blue-800">
                           {selectedEmployee.breakStatus}
                         </span>
@@ -857,7 +872,7 @@ const TeamLeaderDashboard = () => {
                     )}
                     {selectedEmployee.lunchStatus && (
                       <div className="flex items-center text-sm">
-                        <Utensils className="w-4 h-4 text-yellow-600 mr-2" />{" "}
+                        <Utensils className="w-4 h-4 text-yellow-600 mr-2" />
                         <span className="text-yellow-800">
                           {selectedEmployee.lunchStatus}
                         </span>
@@ -875,6 +890,7 @@ const TeamLeaderDashboard = () => {
                   </div>
                 </div>
 
+                {/* Actions */}
                 <div className="space-y-3">
                   <h5 className="font-semibold text-gray-800">Actions</h5>
                   <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
@@ -889,6 +905,7 @@ const TeamLeaderDashboard = () => {
                   </button>
                 </div>
 
+                {/* This Week Summary */}
                 <div className="mt-6 bg-gray-50 p-4 rounded-lg">
                   <h5 className="font-semibold text-gray-800 mb-3">
                     This Week Summary
