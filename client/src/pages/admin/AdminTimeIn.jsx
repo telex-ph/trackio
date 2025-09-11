@@ -6,6 +6,7 @@ import { ChevronRight, Clock, FileText, CheckCircle } from "lucide-react";
 import TableAction from "../../components/TableAction";
 import TableModal from "../../components/TableModal";
 import TableEmployeeDetails from "../../components/TableEmployeeDetails";
+import api from "../../utils/axios";
 
 const AdminTimeIn = () => {
   const [data, setData] = useState([]);
@@ -77,9 +78,33 @@ const AdminTimeIn = () => {
     fetchAttendances();
   }, [dateRange]);
 
-  // TODO: remove this after / sample only
-  const actionClicked = () => {
-    alert("Hello");
+  const handleUpdate = () => {
+    if (!selectedRow) return;
+    setData((prev) =>
+      prev.map((item) =>
+        item.id === selectedRow.id
+          ? { ...item, notes: selectedRow.notes }
+          : item
+      )
+    );
+  };
+
+  const actionClicked = (rowData) => {
+    setSelectedRow(rowData);
+    setIsModalOpen(true);
+  };
+
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case "working":
+        return "bg-green-100 text-green-800 border border-green-300";
+      case "on break":
+        return "bg-yellow-100 text-yellow-800 border border-yellow-400";
+      case "shift ended":
+        return "bg-gray-100 text-gray-800 border border-gray-300";
+      default:
+        return "bg-gray-50 text-gray-600 border border-gray-200";
+    }
   };
 
   // Columns
@@ -137,7 +162,9 @@ const AdminTimeIn = () => {
       headerName: "Action",
       field: "action",
       flex: 1,
-      cellRenderer: (params) => <TableAction action={() => actionClicked(params.data)} />,
+      cellRenderer: (params) => (
+        <TableAction action={() => actionClicked(params.data)} />
+      ),
       filter: false,
     },
   ];
@@ -147,7 +174,8 @@ const AdminTimeIn = () => {
       {/* Page Header */}
       <section className="flex flex-col mb-2">
         <div className="flex items-center gap-1">
-          <h2>Tracking</h2> <ChevronRight className="w-6 h-6" /> <h2>Time In</h2>
+          <h2>Tracking</h2> <ChevronRight className="w-6 h-6" />{" "}
+          <h2>Time In</h2>
         </div>
         <p className="text-light">
           This page displays employee attendance records within the selected
@@ -199,7 +227,9 @@ const AdminTimeIn = () => {
                 <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                   <div className="flex items-center gap-3 mb-6">
                     <Clock className="w-5 h-5 text-gray-700" />
-                    <h3 className="text-xl font-bold text-gray-900">Time & Status Details</h3>
+                    <h3 className="text-xl font-bold text-gray-900">
+                      Time & Status Details
+                    </h3>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -207,16 +237,22 @@ const AdminTimeIn = () => {
                     <div className="bg-white rounded-xl p-6 border-2 border-gray-900 shadow-sm">
                       <div className="flex items-center gap-3 mb-3">
                         <Clock className="w-6 h-6 text-gray-700" />
-                        <p className="text-sm font-bold text-gray-500 uppercase">Time In</p>
+                        <p className="text-sm font-bold text-gray-500 uppercase">
+                          Time In
+                        </p>
                       </div>
-                      <p className="text-4xl font-bold text-gray-900 font-mono">{selectedRow.timeIn}</p>
+                      <p className="text-4xl font-bold text-gray-900 font-mono">
+                        {selectedRow.timeIn}
+                      </p>
                     </div>
 
                     {/* Attendance Status */}
                     <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
                       <div className="flex items-center gap-3 mb-3">
                         <CheckCircle className="w-6 h-6 text-gray-700" />
-                        <p className="text-sm font-bold text-gray-500 uppercase">Attendance Status</p>
+                        <p className="text-sm font-bold text-gray-500 uppercase">
+                          Attendance Status
+                        </p>
                       </div>
                       <div className="flex items-center gap-3">
                         <span
@@ -234,7 +270,9 @@ const AdminTimeIn = () => {
                   <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
                     <div className="flex items-center gap-3 mb-4">
                       <FileText className="w-5 h-5 text-gray-600" />
-                      <h4 className="text-lg font-bold text-gray-900">Daily Notes</h4>
+                      <h4 className="text-lg font-bold text-gray-900">
+                        Daily Notes
+                      </h4>
                     </div>
 
                     {isEditing ? (
@@ -243,12 +281,17 @@ const AdminTimeIn = () => {
                         rows={4}
                         value={selectedRow.notes}
                         onChange={(e) =>
-                          setSelectedRow((prev) => ({ ...prev, notes: e.target.value }))
+                          setSelectedRow((prev) => ({
+                            ...prev,
+                            notes: e.target.value,
+                          }))
                         }
                         placeholder="Enter daily notes here..."
                       />
                     ) : (
-                      <p className="text-gray-800">{selectedRow.notes || "No notes provided."}</p>
+                      <p className="text-gray-800">
+                        {selectedRow.notes || "No notes provided."}
+                      </p>
                     )}
                   </div>
                 </div>

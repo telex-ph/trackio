@@ -10,6 +10,7 @@ import TableEmployeeDetails from "../../components/TableEmployeeDetails";
 
 const AdminTimeOut = () => {
   const [data, setData] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fmt = "hh:mm a";
   const zone = "Asia/Manila";
@@ -93,7 +94,9 @@ const AdminTimeOut = () => {
     if (!selectedRow) return;
     setData((prev) =>
       prev.map((item) =>
-        item.id === selectedRow.id ? { ...item, notes: selectedRow.notes } : item
+        item.id === selectedRow.id
+          ? { ...item, notes: selectedRow.notes }
+          : item
       )
     );
   };
@@ -174,7 +177,9 @@ const AdminTimeOut = () => {
       headerName: "Action",
       field: "action",
       flex: 1,
-      cellRenderer: (params) => <TableAction action={() => actionClicked(params.data)} />,
+      cellRenderer: (params) => (
+        <TableAction action={() => actionClicked(params.data)} />
+      ),
       filter: false,
     },
   ];
@@ -235,7 +240,9 @@ const AdminTimeOut = () => {
                 <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                   <div className="flex items-center gap-3 mb-6">
                     <Clock className="w-5 h-5 text-gray-700" />
-                    <h3 className="text-xl font-bold text-gray-900">Time Out & Status</h3>
+                    <h3 className="text-xl font-bold text-gray-900">
+                      Time Out & Status
+                    </h3>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -243,16 +250,22 @@ const AdminTimeOut = () => {
                     <div className="bg-white rounded-xl p-6 border-2 border-gray-900 shadow-sm">
                       <div className="flex items-center gap-3 mb-3">
                         <Clock className="w-6 h-6 text-gray-700" />
-                        <p className="text-sm font-bold text-gray-500 uppercase">Time Out</p>
+                        <p className="text-sm font-bold text-gray-500 uppercase">
+                          Time Out
+                        </p>
                       </div>
-                      <p className="text-4xl font-bold text-gray-900 font-mono">{selectedRow.timeOut}</p>
+                      <p className="text-4xl font-bold text-gray-900 font-mono">
+                        {selectedRow.timeOut}
+                      </p>
                     </div>
 
                     {/* Status */}
                     <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
                       <div className="flex items-center gap-3 mb-3">
                         <CheckCircle className="w-6 h-6 text-gray-700" />
-                        <p className="text-sm font-bold text-gray-500 uppercase">Status</p>
+                        <p className="text-sm font-bold text-gray-500 uppercase">
+                          Status
+                        </p>
                       </div>
                       <span
                         className={`px-4 py-2 rounded-lg text-lg font-bold ${getStatusColor(
@@ -268,7 +281,9 @@ const AdminTimeOut = () => {
                   <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
                     <div className="flex items-center gap-3 mb-4">
                       <FileText className="w-5 h-5 text-gray-600" />
-                      <h4 className="text-lg font-bold text-gray-900">Daily Notes</h4>
+                      <h4 className="text-lg font-bold text-gray-900">
+                        Daily Notes
+                      </h4>
                     </div>
                     {isEditing ? (
                       <textarea
@@ -276,12 +291,17 @@ const AdminTimeOut = () => {
                         rows={4}
                         value={selectedRow.notes}
                         onChange={(e) =>
-                          setSelectedRow((prev) => ({ ...prev, notes: e.target.value }))
+                          setSelectedRow((prev) => ({
+                            ...prev,
+                            notes: e.target.value,
+                          }))
                         }
                         placeholder="Enter daily notes here..."
                       />
                     ) : (
-                      <p className="text-gray-800">{selectedRow.notes || "No notes provided."}</p>
+                      <p className="text-gray-800">
+                        {selectedRow.notes || "No notes provided."}
+                      </p>
                     )}
                   </div>
                 </div>
