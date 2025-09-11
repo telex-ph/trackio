@@ -183,9 +183,6 @@ const TeamLeaderBasicLogs = () => {
           selectedRow && (
             <div className="space-y-6">
               {/* Title inside modal body */}
-              <h2 className="text-2xl font-bold text-gray-900">
-                Details for {selectedRow.name}
-              </h2>
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
                 {/* Employee Info */}
