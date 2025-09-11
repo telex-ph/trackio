@@ -1,28 +1,32 @@
 import React, { useEffect, useState } from "react";
-import api from "../../utils/axios";
 import Table from "../../components/Table";
 import { DateTime } from "luxon";
 import { Datepicker } from "flowbite-react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Clock, FileText, CheckCircle } from "lucide-react";
 import TableAction from "../../components/TableAction";
+import TableModal from "../../components/TableModal";
+import TableEmployeeDetails from "../../components/TableEmployeeDetails";
 
 const AdminTimeIn = () => {
   const [data, setData] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
 
-  // Initialize with today in PH time
   const [dateRange, setDateRange] = useState({
     startDate: DateTime.now()
       .setZone("Asia/Manila")
       .startOf("day")
       .toUTC()
       .toISO(),
-    endDate: DateTime.now().setZone("Asia/Manila").endOf("day").toUTC().toISO(),
+    endDate: DateTime.now()
+      .setZone("Asia/Manila")
+      .endOf("day")
+      .toUTC()
+      .toISO(),
   });
 
-  // handle datepicker
   const handleDatePicker = (date, field) => {
     if (!date) return;
-
     const isoDate =
       field === "startDate"
         ? DateTime.fromJSDate(date)
@@ -35,11 +39,7 @@ const AdminTimeIn = () => {
             .endOf("day")
             .toUTC()
             .toISO();
-
-    setDateRange((prev) => ({
-      ...prev,
-      [field]: isoDate,
-    }));
+    setDateRange((prev) => ({ ...prev, [field]: isoDate }));
   };
 
   useEffect(() => {
@@ -88,91 +88,131 @@ const AdminTimeIn = () => {
 
   // Columns
   const columns = [
-    {
-      headerName: "ID",
-      field: "id",
-      sortable: true,
-      filter: true,
-      flex: 1,
-    },
-    {
-      headerName: "Name",
-      field: "name",
-      sortable: true,
-      filter: true,
-      flex: 2,
-    },
-    {
-      headerName: "Email",
-      field: "email",
-      sortable: true,
-      filter: true,
-      flex: 2,
-    },
-    {
-      headerName: "Account",
-      field: "accounts",
-      sortable: true,
-      filter: true,
-      flex: 2,
-    },
-    {
-      headerName: "Time In",
-      field: "timeIn",
-      sortable: true,
-      filter: false,
-      flex: 1,
-    },
-    {
-      headerName: "Status",
-      field: "status",
-      sortable: true,
-      filter: true,
-      flex: 1,
-    },
+    { headerName: "ID", field: "id", sortable: true, filter: true, flex: 1 },
+    { headerName: "Name", field: "name", sortable: true, filter: true, flex: 2 },
+    { headerName: "Email", field: "email", sortable: true, filter: true, flex: 2 },
+    { headerName: "Account", field: "accounts", sortable: true, filter: true, flex: 2 },
+    { headerName: "Time In", field: "timeIn", sortable: true, filter: false, flex: 1 },
+    { headerName: "Status", field: "status", sortable: true, filter: true, flex: 1 },
     {
       headerName: "Action",
       field: "action",
       flex: 1,
-      cellRenderer: () => <TableAction action={actionClicked} />,
+      cellRenderer: (params) => <TableAction action={() => actionClicked(params.data)} />,
       filter: false,
     },
   ];
 
   return (
     <div>
+      {/* Page Header */}
       <section className="flex flex-col mb-2">
         <div className="flex items-center gap-1">
-          <h2>Tracking</h2> <ChevronRight className="w-6 h-6" />{" "}
-          <h2>Time In</h2>
+          <h2>Tracking</h2> <ChevronRight className="w-6 h-6" /> <h2>Time In</h2>
         </div>
-        <p className="text-light">
-          Any updates will reflect on the admin account profile.
-        </p>
+        <p className="text-light">Any updates will reflect on the admin account profile.</p>
       </section>
 
+      {/* Date Picker */}
       <section className="flex gap-4 mb-4">
         <div>
           <label className="block text-sm font-medium mb-1">Start Date</label>
           <Datepicker
-            value={DateTime.fromISO(dateRange.startDate)
-              .setZone("Asia/Manila")
-              .toJSDate()}
+            value={DateTime.fromISO(dateRange.startDate).setZone("Asia/Manila").toJSDate()}
             onChange={(date) => handleDatePicker(date, "startDate")}
           />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">End Date</label>
           <Datepicker
-            value={DateTime.fromISO(dateRange.endDate)
-              .setZone("Asia/Manila")
-              .toJSDate()}
+            value={DateTime.fromISO(dateRange.endDate).setZone("Asia/Manila").toJSDate()}
             onChange={(date) => handleDatePicker(date, "endDate")}
           />
         </div>
       </section>
 
+      {/* Table */}
       <Table columns={columns} data={data} />
+
+      {/* Modal */}
+      <TableModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Employee Details"
+        editable={true}
+        onSave={handleUpdate}
+      >
+        {(isEditing) =>
+          selectedRow && (
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+              {/* Employee Details (read-only) */}
+              <div className="xl:col-span-1 space-y-6">
+                <TableEmployeeDetails employee={selectedRow} />
+              </div>
+
+              {/* Time & Notes */}
+              <div className="xl:col-span-2 space-y-6">
+                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <div className="flex items-center gap-3 mb-6">
+                    <Clock className="w-5 h-5 text-gray-700" />
+                    <h3 className="text-xl font-bold text-gray-900">Time & Status Details</h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    {/* Time In */}
+                    <div className="bg-white rounded-xl p-6 border-2 border-gray-900 shadow-sm">
+                      <div className="flex items-center gap-3 mb-3">
+                        <Clock className="w-6 h-6 text-gray-700" />
+                        <p className="text-sm font-bold text-gray-500 uppercase">Time In</p>
+                      </div>
+                      <p className="text-4xl font-bold text-gray-900 font-mono">{selectedRow.timeIn}</p>
+                    </div>
+
+                    {/* Attendance Status */}
+                    <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                      <div className="flex items-center gap-3 mb-3">
+                        <CheckCircle className="w-6 h-6 text-gray-700" />
+                        <p className="text-sm font-bold text-gray-500 uppercase">Attendance Status</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`px-4 py-2 rounded-lg text-lg font-bold ${getStatusColor(
+                            selectedRow.status
+                          )}`}
+                        >
+                          {selectedRow.status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Daily Notes (editable) */}
+                  <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <FileText className="w-5 h-5 text-gray-600" />
+                      <h4 className="text-lg font-bold text-gray-900">Daily Notes</h4>
+                    </div>
+
+                    {isEditing ? (
+                      <textarea
+                        className="w-full bg-white border border-blue-500 rounded-lg p-3 text-gray-800 font-medium resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        rows={4}
+                        value={selectedRow.notes}
+                        onChange={(e) =>
+                          setSelectedRow((prev) => ({ ...prev, notes: e.target.value }))
+                        }
+                        placeholder="Enter daily notes here..."
+                      />
+                    ) : (
+                      <p className="text-gray-800">{selectedRow.notes || "No notes provided."}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        }
+      </TableModal>
     </div>
   );
 };
