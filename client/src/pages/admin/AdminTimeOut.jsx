@@ -10,61 +10,55 @@ import TableEmployeeDetails from "../../components/TableEmployeeDetails";
 
 const AdminTimeOut = () => {
   const [data, setData] = useState([]);
+  // Initialize with today in PH time
   const [dateRange, setDateRange] = useState({
-    startDate: DateTime.utc().startOf("day").toISO(),
-    endDate: DateTime.utc().endOf("day").toISO(),
+    startDate: DateTime.now()
+      .setZone("Asia/Manila")
+      .startOf("day")
+      .toUTC()
+      .toISO(),
+    endDate: DateTime.now().setZone("Asia/Manila").endOf("day").toUTC().toISO(),
   });
-  const [selectedRow, setSelectedRow] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Example schedule: workday ends at 5:30 PM
-  const scheduledEndTime = DateTime.fromFormat("05:30 PM", "hh:mm a");
-
+  // handle date picker changes
   const handleDatePicker = (date, field) => {
     if (!date) return;
     const isoDate =
       field === "startDate"
-        ? DateTime.fromJSDate(date).toUTC().startOf("day").toISO()
-        : DateTime.fromJSDate(date).toUTC().endOf("day").toISO();
-    setDateRange((prev) => ({ ...prev, [field]: isoDate }));
+        ? DateTime.fromJSDate(date)
+            .setZone("Asia/Manila")
+            .startOf("day")
+            .toUTC()
+            .toISO()
+        : DateTime.fromJSDate(date)
+            .setZone("Asia/Manila")
+            .endOf("day")
+            .toUTC()
+            .toISO();
+
+    setDateRange((prev) => ({
+      ...prev,
+      [field]: isoDate,
+    }));
   };
 
   useEffect(() => {
     const fetchAttendances = async () => {
       try {
-        // Replace with API call if needed
-        // const response = await api.get("/attendance/get-attendances", { params: dateRange });
-        // const attendances = response.data;
+        const response = await api.get("/attendance/get-attendances", {
+          params: {
+            startDate: dateRange.startDate,
+            endDate: dateRange.endDate,
+            status: "timeOut",
+          },
+        });
 
-        // Sample data
-        const attendances = [
-          {
-            user: { firstName: "Juan", lastName: "Dela Cruz", email: "juan@example.com", role: "Engineer", department: "IT", phone: "09123456789" },
-            accounts: [{ name: "Account A" }],
-            timeOut: "18:00", // 6:00 PM
-            notes: "Worked late on project",
-            timeOutLocation: "Office",
-          },
-          {
-            user: { firstName: "Maria", lastName: "Santos", email: "maria@example.com", role: "HR", department: "Human Resources", phone: "09987654321" },
-            accounts: [{ name: "Account B" }],
-            timeOut: "16:45", // 4:45 PM
-            notes: "Left early for appointment",
-            timeOutLocation: "Remote",
-          },
-          {
-            user: { firstName: "Pedro", lastName: "Reyes", email: "pedro@example.com", role: "Support", department: "Customer Service", phone: "09234567890" },
-            accounts: [{ name: "Account C" }],
-            timeOut: null, // not logged out
-            notes: "",
-            timeOutLocation: "Office",
-          },
-        ];
-
-        const formattedData = attendances.map((item, index) => {
-          let timeOut = item.timeOut
-            ? DateTime.fromFormat(item.timeOut, "HH:mm").toFormat("hh:mm a")
-            : "Not Logged Out";
+        const formattedData = response.data.map((item) => {
+          const timeOut = item.timeOut
+            ? DateTime.fromISO(item.timeOut)
+                .setZone("Asia/Manila")
+                .toFormat("hh:mm a")
+            : "Not Logged In";
 
           // Determine status
           let status = "Not Logged Out";
@@ -76,17 +70,12 @@ const AdminTimeOut = () => {
           }
 
           return {
-            id: index + 1,
+            id: item.user._id,
             name: `${item.user.firstName} ${item.user.lastName}`,
             email: item.user.email,
             timeOut,
-            status,
-            accounts: item.accounts.map((a) => a.name).join(", "),
-            notes: item.notes || "",
-            role: item.user.role || "",
-            department: item.user.department || "",
-            phone: item.user.phone || "",
-            timeOutLocation: item.timeOutLocation || "",
+            status: item.status || "-",
+            accounts: accounts,
           };
         });
 
@@ -148,9 +137,12 @@ const AdminTimeOut = () => {
     <div>
       <section className="flex flex-col mb-2">
         <div className="flex items-center gap-1">
-          <h2>Tracking</h2> <ChevronRight className="w-6 h-6" /> <h2>Time Out</h2>
+          <h2>Tracking</h2> <ChevronRight className="w-6 h-6" />{" "}
+          <h2>Time Out</h2>
         </div>
-        <p className="text-light">Any updates will reflect on the admin account profile.</p>
+        <p className="text-light">
+          Any updates will reflect on the admin account profile.
+        </p>
       </section>
 
       {/* Date Picker */}
@@ -158,14 +150,18 @@ const AdminTimeOut = () => {
         <div>
           <label className="block text-sm font-medium mb-1">Start Date</label>
           <Datepicker
-            value={DateTime.fromISO(dateRange.startDate).toJSDate()}
+            value={DateTime.fromISO(dateRange.startDate)
+              .setZone("Asia/Manila")
+              .toJSDate()}
             onChange={(date) => handleDatePicker(date, "startDate")}
           />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">End Date</label>
           <Datepicker
-            value={DateTime.fromISO(dateRange.endDate).toJSDate()}
+            value={DateTime.fromISO(dateRange.endDate)
+              .setZone("Asia/Manila")
+              .toJSDate()}
             onChange={(date) => handleDatePicker(date, "endDate")}
           />
         </div>

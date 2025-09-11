@@ -43,86 +43,50 @@ const AdminTimeIn = () => {
   };
 
   useEffect(() => {
-    const sampleData = [
-      {
-        id: 1,
-        name: "Juan Dela Cruz",
-        email: "juan.delacruz@example.com",
-        accounts: "Account A, Account B",
-        timeIn: "08:30 AM",
-        status: "Present",
-        role: "Software Engineer",
-        department: "IT",
-        phone: "09123456789",
-        timeInLocation: "Office",
-        notes: "On time arrival, completed daily standup meeting",
-        image:
-          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-        employeeType: "Full-time",
-      },
-      {
-        id: 2,
-        name: "Maria Santos",
-        email: "maria.santos@example.com",
-        accounts: "Account C",
-        timeIn: "09:00 AM",
-        status: "Late",
-        role: "HR Specialist",
-        department: "Human Resources",
-        phone: "09987654321",
-        timeInLocation: "Remote",
-        notes: "Traffic delay due to heavy rain, compensated by working late",
-        image:
-          "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
-        employeeType: "Full-time",
-      },
-      {
-      id: 3,
-      name: "Pedro Reyes",
-      email: "pedro.reyes@example.com",
-      accounts: "Account D",
-      timeIn: "-",
-      status: "Absent",
-      role: "Marketing Specialist",
-      department: "Marketing",
-      phone: "09223334455",
-      timeInLocation: "-",
-      notes: "Did not log in today",
-      image:
-        "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=150&h=150&fit=crop&crop=face",
-      employeeType: "Full-time",
-    },
-    ];
-    setData(sampleData);
-  }, []);
+    const fetchAttendances = async () => {
+      try {
+        const response = await api.get("/attendance/get-attendances", {
+          params: {
+            startDate: dateRange.startDate,
+            endDate: dateRange.endDate,
+            status: "timeIn",
+          },
+        });
 
-  const actionClicked = (rowData) => {
-    setSelectedRow(rowData);
-    setIsModalOpen(true);
+        const formattedData = response.data.map((item) => {
+          const timeIn = item.timeIn
+            ? DateTime.fromISO(item.timeIn)
+                .setZone("Asia/Manila")
+                .toFormat("hh:mm a")
+            : "Not Logged In";
+
+          const accounts = item.accounts.map((acc) => acc.name).join(",");
+
+          return {
+            id: item.user._id,
+            name: `${item.user.firstName} ${item.user.lastName}`,
+            email: item.user.email,
+            timeIn,
+            status: item.status || "-",
+            accounts,
+          };
+        });
+
+        setData(formattedData);
+      } catch (error) {
+        console.error("Error fetching attendance:", error);
+      }
+    };
+
+    fetchAttendances();
+  }, [dateRange]);
+
+  // TODO: remove this after / sample only
+  const actionClicked = () => {
+    alert("Hello");
   };
 
-  const handleUpdate = () => {
-    if (!selectedRow) return;
-    setData((prev) =>
-      prev.map((item) =>
-        item.id === selectedRow.id ? { ...item, notes: selectedRow.notes } : item
-      )
-    );
-  };
-
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case "present":
-        return "bg-green-100 text-green-800 border border-green-300";
-      case "late":
-        return "bg-yellow-100 text-yellow-800 border border-yellow-400";
-      case "absent":
-        return "bg-red-100 text-red-800 border border-red-500";
-      default:
-        return "bg-gray-50 text-gray-600 border border-gray-200";
-    }
-  };
-
+  // Columns
   const columns = [
     { headerName: "ID", field: "id", sortable: true, filter: true, flex: 1 },
     { headerName: "Name", field: "name", sortable: true, filter: true, flex: 2 },

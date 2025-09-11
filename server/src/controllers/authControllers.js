@@ -52,16 +52,16 @@ export const createToken = async (req, res) => {
 };
 
 export const createNewToken = async (req, res) => {
-  const token = req.cookies?.refreshToken;
+  const refreshToken = req.cookies?.refreshToken;
 
-  if (!token) {
+  if (!refreshToken) {
     return res.status(401).json({ message: "No refresh token found" });
   }
 
   try {
     const publicKey = await jose.importSPKI(publicPEM, "RS256");
 
-    const { payload: user } = await jose.jwtVerify(token, publicKey);
+    const { payload: user } = await jose.jwtVerify(refreshToken, publicKey);
 
     const privateKey = await jose.importPKCS8(privatePEM, "RS256");
 

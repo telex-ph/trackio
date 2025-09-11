@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { verifyJWT } from "../middlewares/verifyJWT.js";
-import { handleExpiredToken } from "../middlewares/handleExpiredToken.js";
 import {
   addAttendance,
   getAttendances,
@@ -10,17 +9,12 @@ import {
 
 const router = Router();
 
-router.post("/add-attendance/:id", verifyJWT, handleExpiredToken, addAttendance);
+router.post("/add-attendance/:id", verifyJWT, addAttendance);
 
-router.get("/get-attendances", verifyJWT, handleExpiredToken, getAttendances);
+router.get("/get-attendances", verifyJWT, getAttendances);
 
-router.get("/get-attendance/:id", verifyJWT, handleExpiredToken, getAttendance);
+router.get("/get-attendance/:id", verifyJWT, getAttendance);
 
-router.patch(
-  "/update-attendance",
-  verifyJWT,
-  handleExpiredToken,
-  updateAttendance
-);
+router.patch("/update-attendance", verifyJWT, updateAttendance);
 
 export default router;

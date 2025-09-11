@@ -16,10 +16,10 @@ export const addAttendance = async (req, res) => {
 };
 
 export const getAttendances = async (req, res) => {
-  const { startDate, endDate } = req.query;
+  const params = req.query;
 
   try {
-    const result = await Attendance.getAll(startDate, endDate);
+    const result = await Attendance.getAll(params);
     res.status(200).json(result);
   } catch (error) {
     console.error("Error fetching all users' attendance:", error);
