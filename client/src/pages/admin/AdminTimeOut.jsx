@@ -9,11 +9,12 @@ import TableModal from "../../components/TableModal";
 import TableEmployeeDetails from "../../components/TableEmployeeDetails";
 
 const AdminTimeOut = () => {
-  const [data, setData] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
   const fmt = "hh:mm a";
   const zone = "Asia/Manila";
+
+  const [data, setData] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
 
   // Initialize with today in PH time
   const [dateRange, setDateRange] = useState({
@@ -33,6 +34,37 @@ const AdminTimeOut = () => {
       ...prev,
       [field]: isoDate,
     }));
+  };
+
+  const actionClicked = (rowData) => {
+    setSelectedRow(rowData);
+    setIsModalOpen(true);
+  };
+
+  const handleUpdate = () => {
+    if (!selectedRow) return;
+    setData((prev) =>
+      prev.map((item) =>
+        item.id === selectedRow.id
+          ? { ...item, notes: selectedRow.notes }
+          : item
+      )
+    );
+  };
+
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case "overtime":
+        return "bg-green-100 text-green-800 border border-green-300";
+      case "undertime":
+        return "bg-yellow-100 text-yellow-800 border border-yellow-300";
+      case "on time":
+        return "bg-gray-100 text-gray-800 border border-gray-300";
+      case "not logged out":
+        return "bg-red-100 text-red-800 border border-red-300";
+      default:
+        return "bg-gray-50 text-gray-600 border border-gray-200";
+    }
   };
 
   useEffect(() => {
@@ -84,37 +116,6 @@ const AdminTimeOut = () => {
 
     fetchAttendances();
   }, [dateRange]);
-
-  const actionClicked = (rowData) => {
-    setSelectedRow(rowData);
-    setIsModalOpen(true);
-  };
-
-  const handleUpdate = () => {
-    if (!selectedRow) return;
-    setData((prev) =>
-      prev.map((item) =>
-        item.id === selectedRow.id
-          ? { ...item, notes: selectedRow.notes }
-          : item
-      )
-    );
-  };
-
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case "overtime":
-        return "bg-green-100 text-green-800 border border-green-300";
-      case "undertime":
-        return "bg-yellow-100 text-yellow-800 border border-yellow-300";
-      case "on time":
-        return "bg-gray-100 text-gray-800 border border-gray-300";
-      case "not logged out":
-        return "bg-red-100 text-red-800 border border-red-300";
-      default:
-        return "bg-gray-50 text-gray-600 border border-gray-200";
-    }
-  };
 
   const columns = [
     {
