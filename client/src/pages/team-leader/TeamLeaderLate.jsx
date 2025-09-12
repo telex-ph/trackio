@@ -4,6 +4,8 @@ import TableAction from "../../components/TableAction";
 import TableModal from "../../components/TableModal";
 import TableEmployeeDetails from "../../components/TableEmployeeDetails";
 import { FileText, Clock, Phone } from "lucide-react";
+import { DateTime } from "luxon";
+import { Datepicker } from "flowbite-react";
 
 const TeamLeaderLate = () => {
   const parseTimeToMinutes = (timeStr) => {
@@ -13,6 +15,37 @@ const TeamLeaderLate = () => {
     if (modifier === "P.M." && hours !== 12) hours += 12;
     if (modifier === "A.M." && hours === 12) hours = 0;
     return hours * 60 + minutes;
+  };
+
+  // Date Range State
+  const [dateRange, setDateRange] = useState({
+    startDate: DateTime.now()
+      .setZone("Asia/Manila")
+      .startOf("day")
+      .toUTC()
+      .toISO(),
+    endDate: DateTime.now()
+      .setZone("Asia/Manila")
+      .endOf("day")
+      .toUTC()
+      .toISO(),
+  });
+
+  const handleDatePicker = (date, field) => {
+    if (!date) return;
+    const isoDate =
+      field === "startDate"
+        ? DateTime.fromJSDate(date)
+            .setZone("Asia/Manila")
+            .startOf("day")
+            .toUTC()
+            .toISO()
+        : DateTime.fromJSDate(date)
+            .setZone("Asia/Manila")
+            .endOf("day")
+            .toUTC()
+            .toISO();
+    setDateRange((prev) => ({ ...prev, [field]: isoDate }));
   };
 
   const [data, setData] = useState([
@@ -27,6 +60,7 @@ const TeamLeaderLate = () => {
       notes: "Traffic on the way",
       image:
         "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+      date: "2025-09-11",
     },
     {
       id: "CPH999",
@@ -39,6 +73,7 @@ const TeamLeaderLate = () => {
       notes: "Arrived slightly late",
       image:
         "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face",
+      date: "2025-09-11",
     },
   ]);
 
@@ -115,6 +150,28 @@ const TeamLeaderLate = () => {
           <h2>Late Logs</h2>
         </div>
         <p className="text-light">Records of employees with late attendance.</p>
+      </section>
+
+      {/* Date Picker Section */}
+      <section className="flex gap-4 mb-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Start Date</label>
+          <Datepicker
+            value={DateTime.fromISO(dateRange.startDate)
+              .setZone("Asia/Manila")
+              .toJSDate()}
+            onChange={(date) => handleDatePicker(date, "startDate")}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">End Date</label>
+          <Datepicker
+            value={DateTime.fromISO(dateRange.endDate)
+              .setZone("Asia/Manila")
+              .toJSDate()}
+            onChange={(date) => handleDatePicker(date, "endDate")}
+          />
+        </div>
       </section>
 
       <Table data={data} columns={columns} />

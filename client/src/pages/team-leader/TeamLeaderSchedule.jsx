@@ -3,7 +3,8 @@ import Table from "../../components/Table";
 import TableAction from "../../components/TableAction";
 import TableModal from "../../components/TableModal";
 import TableEmployeeDetails from "../../components/TableEmployeeDetails";
-import { FileText, CalendarDays, Clock, Briefcase } from "lucide-react";
+import { FileText, CalendarDays, Clock, Briefcase, Upload } from "lucide-react";
+import * as XLSX from "xlsx";
 
 const TeamLeaderSchedule = () => {
   const parseTimeToMinutes = (timeStr) => {
@@ -92,6 +93,36 @@ const TeamLeaderSchedule = () => {
     );
   };
 
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(sheet);
+
+      const formattedData = rows.map((row, index) => ({
+        id: row.ID || `EX${index + 1}`,
+        date: row.Date || "",
+        name: row.Name || "",
+        email: row.Email || "",
+        group: row.Group || "",
+        category: row.Category || "",
+        timeIn: row["Time In"] || "",
+        timeOut: row["Time Out"] || "",
+        notes: row.Notes || "",
+        image: row.Image || "",
+      }));
+
+      setData(formattedData);
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
   const filteredData = data.filter(
     (item) =>
       (filterGroup === "All" || item.group === filterGroup) &&
@@ -126,10 +157,30 @@ const TeamLeaderSchedule = () => {
     <div>
       {/* Header */}
       <section className="flex flex-col mb-4">
-        <div className="flex items-center gap-1">
-          <h2>Schedule Logs</h2>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2>Schedule Logs</h2>
+            <p className="text-light">Employee schedules across departments.</p>
+          </div>
+
+          {/* Upload Button with hidden file input */}
+          <div className="relative">
+            <button
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md"
+              onClick={() => document.getElementById("uploadInput").click()}
+            >
+              <Upload className="w-5 h-5" />
+              Upload
+            </button>
+            <input
+              type="file"
+              id="uploadInput"
+              accept=".xlsx, .xls"
+              className="hidden"
+              onChange={handleFileUpload}
+            />
+          </div>
         </div>
-        <p className="text-light">Employee schedules across departments.</p>
       </section>
 
       {/* Filters */}
@@ -174,12 +225,9 @@ const TeamLeaderSchedule = () => {
           selectedRow && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                {/* Employee Info */}
                 <div className="xl:col-span-1 space-y-6">
                   <TableEmployeeDetails employee={selectedRow} />
                 </div>
-
-                {/* Schedule Details */}
                 <div className="xl:col-span-2 space-y-6">
                   <div className="flex items-center gap-2">
                     <CalendarDays className="w-6 h-6 text-gray-700" />
@@ -187,9 +235,7 @@ const TeamLeaderSchedule = () => {
                       Schedule Details
                     </h3>
                   </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Date */}
                     <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                       <h4 className="text-sm font-medium text-gray-500 mb-1">
                         Date
@@ -198,8 +244,6 @@ const TeamLeaderSchedule = () => {
                         {selectedRow.date}
                       </p>
                     </div>
-
-                    {/* Group */}
                     <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                       <h4 className="text-sm font-medium text-gray-500 mb-1">
                         Department / Group
@@ -208,8 +252,6 @@ const TeamLeaderSchedule = () => {
                         {selectedRow.group}
                       </p>
                     </div>
-
-                    {/* Category */}
                     <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                       <h4 className="text-sm font-medium text-gray-500 mb-1">
                         Role / Category
@@ -218,8 +260,6 @@ const TeamLeaderSchedule = () => {
                         {selectedRow.category}
                       </p>
                     </div>
-
-                    {/* Time In */}
                     <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                       <h4 className="text-sm font-medium text-gray-500 mb-1">
                         Time In
@@ -228,8 +268,6 @@ const TeamLeaderSchedule = () => {
                         {selectedRow.timeIn}
                       </p>
                     </div>
-
-                    {/* Time Out */}
                     <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                       <h4 className="text-sm font-medium text-gray-500 mb-1">
                         Time Out
@@ -238,8 +276,6 @@ const TeamLeaderSchedule = () => {
                         {selectedRow.timeOut}
                       </p>
                     </div>
-
-                    {/* Shift Duration */}
                     <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm md:col-span-2">
                       <h4 className="text-sm font-medium text-gray-500 mb-1">
                         Shift Duration
@@ -253,8 +289,6 @@ const TeamLeaderSchedule = () => {
                       </p>
                     </div>
                   </div>
-
-                  {/* Notes */}
                   <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
                     <div className="flex items-center gap-3 mb-4">
                       <FileText className="w-5 h-5 text-gray-600" />

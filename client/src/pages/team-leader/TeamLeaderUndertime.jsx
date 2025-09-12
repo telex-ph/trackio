@@ -3,7 +3,9 @@ import Table from "../../components/Table";
 import TableAction from "../../components/TableAction";
 import TableModal from "../../components/TableModal";
 import TableEmployeeDetails from "../../components/TableEmployeeDetails";
-import { FileText, Clock } from "lucide-react";
+import { FileText, Clock, Calendar } from "lucide-react";
+import { DateTime } from "luxon";
+import { Datepicker } from "flowbite-react";
 
 const TeamLeaderUndertime = () => {
   const parseTimeToMinutes = (timeStr) => {
@@ -15,6 +17,33 @@ const TeamLeaderUndertime = () => {
     return hours * 60 + minutes;
   };
 
+  // Date Range State
+  const [dateRange, setDateRange] = useState({
+    startDate: DateTime.now()
+      .setZone("Asia/Manila")
+      .startOf("day")
+      .toUTC()
+      .toISO(),
+    endDate: DateTime.now().setZone("Asia/Manila").endOf("day").toUTC().toISO(),
+  });
+
+  const handleDatePicker = (date, field) => {
+    if (!date) return;
+    const isoDate =
+      field === "startDate"
+        ? DateTime.fromJSDate(date)
+            .setZone("Asia/Manila")
+            .startOf("day")
+            .toUTC()
+            .toISO()
+        : DateTime.fromJSDate(date)
+            .setZone("Asia/Manila")
+            .endOf("day")
+            .toUTC()
+            .toISO();
+    setDateRange((prev) => ({ ...prev, [field]: isoDate }));
+  };
+
   const [data, setData] = useState([
     {
       id: "EMP010",
@@ -22,6 +51,8 @@ const TeamLeaderUndertime = () => {
       email: "sophia.lee@example.com",
       scheduledOut: "6:00 P.M.",
       actualOut: "5:30 P.M.",
+      startDate: "2025-09-12",
+      endDate: "2025-09-12",
       undertimeDuration:
         parseTimeToMinutes("6:00 P.M.") - parseTimeToMinutes("5:30 P.M."),
       notes: "Left early for a family emergency",
@@ -34,6 +65,8 @@ const TeamLeaderUndertime = () => {
       email: "david.wilson@example.com",
       scheduledOut: "6:00 P.M.",
       actualOut: "5:50 P.M.",
+      startDate: "2025-09-12",
+      endDate: "2025-09-12",
       undertimeDuration:
         parseTimeToMinutes("6:00 P.M.") - parseTimeToMinutes("5:50 P.M."),
       notes: "Had a doctor’s appointment",
@@ -89,6 +122,28 @@ const TeamLeaderUndertime = () => {
         </p>
       </section>
 
+      {/* Date Picker Section */}
+      <section className="flex gap-4 mb-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Start Date</label>
+          <Datepicker
+            value={DateTime.fromISO(dateRange.startDate)
+              .setZone("Asia/Manila")
+              .toJSDate()}
+            onChange={(date) => handleDatePicker(date, "startDate")}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">End Date</label>
+          <Datepicker
+            value={DateTime.fromISO(dateRange.endDate)
+              .setZone("Asia/Manila")
+              .toJSDate()}
+            onChange={(date) => handleDatePicker(date, "endDate")}
+          />
+        </div>
+      </section>
+
       <Table data={data} columns={columns} />
 
       {/* Main Modal */}
@@ -118,6 +173,22 @@ const TeamLeaderUndertime = () => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Start Date */}
+                    <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-2">
+                      <Calendar className="w-5 h-5 text-gray-500" />
+                      <p className="text-lg font-semibold text-gray-900">
+                        {selectedRow.startDate}
+                      </p>
+                    </div>
+
+                    {/* End Date */}
+                    <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex items-center gap-2">
+                      <Calendar className="w-5 h-5 text-gray-500" />
+                      <p className="text-lg font-semibold text-gray-900">
+                        {selectedRow.endDate}
+                      </p>
+                    </div>
+
                     {/* Scheduled Out */}
                     <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                       <h4 className="text-sm font-medium text-gray-500 mb-1">
@@ -145,6 +216,16 @@ const TeamLeaderUndertime = () => {
                       </h4>
                       <p className="text-lg font-semibold text-red-600">
                         {selectedRow.undertimeDuration} mins
+                      </p>
+                    </div>
+
+                    {/* Paid Overtime */}
+                    <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+                      <h4 className="text-sm font-medium text-gray-500 mb-1">
+                        Paid Overtime
+                      </h4>
+                      <p className="text-lg font-semibold text-green-600">
+                        {selectedRow.paidOvertime || 0} mins
                       </p>
                     </div>
                   </div>
