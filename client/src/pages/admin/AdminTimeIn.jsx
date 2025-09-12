@@ -87,13 +87,12 @@ const AdminTimeIn = () => {
 
           const accounts = item.accounts.map((acc) => acc.name).join(",");
 
-          // Checking if the user is on time or not
-          const nowUtc = DateTime.utc();
-          const shiftUtc = DateTime.fromJSDate(item.shiftStart).toUTC();
-          const nowMinutes = nowUtc.hour * 60 + nowUtc.minute;
-          const shiftMinutes = shiftUtc.hour * 60 + shiftUtc.minute;
-
-          const punctuality = nowMinutes <= shiftMinutes ? "On Time" : "Late";
+          // Calculating if the user is late or not
+          const shift = DateTime.fromISO(item.shiftStart, { zone: "utc" });
+          const time = DateTime.fromISO(item.timeIn, { zone: "utc" });
+          const shiftMinutes = shift.hour * 60 + shift.minute;
+          const timeMinutes = time.hour * 60 + time.minute;
+          const punctuality = timeMinutes <= shiftMinutes ? "On Time" : "Late";
 
           return {
             id: item.user._id,
