@@ -1,108 +1,102 @@
-import { DateTime, Interval } from "luxon";
+import React, { useMemo } from "react";
 import { Button } from "flowbite-react";
 import { Square } from "lucide-react";
 import formatDate from "../utils/formatDate";
 import toast from "react-hot-toast";
+import { calculateDuration, getButtonState } from "../utils/attendanceHelpers";
 
-const TimeBox = ({
-  timeIn,
-  timeOut,
-  isTwoBtn,
-  title,
-  startTime = null,
-  endTime = null,
-  fieldOne,
-  fieldTwo,
-  btnClick,
-  bgColor,
-  textColor,
-}) => {
-  const calculateDuration = (start, end) => {
-    if (!start || !end) return "Start";
+const TimeBox = ({ attendance, config, onTimeIn, onUpdate, user }) => {
+  const {
+    title,
+    isTwoBtn,
+    fieldOne,
+    fieldTwo,
+    fieldOneStatus,
+    fieldTwoStatus,
+    bgColor,
+    textColor,
+    isSpecial,
+  } = config;
 
-    const startDT = DateTime.fromJSDate(new Date(start));
-    const endDT = DateTime.fromJSDate(new Date(end));
+  const startTime = attendance?.[fieldOne];
+  const endTime = fieldTwo ? attendance?.[fieldTwo] : null;
 
-    if (!startDT.isValid || !endDT.isValid) return "0h 0m 0s";
+  const { isDisabled: isStartDisabled, errorMessage: startErrorMessage } =
+    useMemo(
+      () => getButtonState(attendance, fieldOne, isSpecial),
+      [attendance, fieldOne, isSpecial]
+    );
 
-    const interval = Interval.fromDateTimes(startDT, endDT);
-    const duration = interval.toDuration(["hours", "minutes", "seconds"]);
+  const { isDisabled: isEndDisabled, errorMessage: endErrorMessage } = useMemo(
+    () =>
+      fieldTwo
+        ? getButtonState(attendance, fieldTwo, false, true, fieldOne)
+        : { isDisabled: true, errorMessage: null },
+    [attendance, fieldTwo, fieldOne]
+  );
 
-    return `${Math.floor(duration.hours)}h ${Math.floor(
-      duration.minutes
-    )}m ${Math.floor(duration.seconds)}s`;
+  const duration = useMemo(
+    () => calculateDuration(startTime, endTime),
+    [startTime, endTime]
+  );
+
+  const handleStartClick = () => {
+    if (isStartDisabled) {
+      if (startErrorMessage) {
+        toast.error(startErrorMessage);
+      }
+      return;
+    }
+
+    if (isSpecial) {
+      onTimeIn(user.shiftStart, user.shiftEnd);
+    } else {
+      onUpdate(fieldOne, fieldOneStatus);
+    }
   };
 
-  let isStartDisabled = false;
-  let isEndDisabled = false;
-
-  // Disallow buttons
-  if ((!timeIn && title !== "Time In") || startTime || timeOut) {
-    isStartDisabled = true;
-  }
-  if ((!timeIn && title !== "Time In") || endTime || timeOut) {
-    isEndDisabled = true;
-  }
+  const handleEndClick = () => {
+    if (isEndDisabled) {
+      if (endErrorMessage) {
+        toast.error(endErrorMessage);
+      }
+      return;
+    }
+    onUpdate(fieldTwo, fieldTwoStatus);
+  };
 
   return (
     <div className="flex flex-col gap-2 container-light border-light rounded-md p-5">
-      <span>{title}</span>
+      <span className="font-medium">{title}</span>
       <div className="flex gap-3">
-        {/* TODO: implement the hovering */}
         <Button
-          className={`flex-1 hover:bg-[#${textColor}] hover:text-white font-bold
+          className={`flex-1 hover:bg-[#${textColor}] hover:text-white font-bold transition-colors duration-200
           ${isStartDisabled ? "cursor-not-allowed" : "cursor-pointer"}
           `}
           style={{
             backgroundColor: `#${bgColor}`,
             color: `#${textColor}`,
           }}
-          onClick={() => {
-            if (isStartDisabled) {
-              if (!timeIn) {
-                toast.error(
-                  "Please clock in first before performing this action."
-                );
-              } else if (timeOut) {
-                toast.error("You have already clocked out for today.");
-              } else {
-                toast.error("This action has already been recorded.");
-              }
-              return;
-            }
-            btnClick(fieldOne);
-          }}
+          onClick={handleStartClick}
         >
-          {calculateDuration(startTime, endTime)}
+          {duration}
         </Button>
         {isTwoBtn && (
           <Button
-            className={`bg-red-500 hover:bg-red-700 p-2 ${
-              isEndDisabled && "cursor-not-allowed"
+            className={`bg-red-500 hover:bg-red-700 p-2 transition-colors duration-200 ${
+              isEndDisabled ? "cursor-not-allowed opacity-60" : ""
             }`}
-            onClick={() => {
-              if (isEndDisabled) {
-                if (!timeIn) {
-                  toast.error(
-                    "Please clock in first before performing this action."
-                  );
-                } else if (timeOut) {
-                  toast.error("You have already clocked out for today.");
-                } else {
-                  toast.error("This action has already been recorded.");
-                }
-                return;
-              }
-              btnClick(fieldTwo);
-            }}
+            onClick={handleEndClick}
           >
             <Square />
           </Button>
         )}
       </div>
-      <span className="text-light">Time Recorded: {formatDate(startTime)}</span>
+      <span className="text-light text-sm">
+        Time Recorded: {startTime ? formatDate(startTime) : "Not recorded"}
+      </span>
     </div>
   );
 };
 
-export default TimeBox;
+export default React.memo(TimeBox);

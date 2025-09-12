@@ -9,10 +9,10 @@ import TableEmployeeDetails from "../../components/TableEmployeeDetails";
 import api from "../../utils/axios";
 
 const AdminTimeIn = () => {
-  const [data, setData] = useState([]);
-
   const fmt = "hh:mm a";
   const zone = "Asia/Manila";
+
+  const [data, setData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
 
@@ -33,50 +33,6 @@ const AdminTimeIn = () => {
       [field]: isoDate,
     }));
   };
-
-  useEffect(() => {
-    const fetchAttendances = async () => {
-      try {
-        const response = await api.get("/attendance/get-attendances", {
-          params: {
-            startDate: dateRange.startDate,
-            endDate: dateRange.endDate,
-            status: "timeIn",
-          },
-        });
-
-        const formattedData = response.data.map((item) => {
-          const timeIn = item.timeIn
-            ? DateTime.fromISO(item.timeIn).setZone(zone).toFormat(fmt)
-            : "Not Logged In";
-
-          const createdAt = item.createdAt
-            ? DateTime.fromISO(item.createdAt)
-                .setZone(zone)
-                .toFormat("yyyy-MM-dd")
-            : "Not Logged In";
-
-          const accounts = item.accounts.map((acc) => acc.name).join(",");
-
-          return {
-            id: item.user._id,
-            name: `${item.user.firstName} ${item.user.lastName}`,
-            email: item.user.email,
-            timeIn,
-            date: createdAt,
-            status: item.status || "-",
-            accounts,
-          };
-        });
-
-        setData(formattedData);
-      } catch (error) {
-        console.error("Error fetching attendance:", error);
-      }
-    };
-
-    fetchAttendances();
-  }, [dateRange]);
 
   const handleUpdate = () => {
     if (!selectedRow) return;
@@ -106,6 +62,58 @@ const AdminTimeIn = () => {
         return "bg-gray-50 text-gray-600 border border-gray-200";
     }
   };
+
+  useEffect(() => {
+    const fetchAttendances = async () => {
+      try {
+        const response = await api.get("/attendance/get-attendances", {
+          params: {
+            startDate: dateRange.startDate,
+            endDate: dateRange.endDate,
+            status: "timeIn",
+          },
+        });
+
+        const formattedData = response.data.map((item) => {
+          const timeIn = item.timeIn
+            ? DateTime.fromISO(item.timeIn).setZone(zone).toFormat(fmt)
+            : "Not Logged In";
+
+          const createdAt = item.createdAt
+            ? DateTime.fromISO(item.createdAt)
+                .setZone(zone)
+                .toFormat("yyyy-MM-dd")
+            : "Not Logged In";
+
+          const accounts = item.accounts.map((acc) => acc.name).join(",");
+
+          // Checking if the user is on time or not
+          const nowUtc = DateTime.utc();
+          const shiftUtc = DateTime.fromJSDate(item.shiftStart).toUTC();
+          const nowMinutes = nowUtc.hour * 60 + nowUtc.minute;
+          const shiftMinutes = shiftUtc.hour * 60 + shiftUtc.minute;
+
+          const punctuality = nowMinutes <= shiftMinutes ? "On Time" : "Late";
+
+          return {
+            id: item.user._id,
+            date: createdAt,
+            name: `${item.user.firstName} ${item.user.lastName}`,
+            email: item.user.email,
+            timeIn,
+            punctuality,
+            accounts,
+          };
+        });
+
+        setData(formattedData);
+      } catch (error) {
+        console.error("Error fetching attendance:", error);
+      }
+    };
+
+    fetchAttendances();
+  }, [dateRange]);
 
   // Columns
   const columns = [
@@ -152,8 +160,8 @@ const AdminTimeIn = () => {
       flex: 1,
     },
     {
-      headerName: "Status",
-      field: "status",
+      headerName: "Punctuality",
+      field: "punctuality",
       sortable: true,
       filter: true,
       flex: 1,

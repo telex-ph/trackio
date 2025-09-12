@@ -38,7 +38,9 @@ class Attendance {
         break;
       // Get the attendance who were of those who where late / for late page
       case "late":
-        matchStage.status = "Late";
+        matchStage.$expr = {
+          $gt: ["$timeIn", "$shiftStart"], // timeIn > shiftStart → late
+        };
       case "all":
       default:
         // No timeOut filter → return everything
@@ -49,7 +51,7 @@ class Attendance {
       .aggregate([
         { $sort: { createdAt: -1 } },
 
-        // Filter by date range if provided
+        // Filter
         ...(Object.keys(matchStage).length > 0 ? [{ $match: matchStage }] : []),
 
         // Lookup User
@@ -126,7 +128,7 @@ class Attendance {
   }
 
   // Update specific fields by
-  static async updateById(id, fields) {
+  static async updateById(id, fields, status) {
     if (!id) {
       throw new Error("ID is required");
     }
@@ -135,11 +137,18 @@ class Attendance {
       throw new Error("Field/s is required");
     }
 
+    const updateData = { ...fields };
+    if (status !== undefined) {
+      updateData.status = status;
+    }
+
     const db = await connectDB();
     const collection = db.collection(this.#collection);
     const result = await collection.updateOne(
       { _id: new ObjectId(id) },
-      { $set: fields }
+      {
+        $set: updateData,
+      }
     );
     return result;
   }
@@ -168,24 +177,13 @@ class Attendance {
       throw new Error("Attendance already recorded for today.");
     }
 
-    // if current time is after shift start, you're late
-    // Extract only HH:mm from both
-    const nowUtc = DateTime.utc();
-    const shiftUtc = DateTime.fromJSDate(shiftStart).toUTC();
-
-    const nowMinutes = nowUtc.hour * 60 + nowUtc.minute;
-    const shiftMinutes = shiftUtc.hour * 60 + shiftUtc.minute;
-
-    const status = nowMinutes <= shiftMinutes ? "On Time" : "Late";
-    // const status = nowMinutes <= shiftMinutes ? "On Time" : "Late";
-
     const result = await collection.insertOne({
       userId: new ObjectId(id),
       shiftDate: now.toJSDate(),
       shiftStart,
       shiftEnd,
       timeIn: now.toJSDate(),
-      status,
+      status: "Working",
       createdAt: now.toJSDate(),
       updatedAt: now.toJSDate(),
     });
