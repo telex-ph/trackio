@@ -70,7 +70,7 @@ const AdminTimeIn = () => {
           params: {
             startDate: dateRange.startDate,
             endDate: dateRange.endDate,
-            status: "timeIn",
+            filter: "timeIn",
           },
         });
 

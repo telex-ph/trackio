@@ -9,7 +9,7 @@ class Attendance {
   static async getAll({
     startDate = null,
     endDate = null,
-    status = "all",
+    filter = "all",
   } = {}) {
     const db = await connectDB();
     const collection = await db.collection(this.#collection);
@@ -27,7 +27,7 @@ class Attendance {
     }
 
     // Apply status filter
-    switch (status) {
+    switch (filter) {
       case "timeIn":
         // Get the attendance record of those who have not timed out yet / for time-in page
         matchStage.timeOut = null;
@@ -36,11 +36,20 @@ class Attendance {
         // Get the attendance records of those who have already timed out / for time-out page
         matchStage.timeOut = { $exists: true, $ne: null };
         break;
-      // Get the attendance who were of those who where late / for late page
+      // Get the attendance records of those who where late / for late page
       case "late":
         matchStage.$expr = {
           $gt: ["$timeIn", "$shiftStart"], // timeIn > shiftStart → late
         };
+        break;
+      // Get the attendance record who currently on break / for break page
+      case "on-break":
+        matchStage.timeOut = "On Break";
+        break;
+      // Get the attendance record who currently on lunch / for lunch page
+      case "on-lunch":
+        matchStage.timeOut = "On Lunch";
+        break;
       case "all":
       default:
         // No timeOut filter → return everything

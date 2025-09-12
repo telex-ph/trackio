@@ -74,7 +74,7 @@ const AdminTimeOut = () => {
           params: {
             startDate: dateRange.startDate,
             endDate: dateRange.endDate,
-            status: "timeOut",
+            filter: "timeOut",
           },
         });
 
