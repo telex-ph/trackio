@@ -218,16 +218,6 @@ const TeamLeaderUndertime = () => {
                         {selectedRow.undertimeDuration} mins
                       </p>
                     </div>
-
-                    {/* Paid Overtime */}
-                    <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                      <h4 className="text-sm font-medium text-gray-500 mb-1">
-                        Paid Overtime
-                      </h4>
-                      <p className="text-lg font-semibold text-green-600">
-                        {selectedRow.paidOvertime || 0} mins
-                      </p>
-                    </div>
                   </div>
 
                   {/* Notes */}
