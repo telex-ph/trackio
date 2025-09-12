@@ -88,14 +88,12 @@ const AdminTimeOut = () => {
                 .toFormat("yyyy-MM-dd")
             : "Not Logged In";
 
-          // Determine status
-          let status = "Not Logged Out";
-          if (item.timeOut) {
-            const timeOutDT = DateTime.fromFormat(item.timeOut, "HH:mm");
-            if (timeOutDT > scheduledEndTime) status = "Overtime";
-            else if (timeOutDT < scheduledEndTime) status = "Undertime";
-            else status = "On Time";
-          }
+          const accounts = item.accounts.map((acc) => acc.name).join(",");
+
+          // Calculating if the user is undertime or not
+          const shift = DateTime.fromISO(item.shiftEnd);
+          const time = DateTime.fromISO(item.timeOut);
+          const punctuality = time <= shift ? "Undertime" : "On Time";
 
           return {
             id: item.user._id,
@@ -103,7 +101,7 @@ const AdminTimeOut = () => {
             email: item.user.email,
             timeOut,
             date: createdAt,
-            status: item.status || "-",
+            punctuality,
             accounts: accounts,
           };
         });
