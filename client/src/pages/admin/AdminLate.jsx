@@ -39,7 +39,7 @@ const AdminLate = () => {
           params: {
             startDate: dateRange.startDate,
             endDate: dateRange.endDate,
-            status: "late",
+            filter: "late",
           },
         });
 
@@ -151,22 +151,22 @@ const AdminLate = () => {
       sortable: false,
       filter: false,
       // TODO: remove and improve this
-      cellRenderer: (row) => (
-        <div className="flex gap-2">
-          <button
-            className="p-1 rounded hover:bg-yellow-200"
-            onClick={() => alert(`Edit ${row.name}`)}
-          >
-            <Edit className="w-5 h-5 text-blue-500" />
-          </button>
-          <button
-            className="p-1 rounded hover:bg-red-200"
-            onClick={() => alert(`Delete ${row.name}`)}
-          >
-            <Trash2 className="w-5 h-5 text-red-500" />
-          </button>
-        </div>
-      ),
+      // cellRenderer: (row) => (
+      //   <div className="flex gap-2">
+      //     <button
+      //       className="p-1 rounded hover:bg-yellow-200"
+      //       onClick={() => alert(`Edit ${row.name}`)}
+      //     >
+      //       <Edit className="w-5 h-5 text-blue-500" />
+      //     </button>
+      //     <button
+      //       className="p-1 rounded hover:bg-red-200"
+      //       onClick={() => alert(`Delete ${row.name}`)}
+      //     >
+      //       <Trash2 className="w-5 h-5 text-red-500" />
+      //     </button>
+      //   </div>
+      // ),
     },
   ];
 

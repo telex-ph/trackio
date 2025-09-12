@@ -70,13 +70,17 @@ const AdminTimeIn = () => {
           params: {
             startDate: dateRange.startDate,
             endDate: dateRange.endDate,
-            status: "timeIn",
+            filter: "timeIn",
           },
         });
 
         const formattedData = response.data.map((item) => {
           const timeIn = item.timeIn
             ? DateTime.fromISO(item.timeIn).setZone(zone).toFormat(fmt)
+            : "Not Logged In";
+
+          const shiftStart = item.shiftStart
+            ? DateTime.fromISO(item.shiftStart).setZone(zone).toFormat(fmt)
             : "Not Logged In";
 
           const createdAt = item.createdAt
@@ -87,19 +91,17 @@ const AdminTimeIn = () => {
 
           const accounts = item.accounts.map((acc) => acc.name).join(",");
 
-          // Checking if the user is on time or not
-          const nowUtc = DateTime.utc();
-          const shiftUtc = DateTime.fromJSDate(item.shiftStart).toUTC();
-          const nowMinutes = nowUtc.hour * 60 + nowUtc.minute;
-          const shiftMinutes = shiftUtc.hour * 60 + shiftUtc.minute;
-
-          const punctuality = nowMinutes <= shiftMinutes ? "On Time" : "Late";
+          // Calculating if the user is late or not
+          const shift = DateTime.fromISO(item.shiftStart);
+          const time = DateTime.fromISO(item.timeIn);
+          const punctuality = time <= shift ? "On Time" : "Late";
 
           return {
             id: item.user._id,
             date: createdAt,
             name: `${item.user.firstName} ${item.user.lastName}`,
             email: item.user.email,
+            shiftStart,
             timeIn,
             punctuality,
             accounts,
@@ -151,6 +153,13 @@ const AdminTimeIn = () => {
       sortable: true,
       filter: true,
       flex: 2,
+    },
+    {
+      headerName: "Shift Start",
+      field: "shiftStart",
+      sortable: true,
+      filter: false,
+      flex: 1,
     },
     {
       headerName: "Time In",

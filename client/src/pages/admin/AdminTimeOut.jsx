@@ -74,7 +74,7 @@ const AdminTimeOut = () => {
           params: {
             startDate: dateRange.startDate,
             endDate: dateRange.endDate,
-            status: "timeOut",
+            filter: "timeOut",
           },
         });
 
@@ -88,23 +88,26 @@ const AdminTimeOut = () => {
                 .toFormat("yyyy-MM-dd")
             : "Not Logged In";
 
-          // Determine status
-          let status = "Not Logged Out";
-          if (item.timeOut) {
-            const timeOutDT = DateTime.fromFormat(item.timeOut, "HH:mm");
-            if (timeOutDT > scheduledEndTime) status = "Overtime";
-            else if (timeOutDT < scheduledEndTime) status = "Undertime";
-            else status = "On Time";
-          }
+          const shiftEnd = item.shiftEnd
+            ? DateTime.fromISO(item.shiftEnd).setZone(zone).toFormat(fmt)
+            : "Not Logged In";
+
+          const accounts = item.accounts.map((acc) => acc.name).join(",");
+
+          // Calculating if the user is undertime or not
+          const shift = DateTime.fromISO(item.shiftEnd);
+          const time = DateTime.fromISO(item.timeOut);
+          const punctuality = time <= shift ? "Undertime" : "On Time";
 
           return {
             id: item.user._id,
+            date: createdAt,
             name: `${item.user.firstName} ${item.user.lastName}`,
             email: item.user.email,
-            timeOut,
-            date: createdAt,
-            status: item.status || "-",
             accounts: accounts,
+            shiftEnd: shiftEnd,
+            timeOut: timeOut,
+            punctuality,
           };
         });
 
@@ -152,6 +155,13 @@ const AdminTimeOut = () => {
       sortable: true,
       filter: true,
       flex: 2,
+    },
+    {
+      headerName: "Shift End",
+      field: "shiftEnd",
+      sortable: true,
+      filter: false,
+      flex: 1,
     },
     {
       headerName: "Time Out",
