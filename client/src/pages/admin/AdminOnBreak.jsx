@@ -1,57 +1,131 @@
-import React from "react";
+import React, { useState } from "react";
 import Table from "../../components/Table"; // your reusable Table component
+import { DateTime } from "luxon";
+import { Datepicker } from "flowbite-react";
+import { useAttendance } from "../../hooks/useAttendance";
 
 const AdminOnBreak = () => {
-  // Mock Data
-  const data = [
-    {
-      id: "EMP201",
-      name: "Alice Johnson",
-      email: "alice.johnson@example.com",
-      account: "AliceJ123",
-      breakStart: "12:00 P.M.",
-      breakEnd: "12:30 P.M.",
-      status: "On Break",
-      extendedBreak: "5 min",
-    },
-    {
-      id: "EMP202",
-      name: "Bob Smith",
-      email: "bob.smith@example.com",
-      account: "BobS456",
-      breakStart: "1:00 P.M.",
-      breakEnd: "1:20 P.M.",
-      status: "On Break",
-      extendedBreak: "0 min",
-    },
-    {
-      id: "EMP203",
-      name: "Charlie Brown",
-      email: "charlie.brown@example.com",
-      account: "CharlieB789",
-      breakStart: "12:15 P.M.",
-      breakEnd: "12:45 P.M.",
-      status: "On Break",
-      extendedBreak: "10 min",
-    },
-  ];
+  const fmt = "hh:mm a";
+  const zone = "Asia/Manila";
+
+  const [dateRange, setDateRange] = useState({
+    startDate: DateTime.now().setZone(zone).startOf("day").toUTC().toISO(),
+    endDate: DateTime.now().setZone(zone).endOf("day").toUTC().toISO(),
+  });
+
+  const filter = {
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+    status: "on-break",
+  };
+
+  const { attendancesByStatus, loading } = useAttendance(null, filter);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
+
+  const handleDatePicker = (date, field) => {
+    if (!date) return;
+    const isoDate =
+      field === "startDate"
+        ? DateTime.fromJSDate(date).setZone(zone).startOf("day").toUTC().toISO()
+        : DateTime.fromJSDate(date).setZone(zone).endOf("day").toUTC().toISO();
+
+    setDateRange((prev) => ({
+      ...prev,
+      [field]: isoDate,
+    }));
+  };
+
+  console.log(attendancesByStatus);
+
+  if (loading) return <p>Loading...</p>;
 
   // Columns
   const columns = [
     { headerName: "ID", field: "id", sortable: true, filter: true, flex: 1 },
-    { headerName: "Name", field: "name", sortable: true, filter: true, flex: 2 },
-    { headerName: "Email Address", field: "email", sortable: true, filter: true, flex: 2 },
-    { headerName: "Account", field: "account", sortable: true, filter: true, flex: 1 },
-    { headerName: "Break Start", field: "breakStart", sortable: true, filter: false, flex: 1 },
-    { headerName: "Break End", field: "breakEnd", sortable: true, filter: false, flex: 1 },
-    { headerName: "Status", field: "status", sortable: true, filter: true, flex: 1 },
-    { headerName: "Extended Break Duration", field: "extendedBreak", sortable: true, filter: false, flex: 1 },
+    {
+      headerName: "Name",
+      field: "name",
+      sortable: true,
+      filter: true,
+      flex: 2,
+    },
+    {
+      headerName: "Email",
+      field: "email",
+      sortable: true,
+      filter: true,
+      flex: 1,
+    },
+    {
+      headerName: "Account",
+      field: "accounts",
+      sortable: true,
+      filter: true,
+      flex: 1,
+    },
+    {
+      headerName: "1st Break Start",
+      field: "firstBreakStart",
+      sortable: true,
+      filter: false,
+      flex: 1,
+    },
+    {
+      headerName: "1st Break End",
+      field: "firstBreakEnd",
+      sortable: true,
+      filter: false,
+      flex: 1,
+    },
+    {
+      headerName: "2nd Break Start",
+      field: "secondBreakStart",
+      sortable: true,
+      filter: false,
+      flex: 1,
+    },
+    {
+      headerName: "2nd Break End",
+      field: "secondBreakEnd",
+      sortable: true,
+      filter: false,
+      flex: 1,
+    },
+    {
+      headerName: "Extended Break Duration",
+      field: "extendedBreak",
+      sortable: true,
+      filter: false,
+      flex: 1,
+    },
   ];
 
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4">Admin On Break</h2>
-      <Table data={data} columns={columns} />
+
+      {/* Date Picker */}
+      <section className="flex gap-4 mb-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Start Date</label>
+          <Datepicker
+            value={DateTime.fromISO(dateRange.startDate)
+              .setZone(zone)
+              .toJSDate()}
+            onChange={(date) => handleDatePicker(date, "startDate")}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">End Date</label>
+          <Datepicker
+            value={DateTime.fromISO(dateRange.endDate).setZone(zone).toJSDate()}
+            onChange={(date) => handleDatePicker(date, "endDate")}
+          />
+        </div>
+      </section>
+
+      <Table data={attendancesByStatus} columns={columns} />
     </div>
   );
 };

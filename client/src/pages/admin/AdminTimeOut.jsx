@@ -105,8 +105,8 @@ const AdminTimeOut = () => {
             name: `${item.user.firstName} ${item.user.lastName}`,
             email: item.user.email,
             accounts: accounts,
-            shiftEnd,
-            timeOut,
+            shiftEnd: shiftEnd,
+            timeOut: timeOut,
             punctuality,
           };
         });
