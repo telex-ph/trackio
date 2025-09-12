@@ -44,11 +44,11 @@ class Attendance {
         break;
       // Get the attendance record who currently on break / for break page
       case "on-break":
-        matchStage.timeOut = "On Break";
+        matchStage.status = "On Break";
         break;
       // Get the attendance record who currently on lunch / for lunch page
       case "on-lunch":
-        matchStage.timeOut = "On Lunch";
+        matchStage.status = "On Lunch";
         break;
       case "all":
       default:
