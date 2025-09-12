@@ -88,6 +88,10 @@ const AdminTimeOut = () => {
                 .toFormat("yyyy-MM-dd")
             : "Not Logged In";
 
+          const shiftEnd = item.shiftEnd
+            ? DateTime.fromISO(item.shiftEnd).setZone(zone).toFormat(fmt)
+            : "Not Logged In";
+
           const accounts = item.accounts.map((acc) => acc.name).join(",");
 
           // Calculating if the user is undertime or not
@@ -97,12 +101,13 @@ const AdminTimeOut = () => {
 
           return {
             id: item.user._id,
+            date: createdAt,
             name: `${item.user.firstName} ${item.user.lastName}`,
             email: item.user.email,
-            timeOut,
-            date: createdAt,
-            punctuality,
             accounts: accounts,
+            shiftEnd,
+            timeOut,
+            punctuality,
           };
         });
 
@@ -150,6 +155,13 @@ const AdminTimeOut = () => {
       sortable: true,
       filter: true,
       flex: 2,
+    },
+    {
+      headerName: "Shift End",
+      field: "shiftEnd",
+      sortable: true,
+      filter: false,
+      flex: 1,
     },
     {
       headerName: "Time Out",

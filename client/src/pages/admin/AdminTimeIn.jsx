@@ -79,6 +79,10 @@ const AdminTimeIn = () => {
             ? DateTime.fromISO(item.timeIn).setZone(zone).toFormat(fmt)
             : "Not Logged In";
 
+          const shiftStart = item.shiftStart
+            ? DateTime.fromISO(item.shiftStart).setZone(zone).toFormat(fmt)
+            : "Not Logged In";
+
           const createdAt = item.createdAt
             ? DateTime.fromISO(item.createdAt)
                 .setZone(zone)
@@ -97,6 +101,7 @@ const AdminTimeIn = () => {
             date: createdAt,
             name: `${item.user.firstName} ${item.user.lastName}`,
             email: item.user.email,
+            shiftStart,
             timeIn,
             punctuality,
             accounts,
@@ -148,6 +153,13 @@ const AdminTimeIn = () => {
       sortable: true,
       filter: true,
       flex: 2,
+    },
+    {
+      headerName: "Shift Start",
+      field: "shiftStart",
+      sortable: true,
+      filter: false,
+      flex: 1,
     },
     {
       headerName: "Time In",
