@@ -117,8 +117,7 @@ const TeamLeaderSchedule = () => {
   ];
 
   const calculateShiftDuration = (timeIn, timeOut) => {
-    const duration =
-      parseTimeToMinutes(timeOut) - parseTimeToMinutes(timeIn);
+    const duration = parseTimeToMinutes(timeOut) - parseTimeToMinutes(timeIn);
     return duration > 0 ? duration : 0;
   };
 
@@ -246,10 +245,11 @@ const TeamLeaderSchedule = () => {
                       <h4 className="text-lg font-bold text-gray-900">Notes</h4>
                     </div>
                     <textarea
-                      className={`w-full border rounded-lg p-3 font-medium resize-none focus:outline-none focus:ring-2 ${isEditing
-                        ? "border-blue-500 bg-white"
-                        : "border-gray-300 bg-gray-50"
-                        }`}
+                      className={`w-full border rounded-lg p-3 font-medium resize-none focus:outline-none focus:ring-2 ${
+                        isEditing
+                          ? "border-blue-500 bg-white"
+                          : "border-gray-300 bg-gray-50"
+                      }`}
                       rows={4}
                       value={selectedRow.notes}
                       onChange={(e) =>
