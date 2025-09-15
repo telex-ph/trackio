@@ -234,21 +234,18 @@ const TeamLeaderAnnouncement = () => {
   };
 
   return (
-    <div className="p-8">
-      {/* Header */}
-      <div className="mb-12">
-        <div className="mb-10">
-          <h2 className="text-4xl font-bold text-gray-900 mb-2">
-            Announcements
-          </h2>
-          <p className="text-gray-600">
-            Create, manage, and track all team communications.
-          </p>
+    <div>
+      <div>
+      <section className="flex flex-col mb-2">
+        <div className="flex items-center gap-1">
+          <h2>Announcement</h2>
         </div>
+        <p className="text-light">Records of employees with late attendance.</p>
+      </section>
       </div>
 
       {/* Two-Column Layout */}
-      <div className="grid grid-cols-2 gap-10 mb-16">
+      <div className="grid grid-cols-2 p-3 gap-10 mb-16">
         {/* Create/Edit Announcement */}
         <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
           <div className="flex items-center justify-between mb-8">

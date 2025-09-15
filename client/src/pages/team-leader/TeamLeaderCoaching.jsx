@@ -418,19 +418,17 @@ const TeamLeaderCoaching = () => {
   };
 
   return (
-    <div className="p-8">
+    <div>
       {/* Header */}
-      <div className="mb-12">
-        <div className="mb-10">
-          <h2 className="text-4xl font-bold text-gray-900 mb-2">
-            Coaching & Huddle
-          </h2>
-          <p className="text-gray-600">All updates will be reflected on the admin profile.</p>
+      <section className="flex flex-col mb-2">
+        <div className="flex items-center gap-1">
+          <h2>Coaching and Huddle</h2>
         </div>
-      </div>
+        <p className="text-light">Records of employees with late attendance.</p>
+      </section>
 
       {/* Two-Column Layout (mirrors Announcement layout exactly) */}
-      <div className="grid grid-cols-2 gap-10 mb-16">
+      <div className="grid grid-cols-2 p-3 gap-10 mb-16">
         {/* Create/Edit Session (left) */}
         <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
           <div className="flex items-center justify-between mb-8">

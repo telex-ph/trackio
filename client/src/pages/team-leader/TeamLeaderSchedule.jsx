@@ -212,7 +212,7 @@ const TeamLeaderSchedule = () => {
                     </div>
                     <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                       <h4 className="text-sm font-medium text-gray-500 mb-1">
-                        Time In
+                        Scheduled Time In
                       </h4>
                       <p className="text-lg font-semibold text-green-600">
                         {selectedRow.timeIn}
@@ -220,7 +220,7 @@ const TeamLeaderSchedule = () => {
                     </div>
                     <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                       <h4 className="text-sm font-medium text-gray-500 mb-1">
-                        Time Out
+                        Scheduled Time Out
                       </h4>
                       <p className="text-lg font-semibold text-red-600">
                         {selectedRow.timeOut}

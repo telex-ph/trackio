@@ -11,6 +11,7 @@ import AgentDashboard from "../pages/agent/AgentDashboard";
 import AgentAttendance from "../pages/agent/AgentAttendance";
 import AgentCoaching from "../pages/agent/AgentCoaching";
 import AgentAccountSettings from "../pages/agent/AgentAccountSettings";
+import AgentRequest from "../pages/agent/AgentRequest";
 
 // Team Leader Routes
 import TeamLeaderDashboard from "../pages/team-leader/TeamLeaderDashboard";
@@ -139,6 +140,7 @@ const router = createBrowserRouter([
               { path: "dashboard", element: <AgentDashboard /> },
               { path: "attendance", element: <AgentAttendance /> },
               { path: "coaching", element: <AgentCoaching /> },
+              { path: "request", element: <AgentRequest /> },
               { path: "account-settings", element: <AgentAccountSettings /> },
             ],
           },
