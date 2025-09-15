@@ -39,7 +39,7 @@ const CustomCollapse = ({
   onToggle,
 }) => {
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col w-ful">
       <button
         onClick={onToggle}
         className="flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200 w-full"
@@ -59,8 +59,8 @@ const CustomCollapse = ({
 
       <div
         className={`flex flex-col overflow-hidden transition-all duration-300 ${
-          open ? "max-h-screen mt-1" : "max-h-0"
-        }`}
+          !isCollapsed && "pl-3"
+        } ${open ? "max-h-screen mt-1" : "max-h-0"}`}
       >
         {children}
       </div>
@@ -202,8 +202,9 @@ const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       {[
         { path: "time-in", label: "Time In", Icon: Sun },
         { path: "time-out", label: "Time Out", Icon: Moon },
+        { path: "late", label: "Late", Icon: AlertTriangle },
+        { path: "undertime", label: "Undertime", Icon: Clock },
         { path: "absentees", label: "Absentees", Icon: Users },
-        { path: "employee-status", label: "Employee Status", Icon: UserCheck },
       ].map(({ path, label, Icon }) => (
         <SidebarLink
           key={path}
@@ -225,10 +226,9 @@ const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       }
     >
       {[
-        { path: "late", label: "Late", Icon: AlertTriangle },
+        { path: "status", label: "Status", Icon: UserCheck },
         { path: "on-break", label: "On Break", Icon: Coffee },
         { path: "on-lunch", label: "On Lunch", Icon: Sun },
-        { path: "undertime", label: "Undertime", Icon: Clock },
         { path: "bio-break", label: "Bio Break", Icon: Moon },
         { path: "meeting", label: "Meeting", Icon: Video },
       ].map(({ path, label, Icon }) => (

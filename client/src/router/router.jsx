@@ -31,7 +31,7 @@ import AdminDashboard from "../pages/admin/AdminDashboard";
 import AdminTimeIn from "../pages/admin/AdminTimeIn";
 import AdminTimeOut from "../pages/admin/AdminTimeOut";
 import AdminAbsentees from "../pages/admin/AdminAbsentees";
-import AdminEmployeeStatus from "../pages/admin/AdminEmployeeStatus";
+import AdminStatus from "../pages/admin/AdminStatus";
 import AdminLate from "../pages/admin/AdminLate";
 import AdminOnBreak from "../pages/admin/AdminOnBreak";
 import AdminOnLunch from "../pages/admin/AdminOnLunch";
@@ -77,21 +77,22 @@ const router = createBrowserRouter([
                   { index: true, element: <Navigate to="time-in" replace /> },
                   { path: "time-in", element: <AdminTimeIn /> },
                   { path: "time-out", element: <AdminTimeOut /> },
+                  { path: "late", element: <AdminLate /> },
+                  { path: "undertime", element: <AdminUndertime /> },
                   { path: "absentees", element: <AdminAbsentees /> },
-                  { path: "employee-status", element: <AdminEmployeeStatus /> },
                 ],
               },
               {
                 path: "monitoring",
                 children: [
-                  { path: "late", element: <AdminLate /> },
+                  { path: "status", element: <AdminStatus /> },
                   { path: "on-break", element: <AdminOnBreak /> },
                   { path: "on-lunch", element: <AdminOnLunch /> },
-                  { path: "undertime", element: <AdminUndertime /> },
                   { path: "bio-break", element: <AdminBioBreak /> },
                   { path: "meeting", element: <AdminMeeting /> },
                 ],
               },
+
               { path: "history", element: <AdminHistory /> },
               { path: "schedule", element: <AdminSchedule /> },
               { path: "announcement", element: <AdminAnnouncement /> },

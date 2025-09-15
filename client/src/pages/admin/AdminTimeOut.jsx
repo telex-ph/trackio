@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import api from "../../utils/axios";
+import { useState } from "react";
 import Table from "../../components/Table";
 import { DateTime } from "luxon";
 import { Datepicker } from "flowbite-react";
@@ -7,12 +6,11 @@ import { ChevronRight, Clock, FileText, CheckCircle } from "lucide-react";
 import TableAction from "../../components/TableAction";
 import TableModal from "../../components/TableModal";
 import TableEmployeeDetails from "../../components/TableEmployeeDetails";
+import { useAttendance } from "../../hooks/useAttendance";
 
 const AdminTimeOut = () => {
-  const fmt = "hh:mm a";
   const zone = "Asia/Manila";
 
-  const [data, setData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
 
@@ -21,6 +19,14 @@ const AdminTimeOut = () => {
     startDate: DateTime.now().setZone(zone).startOf("day").toUTC().toISO(),
     endDate: DateTime.now().setZone(zone).endOf("day").toUTC().toISO(),
   });
+
+  const filter = {
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+    status: "timeOut",
+  };
+
+  const { attendancesByStatus, loading } = useAttendance(null, filter);
 
   // handle date picker changes
   const handleDatePicker = (date, field) => {
@@ -66,59 +72,6 @@ const AdminTimeOut = () => {
         return "bg-gray-50 text-gray-600 border border-gray-200";
     }
   };
-
-  useEffect(() => {
-    const fetchAttendances = async () => {
-      try {
-        const response = await api.get("/attendance/get-attendances", {
-          params: {
-            startDate: dateRange.startDate,
-            endDate: dateRange.endDate,
-            filter: "timeOut",
-          },
-        });
-
-        const formattedData = response.data.map((item) => {
-          const timeOut = item.timeOut
-            ? DateTime.fromISO(item.timeOut).setZone(zone).toFormat(fmt)
-            : "Not Logged In";
-          const createdAt = item.createdAt
-            ? DateTime.fromISO(item.createdAt)
-                .setZone(zone)
-                .toFormat("yyyy-MM-dd")
-            : "Not Logged In";
-
-          const shiftEnd = item.shiftEnd
-            ? DateTime.fromISO(item.shiftEnd).setZone(zone).toFormat(fmt)
-            : "Not Logged In";
-
-          const accounts = item.accounts.map((acc) => acc.name).join(",");
-
-          // Calculating if the user is undertime or not
-          const shift = DateTime.fromISO(item.shiftEnd);
-          const time = DateTime.fromISO(item.timeOut);
-          const punctuality = time <= shift ? "Undertime" : "On Time";
-
-          return {
-            id: item.user._id,
-            date: createdAt,
-            name: `${item.user.firstName} ${item.user.lastName}`,
-            email: item.user.email,
-            accounts: accounts,
-            shiftEnd: shiftEnd,
-            timeOut: timeOut,
-            punctuality,
-          };
-        });
-
-        setData(formattedData);
-      } catch (error) {
-        console.error("Error fetching attendance:", error);
-      }
-    };
-
-    fetchAttendances();
-  }, [dateRange]);
 
   const columns = [
     {
@@ -171,8 +124,8 @@ const AdminTimeOut = () => {
       flex: 1,
     },
     {
-      headerName: "Punctuality",
-      field: "punctuality",
+      headerName: "Shift Adherence",
+      field: "adherence",
       sortable: true,
       filter: true,
       flex: 1,
@@ -221,7 +174,7 @@ const AdminTimeOut = () => {
         </div>
       </section>
 
-      <Table columns={columns} data={data} />
+      <Table columns={columns} data={attendancesByStatus} />
 
       {/* Modal */}
       <TableModal
