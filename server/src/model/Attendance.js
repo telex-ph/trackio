@@ -43,11 +43,11 @@ class Attendance {
         };
         break;
       // Get the attendance record who currently on break / for break page
-      case "on-break":
+      case "onBreak":
         matchStage.status = "On Break";
         break;
       // Get the attendance record who currently on lunch / for lunch page
-      case "on-lunch":
+      case "onLunch":
         matchStage.status = "On Lunch";
         break;
       case "all":
