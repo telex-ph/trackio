@@ -4,7 +4,6 @@ import TableAction from "../../components/TableAction";
 import TableModal from "../../components/TableModal";
 import TableEmployeeDetails from "../../components/TableEmployeeDetails";
 import { FileText, CalendarDays, Clock, Briefcase, Upload } from "lucide-react";
-import * as XLSX from "xlsx";
 
 const TeamLeaderSchedule = () => {
   const parseTimeToMinutes = (timeStr) => {
@@ -93,36 +92,6 @@ const TeamLeaderSchedule = () => {
     );
   };
 
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: "array" });
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const rows = XLSX.utils.sheet_to_json(sheet);
-
-      const formattedData = rows.map((row, index) => ({
-        id: row.ID || `EX${index + 1}`,
-        date: row.Date || "",
-        name: row.Name || "",
-        email: row.Email || "",
-        group: row.Group || "",
-        category: row.Category || "",
-        timeIn: row["Time In"] || "",
-        timeOut: row["Time Out"] || "",
-        notes: row.Notes || "",
-        image: row.Image || "",
-      }));
-
-      setData(formattedData);
-    };
-    reader.readAsArrayBuffer(file);
-  };
-
   const filteredData = data.filter(
     (item) =>
       (filterGroup === "All" || item.group === filterGroup) &&
@@ -148,8 +117,7 @@ const TeamLeaderSchedule = () => {
   ];
 
   const calculateShiftDuration = (timeIn, timeOut) => {
-    const duration =
-      parseTimeToMinutes(timeOut) - parseTimeToMinutes(timeIn);
+    const duration = parseTimeToMinutes(timeOut) - parseTimeToMinutes(timeIn);
     return duration > 0 ? duration : 0;
   };
 
@@ -161,24 +129,6 @@ const TeamLeaderSchedule = () => {
           <div>
             <h2>Schedule Logs</h2>
             <p className="text-light">Employee schedules across departments.</p>
-          </div>
-
-          {/* Upload Button with hidden file input */}
-          <div className="relative">
-            <button
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md"
-              onClick={() => document.getElementById("uploadInput").click()}
-            >
-              <Upload className="w-5 h-5" />
-              Upload
-            </button>
-            <input
-              type="file"
-              id="uploadInput"
-              accept=".xlsx, .xls"
-              className="hidden"
-              onChange={handleFileUpload}
-            />
           </div>
         </div>
       </section>
