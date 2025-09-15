@@ -45,6 +45,7 @@ export const useAttendance = (userId, filter) => {
       const formattedData = response.data.map((item) => {
         const accounts = item.accounts.map((acc) => acc.name).join(", ");
 
+        // Time formatting
         const formattedTimeIn = formatTime(item.timeIn);
         const formattedTimeOut = formatTime(item.timeOut);
         const formattedShiftStart = formatTime(item.shiftStart);
@@ -69,7 +70,6 @@ export const useAttendance = (userId, filter) => {
         const zone = "Asia/Manila";
         const tIn = DateTime.fromFormat(formattedTimeIn, fmt, { zone });
         const sStart = DateTime.fromFormat(formattedShiftStart, fmt, { zone });
-
         const tardiness = tIn.diff(sStart, "minutes").minutes;
 
         return {
