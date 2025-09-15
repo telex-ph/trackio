@@ -10,7 +10,6 @@ import {
   Bell,
   NotebookTabs,
   Clock,
-  LogOut,
   Coffee,
   Users,
   ChevronDown,
@@ -30,14 +29,12 @@ import { useStore } from "../store/useStore";
 import Role from "../constants/roles";
 import { useState } from "react";
 
-// Custom Collapse with fixed icon size and arrow
-const CustomCollapse = ({ icon, label, children, isCollapsed }) => {
-  const [open, setOpen] = useState(false);
-
+// Custom Collapse (controlled from parent)
+const CustomCollapse = ({ icon, label, children, isCollapsed, open, onToggle }) => {
   return (
     <div className="flex flex-col w-full">
       <button
-        onClick={() => setOpen(!open)}
+        onClick={onToggle}
         className="flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200 w-full"
       >
         <div className="flex items-center gap-2">
@@ -104,7 +101,7 @@ const AgentSidebar = ({ isCollapsed }) => (
 );
 
 // Team Leader Sidebar
-const TeamLeaderSidebar = ({ isCollapsed }) => (
+const TeamLeaderSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
   <SidebarItemGroup className="space-y-1">
     <SidebarLink
       to="/team-leader/dashboard"
@@ -117,6 +114,10 @@ const TeamLeaderSidebar = ({ isCollapsed }) => (
       icon={<BookOpenText className="w-5 h-5" />}
       label="Attendance"
       isCollapsed={isCollapsed}
+      open={activeDropdown === "attendance"}
+      onToggle={() =>
+        setActiveDropdown(activeDropdown === "attendance" ? null : "attendance")
+      }
     >
       {[
         { path: "basic-logs", label: "Basic Logs", Icon: FileText },
@@ -162,7 +163,7 @@ const TeamLeaderSidebar = ({ isCollapsed }) => (
 );
 
 // Admin Sidebar
-const AdminSidebar = ({ isCollapsed }) => (
+const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
   <SidebarItemGroup className="space-y-1">
     <SidebarLink
       to="/admin/dashboard"
@@ -175,6 +176,10 @@ const AdminSidebar = ({ isCollapsed }) => (
       icon={<Clock className="w-5 h-5" />}
       label="Tracking"
       isCollapsed={isCollapsed}
+      open={activeDropdown === "tracking"}
+      onToggle={() =>
+        setActiveDropdown(activeDropdown === "tracking" ? null : "tracking")
+      }
     >
       {[
         { path: "time-in", label: "Time In", Icon: Sun },
@@ -196,6 +201,10 @@ const AdminSidebar = ({ isCollapsed }) => (
       icon={<Activity className="w-5 h-5" />}
       label="Monitoring"
       isCollapsed={isCollapsed}
+      open={activeDropdown === "monitoring"}
+      onToggle={() =>
+        setActiveDropdown(activeDropdown === "monitoring" ? null : "monitoring")
+      }
     >
       {[
         { path: "late", label: "Late", Icon: AlertTriangle },
@@ -239,15 +248,28 @@ const AdminSidebar = ({ isCollapsed }) => (
 // Main Sidebar
 export const Sidebar = ({ isCollapsed }) => {
   const user = useStore((state) => state.user);
+  const [activeDropdown, setActiveDropdown] = useState(null);
 
   const renderSidebar = () => {
     switch (user.role) {
       case Role.AGENT:
         return <AgentSidebar isCollapsed={isCollapsed} />;
       case Role.TEAM_LEADER:
-        return <TeamLeaderSidebar isCollapsed={isCollapsed} />;
+        return (
+          <TeamLeaderSidebar
+            isCollapsed={isCollapsed}
+            activeDropdown={activeDropdown}
+            setActiveDropdown={setActiveDropdown}
+          />
+        );
       case Role.ADMIN:
-        return <AdminSidebar isCollapsed={isCollapsed} />;
+        return (
+          <AdminSidebar
+            isCollapsed={isCollapsed}
+            activeDropdown={activeDropdown}
+            setActiveDropdown={setActiveDropdown}
+          />
+        );
       default:
         return null;
     }
