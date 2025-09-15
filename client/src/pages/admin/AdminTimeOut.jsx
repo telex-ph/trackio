@@ -124,8 +124,8 @@ const AdminTimeOut = () => {
       flex: 1,
     },
     {
-      headerName: "Punctuality",
-      field: "punctuality",
+      headerName: "Shift Adherence",
+      field: "adherence",
       sortable: true,
       filter: true,
       flex: 1,

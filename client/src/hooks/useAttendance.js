@@ -55,9 +55,14 @@ export const useAttendance = (userId, filter) => {
         const formattedSecondBreakEnd = formatTime(item.secondBreakEnd);
 
         // Calculating if the user is late or not
-        const shift = DateTime.fromISO(item.shiftStart);
-        const time = DateTime.fromISO(item.timeIn);
-        const punctuality = time <= shift ? "On Time" : "Late";
+        const shiftStart = DateTime.fromISO(item.shiftStart);
+        const timeIn = DateTime.fromISO(item.timeIn);
+        const punctuality = timeIn <= shiftStart ? "On Time" : "Late";
+
+        // Calculating if the user's shift adherence
+        const shiftEnd = DateTime.fromISO(item.shiftEnd);
+        const timeOut = DateTime.fromISO(item.timeOut);
+        const adherence = timeOut >= shiftEnd ? "On Time" : "Undertime";
 
         // Calculate difference in minutes, for minutes of tardiness
         const fmt = "hh:mm a";
@@ -87,6 +92,7 @@ export const useAttendance = (userId, filter) => {
 
           tardiness,
           punctuality,
+          adherence,
           accounts,
           status: item.status,
         };
