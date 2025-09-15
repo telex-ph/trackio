@@ -16,7 +16,7 @@ const AdminOnBreak = () => {
   const filter = {
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
-    status: "on-break",
+    status: "onBreak",
   };
 
   const { attendancesByStatus, loading } = useAttendance(null, filter);
