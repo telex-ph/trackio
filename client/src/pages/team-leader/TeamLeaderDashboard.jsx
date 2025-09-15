@@ -512,101 +512,158 @@ const TeamLeaderDashboard = () => {
 
           <WorkHoursChart />
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-0">
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="font-semibold text-gray-800">
-                Today's Attendance Status
-              </h3>
-              <select
-                className="border border-gray-300 rounded-lg px-3 py-1 text-sm"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-              >
-                <option value="All">All Members</option>
-                <option value="Present">Present</option>
-                <option value="Absent">Absent</option>
-                <option value="Late">Late Arrivals</option>
-              </select>
+          <div className="bg-gradient-to-br from-white to-gray-50/30 rounded-2xl shadow-lg border border-gray-200/60 p-0 overflow-hidden">
+            {/* Enhanced Header */}
+            <div className="p-6 border-b border-gray-200/80 bg-gradient-to-r from-gray-50/50 to-white relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-500/5 to-indigo-500/8 rounded-full -translate-y-12 translate-x-12"></div>
+
+              <div className="relative z-10 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-md">
+                    <UserCheck className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 tracking-tight">
+                      Today's Attendance Status
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                      Team member tracking overview
+                    </p>
+                  </div>
+                </div>
+
+                <select
+                  className="bg-white border border-gray-300 hover:border-gray-400 rounded-xl px-4 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 shadow-sm"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                >
+                  <option value="All">All Members</option>
+                  <option value="Present">Present</option>
+                  <option value="Absent">Absent</option>
+                  <option value="Late">Late Arrivals</option>
+                </select>
+              </div>
             </div>
 
+            {/* Enhanced Employee List */}
             <div className="max-h-96 overflow-y-auto">
-              {filteredEmployees.map((employee) => (
+              {filteredEmployees.map((employee, index) => (
                 <div
                   key={employee.id}
-                  className="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="group p-5 border-b border-gray-100/60 hover:bg-gradient-to-r hover:from-gray-50/80 hover:to-white cursor-pointer transition-all duration-200 hover:shadow-sm relative"
                   onClick={() => setSelectedEmployee(employee)}
+                  style={{
+                    animationDelay: `${index * 50}ms`,
+                    animation: "fadeIn 0.5s ease-out forwards",
+                  }}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="relative">
+                  {/* Status indicator line */}
+                  <div
+                    className={`absolute left-0 top-0 bottom-0 w-1 rounded-r-full transition-all duration-300 group-hover:w-1.5 ${
+                      employee.status === "Present" && !employee.isLate
+                        ? "bg-gradient-to-b from-emerald-400 to-emerald-600"
+                        : employee.isLate
+                        ? "bg-gradient-to-b from-orange-400 to-orange-600"
+                        : employee.status === "Absent"
+                        ? "bg-gradient-to-b from-red-400 to-red-600"
+                        : "bg-gradient-to-b from-gray-300 to-gray-500"
+                    }`}
+                  />
+
+                  <div className="flex items-center justify-between ml-2">
+                    {/* Employee Info Section */}
+                    <div className="flex items-center space-x-4 flex-1">
+                      {/* Enhanced Avatar */}
+                      <div className="relative flex-shrink-0">
                         <img
                           src={employee.avatar}
                           alt={employee.name}
-                          className="w-12 h-12 rounded-full object-cover"
+                          className="w-14 h-14 rounded-xl object-cover border-2 border-white shadow-md group-hover:shadow-lg transition-shadow duration-200"
                         />
                         <div
-                          className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
+                          className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white shadow-sm ${
                             employee.status === "Present"
-                              ? "bg-green-500"
+                              ? "bg-emerald-500"
                               : employee.status === "Absent"
                               ? "bg-red-500"
                               : employee.breakStatus === "On Break"
                               ? "bg-blue-500"
                               : employee.lunchStatus === "On Lunch"
-                              ? "bg-yellow-500"
-                              : "bg-gray-500"
+                              ? "bg-amber-500"
+                              : "bg-gray-400"
                           }`}
                         />
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900 flex items-center">
-                          {employee.name}
+
+                      {/* Employee Details */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <h4 className="font-bold text-gray-900 text-base group-hover:text-gray-800 transition-colors truncate">
+                            {employee.name}
+                          </h4>
                           {employee.isLate && (
-                            <span className="ml-2 text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
+                            <span className="inline-flex items-center text-xs bg-orange-100 text-orange-800 px-2.5 py-1 rounded-lg border border-orange-200 font-medium shadow-sm">
+                              <Clock className="w-3 h-3 mr-1" />
                               Late
                             </span>
                           )}
-                        </h4>
-                        <div className="flex items-center space-x-2 mt-1">
+                        </div>
+
+                        <div className="flex items-center space-x-2 mb-2 flex-wrap">
                           <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium border ${
+                            className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold border shadow-sm ${
                               statusColors[employee.status]
                             }`}
                           >
                             {employee.status}
                           </span>
+
                           {employee.breakStatus && (
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 shadow-sm">
+                              <Coffee className="w-3 h-3 mr-1" />
                               {employee.breakStatus}
                             </span>
                           )}
+
                           {employee.lunchStatus && (
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 shadow-sm">
+                              <Utensils className="w-3 h-3 mr-1" />
                               {employee.lunchStatus}
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-gray-600 mt-1">
-                          {employee.lastActivity}
-                        </p>
+
+                        <div className="flex items-center text-xs text-gray-500">
+                          <Activity className="w-3 h-3 mr-1" />
+                          <span className="font-medium">
+                            {employee.lastActivity}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="text-right">
+                    {/* Enhanced Time Metrics */}
+                    <div className="flex-shrink-0 ml-6">
                       <div className="grid grid-cols-4 gap-4 text-center">
-                        <div>
+                        <div className="bg-white/80 backdrop-blur-sm p-3 rounded-lg border border-gray-200/60 shadow-sm group-hover:shadow-md transition-all duration-200">
                           <div className="text-sm font-bold text-gray-900">
                             {employee.timeIn || "--"}
                           </div>
-                          <div className="text-xs text-gray-500">Time In</div>
+                          <div className="text-xs text-gray-500 font-medium mt-1">
+                            Time In
+                          </div>
                         </div>
-                        <div>
+
+                        <div className="bg-white/80 backdrop-blur-sm p-3 rounded-lg border border-gray-200/60 shadow-sm group-hover:shadow-md transition-all duration-200">
                           <div className="text-sm font-bold text-gray-900">
                             {employee.workHours}
                           </div>
-                          <div className="text-xs text-gray-500">Hours</div>
+                          <div className="text-xs text-gray-500 font-medium mt-1">
+                            Hours
+                          </div>
                         </div>
-                        <div>
+
+                        <div className="bg-white/80 backdrop-blur-sm p-3 rounded-lg border border-gray-200/60 shadow-sm group-hover:shadow-md transition-all duration-200">
                           <div
                             className={`text-sm font-bold ${
                               employee.overtime !== "0:00"
@@ -616,9 +673,12 @@ const TeamLeaderDashboard = () => {
                           >
                             {employee.overtime}
                           </div>
-                          <div className="text-xs text-gray-500">Overtime</div>
+                          <div className="text-xs text-gray-500 font-medium mt-1">
+                            Overtime
+                          </div>
                         </div>
-                        <div>
+
+                        <div className="bg-white/80 backdrop-blur-sm p-3 rounded-lg border border-gray-200/60 shadow-sm group-hover:shadow-md transition-all duration-200">
                           <div
                             className={`text-sm font-bold ${
                               employee.undertime !== "0:00"
@@ -628,7 +688,9 @@ const TeamLeaderDashboard = () => {
                           >
                             {employee.undertime}
                           </div>
-                          <div className="text-xs text-gray-500">Undertime</div>
+                          <div className="text-xs text-gray-500 font-medium mt-1">
+                            Undertime
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -641,95 +703,236 @@ const TeamLeaderDashboard = () => {
 
         {/* Sidebar */}
         <div className="col-span-12 lg:col-span-4">
-          <div className="bg-white rounded-xl shadow-md border border-gray-200 p-4 flex flex-col">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200/60 p-6 relative overflow-hidden">
+            {/* Subtle decorative elements */}
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gray-50 rounded-full -translate-y-10 translate-x-10"></div>
+            <div className="absolute bottom-0 left-0 w-16 h-16 bg-gray-100 rounded-full translate-y-8 -translate-x-8"></div>
+
             {/* Header */}
-            <h4 className="text-sm font-semibold text-gray-800 mb-3">
-              Live Activity Monitoring
-            </h4>
+            <div className="relative z-10 flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center shadow-md">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                  <div className="w-1 h-4 bg-white rounded-full ml-1"></div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">
+                    Activity Monitor
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Employee time tracking
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-sm font-medium text-gray-700">
+                  Active
+                </span>
+              </div>
+            </div>
 
             {/* Activity List */}
-            <div className="space-y-3 max-h-[560px] overflow-y-auto pr-2">
-              {recentActivities.map((activity) => (
+            <div className="relative z-10 space-y-3 max-h-[580px] overflow-y-auto pr-1">
+              {recentActivities.map((activity, index) => (
                 <div
                   key={activity.id}
-                  className="flex items-start space-x-3 p-3 bg-gray-50/70 rounded-lg hover:bg-gray-50 transition-colors border-l-2 border-gray-200"
+                  className="group bg-gray-50/40 hover:bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all duration-200 relative"
                 >
-                  <img
-                    src={activity.avatar}
-                    alt={activity.employee}
-                    className="w-10 h-10 rounded-full object-cover flex-shrink-0 ring-1 ring-gray-200"
+                  {/* Minimal status line */}
+                  <div
+                    className={`absolute left-0 top-4 bottom-4 w-0.5 rounded-full ${
+                      activity.type === "timein"
+                        ? "bg-green-400"
+                        : activity.type === "timeout"
+                        ? "bg-red-400"
+                        : activity.type === "break"
+                        ? "bg-blue-400"
+                        : activity.type === "break_end"
+                        ? "bg-blue-300"
+                        : activity.type === "lunch"
+                        ? "bg-orange-400"
+                        : activity.type === "lunch_end"
+                        ? "bg-orange-300"
+                        : "bg-gray-300"
+                    }`}
                   />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start mb-1">
-                      <p className="font-medium text-gray-900 text-sm truncate">
-                        {activity.employee}
-                      </p>
-                      <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
-                        {activity.time}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2 mb-2">
+
+                  <div className="flex items-start space-x-4 ml-3">
+                    {/* Avatar */}
+                    <div className="relative flex-shrink-0">
+                      <img
+                        src={activity.avatar}
+                        alt={activity.employee}
+                        className="w-11 h-11 rounded-lg object-cover border-2 border-white shadow-sm group-hover:shadow-md transition-shadow duration-200"
+                      />
                       <div
-                        className={`w-2 h-2 rounded-full ${
+                        className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
                           activity.type === "timein"
-                            ? "bg-green-300"
+                            ? "bg-green-400"
                             : activity.type === "timeout"
-                            ? "bg-red-300"
-                            : activity.type === "break"
-                            ? "bg-blue-300"
-                            : activity.type === "break_end"
-                            ? "bg-blue-200"
-                            : activity.type === "lunch"
-                            ? "bg-yellow-300"
-                            : activity.type === "lunch_end"
-                            ? "bg-yellow-200"
-                            : "bg-gray-300"
+                            ? "bg-red-400"
+                            : activity.type === "break" ||
+                              activity.type === "break_end"
+                            ? "bg-blue-400"
+                            : activity.type === "lunch" ||
+                              activity.type === "lunch_end"
+                            ? "bg-orange-400"
+                            : "bg-gray-400"
                         }`}
                       />
-                      <span
-                        className={`text-xs font-medium px-2 py-1 rounded-full ${
-                          activity.type === "timein"
-                            ? "bg-green-50 text-green-700"
-                            : activity.type === "timeout"
-                            ? "bg-red-50 text-red-700"
-                            : activity.type === "break"
-                            ? "bg-blue-50 text-blue-700"
-                            : activity.type === "break_end"
-                            ? "bg-blue-50 text-blue-600"
-                            : activity.type === "lunch"
-                            ? "bg-yellow-50 text-yellow-700"
-                            : activity.type === "lunch_end"
-                            ? "bg-yellow-50 text-yellow-600"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {activity.action}
-                      </span>
                     </div>
-                    <p className="text-xs text-gray-400">
-                      {activity.timestamp}
-                    </p>
+
+                    <div className="flex-1 min-w-0">
+                      {/* Employee info */}
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-semibold text-gray-900 text-sm truncate">
+                            {activity.employee}
+                          </h4>
+                          <p className="text-xs text-gray-500 font-medium">
+                            {activity.department || "Customer Service"} •{" "}
+                            {activity.position || "Representative"}
+                          </p>
+                        </div>
+                        <div className="text-right flex-shrink-0 ml-4">
+                          <span className="text-xs font-medium text-gray-600 bg-white px-2 py-1 rounded-md border border-gray-200 shadow-sm">
+                            {activity.time}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Action and status */}
+                      <div className="flex items-center justify-between">
+                        <span
+                          className={`inline-flex items-center space-x-2 text-xs font-medium px-2.5 py-1 rounded-md border ${
+                            activity.type === "timein"
+                              ? "bg-green-50 text-green-700 border-green-200"
+                              : activity.type === "timeout"
+                              ? "bg-red-50 text-red-700 border-red-200"
+                              : activity.type === "break"
+                              ? "bg-blue-50 text-blue-700 border-blue-200"
+                              : activity.type === "break_end"
+                              ? "bg-blue-50 text-blue-600 border-blue-200"
+                              : activity.type === "lunch"
+                              ? "bg-orange-50 text-orange-700 border-orange-200"
+                              : activity.type === "lunch_end"
+                              ? "bg-orange-50 text-orange-600 border-orange-200"
+                              : "bg-gray-50 text-gray-700 border-gray-200"
+                          }`}
+                        >
+                          <div
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              activity.type === "timein"
+                                ? "bg-green-400"
+                                : activity.type === "timeout"
+                                ? "bg-red-400"
+                                : activity.type === "break" ||
+                                  activity.type === "break_end"
+                                ? "bg-blue-400"
+                                : activity.type === "lunch" ||
+                                  activity.type === "lunch_end"
+                                ? "bg-orange-400"
+                                : "bg-gray-400"
+                            }`}
+                          />
+                          <span>{activity.action}</span>
+                        </span>
+
+                        <span className="text-xs text-gray-400 font-medium">
+                          {activity.timestamp}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
           {/* TL Side Quick Actions Container */}
-          <div className="bg-white shadow-md rounded-xl p-5 w-full mt-5">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">
-              Quick Actions
-            </h3>
-            <div className="space-y-3">
-              <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-3 rounded-lg text-left flex items-center text-sm transition-colors">
-                <Timer className="w-4 h-4 mr-2" /> Generate Attendance Report
-              </button>
-              <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-3 rounded-lg text-left flex items-center text-sm transition-colors">
-                <Activity className="w-4 h-4 mr-2" /> Export Time Logs
-              </button>
-              <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-3 rounded-lg text-left flex items-center text-sm transition-colors">
-                <AlertTriangle className="w-4 h-4 mr-2" /> View Attendance
-                Issues
-              </button>
+          <div className="bg-gradient-to-br from-white to-gray-50/50 shadow-lg rounded-2xl border border-gray-200/60 p-6 w-full mt-5 relative overflow-hidden">
+            {/* Decorative element */}
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-500/5 to-indigo-500/10 rounded-full -translate-y-10 translate-x-10"></div>
+
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 tracking-tight">
+                    Quick Actions
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Frequently used operations
+                  </p>
+                </div>
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center shadow-md">
+                  <Activity className="w-4 h-4 text-white" />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <button className="group w-full bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 hover:shadow-md text-gray-700 hover:text-gray-900 py-4 px-4 rounded-xl text-left flex items-center justify-between text-sm transition-all duration-200 relative overflow-hidden">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-blue-50 group-hover:bg-blue-100 rounded-lg flex items-center justify-center mr-3 transition-colors">
+                      <Timer className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-gray-900">
+                        Generate Attendance Report
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Export detailed attendance data
+                      </div>
+                    </div>
+                  </div>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full transform group-hover:translate-x-0.5 transition-transform"></div>
+                    </div>
+                  </div>
+                </button>
+
+                <button className="group w-full bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 hover:shadow-md text-gray-700 hover:text-gray-900 py-4 px-4 rounded-xl text-left flex items-center justify-between text-sm transition-all duration-200 relative overflow-hidden">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-green-50 group-hover:bg-green-100 rounded-lg flex items-center justify-center mr-3 transition-colors">
+                      <Activity className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-gray-900">
+                        Export Time Logs
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Download time tracking records
+                      </div>
+                    </div>
+                  </div>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full transform group-hover:translate-x-0.5 transition-transform"></div>
+                    </div>
+                  </div>
+                </button>
+
+                <button className="group w-full bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 hover:shadow-md text-gray-700 hover:text-gray-900 py-4 px-4 rounded-xl text-left flex items-center justify-between text-sm transition-all duration-200 relative overflow-hidden">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-orange-50 group-hover:bg-orange-100 rounded-lg flex items-center justify-center mr-3 transition-colors">
+                      <AlertTriangle className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-gray-900">
+                        View Attendance Issues
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Check flagged attendance records
+                      </div>
+                    </div>
+                  </div>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full transform group-hover:translate-x-0.5 transition-transform"></div>
+                    </div>
+                  </div>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -745,74 +948,153 @@ const TeamLeaderDashboard = () => {
           ></div>
 
           {/* Modal Content */}
-          <div className="relative bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-lg z-10">
+          <div className="relative bg-white rounded-2xl p-0 max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden shadow-2xl border border-gray-200">
             {/* Header */}
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50/50">
               <h3 className="text-xl font-bold text-gray-900">
-                Employee Details
+                Details for {selectedEmployee.name}
               </h3>
               <button
                 onClick={() => setSelectedEmployee(null)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 p-1 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <XCircle className="w-6 h-6" />
               </button>
             </div>
 
-            {/* Main Content */}
-            <div className="grid grid-cols-2 gap-6">
-              {/* Left Column */}
-              <div>
-                {/* Avatar & Name */}
-                <div className="flex items-center space-x-4 mb-6">
-                  <img
-                    src={selectedEmployee.avatar}
-                    alt={selectedEmployee.name}
-                    className="w-20 h-20 rounded-full object-cover"
-                  />
-                  <div>
-                    <h4 className="text-lg font-semibold">
-                      {selectedEmployee.name}
-                    </h4>
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium border ${
-                        statusColors[selectedEmployee.status]
-                      }`}
-                    >
-                      {selectedEmployee.status}
-                    </span>
-                    {selectedEmployee.isLate && (
-                      <div className="mt-2">
-                        <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
-                          Late Arrival
-                        </span>
+            {/* Scrollable Content */}
+            <div className="overflow-y-auto max-h-[calc(90vh-80px)] p-6">
+              <div className="grid grid-cols-12 gap-6">
+                {/* Left Column - Employee Info */}
+                <div className="col-span-5 space-y-6">
+                  {/* Employee Details Card */}
+                  <div className="bg-white border border-gray-200 rounded-xl p-5">
+                    <div className="flex items-start space-x-4 mb-6">
+                      <div className="relative">
+                        <img
+                          src={selectedEmployee.avatar}
+                          alt={selectedEmployee.name}
+                          className="w-16 h-16 rounded-xl object-cover border-2 border-gray-100"
+                        />
+                        <div
+                          className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white ${
+                            selectedEmployee.status === "Present"
+                              ? "bg-green-500"
+                              : selectedEmployee.status === "Break"
+                              ? "bg-blue-500"
+                              : selectedEmployee.status === "Lunch"
+                              ? "bg-orange-500"
+                              : selectedEmployee.status === "Absent"
+                              ? "bg-red-500"
+                              : "bg-gray-400"
+                          }`}
+                        />
                       </div>
-                    )}
-                  </div>
-                </div>
+                      <div className="flex-1">
+                        <h4 className="text-lg font-bold text-gray-900 mb-1">
+                          {selectedEmployee.name}
+                        </h4>
+                        <span
+                          className={`inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium border ${
+                            statusColors[selectedEmployee.status]
+                          }`}
+                        >
+                          {selectedEmployee.status}
+                        </span>
+                        {selectedEmployee.isLate && (
+                          <div className="mt-2">
+                            <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-lg border border-orange-200">
+                              Late Arrival
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-                {/* Today's Schedule */}
-                <div className="space-y-4">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h5 className="font-semibold text-gray-800 mb-3">
+                    <div className="space-y-4">
+                      <div className="flex items-center text-sm">
+                        <div className="w-5 h-5 rounded-md bg-gray-100 flex items-center justify-center mr-3">
+                          <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 text-xs uppercase tracking-wide">
+                            EMPLOYEE ID
+                          </span>
+                          <div className="font-semibold text-gray-900">
+                            {selectedEmployee.employeeId || "#EMP001"}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center text-sm">
+                        <div className="w-5 h-5 rounded-md bg-gray-100 flex items-center justify-center mr-3">
+                          <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 text-xs uppercase tracking-wide">
+                            EMAIL ADDRESS
+                          </span>
+                          <div className="font-medium text-gray-900">
+                            {selectedEmployee.email || "employee@company.com"}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center text-sm">
+                        <div className="w-5 h-5 rounded-md bg-gray-100 flex items-center justify-center mr-3">
+                          <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 text-xs uppercase tracking-wide">
+                            POSITION
+                          </span>
+                          <div className="font-medium text-gray-900">
+                            {selectedEmployee.position ||
+                              "Customer Service Rep"}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center text-sm">
+                        <div className="w-5 h-5 rounded-md bg-gray-100 flex items-center justify-center mr-3">
+                          <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 text-xs uppercase tracking-wide">
+                            DEPARTMENT
+                          </span>
+                          <div className="font-medium text-gray-900">
+                            {selectedEmployee.department || "Customer Support"}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Today's Schedule */}
+                  <div className="bg-white border border-gray-200 rounded-xl p-5">
+                    <h5 className="font-bold text-gray-900 mb-4 flex items-center">
+                      <Clock className="w-5 h-5 mr-2 text-gray-600" />
                       Today's Schedule
                     </h5>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Time In:</span>
-                        <span className="font-medium">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center py-2">
+                        <span className="text-gray-600 text-sm">Time In:</span>
+                        <span className="font-semibold text-gray-900">
                           {selectedEmployee.timeIn || "Not yet"}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Time Out:</span>
-                        <span className="font-medium">
+                      <div className="flex justify-between items-center py-2">
+                        <span className="text-gray-600 text-sm">Time Out:</span>
+                        <span className="font-semibold text-gray-900">
                           {selectedEmployee.timeOut || "Not yet"}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Work Hours:</span>
-                        <span className="font-medium">
+                      <div className="flex justify-between items-center py-2">
+                        <span className="text-gray-600 text-sm">
+                          Work Hours:
+                        </span>
+                        <span className="font-semibold text-gray-900">
                           {selectedEmployee.workHours}
                         </span>
                       </div>
@@ -820,30 +1102,33 @@ const TeamLeaderDashboard = () => {
                   </div>
 
                   {/* Time Deviations */}
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h5 className="font-semibold text-gray-800 mb-3">
+                  <div className="bg-white border border-gray-200 rounded-xl p-5">
+                    <h5 className="font-bold text-gray-900 mb-4 flex items-center">
+                      <TrendingUp className="w-5 h-5 mr-2 text-gray-600" />
                       Time Deviations
                     </h5>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Overtime:</span>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center py-2">
+                        <span className="text-gray-600 text-sm">Overtime:</span>
                         <span
-                          className={`font-medium ${
+                          className={`font-semibold ${
                             selectedEmployee.overtime !== "0:00"
                               ? "text-purple-600"
-                              : ""
+                              : "text-gray-900"
                           }`}
                         >
                           {selectedEmployee.overtime}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Undertime:</span>
+                      <div className="flex justify-between items-center py-2">
+                        <span className="text-gray-600 text-sm">
+                          Undertime:
+                        </span>
                         <span
-                          className={`font-medium ${
+                          className={`font-semibold ${
                             selectedEmployee.undertime !== "0:00"
                               ? "text-red-600"
-                              : ""
+                              : "text-gray-900"
                           }`}
                         >
                           {selectedEmployee.undertime}
@@ -852,88 +1137,163 @@ const TeamLeaderDashboard = () => {
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Right Column */}
-              <div>
-                {/* Current Status */}
-                <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                  <h5 className="font-semibold text-gray-800 mb-2">
-                    Current Status
-                  </h5>
-                  <div className="space-y-2">
-                    {selectedEmployee.breakStatus && (
-                      <div className="flex items-center text-sm">
-                        <Coffee className="w-4 h-4 text-blue-600 mr-2" />
-                        <span className="text-blue-800">
-                          {selectedEmployee.breakStatus}
-                        </span>
+                {/* Right Column */}
+                <div className="col-span-7 space-y-6">
+                  {/* Tardiness Details */}
+                  <div className="bg-white border border-gray-200 rounded-xl p-5">
+                    <h5 className="font-bold text-gray-900 mb-4 flex items-center">
+                      <Clock className="w-5 h-5 mr-2 text-gray-600" />
+                      Tardiness Details
+                    </h5>
+
+                    <div className="grid grid-cols-3 gap-4 mb-4">
+                      <div className="bg-gray-50 p-3 rounded-lg text-center">
+                        <div className="text-sm text-gray-600 mb-1">
+                          Scheduled In
+                        </div>
+                        <div className="font-bold text-gray-900">
+                          {selectedEmployee.scheduledIn || "9:00 A.M."}
+                        </div>
                       </div>
-                    )}
-                    {selectedEmployee.lunchStatus && (
-                      <div className="flex items-center text-sm">
-                        <Utensils className="w-4 h-4 text-yellow-600 mr-2" />
-                        <span className="text-yellow-800">
-                          {selectedEmployee.lunchStatus}
-                        </span>
+                      <div className="bg-gray-50 p-3 rounded-lg text-center">
+                        <div className="text-sm text-gray-600 mb-1">
+                          Actual In
+                        </div>
+                        <div className="font-bold text-gray-900">
+                          {selectedEmployee.actualIn || "9:15 A.M."}
+                        </div>
                       </div>
-                    )}
-                    <div className="flex items-center text-sm">
-                      <Activity className="w-4 h-4 text-gray-600 mr-2" />
-                      <span className="text-gray-700">
-                        {selectedEmployee.lastActivity}
-                      </span>
+                      <div className="bg-red-50 p-3 rounded-lg text-center border border-red-100">
+                        <div className="text-sm text-red-600 mb-1">
+                          Minutes Late
+                        </div>
+                        <div className="font-bold text-red-600">
+                          {selectedEmployee.minutesLate || "15 mins"}
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500">
-                      {selectedEmployee.activityTime}
+
+                    {/* Notes Section */}
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h6 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        Notes
+                      </h6>
+                      <textarea
+                        className="w-full p-3 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        rows="3"
+                        placeholder="Add notes about tardiness..."
+                        defaultValue={
+                          selectedEmployee.notes || "Traffic on the way"
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {/* Current Status */}
+                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-5">
+                    <h5 className="font-bold text-gray-900 mb-4 flex items-center">
+                      <Activity className="w-5 h-5 mr-2 text-blue-600" />
+                      Current Status
+                    </h5>
+                    <div className="space-y-3">
+                      {selectedEmployee.breakStatus && (
+                        <div className="flex items-center text-sm">
+                          <Coffee className="w-4 h-4 text-blue-600 mr-3" />
+                          <span className="text-blue-800 font-medium">
+                            {selectedEmployee.breakStatus}
+                          </span>
+                        </div>
+                      )}
+                      {selectedEmployee.lunchStatus && (
+                        <div className="flex items-center text-sm">
+                          <Utensils className="w-4 h-4 text-orange-600 mr-3" />
+                          <span className="text-orange-800 font-medium">
+                            {selectedEmployee.lunchStatus}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-center text-sm">
+                        <Activity className="w-4 h-4 text-gray-600 mr-3" />
+                        <span className="text-gray-700 font-medium">
+                          {selectedEmployee.lastActivity}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-500 ml-7">
+                        {selectedEmployee.activityTime}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Call Attempts */}
+                  <div className="bg-white border border-gray-200 rounded-xl p-5">
+                    <h5 className="font-bold text-gray-900 mb-3">
+                      Call Attempts
+                    </h5>
+                    <p className="text-sm text-gray-600 mb-4">
+                      View the employee's call attempt history and details.
+                    </p>
+                    <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center font-medium">
+                      <Users className="w-4 h-4 mr-2" />
+                      View Call Attempts
+                    </button>
+                  </div>
+
+                  {/* This Week Summary */}
+                  <div className="bg-white border border-gray-200 rounded-xl p-5">
+                    <h5 className="font-bold text-gray-900 mb-4 flex items-center">
+                      <BarChart2 className="w-5 h-5 mr-2 text-gray-600" />
+                      This Week Summary
+                    </h5>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-3 bg-green-50 rounded-lg border border-green-100">
+                        <div className="text-2xl font-bold text-green-600">
+                          4
+                        </div>
+                        <div className="text-xs text-green-700 font-medium">
+                          Days Present
+                        </div>
+                      </div>
+                      <div className="text-center p-3 bg-red-50 rounded-lg border border-red-100">
+                        <div className="text-2xl font-bold text-red-600">1</div>
+                        <div className="text-xs text-red-700 font-medium">
+                          Days Absent
+                        </div>
+                      </div>
+                      <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-100">
+                        <div className="text-2xl font-bold text-orange-600">
+                          2
+                        </div>
+                        <div className="text-xs text-orange-700 font-medium">
+                          Late Arrivals
+                        </div>
+                      </div>
+                      <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-100">
+                        <div className="text-2xl font-bold text-purple-600">
+                          3.5h
+                        </div>
+                        <div className="text-xs text-purple-700 font-medium">
+                          Total Overtime
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-
-                {/* Actions */}
-                <div className="space-y-3">
-                  <h5 className="font-semibold text-gray-800">Actions</h5>
-                  <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
-                    <Eye className="w-4 h-4 mr-2" /> View Full Time Log
-                  </button>
-                  <button className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
-                    <CheckCircle className="w-4 h-4 mr-2" /> Send Notification
-                  </button>
-                  <button className="w-full bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 transition-colors flex items-center justify-center">
-                    <AlertTriangle className="w-4 h-4 mr-2" /> Flag Attendance
-                    Issue
-                  </button>
-                </div>
-
-                {/* This Week Summary */}
-                <div className="mt-6 bg-gray-50 p-4 rounded-lg">
-                  <h5 className="font-semibold text-gray-800 mb-3">
-                    This Week Summary
-                  </h5>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-green-600">4</div>
-                      <div className="text-xs text-gray-600">Days Present</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-red-600">1</div>
-                      <div className="text-xs text-gray-600">Days Absent</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-orange-600">2</div>
-                      <div className="text-xs text-gray-600">Late Arrivals</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-purple-600">
-                        3.5h
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        Total Overtime
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="flex justify-end space-x-3 p-6 border-t border-gray-100 bg-gray-50/50">
+              <button
+                onClick={() => setSelectedEmployee(null)}
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              >
+                Close
+              </button>
+              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                Edit
+              </button>
             </div>
           </div>
         </div>
