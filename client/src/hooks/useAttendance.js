@@ -2,10 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { DateTime } from "luxon";
 import toast from "react-hot-toast";
 import api from "../utils/axios";
+import { formatTime, formatDate } from "../utils/formatDateTime";
 
 export const useAttendance = (userId, filter) => {
-  const fmt = "hh:mm a";
-  const zone = "Asia/Manila";
   const [attendance, setAttendance] = useState(null);
   const [attendancesByStatus, setAttendancesByStatus] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,36 +43,6 @@ export const useAttendance = (userId, filter) => {
 
       // TODO: improve this, so DRY! HAHAHAHAAH
       const formattedData = response.data.map((item) => {
-        const timeIn = item.timeIn
-          ? DateTime.fromISO(item.timeIn).setZone(zone).toFormat(fmt)
-          : "Not Logged In";
-
-        const shiftStart = item.shiftStart
-          ? DateTime.fromISO(item.shiftStart).setZone(zone).toFormat(fmt)
-          : "Not Logged In";
-
-        const createdAt = item.createdAt
-          ? DateTime.fromISO(item.createdAt)
-              .setZone(zone)
-              .toFormat("yyyy-MM-dd")
-          : "Not Logged In";
-
-        const firstBreakStart = item.firstBreakStart
-          ? DateTime.fromISO(item.firstBreakStart).setZone(zone).toFormat(fmt)
-          : "---";
-
-        const firstBreakEnd = item.firstBreakEnd
-          ? DateTime.fromISO(item.firstBreakEnd).setZone(zone).toFormat(fmt)
-          : "---";
-
-        const secondBreakStart = item.secondBreakStart
-          ? DateTime.fromISO(item.secondBreakStart).setZone(zone).toFormat(fmt)
-          : "---";
-
-        const secondBreakEnd = item.secondBreakEnd
-          ? DateTime.fromISO(item.secondBreakEnd).setZone(zone).toFormat(fmt)
-          : "---";
-
         const accounts = item.accounts.map((acc) => acc.name).join(", ");
 
         // Calculating if the user is late or not
@@ -83,21 +52,21 @@ export const useAttendance = (userId, filter) => {
 
         return {
           id: item.user._id,
-          date: createdAt,
+          date: formatDate(item.createdAt),
           name: `${item.user.firstName} ${item.user.lastName}`,
           email: item.user.email,
-          shiftStart,
-          firstBreakStart,
-          firstBreakEnd,
-          secondBreakStart,
-          secondBreakEnd,
-          timeIn,
+          shiftStart: formatTime(item.shiftStart),
+          firstBreakStart: formatTime(item.firstBreakStart),
+          firstBreakEnd: formatTime(item.firstBreakEnd),
+          secondBreakStart: formatTime(item.secondBreakStart),
+          secondBreakEnd: formatTime(item.secondBreakEnd),
+          timeIn: formatTime(item.timeIn),
           punctuality,
           accounts,
         };
       });
 
-      setAttendancesByStatus(formattedData);
+        setAttendancesByStatus(formattedData);
     } catch (error) {
       console.error("Error fetching attendances by status:", error);
       setError("Failed to fetch attendances by status");
