@@ -50,6 +50,12 @@ class Attendance {
       case "onLunch":
         matchStage.status = "On Lunch";
         break;
+      case "undertime":
+        matchStage.timeOut = { $exists: true, $ne: null };
+        matchStage.$expr = {
+          $gt: ["$shiftEnd", "$timeOut"], //  shiftEnd > timeOut →
+        };
+        break;
       case "all":
       default:
         // No timeOut filter → return everything
