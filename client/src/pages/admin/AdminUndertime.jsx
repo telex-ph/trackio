@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Table from "../../components/Table"; // your reusable Table component
+import Table from "../../components/Table";
 import { Edit, Trash2 } from "lucide-react";
 import { DateTime } from "luxon";
 import { ChevronRight } from "lucide-react";
@@ -18,7 +18,7 @@ const AdminUndertime = () => {
   const filter = {
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
-    status: "late",
+    status: "undertime",
   };
 
   const { attendancesByStatus, loading } = useAttendance(null, filter);
@@ -37,34 +37,6 @@ const AdminUndertime = () => {
       [field]: isoDate,
     }));
   };
-
-  // Mock Data
-  const data = [
-    {
-      id: "EMP401",
-      name: "Alice Johnson",
-      email: "alice.johnson@example.com",
-      account: "AliceJ123",
-      scheduledTimeOut: "6:00 P.M.",
-      timeOut: "5:45 P.M.",
-    },
-    {
-      id: "EMP402",
-      name: "Bob Smith",
-      email: "bob.smith@example.com",
-      account: "BobS456",
-      scheduledTimeOut: "6:00 P.M.",
-      timeOut: "6:00 P.M.",
-    },
-    {
-      id: "EMP403",
-      name: "Charlie Brown",
-      email: "charlie.brown@example.com",
-      account: "CharlieB789",
-      scheduledTimeOut: "6:00 P.M.",
-      timeOut: "5:30 P.M.",
-    },
-  ];
 
   // Helper to calculate undertime in minutes
   const calculateUndertime = (scheduled, actual) => {
@@ -100,14 +72,14 @@ const AdminUndertime = () => {
     },
     {
       headerName: "Account",
-      field: "account",
+      field: "accounts",
       sortable: true,
       filter: true,
       flex: 1,
     },
     {
-      headerName: "Scheduled Time Out",
-      field: "scheduledTimeOut",
+      headerName: "Shirt Start",
+      field: "shiftEnd",
       sortable: true,
       filter: false,
       flex: 1,
@@ -123,10 +95,6 @@ const AdminUndertime = () => {
       headerName: "Undertime Duration",
       field: "undertime",
       flex: 1,
-      renderCell: (row) => {
-        const minutes = calculateUndertime(row.scheduledTimeOut, row.timeOut);
-        return minutes > 0 ? `${minutes} min` : "";
-      },
     },
     {
       headerName: "Action",
@@ -184,7 +152,7 @@ const AdminUndertime = () => {
         </div>
       </section>
 
-      <Table data={data} columns={columns} />
+      <Table data={attendancesByStatus} columns={columns} />
     </div>
   );
 };

@@ -49,7 +49,7 @@ const AdminOnBreak = () => {
       field: "name",
       sortable: true,
       filter: true,
-      flex: 2,
+      flex: 1,
     },
     {
       headerName: "Email",
@@ -66,32 +66,24 @@ const AdminOnBreak = () => {
       flex: 1,
     },
     {
-      headerName: "1st Break Start",
-      field: "firstBreakStart",
-      sortable: true,
+      headerName: "Morning Break",
       filter: false,
       flex: 1,
+      cellRenderer: (params) => {
+        const breakStart = params.data.firstBreakStart;
+        const breakEnd = params.data.firstBreakEnd;
+        return `${breakStart} - ${breakEnd}`;
+      },
     },
     {
-      headerName: "1st Break End",
-      field: "firstBreakEnd",
-      sortable: true,
+      headerName: "Afternoon Break",
       filter: false,
       flex: 1,
-    },
-    {
-      headerName: "2nd Break Start",
-      field: "secondBreakStart",
-      sortable: true,
-      filter: false,
-      flex: 1,
-    },
-    {
-      headerName: "2nd Break End",
-      field: "secondBreakEnd",
-      sortable: true,
-      filter: false,
-      flex: 1,
+      cellRenderer: (params) => {
+        const breakStart = params.data.secondBreakStart;
+        const breakEnd = params.data.secondBreakEnd;
+        return `${breakStart} - ${breakEnd}`;
+      },
     },
     {
       headerName: "Extended Break Duration",
