@@ -8,7 +8,7 @@ import { DateTime } from "luxon";
 import { Datepicker } from "flowbite-react";
 import { useAttendance } from "../../hooks/useAttendance";
 
-const AdminEmployeeStatus = () => {
+const AdminStatus = () => {
   const zone = "Asia/Manila";
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -126,34 +126,14 @@ const AdminEmployeeStatus = () => {
 
   return (
     <div>
-      <section className="flex flex-col mb-2">
+      <section className="flex flex-col mb-4">
         <div className="flex items-center gap-1">
-          <h2>Tracking</h2> <ChevronRight className="w-6 h-6" />{" "}
-          <h2>Employee Status</h2>
+          <h2>Tracking</h2> <ChevronRight className="w-6 h-6" /> <h2>Status</h2>
         </div>
         <p className="text-light">
-          Any updates will reflect on the admin account profile.
+          Monitor employees’ real-time statuses. Any updates made here will
+          instantly reflect in their profiles and activity records.
         </p>
-      </section>
-
-      {/* Date Picker */}
-      <section className="flex gap-4 mb-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Start Date</label>
-          <Datepicker
-            value={DateTime.fromISO(dateRange.startDate)
-              .setZone(zone)
-              .toJSDate()}
-            onChange={(date) => handleDatePicker(date, "startDate")}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">End Date</label>
-          <Datepicker
-            value={DateTime.fromISO(dateRange.endDate).setZone(zone).toJSDate()}
-            onChange={(date) => handleDatePicker(date, "endDate")}
-          />
-        </div>
       </section>
 
       <Table columns={columns} data={attendancesByStatus} />
@@ -240,4 +220,4 @@ const AdminEmployeeStatus = () => {
   );
 };
 
-export default AdminEmployeeStatus;
+export default AdminStatus;

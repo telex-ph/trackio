@@ -199,7 +199,7 @@ const AdminSidebar = ({ isCollapsed }) => (
       isCollapsed={isCollapsed}
     >
       {[
-        { path: "employee-status", label: "Status", Icon: UserCheck },
+        { path: "status", label: "Status", Icon: UserCheck },
         { path: "on-break", label: "On Break", Icon: Coffee },
         { path: "on-lunch", label: "On Lunch", Icon: Sun },
         { path: "bio-break", label: "Bio Break", Icon: Moon },

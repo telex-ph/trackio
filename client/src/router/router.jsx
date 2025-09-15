@@ -30,7 +30,7 @@ import AdminDashboard from "../pages/admin/AdminDashboard";
 import AdminTimeIn from "../pages/admin/AdminTimeIn";
 import AdminTimeOut from "../pages/admin/AdminTimeOut";
 import AdminAbsentees from "../pages/admin/AdminAbsentees";
-import AdminEmployeeStatus from "../pages/admin/AdminEmployeeStatus";
+import AdminStatus from "../pages/admin/AdminStatus";
 import AdminLate from "../pages/admin/AdminLate";
 import AdminOnBreak from "../pages/admin/AdminOnBreak";
 import AdminOnLunch from "../pages/admin/AdminOnLunch";
@@ -84,7 +84,7 @@ const router = createBrowserRouter([
               {
                 path: "monitoring",
                 children: [
-                  { path: "employee-status", element: <AdminEmployeeStatus /> },
+                  { path: "status", element: <AdminStatus /> },
                   { path: "on-break", element: <AdminOnBreak /> },
                   { path: "on-lunch", element: <AdminOnLunch /> },
                   { path: "bio-break", element: <AdminBioBreak /> },
