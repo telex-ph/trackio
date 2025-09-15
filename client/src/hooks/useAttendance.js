@@ -45,28 +45,54 @@ export const useAttendance = (userId, filter) => {
       const formattedData = response.data.map((item) => {
         const accounts = item.accounts.map((acc) => acc.name).join(", ");
 
+        const formattedTimeIn = formatTime(item.timeIn);
+        const formattedTimeOut = formatTime(item.timeOut);
+        const formattedShiftStart = formatTime(item.shiftStart);
+        const formattedShiftEnd = formatTime(item.shiftEnd);
+        const formattedFirstBreakStart = formatTime(item.firstBreakStart);
+        const formattedFirstBreakEnd = formatTime(item.firstBreakEnd);
+        const formattedSecondBreakStart = formatTime(item.secondBreakStart);
+        const formattedSecondBreakEnd = formatTime(item.secondBreakEnd);
+
         // Calculating if the user is late or not
         const shift = DateTime.fromISO(item.shiftStart);
         const time = DateTime.fromISO(item.timeIn);
         const punctuality = time <= shift ? "On Time" : "Late";
+
+        // Calculate difference in minutes, for minutes of tardiness
+        const fmt = "hh:mm a";
+        const zone = "Asia/Manila";
+        const tIn = DateTime.fromFormat(formattedTimeIn, fmt, { zone });
+        const sStart = DateTime.fromFormat(formattedShiftStart, fmt, { zone });
+
+        const tardiness = tIn.diff(sStart, "minutes").minutes;
 
         return {
           id: item.user._id,
           date: formatDate(item.createdAt),
           name: `${item.user.firstName} ${item.user.lastName}`,
           email: item.user.email,
-          shiftStart: formatTime(item.shiftStart),
-          firstBreakStart: formatTime(item.firstBreakStart),
-          firstBreakEnd: formatTime(item.firstBreakEnd),
-          secondBreakStart: formatTime(item.secondBreakStart),
-          secondBreakEnd: formatTime(item.secondBreakEnd),
-          timeIn: formatTime(item.timeIn),
+
+          shiftStart: formattedShiftStart,
+          shiftEnd: formattedShiftEnd,
+
+          firstBreakStart: formattedFirstBreakStart,
+          firstBreakEnd: formattedFirstBreakEnd,
+
+          secondBreakStart: formattedSecondBreakStart,
+          secondBreakEnd: formattedSecondBreakEnd,
+
+          timeIn: formattedTimeIn,
+          timeOut: formattedTimeOut,
+
+          tardiness,
           punctuality,
           accounts,
+          status: item.status,
         };
       });
 
-        setAttendancesByStatus(formattedData);
+      setAttendancesByStatus(formattedData);
     } catch (error) {
       console.error("Error fetching attendances by status:", error);
       setError("Failed to fetch attendances by status");
