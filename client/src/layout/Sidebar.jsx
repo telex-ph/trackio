@@ -35,7 +35,7 @@ const CustomCollapse = ({ icon, label, children, isCollapsed }) => {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col w-ful">
       <button
         onClick={() => setOpen(!open)}
         className="flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200 w-full"
@@ -55,8 +55,8 @@ const CustomCollapse = ({ icon, label, children, isCollapsed }) => {
 
       <div
         className={`flex flex-col overflow-hidden transition-all duration-300 ${
-          open ? "max-h-screen mt-1" : "max-h-0"
-        }`}
+          !isCollapsed && "pl-3"
+        } ${open ? "max-h-screen mt-1" : "max-h-0"}`}
       >
         {children}
       </div>
