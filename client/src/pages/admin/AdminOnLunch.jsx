@@ -91,34 +91,16 @@ const AdminOnLunch = () => {
 
   return (
     <div>
-      <section className="flex flex-col mb-2">
+      <section className="flex flex-col mb-4">
         <div className="flex items-center gap-1">
-          <h2>Monitoring</h2> <ChevronRight className="w-6 h-6" />
-          <h2>Lunch</h2>
+          <h2>Monitoring</h2> <ChevronRight className="w-6 h-6" />{" "}
+          <h2>On Lunch</h2>
         </div>
         <p className="text-light">
-          Any updates will reflect on the admin account profile.
+          View employees who are currently on their lunch break and monitor the
+          duration. This helps manage overall team availability throughout the
+          day.
         </p>
-      </section>
-
-      {/* Date Picker */}
-      <section className="flex gap-4 mb-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Start Date</label>
-          <Datepicker
-            value={DateTime.fromISO(dateRange.startDate)
-              .setZone(zone)
-              .toJSDate()}
-            onChange={(date) => handleDatePicker(date, "startDate")}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">End Date</label>
-          <Datepicker
-            value={DateTime.fromISO(dateRange.endDate).setZone(zone).toJSDate()}
-            onChange={(date) => handleDatePicker(date, "endDate")}
-          />
-        </div>
       </section>
 
       <Table data={attendancesByStatus} columns={columns} />

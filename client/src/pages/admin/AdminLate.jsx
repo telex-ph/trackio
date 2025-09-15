@@ -123,7 +123,7 @@ const AdminLate = () => {
     <div>
       <section className="flex flex-col mb-2">
         <div className="flex items-center gap-1">
-          <h2>Monitoring</h2> <ChevronRight className="w-6 h-6" />
+          <h2>Tracking</h2> <ChevronRight className="w-6 h-6" />
           <h2>Late</h2>
         </div>
         <p className="text-light">

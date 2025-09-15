@@ -167,13 +167,15 @@ const AdminAbsentees = () => {
   return (
     <div>
       {/* Page Header */}
-      <section className="flex flex-col mb-2">
+      <section className="flex flex-col mb-4">
         <div className="flex items-center gap-1">
           <h2>Tracking</h2> <ChevronRight className="w-6 h-6" />{" "}
           <h2>Absentees</h2>
         </div>
         <p className="text-light">
-          Any updates will reflect on the admin account profile.
+          View a list of employees who are absent for the day or a selected date
+          range. This helps maintain accurate attendance records and ensures
+          proper workforce planning.
         </p>
       </section>
 

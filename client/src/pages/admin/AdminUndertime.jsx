@@ -1,8 +1,43 @@
-import React from "react";
+import { useState } from "react";
 import Table from "../../components/Table"; // your reusable Table component
 import { Edit, Trash2 } from "lucide-react";
+import { DateTime } from "luxon";
+import { ChevronRight } from "lucide-react";
+import { useAttendance } from "../../hooks/useAttendance";
+import { Datepicker } from "flowbite-react";
 
 const AdminUndertime = () => {
+  const zone = "Asia/Manila";
+
+  // Initialize with today in PH time
+  const [dateRange, setDateRange] = useState({
+    startDate: DateTime.now().setZone(zone).startOf("day").toUTC().toISO(),
+    endDate: DateTime.now().setZone(zone).endOf("day").toUTC().toISO(),
+  });
+
+  const filter = {
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+    status: "late",
+  };
+
+  const { attendancesByStatus, loading } = useAttendance(null, filter);
+
+  // handle datepicker
+  const handleDatePicker = (date, field) => {
+    if (!date) return;
+
+    const isoDate =
+      field === "startDate"
+        ? DateTime.fromJSDate(date).setZone(zone).startOf("day").toUTC().toISO()
+        : DateTime.fromJSDate(date).setZone(zone).endOf("day").toUTC().toISO();
+
+    setDateRange((prev) => ({
+      ...prev,
+      [field]: isoDate,
+    }));
+  };
+
   // Mock Data
   const data = [
     {
@@ -49,11 +84,41 @@ const AdminUndertime = () => {
 
   const columns = [
     { headerName: "ID", field: "id", sortable: true, filter: true, flex: 1 },
-    { headerName: "Name", field: "name", sortable: true, filter: true, flex: 2 },
-    { headerName: "Email Address", field: "email", sortable: true, filter: true, flex: 2 },
-    { headerName: "Account", field: "account", sortable: true, filter: true, flex: 1 },
-    { headerName: "Scheduled Time Out", field: "scheduledTimeOut", sortable: true, filter: false, flex: 1 },
-    { headerName: "Time Out", field: "timeOut", sortable: true, filter: false, flex: 1 },
+    {
+      headerName: "Name",
+      field: "name",
+      sortable: true,
+      filter: true,
+      flex: 2,
+    },
+    {
+      headerName: "Email Address",
+      field: "email",
+      sortable: true,
+      filter: true,
+      flex: 2,
+    },
+    {
+      headerName: "Account",
+      field: "account",
+      sortable: true,
+      filter: true,
+      flex: 1,
+    },
+    {
+      headerName: "Scheduled Time Out",
+      field: "scheduledTimeOut",
+      sortable: true,
+      filter: false,
+      flex: 1,
+    },
+    {
+      headerName: "Time Out",
+      field: "timeOut",
+      sortable: true,
+      filter: false,
+      flex: 1,
+    },
     {
       headerName: "Undertime Duration",
       field: "undertime",
@@ -88,7 +153,37 @@ const AdminUndertime = () => {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Admin Undertime</h2>
+      <section className="flex flex-col mb-4">
+        <div className="flex items-center gap-1">
+          <h2>Tracking</h2> <ChevronRight className="w-6 h-6" />
+          <h2>Undertime</h2>
+        </div>
+        <p className="text-light">
+          Review employees who logged out earlier than their scheduled shift
+          end. This helps track productivity impact, identify patterns, and
+          maintain proper attendance records.
+        </p>
+      </section>
+
+      <section className="flex gap-4 mb-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Start Date</label>
+          <Datepicker
+            value={DateTime.fromISO(dateRange.startDate)
+              .setZone(zone)
+              .toJSDate()}
+            onChange={(date) => handleDatePicker(date, "startDate")}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">End Date</label>
+          <Datepicker
+            value={DateTime.fromISO(dateRange.endDate).setZone(zone).toJSDate()}
+            onChange={(date) => handleDatePicker(date, "endDate")}
+          />
+        </div>
+      </section>
+
       <Table data={data} columns={columns} />
     </div>
   );
