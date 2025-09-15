@@ -200,8 +200,8 @@ const AdminSidebar = ({ isCollapsed }) => (
     >
       {[
         { path: "employee-status", label: "Status", Icon: UserCheck },
-        { path: "on-break", label: "Break", Icon: Coffee },
-        { path: "on-lunch", label: "Lunch", Icon: Sun },
+        { path: "on-break", label: "On Break", Icon: Coffee },
+        { path: "on-lunch", label: "On Lunch", Icon: Sun },
         { path: "bio-break", label: "Bio Break", Icon: Moon },
         { path: "meeting", label: "Meeting", Icon: Video },
       ].map(({ path, label, Icon }) => (
