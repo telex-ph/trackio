@@ -30,7 +30,14 @@ import Role from "../constants/roles";
 import { useState } from "react";
 
 // Custom Collapse (controlled from parent)
-const CustomCollapse = ({ icon, label, children, isCollapsed, open, onToggle }) => {
+const CustomCollapse = ({
+  icon,
+  label,
+  children,
+  isCollapsed,
+  open,
+  onToggle,
+}) => {
   return (
     <div className="flex flex-col w-full">
       <button
@@ -101,7 +108,11 @@ const AgentSidebar = ({ isCollapsed }) => (
 );
 
 // Team Leader Sidebar
-const TeamLeaderSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
+const TeamLeaderSidebar = ({
+  isCollapsed,
+  activeDropdown,
+  setActiveDropdown,
+}) => (
   <SidebarItemGroup className="space-y-1">
     <SidebarLink
       to="/team-leader/dashboard"
@@ -285,7 +296,8 @@ export const Sidebar = ({ isCollapsed }) => {
         <SidebarItems>{renderSidebar()}</SidebarItems>
       </Side>
 
-      {!isCollapsed && (
+      {/* Shift Schedule only for Agent */}
+      {user.role === Role.AGENT && !isCollapsed && (
         <section className="bg-white border border-gray-200 m-2 p-3 text-center rounded-lg">
           <p className="font-semibold text-gray-800">Shift Schedule:</p>
           <p className="text-gray-600 text-sm">9:00 AM - 6:00 PM</p>
