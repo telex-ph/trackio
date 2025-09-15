@@ -73,9 +73,7 @@ const TLPerformancePage = () => {
   }, []);
 
   // Top absents and lates
-  const topAbsents = agentData
-    .filter((a) => a.status === "Absent")
-    .slice(0, 3);
+  const topAbsents = agentData.filter((a) => a.status === "Absent").slice(0, 3);
   const topLates = agentData.filter((a) => a.status === "Late").slice(0, 3);
 
   // Attendance trend chart
@@ -113,17 +111,29 @@ const TLPerformancePage = () => {
         label: "Performance Score",
         data: agentData.map((a) => a.performance),
         backgroundColor: agentData.map((a) =>
-          a.performance >= 75 ? "#22c55e" : a.performance >= 50 ? "#facc15" : "#f87171"
+          a.performance >= 75
+            ? "#22c55e"
+            : a.performance >= 50
+            ? "#facc15"
+            : "#f87171"
         ),
       },
     ],
   };
 
-  const chartOptions = { responsive: true, plugins: { legend: { position: "top" } } };
+  const chartOptions = {
+    responsive: true,
+    plugins: { legend: { position: "top" } },
+  };
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      <h2 className="text-3xl font-bold text-gray-800">TL Performance</h2>
+    <div className="space-y-6 min-h-screen">
+      <section className="flex flex-col mb-2">
+        <div className="flex items-center gap-1">
+          <h2>Performance</h2>
+        </div>
+        <p className="text-light">Records of employees with late attendance.</p>
+      </section>
 
       {/* Quick Snapshot */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
