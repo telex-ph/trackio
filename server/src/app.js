@@ -18,10 +18,17 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://trackio-frontend.vercel.app", "https://trackio-a0um.onrender.com"],
+    origin: [
+      "http://localhost:5173",
+      "https://trackio-frontend.vercel.app",
+      "https://trackio-a0um.onrender.com"
+    ],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/accounts", accountRoutes);

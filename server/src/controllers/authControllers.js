@@ -8,13 +8,49 @@ const publicPEM = process.env.PUBLIC_KEY;
 export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
-    const response = await User.login(email, password);
-    res.status(200).json(response);
+    const user = await User.login(email, password);
+
+    // ✅ Generate access + refresh tokens
+    const privateKey = await jose.importPKCS8(privatePEM, "RS256");
+
+    const accessToken = await new jose.SignJWT({ id: user._id, email: user.email })
+      .setProtectedHeader({ alg: "RS256" })
+      .setExpirationTime("15m")
+      .sign(privateKey);
+
+    const refreshToken = await new jose.SignJWT({ id: user._id, email: user.email })
+      .setProtectedHeader({ alg: "RS256" })
+      .setExpirationTime("30d")
+      .sign(privateKey);
+
+    // ✅ Set cookies
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      path: "/",
+      maxAge: 15 * 60 * 1000,
+    });
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      path: "/",
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+
+    // ✅ Return user info (without password)
+    res.status(200).json({
+      message: "Login successful",
+      user: { id: user._id, email: user.email },
+    });
   } catch (error) {
     console.error("Login error:", error.message);
     res.status(400).json({ error: error.message });
   }
 };
+
 
 // Creation of access and refresh token
 export const createToken = async (req, res) => {
