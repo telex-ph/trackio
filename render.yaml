@@ -2,7 +2,7 @@ services:
   - type: web
     name: trackio-backend
     env: node
-    rootDir: backend
+    rootDir: server
     buildCommand: npm install
     startCommand: npm start
     plan: free
@@ -17,7 +17,7 @@ services:
   - type: web
     name: trackio-frontend
     env: node
-    rootDir: frontend
+    rootDir: client
     buildCommand: npm install
     startCommand: npm run dev
     plan: free
