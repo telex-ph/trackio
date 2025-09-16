@@ -24,7 +24,7 @@ const Login = () => {
   const [showSplash, setShowSplash] = useState(true);
 
   // Right side animation state
-  //const [showVideo, setShowVideo] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
 
   // Splash screen (1.5s)
   useEffect(() => {
