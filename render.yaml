@@ -4,15 +4,17 @@ services:
     env: node
     rootDir: server
     buildCommand: npm install
-    startCommand: npm start
+    startCommand: node src/index.js
     plan: free
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 10000
       - key: MONGO_URI
-        sync: false
+        value: MONGO_URI=mongodb+srv://hernanidev:telexph102271080030@telexph.6fknsyx.mongodb.net/trackio?retryWrites=true&w=majority&appName=TelexPH&tls=true
       - key: JWT_SECRET
-        sync: false
+        value: yourSuperSecretKey
 
   - type: web
     name: trackio-frontend
