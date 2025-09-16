@@ -3,7 +3,6 @@ import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import session from "express-session";
-import MongoStore from "connect-mongo";
 
 // Routes imports
 import authRoutes from "../src/routes/authRoutes.js";
@@ -13,17 +12,12 @@ import attendanceRoutes from "../src/routes/attendanceRoutes.js";
 const app = express();
 dotenv.config();
 
-// Helper function to detect iOS Safari
-const isIOSSafari = (userAgent) => {
-  return /iPad|iPhone|iPod/.test(userAgent) && /WebKit/.test(userAgent) && !/Edge/.test(userAgent);
-};
-
 // Middlewares
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 
-// CORS should come before session
+// CORS configuration - mas specific for iOS
 app.use(
   cors({
     origin: [
@@ -33,42 +27,39 @@ app.use(
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+    exposedHeaders: ["Set-Cookie"],
   })
 );
 
-// Session configuration with iOS-specific handling
+// Session configuration - mas strict para sa iOS
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "telexph", 
-    resave: false,
+    resave: true, // Changed to true for iOS compatibility
     saveUninitialized: false,
-    rolling: true, // Reset expiration on each request
-    store: MongoStore.create({
-      mongoUrl: process.env.MONGODB_URI || process.env.DATABASE_URL,
-      touchAfter: 24 * 3600, // lazy session update
-      crypto: {
-        secret: process.env.SESSION_SECRET || "telexph"
-      }
-    }),
+    rolling: false, // Changed to false
     cookie: {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      domain: process.env.NODE_ENV === "production" ? ".onrender.com" : undefined,
     },
-    name: 'trackio.sid', // Custom session name
+    name: 'connect.sid', // Use default session name
   })
 );
 
-// Debug middleware for iOS - ILAGAY MO DITO
+// Debug middleware for iOS
 app.use((req, res, next) => {
   if (/iPad|iPhone|iPod/.test(req.get('User-Agent'))) {
     console.log('iOS Request:', {
       method: req.method,
       url: req.url,
       sessionId: req.sessionID,
-      sessionData: req.session
+      hasSessionData: !!req.session.user,
+      cookies: req.headers.cookie,
+      userAgent: req.get('User-Agent')
     });
   }
   next();
