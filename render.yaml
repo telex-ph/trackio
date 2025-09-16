@@ -10,9 +10,9 @@ services:
       - key: NODE_ENV
         value: production
       - key: MONGO_URI
-        sync: false
+        sync: false   # set this manually in Render dashboard
       - key: JWT_SECRET
-        sync: false
+        sync: false   # set this manually in Render dashboard
 
   - type: web
     name: trackio-frontend
