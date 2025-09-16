@@ -2,9 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import { DateTime } from "luxon";
 import toast from "react-hot-toast";
 import api from "../utils/axios";
+import { formatTime, formatDate } from "../utils/formatDateTime";
 
-export const useAttendance = (userId) => {
+export const useAttendance = (userId, filter) => {
   const [attendance, setAttendance] = useState(null);
+  const [attendancesByStatus, setAttendancesByStatus] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -24,6 +26,86 @@ export const useAttendance = (userId) => {
       setLoading(false);
     }
   }, [userId]);
+
+  // Get the attendances using status; on lunch
+  const fetchAttendancesByStatus = useCallback(async (filter) => {
+    if (!filter) return;
+
+    try {
+      setError(null);
+      const response = await api.get("/attendance/get-attendances", {
+        params: {
+          startDate: filter?.startDate,
+          endDate: filter?.endDate,
+          filter: filter?.status,
+        },
+      });
+
+      // TODO: improve this, so DRY! HAHAHAHAAH
+      const formattedData = response.data.map((item) => {
+        const accounts = item.accounts.map((acc) => acc.name).join(", ");
+
+        // Time formatting
+        const formattedTimeIn = formatTime(item.timeIn);
+        const formattedTimeOut = formatTime(item.timeOut);
+        const formattedShiftStart = formatTime(item.shiftStart);
+        const formattedShiftEnd = formatTime(item.shiftEnd);
+        const formattedFirstBreakStart = formatTime(item.firstBreakStart);
+        const formattedFirstBreakEnd = formatTime(item.firstBreakEnd);
+        const formattedSecondBreakStart = formatTime(item.secondBreakStart);
+        const formattedSecondBreakEnd = formatTime(item.secondBreakEnd);
+
+        // Calculating if the user is late or not
+        const shiftStart = DateTime.fromISO(item.shiftStart);
+        const timeIn = DateTime.fromISO(item.timeIn);
+        const punctuality = timeIn <= shiftStart ? "On Time" : "Late";
+
+        // Calculating if the user's shift adherence
+        const shiftEnd = DateTime.fromISO(item.shiftEnd);
+        const timeOut = DateTime.fromISO(item.timeOut);
+        const adherence = timeOut >= shiftEnd ? "On Time" : "Undertime";
+
+        // Calculate difference in minutes, for minutes of tardiness
+        const fmt = "hh:mm a";
+        const zone = "Asia/Manila";
+        const tIn = DateTime.fromFormat(formattedTimeIn, fmt, { zone });
+        const sStart = DateTime.fromFormat(formattedShiftStart, fmt, { zone });
+        const tardiness = tIn.diff(sStart, "minutes").minutes;
+
+        return {
+          id: item.user._id,
+          date: formatDate(item.createdAt),
+          name: `${item.user.firstName} ${item.user.lastName}`,
+          email: item.user.email,
+
+          shiftStart: formattedShiftStart,
+          shiftEnd: formattedShiftEnd,
+
+          firstBreakStart: formattedFirstBreakStart,
+          firstBreakEnd: formattedFirstBreakEnd,
+
+          secondBreakStart: formattedSecondBreakStart,
+          secondBreakEnd: formattedSecondBreakEnd,
+
+          timeIn: formattedTimeIn,
+          timeOut: formattedTimeOut,
+
+          tardiness,
+          punctuality,
+          adherence,
+          accounts,
+          status: item.status,
+        };
+      });
+
+      setAttendancesByStatus(formattedData);
+    } catch (error) {
+      console.error("Error fetching attendances by status:", error);
+      setError("Failed to fetch attendances by status");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const addAttendance = useCallback(
     async (shiftStart, shiftEnd) => {
@@ -77,8 +159,15 @@ export const useAttendance = (userId) => {
     fetchUserAttendance();
   }, [fetchUserAttendance]);
 
+  useEffect(() => {
+    if (filter) {
+      fetchAttendancesByStatus(filter);
+    }
+  }, [filter?.startDate, filter?.endDate, fetchAttendancesByStatus]);
+
   return {
     attendance,
+    attendancesByStatus,
     loading,
     error,
     addAttendance,

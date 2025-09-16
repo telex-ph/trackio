@@ -1,52 +1,44 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Table from "../../components/Table";
 import TableAction from "../../components/TableAction";
 import TableModal from "../../components/TableModal";
 import TableEmployeeDetails from "../../components/TableEmployeeDetails";
 import TableCalendarModal from "../../components/TableCalendarModal";
-import { Clock, FileText } from "lucide-react";
+import { Clock, FileText, ChevronRight } from "lucide-react";
+import { Datepicker } from "flowbite-react";
+import { DateTime } from "luxon";
+import { useAttendance } from "../../hooks/useAttendance";
 
 const AdminHistory = () => {
-  const [data, setData] = useState([
-    {
-      id: "EMP501",
-      name: "Alice Johnson",
-      date: "2025-09-10",
-      timeIn: "9:10 A.M.",
-      timeOut: "6:15 P.M.",
-      scheduledStart: "9:00 A.M.",
-      scheduledEnd: "6:00 P.M.",
-      workDuration: "8h 5m",
-      status: "Present",
-      notes: "Completed tasks on time",
-      image:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-      attendance: [
-        { date: "2025-09-01", status: "Present" },
-        { date: "2025-09-02", status: "Late" },
-        { date: "2025-09-03", status: "Overtime" },
-      ],
-    },
-    {
-      id: "EMP502",
-      name: "Bob Smith",
-      date: "2025-09-10",
-      timeIn: "8:55 A.M.",
-      timeOut: "6:00 P.M.",
-      scheduledStart: "9:00 A.M.",
-      scheduledEnd: "6:00 P.M.",
-      workDuration: "9h 5m",
-      status: "Present",
-      notes: "On time and completed report",
-      image:
-        "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
-      attendance: [
-        { date: "2025-09-01", status: "Present" },
-        { date: "2025-09-02", status: "Present" },
-        { date: "2025-09-03", status: "Late" },
-      ],
-    },
-  ]);
+  const zone = "Asia/Manila";
+
+  // Initialize with today in PH time
+  const [dateRange, setDateRange] = useState({
+    startDate: DateTime.now().setZone(zone).startOf("day").toUTC().toISO(),
+    endDate: DateTime.now().setZone(zone).endOf("day").toUTC().toISO(),
+  });
+
+  const filter = {
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+  };
+
+  const { attendancesByStatus, loading } = useAttendance(null, filter);
+
+  // handle datepicker
+  const handleDatePicker = (date, field) => {
+    if (!date) return;
+
+    const isoDate =
+      field === "startDate"
+        ? DateTime.fromJSDate(date).setZone(zone).startOf("day").toUTC().toISO()
+        : DateTime.fromJSDate(date).setZone(zone).endOf("day").toUTC().toISO();
+
+    setDateRange((prev) => ({
+      ...prev,
+      [field]: isoDate,
+    }));
+  };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -71,12 +63,16 @@ const AdminHistory = () => {
   const openCalendarModal = () => setIsCalendarModalOpen(true);
 
   const timeToMinutes = (timeStr) => {
+    // TODO: fix
+    if (!timeStr) return "---";
+
     const [hourMin, period] = timeStr.split(" ");
     let [hour, min] = hourMin.split(":");
     hour = parseInt(hour, 10);
     min = min ? parseInt(min, 10) : 0;
-    if (period.toUpperCase() === "PM" && hour !== 12) hour += 12;
-    if (period.toUpperCase() === "AM" && hour === 12) hour = 0;
+    // TODO: fix
+    // if (period.toUpperCase() === "PM" && hour !== 12) hour += 12;
+    // if (period.toUpperCase() === "AM" && hour === 12) hour = 0;
     return hour * 60 + min;
   };
 
@@ -106,15 +102,41 @@ const AdminHistory = () => {
 
   const columns = [
     { headerName: "ID", field: "id", flex: 1 },
-    { headerName: "Name", field: "name", flex: 2 },
+    { headerName: "Name", field: "name", flex: 1 },
     { headerName: "Date", field: "date", flex: 1 },
-    { headerName: "Time In", field: "timeIn", flex: 1 },
-    { headerName: "Time Out", field: "timeOut", flex: 1 },
-    { headerName: "Work Duration", field: "workDuration", flex: 1 },
+    { headerName: "Time In", field: "timeIn", filter: false, flex: 1 },
+    { headerName: "Time Out", field: "timeOut", filter: false, flex: 1 },
+    {
+      headerName: "Morning Break",
+      filter: false,
+      flex: 1,
+      cellRenderer: (params) => {
+        const breakStart = params.data.firstBreakStart;
+        const breakEnd = params.data.firstBreakEnd;
+        return `${breakStart} - ${breakEnd}`;
+      },
+    },
+    {
+      headerName: "Afternoon Break",
+      filter: false,
+      flex: 1,
+      cellRenderer: (params) => {
+        const breakStart = params.data.secondBreakStart;
+        const breakEnd = params.data.secondBreakEnd;
+        return `${breakStart} - ${breakEnd}`;
+      },
+    },
+    {
+      headerName: "Work Duration",
+      field: "workDuration",
+      filter: false,
+      flex: 1,
+    },
     {
       headerName: "Action",
       field: "action",
       flex: 1,
+      filter: false,
       cellRenderer: (params) => (
         <TableAction action={() => actionClicked(params.data)} />
       ),
@@ -123,8 +145,38 @@ const AdminHistory = () => {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Admin History</h2>
-      <Table data={data} columns={columns} />
+      <section className="flex flex-col mb-4">
+        <div className="flex items-center gap-1">
+          <h2>Admin</h2> <ChevronRight className="w-6 h-6" /> <h2>History</h2>
+        </div>
+        <p className="text-light">
+          Access the complete record of employees’ attendance and activities,
+          including time-in, time-out, late arrivals, undertime, and break logs.
+          Use this page to review past data, generate reports, and ensure
+          accurate record-keeping.
+        </p>
+      </section>
+
+      <section className="flex gap-4 mb-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Start Date</label>
+          <Datepicker
+            value={DateTime.fromISO(dateRange.startDate)
+              .setZone(zone)
+              .toJSDate()}
+            onChange={(date) => handleDatePicker(date, "startDate")}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">End Date</label>
+          <Datepicker
+            value={DateTime.fromISO(dateRange.endDate).setZone(zone).toJSDate()}
+            onChange={(date) => handleDatePicker(date, "endDate")}
+          />
+        </div>
+      </section>
+
+      <Table data={attendancesByStatus} columns={columns} />
 
       {/* Employee Details Modal */}
       <TableModal

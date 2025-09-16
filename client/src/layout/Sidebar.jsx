@@ -10,7 +10,6 @@ import {
   Bell,
   NotebookTabs,
   Clock,
-  LogOut,
   Coffee,
   Users,
   ChevronDown,
@@ -30,14 +29,19 @@ import { useStore } from "../store/useStore";
 import Role from "../constants/roles";
 import { useState } from "react";
 
-// Custom Collapse with fixed icon size and arrow
-const CustomCollapse = ({ icon, label, children, isCollapsed }) => {
-  const [open, setOpen] = useState(false);
-
+// Custom Collapse (controlled from parent)
+const CustomCollapse = ({
+  icon,
+  label,
+  children,
+  isCollapsed,
+  open,
+  onToggle,
+}) => {
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col w-ful">
       <button
-        onClick={() => setOpen(!open)}
+        onClick={onToggle}
         className="flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200 w-full"
       >
         <div className="flex items-center gap-2">
@@ -55,8 +59,8 @@ const CustomCollapse = ({ icon, label, children, isCollapsed }) => {
 
       <div
         className={`flex flex-col overflow-hidden transition-all duration-300 ${
-          open ? "max-h-screen mt-1" : "max-h-0"
-        }`}
+          !isCollapsed && "pl-3"
+        } ${open ? "max-h-screen mt-1" : "max-h-0"}`}
       >
         {children}
       </div>
@@ -100,11 +104,22 @@ const AgentSidebar = ({ isCollapsed }) => (
       label="Meeting/Coaching"
       isCollapsed={isCollapsed}
     />
+    {/* ➕ New Employee Request Link */}
+    <SidebarLink
+      to="/agent/request"
+      icon={FileText}
+      label="Employee Request"
+      isCollapsed={isCollapsed}
+    />
   </SidebarItemGroup>
 );
 
 // Team Leader Sidebar
-const TeamLeaderSidebar = ({ isCollapsed }) => (
+const TeamLeaderSidebar = ({
+  isCollapsed,
+  activeDropdown,
+  setActiveDropdown,
+}) => (
   <SidebarItemGroup className="space-y-1">
     <SidebarLink
       to="/team-leader/dashboard"
@@ -117,6 +132,10 @@ const TeamLeaderSidebar = ({ isCollapsed }) => (
       icon={<BookOpenText className="w-5 h-5" />}
       label="Attendance"
       isCollapsed={isCollapsed}
+      open={activeDropdown === "attendance"}
+      onToggle={() =>
+        setActiveDropdown(activeDropdown === "attendance" ? null : "attendance")
+      }
     >
       {[
         { path: "basic-logs", label: "Basic Logs", Icon: FileText },
@@ -162,7 +181,7 @@ const TeamLeaderSidebar = ({ isCollapsed }) => (
 );
 
 // Admin Sidebar
-const AdminSidebar = ({ isCollapsed }) => (
+const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
   <SidebarItemGroup className="space-y-1">
     <SidebarLink
       to="/admin/dashboard"
@@ -175,12 +194,17 @@ const AdminSidebar = ({ isCollapsed }) => (
       icon={<Clock className="w-5 h-5" />}
       label="Tracking"
       isCollapsed={isCollapsed}
+      open={activeDropdown === "tracking"}
+      onToggle={() =>
+        setActiveDropdown(activeDropdown === "tracking" ? null : "tracking")
+      }
     >
       {[
         { path: "time-in", label: "Time In", Icon: Sun },
         { path: "time-out", label: "Time Out", Icon: Moon },
+        { path: "late", label: "Late", Icon: AlertTriangle },
+        { path: "undertime", label: "Undertime", Icon: Clock },
         { path: "absentees", label: "Absentees", Icon: Users },
-        { path: "employee-status", label: "Employee Status", Icon: UserCheck },
       ].map(({ path, label, Icon }) => (
         <SidebarLink
           key={path}
@@ -196,12 +220,15 @@ const AdminSidebar = ({ isCollapsed }) => (
       icon={<Activity className="w-5 h-5" />}
       label="Monitoring"
       isCollapsed={isCollapsed}
+      open={activeDropdown === "monitoring"}
+      onToggle={() =>
+        setActiveDropdown(activeDropdown === "monitoring" ? null : "monitoring")
+      }
     >
       {[
-        { path: "late", label: "Late", Icon: AlertTriangle },
+        { path: "status", label: "Status", Icon: UserCheck },
         { path: "on-break", label: "On Break", Icon: Coffee },
         { path: "on-lunch", label: "On Lunch", Icon: Sun },
-        { path: "undertime", label: "Undertime", Icon: Clock },
         { path: "bio-break", label: "Bio Break", Icon: Moon },
         { path: "meeting", label: "Meeting", Icon: Video },
       ].map(({ path, label, Icon }) => (
@@ -239,15 +266,28 @@ const AdminSidebar = ({ isCollapsed }) => (
 // Main Sidebar
 export const Sidebar = ({ isCollapsed }) => {
   const user = useStore((state) => state.user);
+  const [activeDropdown, setActiveDropdown] = useState(null);
 
   const renderSidebar = () => {
     switch (user.role) {
       case Role.AGENT:
         return <AgentSidebar isCollapsed={isCollapsed} />;
       case Role.TEAM_LEADER:
-        return <TeamLeaderSidebar isCollapsed={isCollapsed} />;
+        return (
+          <TeamLeaderSidebar
+            isCollapsed={isCollapsed}
+            activeDropdown={activeDropdown}
+            setActiveDropdown={setActiveDropdown}
+          />
+        );
       case Role.ADMIN:
-        return <AdminSidebar isCollapsed={isCollapsed} />;
+        return (
+          <AdminSidebar
+            isCollapsed={isCollapsed}
+            activeDropdown={activeDropdown}
+            setActiveDropdown={setActiveDropdown}
+          />
+        );
       default:
         return null;
     }
@@ -263,7 +303,8 @@ export const Sidebar = ({ isCollapsed }) => {
         <SidebarItems>{renderSidebar()}</SidebarItems>
       </Side>
 
-      {!isCollapsed && (
+      {/* Shift Schedule only for Agent */}
+      {user.role === Role.AGENT && !isCollapsed && (
         <section className="bg-white border border-gray-200 m-2 p-3 text-center rounded-lg">
           <p className="font-semibold text-gray-800">Shift Schedule:</p>
           <p className="text-gray-600 text-sm">9:00 AM - 6:00 PM</p>

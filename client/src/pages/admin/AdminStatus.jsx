@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Table from "../../components/Table";
 import TableAction from "../../components/TableAction";
 import TableModal from "../../components/TableModal";
@@ -6,12 +6,10 @@ import TableEmployeeDetails from "../../components/TableEmployeeDetails";
 import { ChevronRight, Clock, FileText } from "lucide-react";
 import { DateTime } from "luxon";
 import { Datepicker } from "flowbite-react";
-import api from "../../utils/axios";
+import { useAttendance } from "../../hooks/useAttendance";
 
-const AdminEmployeeStatus = () => {
-  const fmt = "hh:mm a";
+const AdminStatus = () => {
   const zone = "Asia/Manila";
-  const [data, setData] = useState([]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -21,6 +19,13 @@ const AdminEmployeeStatus = () => {
     startDate: DateTime.now().setZone(zone).startOf("day").toUTC().toISO(),
     endDate: DateTime.now().setZone(zone).endOf("day").toUTC().toISO(),
   });
+
+  const filter = {
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+  };
+
+  const { attendancesByStatus, loading } = useAttendance(null, filter);
 
   // handle date picker changes
   const handleDatePicker = (date, field) => {
@@ -70,48 +75,6 @@ const AdminEmployeeStatus = () => {
         return "bg-gray-50 text-gray-600 border border-gray-200";
     }
   };
-
-  useEffect(() => {
-    const fetchAttendances = async () => {
-      try {
-        const response = await api.get("/attendance/get-attendances", {
-          params: {
-            startDate: dateRange.startDate,
-            endDate: dateRange.endDate,
-          },
-        });
-
-        const formattedData = response.data.map((item) => {
-          const timeOut = item.timeOut
-            ? DateTime.fromISO(item.timeOut).setZone(zone).toFormat(fmt)
-            : "Not Logged In";
-          const createdAt = item.createdAt
-            ? DateTime.fromISO(item.createdAt)
-                .setZone(zone)
-                .toFormat("yyyy-MM-dd")
-            : "Not Logged In";
-
-          const accounts = item.accounts.map((acc) => acc.name).join(",");
-
-          return {
-            id: item.user._id,
-            name: `${item.user.firstName} ${item.user.lastName}`,
-            email: item.user.email,
-            timeOut,
-            date: createdAt,
-            status: item.status || "-",
-            accounts: accounts,
-          };
-        });
-
-        setData(formattedData);
-      } catch (error) {
-        console.error("Error fetching attendance:", error);
-      }
-    };
-
-    fetchAttendances();
-  }, [dateRange]);
 
   const columns = [
     { headerName: "ID", field: "id", sortable: true, filter: true, flex: 1 },
@@ -163,37 +126,17 @@ const AdminEmployeeStatus = () => {
 
   return (
     <div>
-      <section className="flex flex-col mb-2">
+      <section className="flex flex-col mb-4">
         <div className="flex items-center gap-1">
-          <h2>Tracking</h2> <ChevronRight className="w-6 h-6" />{" "}
-          <h2>Employee Status</h2>
+          <h2>Monitoring</h2> <ChevronRight className="w-6 h-6" /> <h2>Status</h2>
         </div>
         <p className="text-light">
-          Any updates will reflect on the admin account profile.
+          Monitor employees’ real-time statuses. Any updates made here will
+          instantly reflect in their profiles and activity records.
         </p>
       </section>
 
-      {/* Date Picker */}
-      <section className="flex gap-4 mb-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Start Date</label>
-          <Datepicker
-            value={DateTime.fromISO(dateRange.startDate)
-              .setZone(zone)
-              .toJSDate()}
-            onChange={(date) => handleDatePicker(date, "startDate")}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">End Date</label>
-          <Datepicker
-            value={DateTime.fromISO(dateRange.endDate).setZone(zone).toJSDate()}
-            onChange={(date) => handleDatePicker(date, "endDate")}
-          />
-        </div>
-      </section>
-
-      <Table columns={columns} data={data} />
+      <Table columns={columns} data={attendancesByStatus} />
 
       {/* Employee Details Modal */}
       <TableModal
@@ -277,4 +220,4 @@ const AdminEmployeeStatus = () => {
   );
 };
 
-export default AdminEmployeeStatus;
+export default AdminStatus;

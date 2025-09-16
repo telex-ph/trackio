@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Table from "../../components/Table";
 import { DateTime } from "luxon";
 import { Datepicker } from "flowbite-react";
@@ -6,13 +6,11 @@ import { ChevronRight, Clock, FileText, CheckCircle } from "lucide-react";
 import TableAction from "../../components/TableAction";
 import TableModal from "../../components/TableModal";
 import TableEmployeeDetails from "../../components/TableEmployeeDetails";
-import api from "../../utils/axios";
+import { useAttendance } from "../../hooks/useAttendance";
 
 const AdminTimeIn = () => {
-  const fmt = "hh:mm a";
   const zone = "Asia/Manila";
 
-  const [data, setData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
 
@@ -20,6 +18,14 @@ const AdminTimeIn = () => {
     startDate: DateTime.now().setZone(zone).startOf("day").toUTC().toISO(),
     endDate: DateTime.now().setZone(zone).endOf("day").toUTC().toISO(),
   });
+
+  const filter = {
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+    status: "timeIn",
+  };
+
+  const { attendancesByStatus, loading } = useAttendance(null, filter);
 
   const handleDatePicker = (date, field) => {
     if (!date) return;
@@ -63,58 +69,6 @@ const AdminTimeIn = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchAttendances = async () => {
-      try {
-        const response = await api.get("/attendance/get-attendances", {
-          params: {
-            startDate: dateRange.startDate,
-            endDate: dateRange.endDate,
-            status: "timeIn",
-          },
-        });
-
-        const formattedData = response.data.map((item) => {
-          const timeIn = item.timeIn
-            ? DateTime.fromISO(item.timeIn).setZone(zone).toFormat(fmt)
-            : "Not Logged In";
-
-          const createdAt = item.createdAt
-            ? DateTime.fromISO(item.createdAt)
-                .setZone(zone)
-                .toFormat("yyyy-MM-dd")
-            : "Not Logged In";
-
-          const accounts = item.accounts.map((acc) => acc.name).join(",");
-
-          // Checking if the user is on time or not
-          const nowUtc = DateTime.utc();
-          const shiftUtc = DateTime.fromJSDate(item.shiftStart).toUTC();
-          const nowMinutes = nowUtc.hour * 60 + nowUtc.minute;
-          const shiftMinutes = shiftUtc.hour * 60 + shiftUtc.minute;
-
-          const punctuality = nowMinutes <= shiftMinutes ? "On Time" : "Late";
-
-          return {
-            id: item.user._id,
-            date: createdAt,
-            name: `${item.user.firstName} ${item.user.lastName}`,
-            email: item.user.email,
-            timeIn,
-            punctuality,
-            accounts,
-          };
-        });
-
-        setData(formattedData);
-      } catch (error) {
-        console.error("Error fetching attendance:", error);
-      }
-    };
-
-    fetchAttendances();
-  }, [dateRange]);
-
   // Columns
   const columns = [
     {
@@ -151,6 +105,13 @@ const AdminTimeIn = () => {
       sortable: true,
       filter: true,
       flex: 2,
+    },
+    {
+      headerName: "Shift Start",
+      field: "shiftStart",
+      sortable: true,
+      filter: false,
+      flex: 1,
     },
     {
       headerName: "Time In",
@@ -212,7 +173,7 @@ const AdminTimeIn = () => {
       </section>
 
       {/* Table */}
-      <Table columns={columns} data={data} />
+      <Table columns={columns} data={attendancesByStatus} />
 
       {/* Modal */}
       <TableModal

@@ -1,9 +1,13 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-import flowbiteReact from "flowbite-react/plugin/vite";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import flowbiteReact from 'flowbite-react/plugin/vite';
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [tailwindcss(), react(), flowbiteReact()],
-})
+  plugins: [react(), tailwindcss(), flowbiteReact()],
+  preview: {
+  host: '0.0.0.0',
+  port: parseInt(process.env.PORT) || 4173,
+  allowedHosts: ['trackio-frontend.onrender.com']
+}
+});
