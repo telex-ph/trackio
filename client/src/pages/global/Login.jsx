@@ -264,7 +264,7 @@ const Login = () => {
             src={telexvid}
             autoPlay
             muted
-            className={`absolute inset-0 w-full h-full object-cover rounded-l-lg transition-all duration-1500 ease-in-out ${
+            className={`absolute  hidden lg:flex inset-0 w-full h-full object-cover rounded-l-lg transition-all duration-1500 ease-in-out ${
               showVideo ? "opacity-100" : "opacity-0"
             }`}
             onEnded={() => setShowVideo(false)}
