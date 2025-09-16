@@ -24,7 +24,7 @@ const ServerTime = () => {
   const seconds = String(time.second).padStart(2, "0");
 
   return (
-    <section className="flex items-center flex-1 p-5 container-light border-light rounded-md">
+    <section className="flex flex-col md:flex-row md:items-center flex-1 p-5 container-light border-light rounded-md">
       <div className="flex-1">
         <h1>SERVER TIME</h1>
       </div>

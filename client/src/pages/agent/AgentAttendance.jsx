@@ -28,12 +28,14 @@ const AgentAttendance = () => {
 
   return (
     <div className="space-y-5">
-      <section className="flex gap-5">
+      {/* Make this section stack vertically on small screens */}
+      <section className="flex flex-col gap-4 sm:flex-row sm:gap-5">
         <WorkingTime timeIn={attendance?.timeIn} />
         <ServerTime />
       </section>
 
-      <section className="grid grid-cols-5 gap-4">
+      {/* Responsive grid: 1 col on small, 2 cols on md, up to 5 cols on xl */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {TIME_BOX_CONFIG.map((config) => (
           <TimeBox
             key={config.id}
