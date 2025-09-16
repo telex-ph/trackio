@@ -25,14 +25,14 @@ export const login = async (req, res) => {
     };
 
     if (isIOS) {
-      // For iOS devices, use JWT tokens instead of sessions
-      console.log("iOS device detected, using JWT tokens");
+      // For iOS devices, send JWT tokens in response body instead of cookies
+      console.log("iOS device detected, using JWT tokens in response body");
       
       const privateKey = await jose.importPKCS8(privatePEM, "RS256");
 
       const accessToken = await new jose.SignJWT(userData)
         .setProtectedHeader({ alg: "RS256" })
-        .setExpirationTime("24h") // Longer expiration for iOS
+        .setExpirationTime("24h")
         .sign(privateKey);
 
       const refreshToken = await new jose.SignJWT(userData)
@@ -40,7 +40,7 @@ export const login = async (req, res) => {
         .setExpirationTime("30d")
         .sign(privateKey);
 
-      // Set cookies with iOS-friendly settings
+      // Try to set cookies anyway (might work in some cases)
       const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -50,24 +50,23 @@ export const login = async (req, res) => {
 
       res.cookie("accessToken", accessToken, {
         ...cookieOptions,
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        maxAge: 24 * 60 * 60 * 1000,
       });
 
       res.cookie("refreshToken", refreshToken, {
         ...cookieOptions,
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        maxAge: 30 * 24 * 60 * 60 * 1000,
       });
 
-      // Also set a simple flag cookie for iOS
-      res.cookie("isLoggedIn", "true", {
-        ...cookieOptions,
-        maxAge: 24 * 60 * 60 * 1000,
-      });
-
+      // Send tokens in response body for iOS to store in localStorage
       return res.status(200).json({ 
         message: "Login successful",
         user: userData,
-        authMethod: "jwt"
+        authMethod: "jwt",
+        tokens: {
+          accessToken: accessToken,
+          refreshToken: refreshToken
+        }
       });
       
     } else {
@@ -104,11 +103,19 @@ export const getStatus = async (req, res) => {
   const isIOS = isIOSSafari(userAgent);
   
   if (isIOS) {
-    // For iOS, check JWT tokens
-    const accessToken = req.cookies?.accessToken;
-    const isLoggedIn = req.cookies?.isLoggedIn;
+    // For iOS, check Authorization header first (from localStorage)
+    const authHeader = req.headers.authorization;
+    let accessToken = req.cookies?.accessToken;
     
-    if (accessToken && isLoggedIn) {
+    // Check if token is in Authorization header (Bearer token)
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      accessToken = authHeader.substring(7);
+      console.log("iOS: Using token from Authorization header");
+    } else if (accessToken) {
+      console.log("iOS: Using token from cookies");
+    }
+    
+    if (accessToken) {
       try {
         const publicKey = await jose.importSPKI(publicPEM, "RS256");
         const { payload: user } = await jose.jwtVerify(accessToken, publicKey);

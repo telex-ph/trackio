@@ -69,7 +69,15 @@ const Login = () => {
       if (responseData.user) {
         console.log("Login successful, user data:", responseData.user);
         
-        // Small delay to ensure session is properly set
+        // For iOS devices with JWT tokens
+        if (responseData.authMethod === "jwt" && responseData.tokens) {
+          console.log("Storing JWT tokens for iOS device");
+          localStorage.setItem('accessToken', responseData.tokens.accessToken);
+          localStorage.setItem('refreshToken', responseData.tokens.refreshToken);
+          localStorage.setItem('user', JSON.stringify(responseData.user));
+        }
+        
+        // Small delay to ensure data is stored
         setTimeout(() => {
           console.log("Redirecting to dashboard...");
           navigate(`/${responseData.user.role}/dashboard`, { replace: true });
@@ -128,14 +136,42 @@ const Login = () => {
     const fetchUser = async () => {
       try {
         console.log("Checking authentication status...");
+        
+        // For iOS devices, check localStorage first
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if (isIOS) {
+          const storedUser = localStorage.getItem('user');
+          const accessToken = localStorage.getItem('accessToken');
+          
+          if (storedUser && accessToken) {
+            try {
+              const user = JSON.parse(storedUser);
+              console.log("Found stored user data for iOS:", user);
+              navigate(`/${user.role}/dashboard`, { replace: true });
+              return;
+            } catch (parseError) {
+              console.log("Error parsing stored user data:", parseError);
+              localStorage.removeItem('user');
+              localStorage.removeItem('accessToken');
+              localStorage.removeItem('refreshToken');
+            }
+          }
+        }
+        
         const response = await api.get("/auth/status");
         const user = response.data.user;
         const isValid = response.data.isValid;
 
-        console.log("Auth status response:", { isValid, user });
+        console.log("Auth status response:", { isValid, user, authMethod: response.data.authMethod });
 
         if (isValid && user) {
           console.log("Valid session found, redirecting...");
+          
+          // Store user data in localStorage for iOS
+          if (isIOS && response.data.authMethod === "jwt") {
+            localStorage.setItem('user', JSON.stringify(user));
+          }
+          
           navigate(`/${user.role}/dashboard`, { replace: true });
           return;
         } else {
