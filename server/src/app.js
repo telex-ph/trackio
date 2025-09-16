@@ -35,6 +35,6 @@ app.options("*", cors());
 // Routes
 //app.use("/api/auth", authRoutes);
 //app.use("/api/accounts", accountRoutes);
-app.use("/api/attendance", attendanceRoutes);
+//app.use("/api/attendance", attendanceRoutes);
 
 export default app;
