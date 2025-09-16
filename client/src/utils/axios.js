@@ -6,6 +6,22 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// Track if we're currently refreshing token to prevent loops
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  
+  failedQueue = [];
+};
+
 // Add request interceptor to include Authorization header for iOS
 api.interceptors.request.use(
   (config) => {
@@ -34,65 +50,100 @@ api.interceptors.response.use(
     const code = error.response?.data?.code;
     const originalRequest = error.config;
 
-    // Prevent infinite loops: don't refresh token on login page
-    if (window.location.pathname === "/login" || window.location.pathname === "/") {
+    // Prevent infinite loops: don't refresh token on login page or auth endpoints
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/');
+    if (window.location.pathname === "/login" || 
+        window.location.pathname === "/" || 
+        isAuthEndpoint) {
       return Promise.reject(error);
     }
 
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-    if (code === "ACCESS_TOKEN_EXPIRED" || (error.response?.status === 401 && !originalRequest._retry)) {
+    if ((code === "ACCESS_TOKEN_EXPIRED" || error.response?.status === 401) && !originalRequest._retry) {
       originalRequest._retry = true;
       
       if (isIOS) {
         // Handle token refresh for iOS
         const refreshToken = localStorage.getItem('refreshToken');
-        if (refreshToken) {
-          try {
-            console.log("iOS: Attempting token refresh");
-            const refreshResponse = await api.post("/auth/create-new-token", {}, {
-              headers: { Authorization: `Bearer ${refreshToken}` }
-            });
+        
+        if (!refreshToken) {
+          console.log("iOS: No refresh token found, redirecting to login");
+          localStorage.clear();
+          location.replace("/");
+          return Promise.reject(error);
+        }
+
+        if (isRefreshing) {
+          // If already refreshing, queue this request
+          return new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          }).then(() => {
+            const newToken = localStorage.getItem('accessToken');
+            if (newToken) {
+              originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            }
+            return api(originalRequest);
+          });
+        }
+
+        isRefreshing = true;
+
+        try {
+          console.log("iOS: Attempting token refresh");
+          // Make direct HTTP request to avoid interceptor loop
+          const refreshResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/create-new-token`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${refreshToken}`
+            },
+            credentials: 'include'
+          });
+
+          if (refreshResponse.ok) {
+            const data = await refreshResponse.json();
             
-            if (refreshResponse.data.tokens) {
-              // Update stored tokens
-              localStorage.setItem('accessToken', refreshResponse.data.tokens.accessToken);
-              if (refreshResponse.data.tokens.refreshToken) {
-                localStorage.setItem('refreshToken', refreshResponse.data.tokens.refreshToken);
-              }
+            if (data.tokens?.accessToken) {
+              console.log("iOS: Token refresh successful");
+              localStorage.setItem('accessToken', data.tokens.accessToken);
               
-              // Retry original request with new token
-              originalRequest.headers.Authorization = `Bearer ${refreshResponse.data.tokens.accessToken}`;
+              processQueue(null, data.tokens.accessToken);
+              
+              // Retry original request
+              originalRequest.headers.Authorization = `Bearer ${data.tokens.accessToken}`;
               return api(originalRequest);
             }
-          } catch (refreshError) {
-            console.error("iOS: Refresh token failed:", refreshError);
-            // Clear iOS tokens and redirect
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('user');
-            location.replace("/");
           }
-        } else {
-          console.log("iOS: No refresh token found");
+          
+          throw new Error('Token refresh failed');
+          
+        } catch (refreshError) {
+          console.error("iOS: Refresh token failed:", refreshError);
+          processQueue(refreshError, null);
+          
+          // Clear iOS tokens and redirect
+          localStorage.clear();
           location.replace("/");
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
         }
       } else {
         // Handle token refresh for non-iOS (original logic)
-        try {
-          await api.post("/auth/create-new-token");
-          return api(originalRequest);
-        } catch (refreshError) {
-          console.error("Refresh token failed:", refreshError);
-          return Promise.reject(refreshError);
+        if (code === "ACCESS_TOKEN_EXPIRED") {
+          try {
+            await api.post("/auth/create-new-token");
+            return api(originalRequest);
+          } catch (refreshError) {
+            console.error("Refresh token failed:", refreshError);
+            return Promise.reject(refreshError);
+          }
         }
       }
     } else if (code === "REFRESH_TOKEN_EXPIRED") {
       if (isIOS) {
-        // Clear iOS tokens
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
+        localStorage.clear();
       }
       location.replace("/");
     }

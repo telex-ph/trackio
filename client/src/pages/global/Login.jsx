@@ -75,9 +75,14 @@ const Login = () => {
           localStorage.setItem('accessToken', responseData.tokens.accessToken);
           localStorage.setItem('refreshToken', responseData.tokens.refreshToken);
           localStorage.setItem('user', JSON.stringify(responseData.user));
+          
+          // Force immediate redirect for iOS
+          console.log("iOS: Immediate redirect to dashboard");
+          window.location.href = `/${responseData.user.role}/dashboard`;
+          return;
         }
         
-        // Small delay to ensure data is stored
+        // For non-iOS devices
         setTimeout(() => {
           console.log("Redirecting to dashboard...");
           navigate(`/${responseData.user.role}/dashboard`, { replace: true });
@@ -147,36 +152,46 @@ const Login = () => {
             try {
               const user = JSON.parse(storedUser);
               console.log("Found stored user data for iOS:", user);
-              navigate(`/${user.role}/dashboard`, { replace: true });
-              return;
+              
+              // Validate token by making a simple request
+              const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/status`, {
+                method: 'GET',
+                headers: {
+                  'Authorization': `Bearer ${accessToken}`,
+                  'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+              });
+              
+              if (response.ok) {
+                console.log("iOS: Token validation successful, redirecting");
+                window.location.href = `/${user.role}/dashboard`;
+                return;
+              } else {
+                console.log("iOS: Token validation failed, clearing storage");
+                localStorage.clear();
+              }
             } catch (parseError) {
               console.log("Error parsing stored user data:", parseError);
-              localStorage.removeItem('user');
-              localStorage.removeItem('accessToken');
-              localStorage.removeItem('refreshToken');
+              localStorage.clear();
             }
+          }
+        } else {
+          // For non-iOS, use normal API call
+          const response = await api.get("/auth/status");
+          const user = response.data.user;
+          const isValid = response.data.isValid;
+
+          console.log("Auth status response:", { isValid, user, authMethod: response.data.authMethod });
+
+          if (isValid && user) {
+            console.log("Valid session found, redirecting...");
+            navigate(`/${user.role}/dashboard`, { replace: true });
+            return;
           }
         }
         
-        const response = await api.get("/auth/status");
-        const user = response.data.user;
-        const isValid = response.data.isValid;
-
-        console.log("Auth status response:", { isValid, user, authMethod: response.data.authMethod });
-
-        if (isValid && user) {
-          console.log("Valid session found, redirecting...");
-          
-          // Store user data in localStorage for iOS
-          if (isIOS && response.data.authMethod === "jwt") {
-            localStorage.setItem('user', JSON.stringify(user));
-          }
-          
-          navigate(`/${user.role}/dashboard`, { replace: true });
-          return;
-        } else {
-          console.log("No valid session found");
-        }
+        console.log("No valid authentication found");
       } catch (error) {
         console.log("Auth check error:", {
           message: error.message,
