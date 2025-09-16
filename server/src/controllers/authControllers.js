@@ -48,27 +48,43 @@ export const login = async (req, res) => {
       .sign(privateKey);
 
     const cookieOptions = getCookieOptions(req);
+    const userAgent = req.get('User-Agent') || '';
+    const isIOS = isIOSSafari(userAgent);
 
-    // Set access token cookie
     res.cookie("accessToken", accessToken, {
       ...cookieOptions,
       maxAge: 15 * 60 * 1000,
     });
 
-    // Set refresh token cookie  
     res.cookie("refreshToken", refreshToken, {
       ...cookieOptions,
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).json({
+    const responseData = {
       message: "Login successful",
       user: { 
         id: user._id.toString(),
         email: user.email, 
         role: user.role 
       },
-    });
+      debug: {
+        userAgent: userAgent,
+        isIOS: isIOS,
+        sameSite: cookieOptions.sameSite,
+        cookieOptionsUsed: cookieOptions
+      }
+    };
+
+    if (isIOS) {
+      responseData.fallbackTokens = {
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        expiresAt: Date.now() + (15 * 60 * 1000)
+      };
+    }
+
+    res.status(200).json(responseData);
   } catch (error) {
     console.error("Login error:", error.message);
     res.status(400).json({ error: error.message });
@@ -78,10 +94,8 @@ export const login = async (req, res) => {
 export const createToken = async (req, res) => {
   const user = req.body;
 
-  // Importing the private key (PKCS8 format) for RS256 signing
   const privateKey = await jose.importPKCS8(privatePEM, "RS256");
 
-  // Access token (short exp date)
   const accessToken = await new jose.SignJWT(user)
     .setProtectedHeader({ alg: "RS256" })
     .setExpirationTime("15m")

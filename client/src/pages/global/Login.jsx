@@ -58,19 +58,48 @@ const Login = () => {
     e.preventDefault();
     try {
       const response = await api.post("/auth/log-in", data, { withCredentials: true });
-      const user = response.data.user;
+      const responseData = response.data;
 
-      if (user) {
-        navigate(`/${user.role}/dashboard`);
+      console.log('Login response:', responseData); 
+
+      if (responseData.user) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        try {
+          const statusResponse = await api.get("/auth/status");
+          
+          if (statusResponse.data.isValid) {
+            console.log('Cookies working, redirecting...');
+            navigate(`/${responseData.user.role}/dashboard`);
+            return;
+          }
+        } catch (statusError) {
+          console.log('Status check failed, trying fallback...');
+        }
+        
+        if (responseData.fallbackTokens) {
+          console.log('Using localStorage fallback for iOS');
+          localStorage.setItem('fallbackAuth', JSON.stringify({
+            accessToken: responseData.fallbackTokens.accessToken,
+            refreshToken: responseData.fallbackTokens.refreshToken,
+            expiresAt: responseData.fallbackTokens.expiresAt,
+            user: responseData.user
+          }));
+          
+          navigate(`/${responseData.user.role}/dashboard`);
+          return;
+        }
+        
+        throw new Error('Authentication method not supported on this device');
       }
     } catch (error) {
       setError({
-        message: error.response?.data
+        message: error.response?.data?.error
           ? "Oops! We couldn't log you in. Please check your email and password."
           : error.message,
         hasError: true,
       });
-      console.error("Error: ", error);
+      console.error("Login error: ", error);
     }
   };
 
@@ -99,18 +128,47 @@ const Login = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        // First try cookie-based auth
         const response = await api.get("/auth/status");
         const user = response.data.user;
         const isValid = response.data.isValid;
-        if (isValid && user) navigate(`/${user.role}/dashboard`);
+        
+        if (isValid && user) {
+          navigate(`/${user.role}/dashboard`);
+          return;
+        }
       } catch (error) {
-        console.log(error);
+        console.log('Cookie auth failed, checking localStorage fallback...');
+        
+        // Fallback to localStorage for iOS
+        const fallbackAuth = localStorage.getItem('fallbackAuth');
+        if (fallbackAuth) {
+          try {
+            const authData = JSON.parse(fallbackAuth);
+            
+            // Check if token is still valid
+            if (Date.now() < authData.expiresAt) {
+              console.log('Using valid localStorage token');
+              navigate(`/${authData.user.role}/dashboard`);
+              return;
+            } else {
+              console.log('localStorage token expired, clearing...');
+              localStorage.removeItem('fallbackAuth');
+            }
+          } catch (parseError) {
+            console.log('Error parsing localStorage auth:', parseError);
+            localStorage.removeItem('fallbackAuth');
+          }
+        }
       } finally {
         setLoading(false);
       }
     };
-    fetchUser();
-  }, []);
+    
+    if (!showSplash) {
+      fetchUser();
+    }
+  }, [showSplash, navigate]);
 
   if (showSplash) {
     return (
