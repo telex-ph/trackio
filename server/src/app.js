@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import session from "express-session";
 
 // Routes imports
 import authRoutes from "../src/routes/authRoutes.js";
@@ -14,6 +15,19 @@ dotenv.config();
 // Middlewares
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "telexph", 
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: true, 
+      sameSite: "none", 
+    },
+  })
+);
+
 app.use(cookieParser());
 
 app.use(
