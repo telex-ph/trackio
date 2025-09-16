@@ -18,7 +18,7 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://trackio-frontend.vercel.app"],
+    origin: ["http://localhost:5173", "https://trackio-frontend.vercel.app", "https://trackio-frontend.onrender.com"],
     credentials: true,
   })
 );
