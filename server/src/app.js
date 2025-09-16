@@ -53,6 +53,18 @@ app.use(
   })
 );
 
+app.use((req, res, next) => {
+  if (/iPad|iPhone|iPod/.test(req.get('User-Agent'))) {
+    console.log('iOS Request:', {
+      method: req.method,
+      url: req.url,
+      sessionId: req.sessionID,
+      sessionData: req.session
+    });
+  }
+  next();
+});
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/accounts", accountRoutes);
