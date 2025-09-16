@@ -7,12 +7,12 @@ import flowbiteReact from 'flowbite-react/plugin/vite';
 export default defineConfig({
   plugins: [react(), tailwindcss(), flowbiteReact()],
   preview: {
-    host: '0.0.0.0',
-    port: parseInt(process.env.PORT) || 4173,
-    allowedHosts: ['trackio-frontend.onrender.com']
+    host: '0.0.0.0', // allows network access
+    port: parseInt(process.env.PORT) || 4173, // use Render's $PORT
+    allowedHosts: 'all' // allow all hosts to prevent "Blocked request" errors
   },
   build: {
-    outDir: 'dist',
-    base: '/'
+    outDir: 'dist', // production-ready files go here
+    base: '/' // base path
   }
 });
