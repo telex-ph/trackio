@@ -57,13 +57,11 @@ const Login = () => {
   const handleLoginClick = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post("/auth/log-in", data);
-      const user = response.data;
+      const response = await api.post("/auth/log-in", data, { withCredentials: true });
+      const user = response.data.user;
+
       if (user) {
-        const loginResponse = await api.post("/auth/create-token", user);
-        if (loginResponse.status === 200) {
-          navigate(`/${user.role}/dashboard`);
-        }
+        navigate(`/${user.id}/dashboard`);
       }
     } catch (error) {
       setError({
@@ -75,6 +73,7 @@ const Login = () => {
       console.error("Error: ", error);
     }
   };
+
 
   // TODO: remove this since in microsoft azure, we cannot get thier shifts
   const handleMicrosoftClick = async () => {
