@@ -61,7 +61,7 @@ const Login = () => {
       const user = response.data.user;
 
       if (user) {
-        navigate(`/${user.id}/dashboard`);
+        navigate(`/${user.role}/dashboard`);
       }
     } catch (error) {
       setError({

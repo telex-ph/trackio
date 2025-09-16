@@ -10,7 +10,6 @@ export const login = async (req, res) => {
   try {
     const user = await User.login(email, password);
 
-    // ✅ Generate access + refresh tokens
     const privateKey = await jose.importPKCS8(privatePEM, "RS256");
 
     const accessToken = await new jose.SignJWT({ id: user._id, email: user.email })
@@ -23,7 +22,6 @@ export const login = async (req, res) => {
       .setExpirationTime("30d")
       .sign(privateKey);
 
-    // ✅ Set cookies
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -40,10 +38,9 @@ export const login = async (req, res) => {
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
-    // ✅ Return user info (without password)
     res.status(200).json({
       message: "Login successful",
-      user: { id: user._id, email: user.email },
+      user: { id: user._id, email: user.email, role: user.role },
     });
   } catch (error) {
     console.error("Login error:", error.message);
@@ -52,7 +49,6 @@ export const login = async (req, res) => {
 };
 
 
-// Creation of access and refresh token
 export const createToken = async (req, res) => {
   const user = req.body;
 
