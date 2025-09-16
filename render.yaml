@@ -18,7 +18,7 @@ services:
     name: trackio-frontend
     env: node
     rootDir: client
-    buildCommand: npm install
+    buildCommand: npm install && npm run build
     startCommand: npm run preview
     plan: free
     envVars:
