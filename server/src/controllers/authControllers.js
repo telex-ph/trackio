@@ -4,7 +4,6 @@ import User from "../model/User.js";
 const privatePEM = process.env.PRIVATE_KEY;
 const publicPEM = process.env.PUBLIC_KEY;
 
-// Login
 export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -12,12 +11,19 @@ export const login = async (req, res) => {
 
     const privateKey = await jose.importPKCS8(privatePEM, "RS256");
 
-    const accessToken = await new jose.SignJWT({ id: user._id, email: user.email })
+    // Convert ObjectId to string before putting in JWT
+    const userPayload = {
+      id: user._id.toString(), // Convert to string!
+      email: user.email,
+      role: user.role // Include role if needed
+    };
+
+    const accessToken = await new jose.SignJWT(userPayload)
       .setProtectedHeader({ alg: "RS256" })
       .setExpirationTime("15m")
       .sign(privateKey);
 
-    const refreshToken = await new jose.SignJWT({ id: user._id, email: user.email })
+    const refreshToken = await new jose.SignJWT(userPayload)
       .setProtectedHeader({ alg: "RS256" })
       .setExpirationTime("30d")
       .sign(privateKey);
@@ -40,14 +46,17 @@ export const login = async (req, res) => {
 
     res.status(200).json({
       message: "Login successful",
-      user: { id: user._id, email: user.email, role: user.role },
+      user: { 
+        id: user._id.toString(), // Also convert here
+        email: user.email, 
+        role: user.role 
+      },
     });
   } catch (error) {
     console.error("Login error:", error.message);
     res.status(400).json({ error: error.message });
   }
 };
-
 
 export const createToken = async (req, res) => {
   const user = req.body;
