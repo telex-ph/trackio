@@ -2,7 +2,7 @@ services:
   - type: web
     name: trackio-backend
     env: node
-    rootDir: server
+    rootDir: backend
     buildCommand: npm install
     startCommand: npm start
     plan: free
@@ -10,9 +10,10 @@ services:
       - key: NODE_ENV
         value: production
       - key: MONGO_URI
-        sync: false   # set this manually in Render dashboard
+        sync: false
       - key: JWT_SECRET
-        sync: false   # set this manually in Render dashboard
+        sync: false
+
 
   - type: web
     name: trackio-frontend
