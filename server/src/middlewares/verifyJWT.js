@@ -5,7 +5,7 @@ export const verifyJWT = async (req, res, next) => {
 
   try {
     if (accessToken) {
-    const publicPEM = process.env.PUBLIC_KEY.replace(/\\n/g, "\n");
+      const publicPEM = process.env.PUBLIC_KEY;
       const publicKey = await jose.importSPKI(publicPEM, "RS256");
       const { payload } = await jose.jwtVerify(accessToken, publicKey);
       req.user = payload;

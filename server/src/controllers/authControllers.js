@@ -1,8 +1,8 @@
 import * as jose from "jose";
 import User from "../model/User.js";
 
-const privatePEM = process.env.PRIVATE_KEY.replace(/\\n/g, "\n");
-const publicPEM = process.env.PUBLIC_KEY.replace(/\\n/g, "\n");
+const privatePEM = process.env.PRIVATE_KEY;
+const publicPEM = process.env.PUBLIC_KEY;
 
 // Login
 export const login = async (req, res) => {

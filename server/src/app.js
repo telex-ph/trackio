@@ -16,6 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 
+// CORS configuration - this should be before your routes
 app.use(
   cors({
     origin: [
@@ -32,9 +33,8 @@ app.use(
 
 app.options("*", cors());
 
-// Routes
-//app.use("/api/auth", authRoutes);
-//app.use("/api/accounts", accountRoutes);
-//app.use("/api/attendance", attendanceRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/accounts", accountRoutes);
+app.use("/api/attendance", attendanceRoutes);
 
 export default app;
