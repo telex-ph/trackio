@@ -24,7 +24,7 @@ const Login = () => {
   const [showSplash, setShowSplash] = useState(true);
 
   // Right side animation state
-  const [showVideo, setShowVideo] = useState(false);
+  //const [showVideo, setShowVideo] = useState(false);
 
   // Splash screen (1.5s)
   useEffect(() => {
@@ -57,40 +57,14 @@ const Login = () => {
   const handleLoginClick = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post("/auth/log-in", data, { withCredentials: true });
+      const response = await api.post("/auth/log-in", data); // Tanggalin ang { withCredentials: true } dahil naka-set na ito sa Axios instance
       const responseData = response.data;
 
-      console.log('Login response:', responseData); 
-
+      // Kung successful ang login, diretsong i-redirect ang user
       if (responseData.user) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        try {
-          const statusResponse = await api.get("/auth/status");
-          
-          if (statusResponse.data.isValid) {
-            console.log('Cookies working, redirecting...');
-            navigate(`/${responseData.user.role}/dashboard`);
-            return;
-          }
-        } catch (statusError) {
-          console.log('Status check failed, trying fallback...');
-        }
-        
-        if (responseData.fallbackTokens) {
-          console.log('Using localStorage fallback for iOS');
-          localStorage.setItem('fallbackAuth', JSON.stringify({
-            accessToken: responseData.fallbackTokens.accessToken,
-            refreshToken: responseData.fallbackTokens.refreshToken,
-            expiresAt: responseData.fallbackTokens.expiresAt,
-            user: responseData.user
-          }));
-          
-          navigate(`/${responseData.user.role}/dashboard`);
-          return;
-        }
-        
-        throw new Error('Authentication method not supported on this device');
+        console.log("Login successful, redirecting...");
+        navigate(`/${responseData.user.role}/dashboard`);
+        return;
       }
     } catch (error) {
       setError({
@@ -102,7 +76,6 @@ const Login = () => {
       console.error("Login error: ", error);
     }
   };
-
 
   // TODO: remove this since in microsoft azure, we cannot get thier shifts
   const handleMicrosoftClick = async () => {
@@ -128,47 +101,27 @@ const Login = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        // First try cookie-based auth
         const response = await api.get("/auth/status");
         const user = response.data.user;
         const isValid = response.data.isValid;
-        
+
         if (isValid && user) {
+          console.log("Session is valid, redirecting...");
           navigate(`/${user.role}/dashboard`);
           return;
         }
       } catch (error) {
-        console.log('Cookie auth failed, checking localStorage fallback...');
-        
-        // Fallback to localStorage for iOS
-        const fallbackAuth = localStorage.getItem('fallbackAuth');
-        if (fallbackAuth) {
-          try {
-            const authData = JSON.parse(fallbackAuth);
-            
-            // Check if token is still valid
-            if (Date.now() < authData.expiresAt) {
-              console.log('Using valid localStorage token');
-              navigate(`/${authData.user.role}/dashboard`);
-              return;
-            } else {
-              console.log('localStorage token expired, clearing...');
-              localStorage.removeItem('fallbackAuth');
-            }
-          } catch (parseError) {
-            console.log('Error parsing localStorage auth:', parseError);
-            localStorage.removeItem('fallbackAuth');
-          }
-        }
+        console.log("No active session found.");
       } finally {
         setLoading(false);
       }
     };
-    
+
     if (!showSplash) {
       fetchUser();
     }
   }, [showSplash, navigate]);
+  
 
   if (showSplash) {
     return (

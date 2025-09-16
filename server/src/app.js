@@ -15,6 +15,7 @@ dotenv.config();
 // Middlewares
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(cookieParser());
 
 app.use(
   session({
@@ -27,8 +28,6 @@ app.use(
     },
   })
 );
-
-app.use(cookieParser());
 
 app.use(
   cors({
