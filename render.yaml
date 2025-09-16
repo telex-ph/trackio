@@ -2,7 +2,7 @@ services:
   - type: web
     name: trackio-backend
     env: node
-    rootDir: backend
+    rootDir: server
     buildCommand: npm install
     startCommand: npm start
     plan: free
@@ -14,13 +14,12 @@ services:
       - key: JWT_SECRET
         sync: false
 
-
   - type: web
     name: trackio-frontend
     env: node
     rootDir: client
     buildCommand: npm install
-    startCommand: npm run dev
+    startCommand: npm run preview
     plan: free
     envVars:
       - key: NODE_ENV
