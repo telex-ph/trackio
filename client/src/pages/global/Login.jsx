@@ -76,9 +76,14 @@ const Login = () => {
           localStorage.setItem('refreshToken', responseData.tokens.refreshToken);
           localStorage.setItem('user', JSON.stringify(responseData.user));
           
-          // Force immediate redirect for iOS
-          console.log("iOS: Immediate redirect to dashboard");
-          window.location.href = `/${responseData.user.role}/dashboard`;
+          // Use React Router for iOS instead of window.location.href
+          console.log("iOS: Using React Router navigation");
+          setTimeout(() => {
+            navigate(`/${responseData.user.role}/dashboard`, { 
+              replace: true,
+              state: { fromLogin: true }
+            });
+          }, 200);
           return;
         }
         
@@ -153,24 +158,12 @@ const Login = () => {
               const user = JSON.parse(storedUser);
               console.log("Found stored user data for iOS:", user);
               
-              // Validate token by making a simple request
-              const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/status`, {
-                method: 'GET',
-                headers: {
-                  'Authorization': `Bearer ${accessToken}`,
-                  'Content-Type': 'application/json'
-                },
-                credentials: 'include'
+              // Use React Router instead of window.location.href
+              navigate(`/${user.role}/dashboard`, { 
+                replace: true,
+                state: { fromAuth: true }
               });
-              
-              if (response.ok) {
-                console.log("iOS: Token validation successful, redirecting");
-                window.location.href = `/${user.role}/dashboard`;
-                return;
-              } else {
-                console.log("iOS: Token validation failed, clearing storage");
-                localStorage.clear();
-              }
+              return;
             } catch (parseError) {
               console.log("Error parsing stored user data:", parseError);
               localStorage.clear();
