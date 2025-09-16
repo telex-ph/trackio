@@ -2,7 +2,7 @@ import "./config/keyManager.js";
 import dotenv from "dotenv";
 dotenv.config();
 
-import app from "./app.js";
+import { app } from "./app.js";  // named import
 
 const PORT = process.env.PORT || 5000;
 
