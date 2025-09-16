@@ -33,7 +33,7 @@ app.use(
 app.options("*", cors());
 
 // Routes
-app.use("/api/auth", authRoutes);
+//app.use("/api/auth", authRoutes);
 app.use("/api/accounts", accountRoutes);
 app.use("/api/attendance", attendanceRoutes);
 
