@@ -9,12 +9,11 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10000
       - key: MONGO_URI
-        value: mongodb+srv://hernanidev:telexph102271080030@telexph.6fknsyx.mongodb.net/trackio?retryWrites=true&w=majority&appName=TelexPH&tls=true
+        value: mongodb+srv://...
       - key: JWT_SECRET
         value: yourSuperSecretKey
+
 
   - type: web
     name: trackio-frontend
