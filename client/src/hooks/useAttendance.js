@@ -41,7 +41,6 @@ export const useAttendance = (userId, filter) => {
         },
       });
 
-      // TODO: improve this, so DRY! HAHAHAHAAH
       const formattedData = response.data.map((item) => {
         const accounts = item.accounts.map((acc) => acc.name).join(", ");
 
@@ -56,14 +55,29 @@ export const useAttendance = (userId, filter) => {
         const formattedSecondBreakEnd = formatTime(item.secondBreakEnd);
 
         // Calculating if the user is late or not
-        const shiftStart = DateTime.fromISO(item.shiftStart);
-        const timeIn = DateTime.fromISO(item.timeIn);
-        const punctuality = timeIn <= shiftStart ? "On Time" : "Late";
+        let punctuality = "N/A";
+        if (item.timeIn && item.shiftStart) {
+          const timeIn = DateTime.fromISO(item.timeIn);
+          const shiftStart = DateTime.fromISO(item.shiftStart).set({
+            year: timeIn.year,
+            month: timeIn.month,
+            day: timeIn.day,
+          });
+          punctuality = timeIn <= shiftStart ? "On Time" : "Late";
+        }
 
         // Calculating if the user's shift adherence
-        const shiftEnd = DateTime.fromISO(item.shiftEnd);
-        const timeOut = DateTime.fromISO(item.timeOut);
-        const adherence = timeOut >= shiftEnd ? "On Time" : "Undertime";
+        let adherence = "N/A";
+        if (item.timeOut && item.shiftEnd) {
+          const timeOut = DateTime.fromISO(item.timeOut);
+          const shiftEnd = DateTime.fromISO(item.shiftEnd).set({
+            year: timeOut.year,
+            month: timeOut.month,
+            day: timeOut.day,
+          });
+          adherence = timeOut >= shiftEnd ? "On Time" : "Undertime";
+        }
+        // const adherence = timeOut >= shiftEnd ? "On Time" : "Undertime";
 
         // Calculate difference in minutes, for minutes of tardiness
         const fmt = "hh:mm a";
