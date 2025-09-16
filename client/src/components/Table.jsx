@@ -23,17 +23,26 @@ const Table = ({ data, columns }) => {
   const rowData = useMemo(() => data, [data]);
 
   return (
-    <div className="ag-theme-quartz" style={{ height: "90vh", width: "100%" }}>
-      <AgGridReact
-        ref={gridRef}
-        rowData={rowData}
-        columnDefs={columns}
-        defaultColDef={defaultColDef}
-        pagination={true}
-        paginationPageSize={15}
-        paginationPageSizeSelector={[15, 25, 50]}
-      />
-    </div>
+    <section className="overflow-x-auto w-full">
+      <div
+        className="ag-theme-quartz"
+        style={{
+          height: "90vh",
+          minWidth: "60rem",
+          width: "100%",
+        }}
+      >
+        <AgGridReact
+          ref={gridRef}
+          rowData={rowData}
+          columnDefs={columns}
+          defaultColDef={defaultColDef}
+          pagination={true}
+          paginationPageSize={15}
+          paginationPageSizeSelector={[15, 25, 50]}
+        />
+      </div>
+    </section>
   );
 };
 
