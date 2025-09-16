@@ -1,14 +1,11 @@
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import Table from "../../components/Table";
-import { Edit, Trash2, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { DateTime } from "luxon";
-import api from "../../utils/axios";
 import { Datepicker } from "flowbite-react";
+import { useAttendance } from "../../hooks/useAttendance";
 
 const AdminLate = () => {
-  const [data, setData] = useState([]);
-
-  const fmt = "hh:mm a";
   const zone = "Asia/Manila";
 
   // Initialize with today in PH time
@@ -16,6 +13,14 @@ const AdminLate = () => {
     startDate: DateTime.now().setZone(zone).startOf("day").toUTC().toISO(),
     endDate: DateTime.now().setZone(zone).endOf("day").toUTC().toISO(),
   });
+
+  const filter = {
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+    status: "late",
+  };
+
+  const { attendancesByStatus, loading } = useAttendance(null, filter);
 
   // handle datepicker
   const handleDatePicker = (date, field) => {
@@ -31,62 +36,6 @@ const AdminLate = () => {
       [field]: isoDate,
     }));
   };
-
-  useEffect(() => {
-    const fetchAttendances = async () => {
-      try {
-        const response = await api.get("/attendance/get-attendances", {
-          params: {
-            startDate: dateRange.startDate,
-            endDate: dateRange.endDate,
-            filter: "late",
-          },
-        });
-
-        const formattedData = response.data.map((item) => {
-          const timeIn = item.timeIn
-            ? DateTime.fromISO(item.timeIn).setZone(zone).toFormat(fmt)
-            : "Not Logged In";
-
-          const shiftStart = item.shiftStart
-            ? DateTime.fromISO(item.shiftStart).setZone(zone).toFormat(fmt)
-            : "Not Logged In";
-
-          const date = item.createdAt
-            ? DateTime.fromISO(item.createdAt)
-                .setZone(zone)
-                .toFormat("yyyy-MM-dd")
-            : "Not Logged In";
-
-          const accounts = item.accounts.map((acc) => acc.name).join(", ");
-
-          // Calculate difference in minutes, for minutes of tardiness
-          const tIn = DateTime.fromFormat(timeIn, fmt, { zone });
-          const sStart = DateTime.fromFormat(shiftStart, fmt, { zone });
-
-          const tardiness = tIn.diff(sStart, "minutes").minutes;
-
-          return {
-            id: item.user._id,
-            name: `${item.user.firstName} ${item.user.lastName}`,
-            email: item.user.email,
-            timeIn,
-            shiftStart,
-            date,
-            tardiness,
-            status: item.status || "-",
-            accounts,
-          };
-        });
-
-        setData(formattedData);
-      } catch (error) {
-        console.error("Error fetching attendance:", error);
-      }
-    };
-
-    fetchAttendances();
-  }, [dateRange]);
 
   // Columns
   const columns = [
@@ -174,7 +123,7 @@ const AdminLate = () => {
     <div>
       <section className="flex flex-col mb-2">
         <div className="flex items-center gap-1">
-          <h2>Monitoring</h2> <ChevronRight className="w-6 h-6" />
+          <h2>Tracking</h2> <ChevronRight className="w-6 h-6" />
           <h2>Late</h2>
         </div>
         <p className="text-light">
@@ -201,7 +150,7 @@ const AdminLate = () => {
         </div>
       </section>
 
-      <Table data={data} columns={columns} />
+      <Table data={attendancesByStatus} columns={columns} />
     </div>
   );
 };

@@ -1,35 +1,42 @@
-import React from "react";
-import Table from "../../components/Table"; // your reusable Table component
+import { useState } from "react";
+import Table from "../../components/Table";
 import { Edit, Trash2 } from "lucide-react";
+import { DateTime } from "luxon";
+import { ChevronRight } from "lucide-react";
+import { useAttendance } from "../../hooks/useAttendance";
+import { Datepicker } from "flowbite-react";
 
 const AdminUndertime = () => {
-  // Mock Data
-  const data = [
-    {
-      id: "EMP401",
-      name: "Alice Johnson",
-      email: "alice.johnson@example.com",
-      account: "AliceJ123",
-      scheduledTimeOut: "6:00 P.M.",
-      timeOut: "5:45 P.M.",
-    },
-    {
-      id: "EMP402",
-      name: "Bob Smith",
-      email: "bob.smith@example.com",
-      account: "BobS456",
-      scheduledTimeOut: "6:00 P.M.",
-      timeOut: "6:00 P.M.",
-    },
-    {
-      id: "EMP403",
-      name: "Charlie Brown",
-      email: "charlie.brown@example.com",
-      account: "CharlieB789",
-      scheduledTimeOut: "6:00 P.M.",
-      timeOut: "5:30 P.M.",
-    },
-  ];
+  const zone = "Asia/Manila";
+
+  // Initialize with today in PH time
+  const [dateRange, setDateRange] = useState({
+    startDate: DateTime.now().setZone(zone).startOf("day").toUTC().toISO(),
+    endDate: DateTime.now().setZone(zone).endOf("day").toUTC().toISO(),
+  });
+
+  const filter = {
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+    status: "undertime",
+  };
+
+  const { attendancesByStatus, loading } = useAttendance(null, filter);
+
+  // handle datepicker
+  const handleDatePicker = (date, field) => {
+    if (!date) return;
+
+    const isoDate =
+      field === "startDate"
+        ? DateTime.fromJSDate(date).setZone(zone).startOf("day").toUTC().toISO()
+        : DateTime.fromJSDate(date).setZone(zone).endOf("day").toUTC().toISO();
+
+    setDateRange((prev) => ({
+      ...prev,
+      [field]: isoDate,
+    }));
+  };
 
   // Helper to calculate undertime in minutes
   const calculateUndertime = (scheduled, actual) => {
@@ -49,19 +56,45 @@ const AdminUndertime = () => {
 
   const columns = [
     { headerName: "ID", field: "id", sortable: true, filter: true, flex: 1 },
-    { headerName: "Name", field: "name", sortable: true, filter: true, flex: 2 },
-    { headerName: "Email Address", field: "email", sortable: true, filter: true, flex: 2 },
-    { headerName: "Account", field: "account", sortable: true, filter: true, flex: 1 },
-    { headerName: "Scheduled Time Out", field: "scheduledTimeOut", sortable: true, filter: false, flex: 1 },
-    { headerName: "Time Out", field: "timeOut", sortable: true, filter: false, flex: 1 },
+    {
+      headerName: "Name",
+      field: "name",
+      sortable: true,
+      filter: true,
+      flex: 2,
+    },
+    {
+      headerName: "Email Address",
+      field: "email",
+      sortable: true,
+      filter: true,
+      flex: 2,
+    },
+    {
+      headerName: "Account",
+      field: "accounts",
+      sortable: true,
+      filter: true,
+      flex: 1,
+    },
+    {
+      headerName: "Shirt Start",
+      field: "shiftEnd",
+      sortable: true,
+      filter: false,
+      flex: 1,
+    },
+    {
+      headerName: "Time Out",
+      field: "timeOut",
+      sortable: true,
+      filter: false,
+      flex: 1,
+    },
     {
       headerName: "Undertime Duration",
       field: "undertime",
       flex: 1,
-      renderCell: (row) => {
-        const minutes = calculateUndertime(row.scheduledTimeOut, row.timeOut);
-        return minutes > 0 ? `${minutes} min` : "";
-      },
     },
     {
       headerName: "Action",
@@ -88,8 +121,38 @@ const AdminUndertime = () => {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Admin Undertime</h2>
-      <Table data={data} columns={columns} />
+      <section className="flex flex-col mb-4">
+        <div className="flex items-center gap-1">
+          <h2>Tracking</h2> <ChevronRight className="w-6 h-6" />
+          <h2>Undertime</h2>
+        </div>
+        <p className="text-light">
+          Review employees who logged out earlier than their scheduled shift
+          end. This helps track productivity impact, identify patterns, and
+          maintain proper attendance records.
+        </p>
+      </section>
+
+      <section className="flex gap-4 mb-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Start Date</label>
+          <Datepicker
+            value={DateTime.fromISO(dateRange.startDate)
+              .setZone(zone)
+              .toJSDate()}
+            onChange={(date) => handleDatePicker(date, "startDate")}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">End Date</label>
+          <Datepicker
+            value={DateTime.fromISO(dateRange.endDate).setZone(zone).toJSDate()}
+            onChange={(date) => handleDatePicker(date, "endDate")}
+          />
+        </div>
+      </section>
+
+      <Table data={attendancesByStatus} columns={columns} />
     </div>
   );
 };

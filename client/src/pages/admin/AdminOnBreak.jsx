@@ -3,6 +3,7 @@ import Table from "../../components/Table"; // your reusable Table component
 import { DateTime } from "luxon";
 import { Datepicker } from "flowbite-react";
 import { useAttendance } from "../../hooks/useAttendance";
+import { ChevronRight } from "lucide-react";
 
 const AdminOnBreak = () => {
   const fmt = "hh:mm a";
@@ -16,7 +17,7 @@ const AdminOnBreak = () => {
   const filter = {
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
-    status: "on-break",
+    status: "onBreak",
   };
 
   const { attendancesByStatus, loading } = useAttendance(null, filter);
@@ -48,7 +49,7 @@ const AdminOnBreak = () => {
       field: "name",
       sortable: true,
       filter: true,
-      flex: 2,
+      flex: 1,
     },
     {
       headerName: "Email",
@@ -65,32 +66,24 @@ const AdminOnBreak = () => {
       flex: 1,
     },
     {
-      headerName: "1st Break Start",
-      field: "firstBreakStart",
-      sortable: true,
+      headerName: "Morning Break",
       filter: false,
       flex: 1,
+      cellRenderer: (params) => {
+        const breakStart = params.data.firstBreakStart;
+        const breakEnd = params.data.firstBreakEnd;
+        return `${breakStart} - ${breakEnd}`;
+      },
     },
     {
-      headerName: "1st Break End",
-      field: "firstBreakEnd",
-      sortable: true,
+      headerName: "Afternoon Break",
       filter: false,
       flex: 1,
-    },
-    {
-      headerName: "2nd Break Start",
-      field: "secondBreakStart",
-      sortable: true,
-      filter: false,
-      flex: 1,
-    },
-    {
-      headerName: "2nd Break End",
-      field: "secondBreakEnd",
-      sortable: true,
-      filter: false,
-      flex: 1,
+      cellRenderer: (params) => {
+        const breakStart = params.data.secondBreakStart;
+        const breakEnd = params.data.secondBreakEnd;
+        return `${breakStart} - ${breakEnd}`;
+      },
     },
     {
       headerName: "Extended Break Duration",
@@ -103,26 +96,16 @@ const AdminOnBreak = () => {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Admin On Break</h2>
-
-      {/* Date Picker */}
-      <section className="flex gap-4 mb-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Start Date</label>
-          <Datepicker
-            value={DateTime.fromISO(dateRange.startDate)
-              .setZone(zone)
-              .toJSDate()}
-            onChange={(date) => handleDatePicker(date, "startDate")}
-          />
+      <section className="flex flex-col mb-4">
+        <div className="flex items-center gap-1">
+          <h2>Monitoring</h2> <ChevronRight className="w-6 h-6" />{" "}
+          <h2>On Break</h2>
         </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">End Date</label>
-          <Datepicker
-            value={DateTime.fromISO(dateRange.endDate).setZone(zone).toJSDate()}
-            onChange={(date) => handleDatePicker(date, "endDate")}
-          />
-        </div>
+        <p className="text-light">
+          Track which employees' are currently on break and monitor their break
+          durations. This helps ensure compliance with company policies and
+          better visibility of team availability.
+        </p>
       </section>
 
       <Table data={attendancesByStatus} columns={columns} />

@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { Button } from "flowbite-react";
 import { Square } from "lucide-react";
-import formatDate from "../utils/formatDate";
+import { formatTime } from "../utils/formatDateTime";
 import toast from "react-hot-toast";
 import { calculateDuration, getButtonState } from "../utils/attendanceHelpers";
 
@@ -93,7 +93,7 @@ const TimeBox = ({ attendance, config, onTimeIn, onUpdate, user }) => {
         )}
       </div>
       <span className="text-light text-sm">
-        Time Recorded: {startTime ? formatDate(startTime) : "Not recorded"}
+        Time Recorded: {startTime ? formatTime(startTime) : "Not recorded"}
       </span>
     </div>
   );
