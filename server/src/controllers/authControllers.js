@@ -8,48 +8,67 @@ const isIOSSafari = (userAgent) => {
   return /iPad|iPhone|iPod/.test(userAgent) && /WebKit/.test(userAgent) && !/Edge/.test(userAgent);
 };
 
-const getCookieOptions = (req) => {
-  const isProduction = process.env.NODE_ENV === "production";
-  const userAgent = req.get('User-Agent') || '';
-  const isIOS = isIOSSafari(userAgent);
-  
-  const sameSiteValue = isProduction ? 
-    (isIOS ? "Lax" : "None") : 
-    "Lax"; 
-
-  return {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: sameSiteValue,
-    path: "/",
-  };
-};
-
 export const login = async (req, res) => {
   const { email, password } = req.body;
+  
   try {
-    const user = await User.login(email, password); // I-assume na tama ang User.login mo
+    const user = await User.login(email, password);
 
-    // I-save ang user data sa session
-    req.session.user = {
+    // Create user session data
+    const sessionData = {
       id: user._id.toString(),
       email: user.email,
-      role: user.role
+      role: user.role,
+      loginTime: new Date().toISOString()
     };
 
-    // I-save ang session bago mag-response
-    req.session.save((err) => {
-      if (err) {
-        console.error("Error saving session:", err);
-        return res.status(500).json({ error: "Session save failed" });
-      }
-
-      // I-send ang successful response
-      res.status(200).json({ 
-        message: "Login successful",
-        user: req.session.user // I-return ang user data
+    // Set session data
+    req.session.user = sessionData;
+    
+    // Force session regeneration for iOS devices
+    const userAgent = req.get('User-Agent') || '';
+    if (isIOSSafari(userAgent)) {
+      return new Promise((resolve) => {
+        req.session.regenerate((err) => {
+          if (err) {
+            console.error("Session regeneration error:", err);
+            return res.status(500).json({ error: "Session creation failed" });
+          }
+          
+          // Set user data again after regeneration
+          req.session.user = sessionData;
+          
+          // Explicitly save session
+          req.session.save((saveErr) => {
+            if (saveErr) {
+              console.error("Session save error:", saveErr);
+              return res.status(500).json({ error: "Session save failed" });
+            }
+            
+            console.log("iOS Safari session created successfully");
+            res.status(200).json({ 
+              message: "Login successful",
+              user: sessionData
+            });
+            resolve();
+          });
+        });
       });
-    });
+    } else {
+      // For non-iOS devices, use normal session save
+      req.session.save((err) => {
+        if (err) {
+          console.error("Error saving session:", err);
+          return res.status(500).json({ error: "Session save failed" });
+        }
+
+        console.log("Session created successfully for:", sessionData.email);
+        res.status(200).json({ 
+          message: "Login successful",
+          user: sessionData
+        });
+      });
+    }
 
   } catch (error) {
     console.error("Login error:", error.message);
@@ -57,15 +76,50 @@ export const login = async (req, res) => {
   }
 };
 
-// Baguhin ang getStatus function
 export const getStatus = (req, res) => {
-  // Gamitin ang req.session.user para i-check kung valid ang session
-  const user = req.session.user;
+  console.log("Session ID:", req.sessionID);
+  console.log("Session data:", req.session);
+  
+  const user = req.session?.user;
 
   if (user) {
-    return res.status(200).json({ isValid: true, user: user });
+    // Update last accessed time
+    req.session.lastAccessed = new Date().toISOString();
+    
+    return res.status(200).json({ 
+      isValid: true, 
+      user: user,
+      sessionId: req.sessionID
+    });
   } else {
-    return res.status(401).json({ isValid: false, message: "User not authenticated" });
+    console.log("No valid session found");
+    return res.status(401).json({ 
+      isValid: false, 
+      message: "User not authenticated",
+      sessionId: req.sessionID
+    });
+  }
+};
+
+export const logout = (req, res) => {
+  if (req.session) {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Session destruction error:", err);
+        return res.status(500).json({ error: "Logout failed" });
+      }
+      
+      res.clearCookie('trackio.sid'); // Clear the session cookie
+      res.status(200).json({ 
+        message: "Logged out successfully",
+        isLoggedOut: true 
+      });
+    });
+  } else {
+    res.status(200).json({ 
+      message: "No active session",
+      isLoggedOut: true 
+    });
   }
 };
 
@@ -84,23 +138,24 @@ export const createToken = async (req, res) => {
     .setExpirationTime("30d")
     .sign(privateKey);
 
-  res.cookie("accessToken", accessToken, {
+  const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     path: "/",
+  };
+
+  res.cookie("accessToken", accessToken, {
+    ...cookieOptions,
     maxAge: 15 * 60 * 1000, // 15 minutes
   });
 
   res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    path: "/",
+    ...cookieOptions,
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
 
-  res.status(200).json({ message: "Sucessfully authenticated" });
+  res.status(200).json({ message: "Successfully authenticated" });
 };
 
 export const createNewToken = async (req, res) => {
@@ -112,9 +167,7 @@ export const createNewToken = async (req, res) => {
 
   try {
     const publicKey = await jose.importSPKI(publicPEM, "RS256");
-
     const { payload: user } = await jose.jwtVerify(refreshToken, publicKey);
-
     const privateKey = await jose.importPKCS8(privatePEM, "RS256");
 
     const accessToken = await new jose.SignJWT(user)
@@ -122,7 +175,6 @@ export const createNewToken = async (req, res) => {
       .setExpirationTime("15m")
       .sign(privateKey);
 
-    // Setting cookies as httpOnly (not accessible by JavaScript)
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -130,6 +182,7 @@ export const createNewToken = async (req, res) => {
       path: "/",
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
+    
     return res.json({ message: "New access token created" });
   } catch (error) {
     if (error.code === "ERR_JWT_EXPIRED") {
@@ -143,21 +196,16 @@ export const createNewToken = async (req, res) => {
 };
 
 export const deleteToken = async (req, res) => {
-  res.cookie("accessToken", "", {
+  const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     path: "/",
     expires: new Date(0),
-  });
+  };
 
-  res.cookie("refreshToken", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    path: "/",
-    expires: new Date(0),
-  });
+  res.cookie("accessToken", "", cookieOptions);
+  res.cookie("refreshToken", "", cookieOptions);
 
   res.json({ message: "Logged out successfully", isLoggedOut: true });
 };
@@ -179,20 +227,3 @@ export const getAuthUser = (req, res) => {
     });
   }
 };
-
-/*export const getStatus = (req, res) => {
-  const user = req.user;
-  const now = Math.floor(Date.now() / 1000);
-
-  if (!user) {
-    return res
-      .status(401)
-      .json({ isValid: false, message: "User does not exist" });
-  } else if (user.exp < now) {
-    return res
-      .status(401)
-      .json({ isValid: false, message: "Invalid or expired token" });
-  } else {
-    return res.status(200).json({ isValid: true, message: "Valid user" });
-  }
-};*/

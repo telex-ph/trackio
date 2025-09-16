@@ -22,6 +22,7 @@ const Login = () => {
   const [error, setError] = useState({ message: "", hasError: false });
   const [loading, setLoading] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
+  const [loginAttempts, setLoginAttempts] = useState(0);
 
   // Right side animation state
   const [showVideo, setShowVideo] = useState(false);
@@ -37,7 +38,6 @@ const Login = () => {
     let logoTimer;
 
     if (!showVideo) {
-      // Stay logo for 6s then switch to video
       logoTimer = setTimeout(() => {
         setShowVideo(true);
       }, 6000);
@@ -56,62 +56,97 @@ const Login = () => {
 
   const handleLoginClick = async (e) => {
     e.preventDefault();
+    
     try {
-      const response = await api.post("/auth/log-in", data); // Tanggalin ang { withCredentials: true } dahil naka-set na ito sa Axios instance
+      console.log("Attempting login...");
+      setLoginAttempts(prev => prev + 1);
+      
+      const response = await api.post("/auth/log-in", data);
       const responseData = response.data;
 
-      // Kung successful ang login, diretsong i-redirect ang user
+      console.log("Login response:", responseData);
+
       if (responseData.user) {
-        console.log("Login successful, redirecting...");
-        navigate(`/${responseData.user.role}/dashboard`);
+        console.log("Login successful, user data:", responseData.user);
+        
+        // Small delay to ensure session is properly set
+        setTimeout(() => {
+          console.log("Redirecting to dashboard...");
+          navigate(`/${responseData.user.role}/dashboard`, { replace: true });
+        }, 100);
+        
         return;
       }
     } catch (error) {
+      console.error("Login error details:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        attempt: loginAttempts
+      });
+      
       setError({
         message: error.response?.data?.error
           ? "Oops! We couldn't log you in. Please check your email and password."
           : error.message,
         hasError: true,
       });
-      console.error("Login error: ", error);
     }
   };
 
-  // TODO: remove this since in microsoft azure, we cannot get thier shifts
   const handleMicrosoftClick = async () => {
-    const microsoftResponse = await microsoftLogin();
-    const microsoftUser = await getMicrosoftUser(microsoftResponse.accessToken);
+    try {
+      const microsoftResponse = await microsoftLogin();
+      const microsoftUser = await getMicrosoftUser(microsoftResponse.accessToken);
 
-    const user = {
-      id: microsoftUser.id,
-      email: microsoftUser.mail,
-      firstName: microsoftUser.givenName,
-      lastName: microsoftUser.surname,
-      jobTitle: microsoftUser.jobTitle,
-    };
+      const user = {
+        id: microsoftUser.id,
+        email: microsoftUser.mail,
+        firstName: microsoftUser.givenName,
+        lastName: microsoftUser.surname,
+        jobTitle: microsoftUser.jobTitle,
+      };
 
-    const loginResponse = await api.post("/auth/create-token", user);
-    const role = await checkRole(user.id, microsoftResponse.accessToken);
-    console.log("role: ", role);
+      const loginResponse = await api.post("/auth/create-token", user);
+      const role = await checkRole(user.id, microsoftResponse.accessToken);
+      console.log("Microsoft login role: ", role);
 
-    if (loginResponse.status === 200) navigate("/dashboard");
+      if (loginResponse.status === 200) {
+        navigate("/dashboard", { replace: true });
+      }
+    } catch (error) {
+      console.error("Microsoft login error:", error);
+      setError({
+        message: "Microsoft login failed. Please try again.",
+        hasError: true,
+      });
+    }
   };
 
-  // Check auth status
+  // Check auth status with better error handling
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        console.log("Checking authentication status...");
         const response = await api.get("/auth/status");
         const user = response.data.user;
         const isValid = response.data.isValid;
 
+        console.log("Auth status response:", { isValid, user });
+
         if (isValid && user) {
-          console.log("Session is valid, redirecting...");
-          navigate(`/${user.role}/dashboard`);
+          console.log("Valid session found, redirecting...");
+          navigate(`/${user.role}/dashboard`, { replace: true });
           return;
+        } else {
+          console.log("No valid session found");
         }
       } catch (error) {
-        console.log("No active session found.");
+        console.log("Auth check error:", {
+          message: error.message,
+          status: error.response?.status,
+          data: error.response?.data
+        });
       } finally {
         setLoading(false);
       }
@@ -121,7 +156,6 @@ const Login = () => {
       fetchUser();
     }
   }, [showSplash, navigate]);
-  
 
   if (showSplash) {
     return (
@@ -142,7 +176,13 @@ const Login = () => {
     );
   }
 
-  if (loading) return <p>Checking authentication...</p>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p>Checking authentication...</p>
+      </div>
+    );
+  }
 
   return (
     <section className="flex h-screen">
@@ -154,6 +194,12 @@ const Login = () => {
           <p className="text-light">
             All fields are required. Make sure your details are correct.
           </p>
+          {/* Debug info for iOS testing */}
+          {process.env.NODE_ENV === 'development' && (
+            <p className="text-xs text-gray-500">
+              Login attempts: {loginAttempts} | User-Agent: {navigator.userAgent.includes('iPhone') ? 'iOS' : 'Other'}
+            </p>
+          )}
         </div>
 
         <form
