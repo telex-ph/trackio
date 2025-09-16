@@ -6,8 +6,8 @@ import flowbiteReact from 'flowbite-react/plugin/vite';
 export default defineConfig({
   plugins: [react(), tailwindcss(), flowbiteReact()],
   preview: {
-    host: '0.0.0.0', // already there
-    port: parseInt(process.env.PORT) || 4173,
-    allowedHosts: ['trackio-1.onrender.com'],
-  },
+  host: '0.0.0.0',
+  port: parseInt(process.env.PORT) || 4173,
+  allowedHosts: ['trackio-frontend.onrender.com']
+}
 });
