@@ -28,66 +28,44 @@ const getCookieOptions = (req) => {
 export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await User.login(email, password);
-    const privateKey = await jose.importPKCS8(privatePEM, "RS256");
+    const user = await User.login(email, password); // I-assume na tama ang User.login mo
 
-    const userPayload = {
+    // I-save ang user data sa session
+    req.session.user = {
       id: user._id.toString(),
       email: user.email,
       role: user.role
     };
 
-    const accessToken = await new jose.SignJWT(userPayload)
-      .setProtectedHeader({ alg: "RS256" })
-      .setExpirationTime("15m")
-      .sign(privateKey);
-
-    const refreshToken = await new jose.SignJWT(userPayload)
-      .setProtectedHeader({ alg: "RS256" })
-      .setExpirationTime("30d")
-      .sign(privateKey);
-
-    const cookieOptions = getCookieOptions(req);
-    const userAgent = req.get('User-Agent') || '';
-    const isIOS = isIOSSafari(userAgent);
-
-    res.cookie("accessToken", accessToken, {
-      ...cookieOptions,
-      maxAge: 15 * 60 * 1000,
-    });
-
-    res.cookie("refreshToken", refreshToken, {
-      ...cookieOptions,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    });
-
-    const responseData = {
-      message: "Login successful",
-      user: { 
-        id: user._id.toString(),
-        email: user.email, 
-        role: user.role 
-      },
-      debug: {
-        userAgent: userAgent,
-        isIOS: isIOS,
-        sameSite: cookieOptions.sameSite,
-        cookieOptionsUsed: cookieOptions
+    // I-save ang session bago mag-response
+    req.session.save((err) => {
+      if (err) {
+        console.error("Error saving session:", err);
+        return res.status(500).json({ error: "Session save failed" });
       }
-    };
 
-    if (isIOS) {
-      responseData.fallbackTokens = {
-        accessToken: accessToken,
-        refreshToken: refreshToken,
-        expiresAt: Date.now() + (15 * 60 * 1000)
-      };
-    }
+      // I-send ang successful response
+      res.status(200).json({ 
+        message: "Login successful",
+        user: req.session.user // I-return ang user data
+      });
+    });
 
-    res.status(200).json(responseData);
   } catch (error) {
     console.error("Login error:", error.message);
     res.status(400).json({ error: error.message });
+  }
+};
+
+// Baguhin ang getStatus function
+export const getStatus = (req, res) => {
+  // Gamitin ang req.session.user para i-check kung valid ang session
+  const user = req.session.user;
+
+  if (user) {
+    return res.status(200).json({ isValid: true, user: user });
+  } else {
+    return res.status(401).json({ isValid: false, message: "User not authenticated" });
   }
 };
 
@@ -202,7 +180,7 @@ export const getAuthUser = (req, res) => {
   }
 };
 
-export const getStatus = (req, res) => {
+/*export const getStatus = (req, res) => {
   const user = req.user;
   const now = Math.floor(Date.now() / 1000);
 
@@ -217,4 +195,4 @@ export const getStatus = (req, res) => {
   } else {
     return res.status(200).json({ isValid: true, message: "Valid user" });
   }
-};
+};*/

@@ -7,7 +7,7 @@ import {
   getStatus,
   login,
 } from "../controllers/authControllers.js";
-import { verifyJWT } from "../middlewares/verifyJWT.js";
+//import { verifyJWT } from "../middlewares/verifyJWT.js";
 // import { handleExpiredToken } from "../middlewares/handleExpiredToken.js";
 const router = Router();
 
@@ -24,9 +24,9 @@ router.post("/create-new-token", createNewToken);
 router.get("/delete-token", deleteToken);
 
 // Get the currently authenticated user info
-router.get("/get-auth-user", verifyJWT, getAuthUser);
+router.get("/get-auth-user", getAuthUser);
 
 // Check if the user is still valid
-router.get("/status", verifyJWT, getStatus);
+router.get("/status", getStatus);
 
 export default router;
