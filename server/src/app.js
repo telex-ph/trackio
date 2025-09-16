@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import session from "express-session";
+import MongoStore from "connect-mongo";
 
 // Routes imports
 import authRoutes from "../src/routes/authRoutes.js";
@@ -43,6 +44,13 @@ app.use(
     resave: false,
     saveUninitialized: false,
     rolling: true, // Reset expiration on each request
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGODB_URI || process.env.DATABASE_URL,
+      touchAfter: 24 * 3600, // lazy session update
+      crypto: {
+        secret: process.env.SESSION_SECRET || "telexph"
+      }
+    }),
     cookie: {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
@@ -53,6 +61,7 @@ app.use(
   })
 );
 
+// Debug middleware for iOS - ILAGAY MO DITO
 app.use((req, res, next) => {
   if (/iPad|iPhone|iPod/.test(req.get('User-Agent'))) {
     console.log('iOS Request:', {
