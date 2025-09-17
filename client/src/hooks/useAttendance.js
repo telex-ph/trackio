@@ -6,6 +6,7 @@ import { formatTime, formatDate } from "../utils/formatDateTime";
 
 export const useAttendance = (userId, filter) => {
   const [attendance, setAttendance] = useState(null);
+  const [absentees, setAbsentees] = useState(null);
   const [attendancesByStatus, setAttendancesByStatus] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -121,6 +122,24 @@ export const useAttendance = (userId, filter) => {
     }
   }, []);
 
+  const fetchAbsentees = useCallback(async () => {
+    try {
+      setError(null);
+      const response = await api.get("/attendance/get-attendances", {
+        params: {
+          startDate: filter?.startDate,
+          endDate: filter?.endDate,
+          filter: filter?.status,
+        },
+      });
+      setAbsentees(response.data);
+    } catch (error) {
+      console.error("Error fetching absentees:", error);
+      setError("Failed to fetch absenteees");
+    }
+    setLoading(false);
+  }, []);
+
   const addAttendance = useCallback(
     async (shiftStart, shiftEnd) => {
       if (!userId) return;
@@ -179,9 +198,16 @@ export const useAttendance = (userId, filter) => {
     }
   }, [filter?.startDate, filter?.endDate, fetchAttendancesByStatus]);
 
+  useEffect(() => {
+    if (filter) {
+      fetchAttendancesByStatus(filter);
+    }
+  }, [filter?.startDate, filter?.endDate, fetchAbsentees]);
+
   return {
     attendance,
     attendancesByStatus,
+    absentees,
     loading,
     error,
     addAttendance,

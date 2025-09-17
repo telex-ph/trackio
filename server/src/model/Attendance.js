@@ -4,6 +4,7 @@ import { ObjectId } from "mongodb";
 
 class Attendance {
   static #collection = "attendances";
+  static #usersCollection = "users";
 
   // Get all timed in attendance records
   static async getAll({
@@ -204,6 +205,42 @@ class Attendance {
     });
 
     return result;
+  }
+
+  // Check users' attendance
+  static async checkAbsentees() {
+    const db = await connectDB();
+    const usersCollection = db.collection(this.#usersCollection);
+    const attendanceCollection = db.collection(this.#collection);
+
+    // 1️⃣ Get today's date as ISO string (ignore time)
+    const todayDate = DateTime.now().toISODate(); // "2025-09-16"
+
+    // 2️⃣ Get today's weekday
+    const weekday = DateTime.now().weekday; // 1 = Monday ... 7 = Sunday
+
+    // 3️⃣ Get all users scheduled for today
+    const usersOnShift = await usersCollection
+      .find({ shiftDays: weekday }, { projection: { password: 0 } })
+      .toArray();
+
+    // 4️⃣ Get all attendance records for today
+    const attendanceToday = await attendanceCollection
+      .find({ date: todayDate })
+      .project({ userId: 1 })
+      .toArray();
+
+    // 5️⃣ Extract userIds who already attended
+    const attendedUserIds = attendanceToday.map((a) => a.userId.toString());
+
+    // 6️⃣ Filter users who haven't attended yet (absentees)
+    const absentees = usersOnShift.filter(
+      (user) => !attendedUserIds.includes(user._id.toString())
+    );
+
+    console.log("Absentees today:", absentees);
+
+    return absentees;
   }
 }
 

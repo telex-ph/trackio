@@ -1,92 +1,46 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Table from "../../components/Table";
 import { DateTime } from "luxon";
 import { Datepicker } from "flowbite-react";
-import {
-  ChevronRight,
-  FileText,
-  CheckCircle,
-  CalendarDays,
-  Upload,
-  Eye,
-  Trash2,
-} from "lucide-react";
+import { ChevronRight, FileText, Upload, Eye, Trash2 } from "lucide-react";
 import TableAction from "../../components/TableAction";
 import Modal from "../../components/TableModal";
 import TableEmployeeDetails from "../../components/TableEmployeeDetails";
+import { useAttendance } from "../../hooks/useAttendance";
 
 const AdminAbsentees = () => {
-  const [data, setData] = useState([]);
+  const zone = "Asia/Manila";
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
 
-  const [previewFile, setPreviewFile] = useState(null); // for file preview modal
-
   const [dateRange, setDateRange] = useState({
-    startDate: DateTime.now()
-      .setZone("Asia/Manila")
-      .startOf("day")
-      .toUTC()
-      .toISO(),
-    endDate: DateTime.now().setZone("Asia/Manila").endOf("day").toUTC().toISO(),
+    startDate: DateTime.now().setZone(zone).startOf("day").toUTC().toISO(),
+    endDate: DateTime.now().setZone(zone).endOf("day").toUTC().toISO(),
   });
+
+  const filter = {
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+    status: "timeIn",
+  };
+
+  const { attendancesByStatus, loading } = useAttendance(null, filter);
 
   const handleDatePicker = (date, field) => {
     if (!date) return;
     const isoDate =
       field === "startDate"
-        ? DateTime.fromJSDate(date)
-            .setZone("Asia/Manila")
-            .startOf("day")
-            .toUTC()
-            .toISO()
-        : DateTime.fromJSDate(date)
-            .setZone("Asia/Manila")
-            .endOf("day")
-            .toUTC()
-            .toISO();
-    setDateRange((prev) => ({ ...prev, [field]: isoDate }));
+        ? DateTime.fromJSDate(date).setZone(zone).startOf("day").toUTC().toISO()
+        : DateTime.fromJSDate(date).setZone(zone).endOf("day").toUTC().toISO();
+
+    setDateRange((prev) => ({
+      ...prev,
+      [field]: isoDate,
+    }));
   };
 
-  useEffect(() => {
-    const sampleData = [
-      {
-        id: "ADM001",
-        name: "John Doe",
-        email: "john.doe@example.com",
-        accounts: ["JDoe123"],
-        status: "Absent",
-        validity: "Invalid",
-        absentDate: "2025-09-05",
-        remarks: "Did not submit valid excuse letter.",
-        attachments: [
-          {
-            name: "medicalcertificate.jpg",
-            size: "500kb",
-            url: "https://via.placeholder.com/600x400.png?text=Medical+Proof",
-          },
-        ],
-        role: "Software Engineer",
-        department: "IT",
-        phone: "09123456789",
-      },
-      {
-        id: "ADM002",
-        name: "Jane Smith",
-        email: "jane.smith@example.com",
-        accounts: ["JSmith456"],
-        status: "Absent",
-        validity: "Valid",
-        absentDate: "2025-09-07",
-        remarks: "Family emergency (approved).",
-        attachments: [],
-        role: "HR Specialist",
-        department: "HR",
-        phone: "09987654321",
-      },
-    ];
-    setData(sampleData);
-  }, []);
+  const [previewFile, setPreviewFile] = useState(null);
 
   const actionClicked = (rowData) => {
     setSelectedRow(rowData);
@@ -185,7 +139,7 @@ const AdminAbsentees = () => {
           <label className="block text-sm font-medium mb-1">Start Date</label>
           <Datepicker
             value={DateTime.fromISO(dateRange.startDate)
-              .setZone("Asia/Manila")
+              .setZone(zone)
               .toJSDate()}
             onChange={(date) => handleDatePicker(date, "startDate")}
           />
@@ -193,16 +147,14 @@ const AdminAbsentees = () => {
         <div>
           <label className="block text-sm font-medium mb-1">End Date</label>
           <Datepicker
-            value={DateTime.fromISO(dateRange.endDate)
-              .setZone("Asia/Manila")
-              .toJSDate()}
+            value={DateTime.fromISO(dateRange.endDate).setZone(zone).toJSDate()}
             onChange={(date) => handleDatePicker(date, "endDate")}
           />
         </div>
       </section>
 
       {/* Table */}
-      <Table columns={columns} data={data} />
+      <Table columns={columns} data={attendancesByStatus} />
 
       <Modal
         isOpen={isModalOpen}

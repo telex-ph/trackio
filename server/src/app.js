@@ -2,6 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+// For marking absentees
+import "./cron.js";
 
 // Routes imports
 import authRoutes from "../src/routes/authRoutes.js";
