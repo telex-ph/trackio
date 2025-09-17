@@ -303,7 +303,7 @@ const AccountSettings = () => {
                                 )
                               }
                               disabled={!isEditing}
-                              className="w-full max-w-xs sm:max-w-sm md:max-w-md px-3 sm:px-4 md:px-6 py-3 sm:py-4 bg-white/80 border-2 border-gray-200 rounded-r-xl focus:border-red-600 focus:ring-4 focus:ring-red-600/20 transition-all duration-300 disabled:bg-gray-50 disabled:text-gray-500 text-sm sm:text-base"
+                              className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl px-3 sm:px-4 md:px-6 py-3 sm:py-4  bg-white/80 border-2 border-gray-200 rounded-r-xl focus:border-red-600 focus:ring-4 focus:ring-red-600/20 transition-all duration-300 disabled:bg-gray-50 disabled:text-gray-500 text-sm sm:text-base"
                             />
                           </div>
                         </div>
