@@ -1,8 +1,10 @@
 import cron from "node-cron";
-import Attendance from "./model/Attendance.js";
+import { checkAbsences, markAbsences } from "./services/absence.services.js";
 
 // Runs every 1 minute
 cron.schedule("* * * * *", async () => {
-  const users = await Attendance.checkAbsentees();
-  console.log(users);
+  const users = await checkAbsences();
+  if (users) {
+    await markAbsences(users);
+  }
 });
