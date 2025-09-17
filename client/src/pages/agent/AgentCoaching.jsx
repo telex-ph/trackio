@@ -11,6 +11,9 @@ import {
   Eye,
   X,
 } from "lucide-react";
+import TableAction from "../../components/TableAction";
+import Table from "../../components/Table";
+import Modal from "../../components/TableModal";
 
 const AgentCoaching = () => {
   const scrollRef = useRef(null);
@@ -332,8 +335,101 @@ const AgentCoaching = () => {
     }
   };
 
+  const columns = [
+    {
+      headerName: "DATE",
+      field: "date",
+      sortable: true,
+      filter: true,
+      flex: 1,
+    },
+    {
+      headerName: "FACILITATOR",
+      field: "facilitator",
+      sortable: true,
+      filter: true,
+      flex: 1,
+    },
+    {
+      headerName: "TYPE",
+      field: "type",
+      sortable: true,
+      filter: true,
+      flex: 1,
+      cellRenderer: (params) => (
+        <span
+          className={`px-2 sm:px-3 py-1 rounded-lg text-xs font-medium border ${
+            typeColors[params.value]
+          }`}
+        >
+          {params.value}
+        </span>
+      ),
+    },
+    {
+      headerName: "TIME",
+      field: "time",
+      sortable: true,
+      filter: true,
+      flex: 1,
+    },
+    {
+      headerName: "AGENDA",
+      field: "agenda",
+      sortable: true,
+      filter: true,
+      flex: 2,
+      cellRenderer: (params) => (
+        <span className="truncate block text-xs sm:text-sm">
+          {params.value.length > 30
+            ? params.value.substring(0, 30) + "..."
+            : params.value}
+        </span>
+      ),
+    },
+    {
+      headerName: "STATUS",
+      field: "status",
+      sortable: true,
+      filter: true,
+      flex: 1,
+      cellRenderer: (params) => (
+        <span
+          className={`px-2 sm:px-4 py-1 sm:py-2 rounded-xl text-xs font-semibold ${getStatusColor(
+            params.value
+          )}`}
+        >
+          {params.value}
+        </span>
+      ),
+    },
+    {
+      headerName: "REMARKS",
+      field: "remarks",
+      sortable: true,
+      filter: true,
+      flex: 1,
+      cellRenderer: (params) => (
+        <span className="truncate block text-xs sm:text-sm">
+          {params.value.length > 20
+            ? params.value.substring(0, 20) + "..."
+            : params.value}
+        </span>
+      ),
+    },
+    {
+      headerName: "ACTION",
+      field: "action",
+      flex: 1,
+      cellRenderer: (params) => (
+        <TableAction action={() => openModal(params.data)} />
+      ),
+      filter: false,
+    },
+  ];
+
   return (
-    <div className="p-8">
+    <div>
       {/* Header */}
       <div className="mb-10">
         <h2 className="text-4xl font-bold text-gray-900 mb-2">
@@ -345,19 +441,19 @@ const AgentCoaching = () => {
       </div>
 
       {/* Upcoming Sessions */}
-      <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20 mb-16">
-        <div className="flex items-center justify-between mb-8">
+      <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-4 sm:p-6 lg:p-8 border border-white/20 mb-8 sm:mb-12 lg:mb-16 w-full max-w-none">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4 sm:gap-0">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-indigo-100 rounded-lg">
-              <Clock className="w-6 h-6 text-red-600" />
+              <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-800">
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
               Upcoming Sessions
             </h3>
           </div>
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg"></div>
-            <span className="text-sm text-gray-600 font-medium bg-green-50 px-3 py-1 rounded-full border border-green-200">
+            <span className="text-xs sm:text-sm text-gray-600 font-medium bg-green-50 px-2 sm:px-3 py-1 rounded-full border border-green-200">
               Live Updates
             </span>
           </div>
@@ -366,24 +462,24 @@ const AgentCoaching = () => {
         <div className="relative flex items-center">
           <button
             onClick={() => scroll("left")}
-            className="p-4 rounded-2xl bg-gradient-to-r from-red-500 to-red-500 hover:from-red-600 hover:to-red-600 text-white transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 z-10 mr-4"
+            className="hidden md:block p-3 lg:p-4 rounded-2xl bg-gradient-to-r from-red-500 to-red-500 hover:from-red-600 hover:to-red-600 text-white transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 z-10 mr-3 lg:mr-4"
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={20} className="lg:w-6 lg:h-6" />
           </button>
 
           <div
             ref={scrollRef}
-            className="flex-1 flex gap-6 overflow-x-auto scrollbar-hide px-2 py-4"
+            className="flex-1 flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide px-2 py-4"
           >
             {upcomingSessions.map((session, i) => {
               const IconComponent = typeIcons[session.type];
               return (
                 <div
                   key={i}
-                  className="flex-shrink-0 w-96 bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 overflow-hidden group p-6"
+                  className="flex-shrink-0 w-72 sm:w-[400px] lg:w-[400px] bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 overflow-hidden group p-4 sm:p-6"
                 >
                   {/* Header with Type and Time Left */}
-                  <div className="flex justify-between items-center mb-6">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3 sm:gap-0">
                     <div className="flex items-center gap-3">
                       <div
                         className={`p-2 ${
@@ -395,7 +491,7 @@ const AgentCoaching = () => {
                         } rounded-lg group-hover:scale-110 transition-transform`}
                       >
                         <IconComponent
-                          className={`w-5 h-5 ${
+                          className={`w-4 h-4 sm:w-5 sm:h-5 ${
                             session.type === "Coaching"
                               ? "text-blue-600"
                               : session.type === "Meeting"
@@ -405,45 +501,45 @@ const AgentCoaching = () => {
                         />
                       </div>
                       <span
-                        className={`px-4 py-2 rounded-xl text-sm font-bold border ${
+                        className={`px-3 sm:px-4 py-1 sm:py-2 rounded-xl text-xs sm:text-sm font-bold border ${
                           typeColors[session.type]
                         } shadow-md`}
                       >
                         {session.type}
                       </span>
                     </div>
-                    <span className="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg animate-pulse">
+                    <span className="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 sm:px-4 py-1 sm:py-2 rounded-xl text-xs sm:text-sm font-bold shadow-lg animate-pulse">
                       {session.timeLeft}
                     </span>
                   </div>
 
                   {/* Session Title */}
                   <div className="mb-4">
-                    <h4 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-red-600 transition-colors">
+                    <h4 className="text-lg sm:text-xl font-bold text-gray-800 mb-2 group-hover:text-red-600 transition-colors">
                       {session.type} Session
                     </h4>
-                    <p className="text-sm text-gray-600 flex items-center gap-2">
-                      <User className="w-4 h-4" />
+                    <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
+                      <User className="w-3 h-3 sm:w-4 sm:h-4" />
                       Facilitator:{" "}
                       <span className="font-medium">{session.facilitator}</span>
                     </p>
                   </div>
 
                   {/* Date & Time */}
-                  <div className="flex gap-4 text-sm text-gray-700 mb-4">
-                    <span className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-xl border border-blue-100">
-                      <Calendar className="w-4 h-4 text-gray-500" />
-                      {session.date}
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs sm:text-sm text-gray-700 mb-4">
+                    <span className="flex items-center gap-2 bg-blue-50 px-2 sm:px-3 py-2 rounded-xl border border-blue-100">
+                      <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
+                      <span className="truncate">{session.date}</span>
                     </span>
-                    <span className="flex items-center gap-2 bg-orange-50 px-3 py-2 rounded-xl border border-orange-100">
-                      <Clock className="w-4 h-4 text-gray-500" />
+                    <span className="flex items-center gap-2 bg-orange-50 px-2 sm:px-3 py-2 rounded-xl border border-orange-100">
+                      <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
                       {session.time}
                     </span>
                   </div>
 
                   {/* Agenda Preview */}
-                  <div className="bg-gray-50 rounded-xl p-4 border-l-4 border-red-500 mb-4">
-                    <p className="text-sm text-gray-700">
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border-l-4 border-red-500 mb-4">
+                    <p className="text-xs sm:text-sm text-gray-700">
                       <span className="font-semibold text-gray-800">
                         Agenda:
                       </span>{" "}
@@ -454,9 +550,9 @@ const AgentCoaching = () => {
                   </div>
 
                   {/* Status and View Details */}
-                  <div className="flex justify-between items-center">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
                     <span
-                      className={`px-4 py-2 rounded-xl text-sm font-semibold ${getStatusColor(
+                      className={`px-3 sm:px-4 py-1 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold ${getStatusColor(
                         session.status
                       )}`}
                     >
@@ -464,9 +560,9 @@ const AgentCoaching = () => {
                     </span>
                     <button
                       onClick={() => openModal(session)}
-                      className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors"
+                      className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm rounded-lg transition-colors w-full sm:w-auto justify-center sm:justify-start"
                     >
-                      <Eye className="w-4 h-4" />
+                      <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
                       Details
                     </button>
                   </div>
@@ -477,135 +573,36 @@ const AgentCoaching = () => {
 
           <button
             onClick={() => scroll("right")}
-            className="p-4 rounded-2xl bg-gradient-to-r from-red-500 to-red-500 hover:from-red-600 hover:to-red-600 text-white transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 z-10 ml-4"
+            className="hidden md:block p-3 lg:p-4 rounded-2xl bg-gradient-to-r from-red-500 to-red-500 hover:from-red-600 hover:to-red-600 text-white transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 z-10 ml-3 lg:ml-4"
           >
-            <ChevronRight size={24} />
+            <ChevronRight size={20} className="lg:w-6 lg:h-6" />
           </button>
         </div>
       </div>
 
       {/* Session History */}
-      <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="p-2 bg-gray-100 rounded-lg">
-            <FileText className="w-6 h-6 text-gray-600" />
+      <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-4 sm:p-6 lg:p-8 border border-white/20 w-full max-w-none">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-3 mb-6 sm:mb-8">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-gray-100 rounded-lg">
+              <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
+            </div>
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
+              Session History
+            </h3>
           </div>
-          <h3 className="text-2xl font-bold text-gray-800">Session History</h3>
-          <span className="ml-auto bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+          <span className="sm:ml-auto bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
             {sessionHistory.length} Records
           </span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-md text-left text-gray-700 border-separate border-spacing-y-3">
-            <thead className="bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 font-bold rounded-2xl">
-              <tr>
-                {[
-                  "DATE",
-                  "FACILITATOR",
-                  "TYPE",
-                  "TIME",
-                  "AGENDA",
-                  "STATUS",
-                  "REMARKS",
-                  "ACTION",
-                ].map((col) => (
-                  <th
-                    key={col}
-                    className="px-6 py-4 first:rounded-l-2xl last:rounded-r-2xl"
-                  >
-                    {col}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {currentItems.map((row, i) => (
-                <tr
-                  key={i}
-                  className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                >
-                  <td className="px-6 py-4 rounded-l-2xl font-medium">
-                    {row.date}
-                  </td>
-                  <td className="px-6 py-4">{row.facilitator}</td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-3 py-1 rounded-lg text-sm font-medium border ${
-                        typeColors[row.type]
-                      }`}
-                    >
-                      {row.type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">{row.time}</td>
-                  <td className="px-6 py-4 max-w-xs">
-                    <span className="truncate block">
-                      {row.agenda.length > 30
-                        ? row.agenda.substring(0, 30) + "..."
-                        : row.agenda}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-4 py-2 rounded-xl text-sm font-semibold ${getStatusColor(
-                        row.status
-                      )}`}
-                    >
-                      {row.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 max-w-xs">
-                    <span className="truncate block">
-                      {row.remarks.length > 20
-                        ? row.remarks.substring(0, 20) + "..."
-                        : row.remarks}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 rounded-r-2xl">
-                    <button
-                      onClick={() => openModal(row)}
-                      className="flex items-center gap-1 px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded transition-colors"
-                    >
-                      <Eye className="w-3 h-3" />
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {/* Pagination */}
-          <div className="flex justify-center mt-8">
-            <div className="flex gap-2">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (number) => (
-                  <button
-                    key={number}
-                    onClick={() => paginate(number)}
-                    className={`px-5 py-3 rounded-xl font-medium transition-all duration-300 ${
-                      currentPage === number
-                        ? "bg-gradient-to-r from-red-600 to-red-600 text-white shadow-lg"
-                        : "bg-gray-200 text-gray-700 hover:bg-gray-300 border-2 border-indigo-200"
-                    }`}
-                  >
-                    {number}
-                  </button>
-                )
-              )}
-            </div>
-          </div>
+          <Table columns={columns} data={currentItems} />
         </div>
 
         {/* Summary Stats */}
-        <div className="flex justify-between items-center mt-8 text-sm text-gray-600 bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-2xl border border-gray-200">
-          <span className="font-medium">
-            Showing {indexOfFirstItem + 1}–
-            {Math.min(indexOfLastItem, sessionHistory.length)} of{" "}
-            {sessionHistory.length} records
-          </span>
-          <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mt-6 sm:mt-8 text-xs sm:text-sm text-gray-600 bg-gradient-to-r from-gray-50 to-gray-100 p-3 sm:p-4 rounded-2xl border border-gray-200">
+          <div className="flex gap-3 sm:gap-4">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-green-400 rounded-full"></div>
               <span className="text-xs">
@@ -625,94 +622,53 @@ const AgentCoaching = () => {
       </div>
 
       {/* Modal */}
-      {isModalOpen && selectedSession && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="flex justify-between items-center p-6 border-b border-gray-200">
-              <div className="flex items-center gap-4">
-                <div
-                  className={`p-3 ${
-                    selectedSession.type === "Coaching"
-                      ? "bg-blue-100"
-                      : selectedSession.type === "Meeting"
-                      ? "bg-purple-100"
-                      : "bg-green-100"
-                  } rounded-xl`}
-                >
-                  {(() => {
-                    const IconComponent = typeIcons[selectedSession.type];
-                    return (
-                      <IconComponent
-                        className={`w-6 h-6 ${
-                          selectedSession.type === "Coaching"
-                            ? "text-blue-600"
-                            : selectedSession.type === "Meeting"
-                            ? "text-purple-600"
-                            : "text-green-600"
-                        }`}
-                      />
-                    );
-                  })()}
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-800">
-                    {selectedSession.type} Session Details
-                  </h2>
-                  <p className="text-gray-600">
-                    Complete information about this session
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={closeModal}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <X className="w-6 h-6 text-gray-500" />
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 space-y-6">
+      <Modal isOpen={isModalOpen} onClose={closeModal} title="Session Details">
+        {(isEditing) =>
+          selectedSession && (
+            <div className="space-y-4 sm:space-y-6 max-w-full">
               {/* Basic Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="bg-gray-50 rounded-xl p-4">
-                    <h3 className="font-semibold text-gray-800 mb-2">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-4">
+                    <h3 className="font-semibold text-gray-800 mb-2 text-sm sm:text-base">
                       Session Information
                     </h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Type:</span>
+                    <div className="space-y-2 text-xs sm:text-sm">
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
+                        <span className="text-gray-600 font-medium">Type:</span>
                         <span
-                          className={`px-3 py-1 rounded-lg font-medium border ${
+                          className={`px-2 sm:px-3 py-1 rounded-lg font-medium border text-xs sm:text-sm ${
                             typeColors[selectedSession.type]
-                          }`}
+                          } w-fit`}
                         >
                           {selectedSession.type}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Facilitator:</span>
-                        <span className="font-medium">
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
+                        <span className="text-gray-600 font-medium">
+                          Facilitator:
+                        </span>
+                        <span className="font-medium text-gray-800 break-words">
                           {selectedSession.facilitator}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Date:</span>
-                        <span className="font-medium">
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
+                        <span className="text-gray-600 font-medium">Date:</span>
+                        <span className="font-medium text-gray-800">
                           {selectedSession.date}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Time:</span>
-                        <span className="font-medium">
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
+                        <span className="text-gray-600 font-medium">Time:</span>
+                        <span className="font-medium text-gray-800">
                           {selectedSession.time}
                         </span>
                       </div>
                       {selectedSession.timeLeft && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Time Left:</span>
+                        <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
+                          <span className="text-gray-600 font-medium">
+                            Time Left:
+                          </span>
                           <span className="font-medium text-red-600">
                             {selectedSession.timeLeft}
                           </span>
@@ -722,11 +678,13 @@ const AgentCoaching = () => {
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="bg-gray-50 rounded-xl p-4">
-                    <h3 className="font-semibold text-gray-800 mb-2">Status</h3>
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-4">
+                    <h3 className="font-semibold text-gray-800 mb-2 text-sm sm:text-base">
+                      Status
+                    </h3>
                     <span
-                      className={`px-4 py-2 rounded-xl text-sm font-semibold ${getStatusColor(
+                      className={`inline-block px-3 sm:px-4 py-1 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold ${getStatusColor(
                         selectedSession.status
                       )}`}
                     >
@@ -735,10 +693,10 @@ const AgentCoaching = () => {
                     {selectedSession.remarks &&
                       selectedSession.remarks !== "-" && (
                         <div className="mt-3">
-                          <p className="text-sm text-gray-600 font-medium mb-1">
+                          <p className="text-xs sm:text-sm text-gray-600 font-medium mb-1">
                             Remarks:
                           </p>
-                          <p className="text-sm text-gray-700">
+                          <p className="text-xs sm:text-sm text-gray-700 break-words">
                             {selectedSession.remarks}
                           </p>
                         </div>
@@ -748,11 +706,11 @@ const AgentCoaching = () => {
               </div>
 
               {/* Full Agenda */}
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border-l-4 border-blue-500">
-                <h3 className="font-semibold text-gray-800 mb-3">
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 sm:p-6 border-l-4 border-blue-500">
+                <h3 className="font-semibold text-gray-800 mb-3 text-sm sm:text-base">
                   Complete Agenda
                 </h3>
-                <p className="text-gray-700 leading-relaxed">
+                <p className="text-gray-700 leading-relaxed text-xs sm:text-sm break-words">
                   {selectedSession.agenda}
                 </p>
               </div>
@@ -760,8 +718,8 @@ const AgentCoaching = () => {
               {/* Materials */}
               {selectedSession.materials &&
                 selectedSession.materials.length > 0 && (
-                  <div className="bg-purple-50 rounded-xl p-6">
-                    <h3 className="font-semibold text-gray-800 mb-3">
+                  <div className="bg-purple-50 rounded-xl p-4 sm:p-6">
+                    <h3 className="font-semibold text-gray-800 mb-3 text-sm sm:text-base">
                       Materials & Resources
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -770,8 +728,8 @@ const AgentCoaching = () => {
                           key={index}
                           className="flex items-center gap-3 bg-white rounded-lg p-3 border border-purple-200"
                         >
-                          <FileText className="w-4 h-4 text-purple-600" />
-                          <span className="text-gray-700 text-sm">
+                          <FileText className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                          <span className="text-gray-700 text-xs sm:text-sm break-words">
                             {material}
                           </span>
                         </div>
@@ -780,9 +738,9 @@ const AgentCoaching = () => {
                   </div>
                 )}
             </div>
-          </div>
-        </div>
-      )}
+          )
+        }
+      </Modal>
     </div>
   );
 };

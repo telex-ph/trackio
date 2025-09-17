@@ -20,104 +20,68 @@ import {
   LineChart,
 } from "lucide-react";
 import Chart from "chart.js/auto";
+import { Search } from "lucide-react";
 
-// ---------- Sample Data (kept small for demo) ----------
 const teamData = [
   {
     id: 1,
-    name: "Maria Santos",
-    avatar: "https://randomuser.me/api/portraits/women/32.jpg",
+    name: "John Doe",
     status: "Present",
-    timeIn: "08:00 AM",
-    timeOut: null,
-    breakStatus: null,
-    lunchStatus: null,
-    workHours: "8:15",
-    overtime: "0:15",
-    undertime: "0:00",
+    timeIn: "8:00 AM",
+    timeOut: "-",
     isLate: false,
-    lastActivity: "Timed In - 08:00 AM",
-    activityTime: "8 hours ago",
+    overtime: "0:30",
+    undertime: "0:00",
+    breakStatus: "Available",
+    lunchStatus: "Available",
   },
   {
     id: 2,
-    name: "John Rivera",
-    avatar: "https://randomuser.me/api/portraits/men/45.jpg",
+    name: "Jane Smith",
     status: "Present",
-    timeIn: "08:15 AM",
-    timeOut: null,
-    breakStatus: "On Break",
-    lunchStatus: null,
-    workHours: "8:00",
+    timeIn: "7:55 AM",
+    timeOut: "-",
+    isLate: false,
     overtime: "0:00",
     undertime: "0:00",
-    isLate: true,
-    lastActivity: "Started Break - 02:30 PM",
-    activityTime: "5 mins ago",
+    breakStatus: "On Break",
+    lunchStatus: "Available",
   },
   {
     id: 3,
-    name: "Ana Reyes",
-    avatar: "https://randomuser.me/api/portraits/women/28.jpg",
-    status: "Present",
-    timeIn: "07:55 AM",
-    timeOut: null,
-    breakStatus: null,
-    lunchStatus: "On Lunch",
-    workHours: "8:20",
-    overtime: "0:20",
-    undertime: "0:00",
+    name: "Mike Johnson",
+    status: "Absent",
+    timeIn: "-",
+    timeOut: "-",
     isLate: false,
-    lastActivity: "Started Lunch - 12:00 PM",
-    activityTime: "2 hours ago",
+    overtime: "0:00",
+    undertime: "0:00",
+    breakStatus: "N/A",
+    lunchStatus: "N/A",
   },
   {
     id: 4,
-    name: "Carlos Mendoza",
-    avatar: "https://randomuser.me/api/portraits/men/33.jpg",
+    name: "Sarah Wilson",
     status: "Present",
-    timeIn: "08:30 AM",
-    timeOut: null,
-    breakStatus: null,
-    lunchStatus: null,
-    workHours: "7:45",
+    timeIn: "8:15 AM",
+    timeOut: "-",
+    isLate: true,
     overtime: "0:00",
     undertime: "0:15",
-    isLate: true,
-    lastActivity: "Ended Break - 01:45 PM",
-    activityTime: "20 mins ago",
+    breakStatus: "Available",
+    lunchStatus: "On Lunch",
   },
   {
     id: 5,
-    name: "Lisa Garcia",
-    avatar: "https://randomuser.me/api/portraits/women/41.jpg",
-    status: "Absent",
-    timeIn: null,
-    timeOut: null,
-    breakStatus: null,
-    lunchStatus: null,
-    workHours: "0:00",
-    overtime: "0:00",
-    undertime: "8:00",
-    isLate: false,
-    lastActivity: "No Time In Today",
-    activityTime: "N/A",
-  },
-  {
-    id: 6,
-    name: "Mark Reyes",
-    avatar: "https://randomuser.me/api/portraits/men/22.jpg",
+    name: "Tom Brown",
     status: "Present",
-    timeIn: "08:10 AM",
-    timeOut: "06:30 PM",
-    breakStatus: null,
-    lunchStatus: null,
-    workHours: "9:30",
-    overtime: "1:30",
+    timeIn: "8:00 AM",
+    timeOut: "-",
+    isLate: false,
+    overtime: "0:45",
     undertime: "0:00",
-    isLate: true,
-    lastActivity: "Timed Out - 06:30 PM",
-    activityTime: "30 mins ago",
+    breakStatus: "Available",
+    lunchStatus: "Available",
   },
 ];
 
@@ -178,7 +142,6 @@ const recentActivities = [
   },
 ];
 
-// ---------- Small helper to create/destroy charts cleanly ----------
 function useChart(canvasRef, buildConfig, deps = []) {
   const chartRef = useRef(null);
 
@@ -201,13 +164,11 @@ function useChart(canvasRef, buildConfig, deps = []) {
         chartRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   return chartRef;
 }
 
-// ---------- Charts (using the helper) ----------
 const AttendanceChart = () => {
   const ref = useRef(null);
 
@@ -310,7 +271,7 @@ const CurrentStatusChart = () => {
   );
 
   return (
-    <div className="h-80 md:h-96 p-4 bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-md border border-gray-100">
+    <div className="h-96 md:h-96 p-4 bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-md border border-gray-100">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-2">
           <PieChart className="w-5 h-5 text-slate-600" />
@@ -358,26 +319,55 @@ const WorkHoursChart = () => {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        scales: { y: { beginAtZero: true } },
-        plugins: { legend: { position: "bottom" } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              font: {
+                size: window.innerWidth < 640 ? 10 : 12,
+              },
+            },
+          },
+          x: {
+            ticks: {
+              font: {
+                size: window.innerWidth < 640 ? 10 : 12,
+              },
+            },
+          },
+        },
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: {
+              font: {
+                size: window.innerWidth < 640 ? 10 : 12,
+              },
+              padding: window.innerWidth < 640 ? 8 : 12,
+            },
+          },
+        },
       },
     }),
     []
   );
 
   return (
-    <div className="h-70 md:h-96 p-16 bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-md border border-gray-100">
-      <div className="flex items-center justify-between mb-3">
+    <div className="w-full max-w-full h-auto p-4 bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-md border border-gray-100">
+      {/* ✅ One row header */}
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center space-x-2">
-          <LineChart className="w-5 h-5 text-slate-600" />
+          <LineChart className="w-4 h-4 text-slate-600" />
           <h3 className="text-sm font-semibold text-slate-800">
             Work Hours Analysis
           </h3>
         </div>
         <div className="text-xs text-gray-500">Overtime vs Undertime</div>
       </div>
-      <div className="w-full h-full relative">
-        <canvas ref={ref} />
+
+      {/* ✅ Slightly taller height */}
+      <div className="w-full h-[220px] sm:h-[260px] md:h-[280px] relative">
+        <canvas ref={ref} className="w-full h-full" />
       </div>
     </div>
   );
@@ -387,6 +377,7 @@ const WorkHoursChart = () => {
 const TeamLeaderDashboard = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [filterStatus, setFilterStatus] = useState("All");
+  const [searchQuery, setSearchQuery] = useState(""); // Add this line
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -403,12 +394,22 @@ const TeamLeaderDashboard = () => {
 
   const filteredEmployees =
     filterStatus === "All"
-      ? teamData
+      ? teamData.filter((emp) =>
+          emp.name.toLowerCase().includes(searchQuery.toLowerCase())
+        )
       : teamData.filter((emp) => {
-          if (filterStatus === "Present") return emp.status === "Present";
-          if (filterStatus === "Absent") return emp.status === "Absent";
-          if (filterStatus === "Late") return emp.isLate;
-          return emp.status === filterStatus;
+          const matchesStatus =
+            filterStatus === "Present"
+              ? emp.status === "Present"
+              : filterStatus === "Absent"
+              ? emp.status === "Absent"
+              : filterStatus === "Late"
+              ? emp.isLate
+              : emp.status === filterStatus;
+          return (
+            matchesStatus &&
+            emp.name.toLowerCase().includes(searchQuery.toLowerCase())
+          );
         });
 
   const stats = {
@@ -423,29 +424,34 @@ const TeamLeaderDashboard = () => {
   };
 
   return (
-    <div className="p-6 min-h-screen">
+    <div className="min-h-screen">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Team Monitoring Dashboard
-          </h1>
-          <p className="text-gray-600">
-            Real-time attendance and work hours monitoring
-          </p>
-          <p className="text-sm text-gray-500 mt-1">
-            Last updated: {currentTime.toLocaleTimeString()} | Today:{" "}
-            {currentTime.toLocaleDateString()}
-          </p>
+          <section className="flex flex-col mb-2">
+            <div className="flex items-center gap-1">
+              <h2 className="text-xl sm:text-2xl font-semibold">
+                Team Monitoring Dashboard
+              </h2>
+            </div>
+            <p className="text-light text-sm sm:text-base">
+              Real-time attendance and work hours monitoring
+            </p>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">
+              Last updated: {currentTime.toLocaleTimeString()} | Today:{" "}
+              {currentTime.toLocaleDateString()}
+            </p>
+          </section>
         </div>
-        <div className="flex space-x-3">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+          <button className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
             <Calendar className="w-4 h-4 mr-2" />
-            View Reports
+            <span className="text-sm sm:text-base">View Reports</span>
           </button>
-          <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+          <button className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
             <Eye className="w-4 h-4 mr-2" />
-            Live Monitor
+            <span className="text-sm sm:text-base">Live Monitor</span>
           </button>
         </div>
       </div>
@@ -514,43 +520,54 @@ const TeamLeaderDashboard = () => {
 
           <div className="bg-gradient-to-br from-white to-gray-50/30 rounded-2xl shadow-lg border border-gray-200/60 p-0 overflow-hidden">
             {/* Enhanced Header */}
-            <div className="p-6 border-b border-gray-200/80 bg-gradient-to-r from-gray-50/50 to-white relative overflow-hidden">
+            <div className="p-4 sm:p-6 border-b border-gray-200/80 bg-gradient-to-r from-gray-50/50 to-white relative overflow-hidden">
               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-500/5 to-indigo-500/8 rounded-full -translate-y-12 translate-x-12"></div>
 
-              <div className="relative z-10 flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-md">
-                    <UserCheck className="w-5 h-5 text-white" />
+              <div className="relative z-10">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-md">
+                      <UserCheck className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight">
+                        Today's Attendance Status
+                      </h3>
+                      <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                        Team member tracking overview
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 tracking-tight">
-                      Today's Attendance Status
-                    </h3>
-                    <p className="text-sm text-gray-500 mt-0.5">
-                      Team member tracking overview
-                    </p>
+
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
+                    <input
+                      type="text"
+                      placeholder="Search employees..."
+                      className="w-full sm:w-48 bg-white border border-gray-300 hover:border-gray-400 rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 shadow-sm"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <select
+                      className="w-full sm:w-40 bg-white border border-gray-300 hover:border-gray-400 rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 shadow-sm"
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                    >
+                      <option value="All">All Members</option>
+                      <option value="Present">Present</option>
+                      <option value="Absent">Absent</option>
+                      <option value="Late">Late Arrivals</option>
+                    </select>
                   </div>
                 </div>
-
-                <select
-                  className="bg-white border border-gray-300 hover:border-gray-400 rounded-xl px-4 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 shadow-sm"
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                >
-                  <option value="All">All Members</option>
-                  <option value="Present">Present</option>
-                  <option value="Absent">Absent</option>
-                  <option value="Late">Late Arrivals</option>
-                </select>
               </div>
             </div>
 
             {/* Enhanced Employee List */}
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-80 sm:max-h-96 overflow-y-auto">
               {filteredEmployees.map((employee, index) => (
                 <div
                   key={employee.id}
-                  className="group p-5 border-b border-gray-100/60 hover:bg-gradient-to-r hover:from-gray-50/80 hover:to-white cursor-pointer transition-all duration-200 hover:shadow-sm relative"
+                  className="group p-3 sm:p-5 border-b border-gray-100/60 hover:bg-gradient-to-r hover:from-gray-50/80 hover:to-white cursor-pointer transition-all duration-200 hover:shadow-sm relative"
                   onClick={() => setSelectedEmployee(employee)}
                   style={{
                     animationDelay: `${index * 50}ms`,
@@ -570,18 +587,18 @@ const TeamLeaderDashboard = () => {
                     }`}
                   />
 
-                  <div className="flex items-center justify-between ml-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between ml-2 gap-3">
                     {/* Employee Info Section */}
-                    <div className="flex items-center space-x-4 flex-1">
+                    <div className="flex items-center space-x-3 sm:space-x-4 flex-1">
                       {/* Enhanced Avatar */}
                       <div className="relative flex-shrink-0">
                         <img
                           src={employee.avatar}
                           alt={employee.name}
-                          className="w-14 h-14 rounded-xl object-cover border-2 border-white shadow-md group-hover:shadow-lg transition-shadow duration-200"
+                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover border-2 border-white shadow-md group-hover:shadow-lg transition-shadow duration-200"
                         />
                         <div
-                          className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white shadow-sm ${
+                          className={`absolute -bottom-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 border-white shadow-sm ${
                             employee.status === "Present"
                               ? "bg-emerald-500"
                               : employee.status === "Absent"
@@ -597,21 +614,21 @@ const TeamLeaderDashboard = () => {
 
                       {/* Employee Details */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <h4 className="font-bold text-gray-900 text-base group-hover:text-gray-800 transition-colors truncate">
+                        <div className="flex items-center space-x-2 mb-1 sm:mb-2">
+                          <h4 className="font-bold text-gray-900 text-sm sm:text-base group-hover:text-gray-800 transition-colors truncate">
                             {employee.name}
                           </h4>
                           {employee.isLate && (
-                            <span className="inline-flex items-center text-xs bg-orange-100 text-orange-800 px-2.5 py-1 rounded-lg border border-orange-200 font-medium shadow-sm">
+                            <span className="inline-flex items-center text-xs bg-orange-100 text-orange-800 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg border border-orange-200 font-medium shadow-sm">
                               <Clock className="w-3 h-3 mr-1" />
                               Late
                             </span>
                           )}
                         </div>
 
-                        <div className="flex items-center space-x-2 mb-2 flex-wrap">
+                        <div className="flex items-center space-x-2 mb-1 sm:mb-2 flex-wrap gap-1 sm:gap-2">
                           <span
-                            className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold border shadow-sm ${
+                            className={`inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-lg text-xs font-semibold border shadow-sm ${
                               statusColors[employee.status]
                             }`}
                           >
@@ -619,14 +636,14 @@ const TeamLeaderDashboard = () => {
                           </span>
 
                           {employee.breakStatus && (
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 shadow-sm">
+                            <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 shadow-sm">
                               <Coffee className="w-3 h-3 mr-1" />
                               {employee.breakStatus}
                             </span>
                           )}
 
                           {employee.lunchStatus && (
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 shadow-sm">
+                            <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 shadow-sm">
                               <Utensils className="w-3 h-3 mr-1" />
                               {employee.lunchStatus}
                             </span>
@@ -643,10 +660,10 @@ const TeamLeaderDashboard = () => {
                     </div>
 
                     {/* Enhanced Time Metrics */}
-                    <div className="flex-shrink-0 ml-6">
-                      <div className="grid grid-cols-4 gap-4 text-center">
-                        <div className="bg-white/80 backdrop-blur-sm p-3 rounded-lg border border-gray-200/60 shadow-sm group-hover:shadow-md transition-all duration-200">
-                          <div className="text-sm font-bold text-gray-900">
+                    <div className="flex-shrink-0 ml-0 sm:ml-6 w-full sm:w-auto">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-center">
+                        <div className="bg-white/80 backdrop-blur-sm p-2 sm:p-3 rounded-lg border border-gray-200/60 shadow-sm group-hover:shadow-md transition-all duration-200">
+                          <div className="text-xs sm:text-sm font-bold text-gray-900">
                             {employee.timeIn || "--"}
                           </div>
                           <div className="text-xs text-gray-500 font-medium mt-1">
@@ -654,8 +671,8 @@ const TeamLeaderDashboard = () => {
                           </div>
                         </div>
 
-                        <div className="bg-white/80 backdrop-blur-sm p-3 rounded-lg border border-gray-200/60 shadow-sm group-hover:shadow-md transition-all duration-200">
-                          <div className="text-sm font-bold text-gray-900">
+                        <div className="bg-white/80 backdrop-blur-sm p-2 sm:p-3 rounded-lg border border-gray-200/60 shadow-sm group-hover:shadow-md transition-all duration-200">
+                          <div className="text-xs sm:text-sm font-bold text-gray-900">
                             {employee.workHours}
                           </div>
                           <div className="text-xs text-gray-500 font-medium mt-1">
@@ -663,9 +680,9 @@ const TeamLeaderDashboard = () => {
                           </div>
                         </div>
 
-                        <div className="bg-white/80 backdrop-blur-sm p-3 rounded-lg border border-gray-200/60 shadow-sm group-hover:shadow-md transition-all duration-200">
+                        <div className="bg-white/80 backdrop-blur-sm p-2 sm:p-3 rounded-lg border border-gray-200/60 shadow-sm group-hover:shadow-md transition-all duration-200">
                           <div
-                            className={`text-sm font-bold ${
+                            className={`text-xs sm:text-sm font-bold ${
                               employee.overtime !== "0:00"
                                 ? "text-purple-600"
                                 : "text-gray-900"
@@ -678,9 +695,9 @@ const TeamLeaderDashboard = () => {
                           </div>
                         </div>
 
-                        <div className="bg-white/80 backdrop-blur-sm p-3 rounded-lg border border-gray-200/60 shadow-sm group-hover:shadow-md transition-all duration-200">
+                        <div className="bg-white/80 backdrop-blur-sm p-2 sm:p-3 rounded-lg border border-gray-200/60 shadow-sm group-hover:shadow-md transition-all duration-200">
                           <div
-                            className={`text-sm font-bold ${
+                            className={`text-xs sm:text-sm font-bold ${
                               employee.undertime !== "0:00"
                                 ? "text-red-600"
                                 : "text-gray-900"
