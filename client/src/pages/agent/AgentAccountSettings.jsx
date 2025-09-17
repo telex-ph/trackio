@@ -278,17 +278,21 @@ const AccountSettings = () => {
                         </div>
 
                         {/* Contact & Address */}
-                        <div className="group">
-                          <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center space-x-2">
+                        <div className="group w-full">
+                          <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center space-x-2">
                             <Phone size={16} />
                             <span>Contact Number</span>
                           </label>
-                          <div className="flex">
-                            <div className="flex items-center px-6 py-4 bg-gray-100 border-2 border-r-0 border-gray-200 rounded-l-xl">
-                              <span className="text-gray-600 font-bold">
+
+                          <div className="flex w-full">
+                            {/* Country Code */}
+                            <div className="flex items-center px-3 sm:px-4 md:px-6 py-3 sm:py-4 bg-gray-100 border-2 border-r-0 border-gray-200 rounded-l-xl shrink-0">
+                              <span className="text-gray-600 font-bold text-sm sm:text-base">
                                 +63
                               </span>
                             </div>
+
+                            {/* Input */}
                             <input
                               type="tel"
                               value={formData.contactNumber}
@@ -299,7 +303,7 @@ const AccountSettings = () => {
                                 )
                               }
                               disabled={!isEditing}
-                              className="flex-1 px-6 py-4 bg-white/80 border-2 border-gray-200 rounded-r-xl focus:border-red-600 focus:ring-4 focus:ring-red-600/20 transition-all duration-300 disabled:bg-gray-50 disabled:text-gray-500"
+                              className="w-full max-w-xs sm:max-w-sm md:max-w-md px-3 sm:px-4 md:px-6 py-3 sm:py-4 bg-white/80 border-2 border-gray-200 rounded-r-xl focus:border-red-600 focus:ring-4 focus:ring-red-600/20 transition-all duration-300 disabled:bg-gray-50 disabled:text-gray-500 text-sm sm:text-base"
                             />
                           </div>
                         </div>
