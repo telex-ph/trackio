@@ -22,7 +22,6 @@ const Login = () => {
   const [error, setError] = useState({ message: "", hasError: false });
   const [loading, setLoading] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
-  const [loginAttempts, setLoginAttempts] = useState(0);
 
   // Right side animation state
   const [showVideo, setShowVideo] = useState(false);
@@ -38,6 +37,7 @@ const Login = () => {
     let logoTimer;
 
     if (!showVideo) {
+      // Stay logo for 6s then switch to video
       logoTimer = setTimeout(() => {
         setShowVideo(true);
       }, 6000);
@@ -56,157 +56,61 @@ const Login = () => {
 
   const handleLoginClick = async (e) => {
     e.preventDefault();
-    
     try {
-      console.log("Attempting login...");
-      setLoginAttempts(prev => prev + 1);
-      
-      const response = await api.post("/auth/log-in", data);
-      const responseData = response.data;
+      const response = await api.post("/auth/log-in", data, { withCredentials: true });
+      const user = response.data.user;
 
-      console.log("Login response:", responseData);
-
-      if (responseData.user) {
-        console.log("Login successful, user data:", responseData.user);
-        
-        // For iOS devices with JWT tokens
-        if (responseData.authMethod === "jwt" && responseData.tokens) {
-          console.log("Storing JWT tokens for iOS device");
-          localStorage.setItem('accessToken', responseData.tokens.accessToken);
-          localStorage.setItem('refreshToken', responseData.tokens.refreshToken);
-          localStorage.setItem('user', JSON.stringify(responseData.user));
-          
-          // Force immediate redirect for iOS
-          console.log("iOS: Immediate redirect to dashboard");
-          window.location.href = `/${responseData.user.role}/dashboard`;
-          return;
-        }
-        
-        // For non-iOS devices
-        setTimeout(() => {
-          console.log("Redirecting to dashboard...");
-          navigate(`/${responseData.user.role}/dashboard`, { replace: true });
-        }, 100);
-        
-        return;
+      if (user) {
+        navigate(`/${user.role}/dashboard`);
       }
     } catch (error) {
-      console.error("Login error details:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        attempt: loginAttempts
-      });
-      
       setError({
-        message: error.response?.data?.error
+        message: error.response?.data
           ? "Oops! We couldn't log you in. Please check your email and password."
           : error.message,
         hasError: true,
       });
+      console.error("Error: ", error);
     }
   };
 
+
+  // TODO: remove this since in microsoft azure, we cannot get thier shifts
   const handleMicrosoftClick = async () => {
-    try {
-      const microsoftResponse = await microsoftLogin();
-      const microsoftUser = await getMicrosoftUser(microsoftResponse.accessToken);
+    const microsoftResponse = await microsoftLogin();
+    const microsoftUser = await getMicrosoftUser(microsoftResponse.accessToken);
 
-      const user = {
-        id: microsoftUser.id,
-        email: microsoftUser.mail,
-        firstName: microsoftUser.givenName,
-        lastName: microsoftUser.surname,
-        jobTitle: microsoftUser.jobTitle,
-      };
+    const user = {
+      id: microsoftUser.id,
+      email: microsoftUser.mail,
+      firstName: microsoftUser.givenName,
+      lastName: microsoftUser.surname,
+      jobTitle: microsoftUser.jobTitle,
+    };
 
-      const loginResponse = await api.post("/auth/create-token", user);
-      const role = await checkRole(user.id, microsoftResponse.accessToken);
-      console.log("Microsoft login role: ", role);
+    const loginResponse = await api.post("/auth/create-token", user);
+    const role = await checkRole(user.id, microsoftResponse.accessToken);
+    console.log("role: ", role);
 
-      if (loginResponse.status === 200) {
-        navigate("/dashboard", { replace: true });
-      }
-    } catch (error) {
-      console.error("Microsoft login error:", error);
-      setError({
-        message: "Microsoft login failed. Please try again.",
-        hasError: true,
-      });
-    }
+    if (loginResponse.status === 200) navigate("/dashboard");
   };
 
-  // Check auth status with better error handling
+  // Check auth status
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        console.log("Checking authentication status...");
-        
-        // For iOS devices, check localStorage first
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        if (isIOS) {
-          const storedUser = localStorage.getItem('user');
-          const accessToken = localStorage.getItem('accessToken');
-          
-          if (storedUser && accessToken) {
-            try {
-              const user = JSON.parse(storedUser);
-              console.log("Found stored user data for iOS:", user);
-              
-              // Validate token by making a simple request
-              const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/status`, {
-                method: 'GET',
-                headers: {
-                  'Authorization': `Bearer ${accessToken}`,
-                  'Content-Type': 'application/json'
-                },
-                credentials: 'include'
-              });
-              
-              if (response.ok) {
-                console.log("iOS: Token validation successful, redirecting");
-                window.location.href = `/${user.role}/dashboard`;
-                return;
-              } else {
-                console.log("iOS: Token validation failed, clearing storage");
-                localStorage.clear();
-              }
-            } catch (parseError) {
-              console.log("Error parsing stored user data:", parseError);
-              localStorage.clear();
-            }
-          }
-        } else {
-          // For non-iOS, use normal API call
-          const response = await api.get("/auth/status");
-          const user = response.data.user;
-          const isValid = response.data.isValid;
-
-          console.log("Auth status response:", { isValid, user, authMethod: response.data.authMethod });
-
-          if (isValid && user) {
-            console.log("Valid session found, redirecting...");
-            navigate(`/${user.role}/dashboard`, { replace: true });
-            return;
-          }
-        }
-        
-        console.log("No valid authentication found");
+        const response = await api.get("/auth/status");
+        const user = response.data.user;
+        const isValid = response.data.isValid;
+        if (isValid && user) navigate(`/${user.role}/dashboard`);
       } catch (error) {
-        console.log("Auth check error:", {
-          message: error.message,
-          status: error.response?.status,
-          data: error.response?.data
-        });
+        console.log(error);
       } finally {
         setLoading(false);
       }
     };
-
-    if (!showSplash) {
-      fetchUser();
-    }
-  }, [showSplash, navigate]);
+    fetchUser();
+  }, []);
 
   if (showSplash) {
     return (
@@ -227,13 +131,7 @@ const Login = () => {
     );
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p>Checking authentication...</p>
-      </div>
-    );
-  }
+  if (loading) return <p>Checking authentication...</p>;
 
   return (
     <section className="flex h-screen">
@@ -245,12 +143,6 @@ const Login = () => {
           <p className="text-light">
             All fields are required. Make sure your details are correct.
           </p>
-          {/* Debug info for iOS testing */}
-          {process.env.NODE_ENV === 'development' && (
-            <p className="text-xs text-gray-500">
-              Login attempts: {loginAttempts} | User-Agent: {navigator.userAgent.includes('iPhone') ? 'iOS' : 'Other'}
-            </p>
-          )}
         </div>
 
         <form
