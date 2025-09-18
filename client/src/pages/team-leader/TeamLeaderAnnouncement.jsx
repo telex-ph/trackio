@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, memo } from "react";
+import axios from "axios";
 import {
   Calendar,
   Clock,
@@ -12,88 +13,67 @@ import {
   Edit,
 } from "lucide-react";
 import Table from "../../components/Table";
+import { DateTime } from "luxon";
+import api from "../../utils/axios";
 
-const AdminAnnouncement = () => {
-  const [announcements, setAnnouncements] = useState([
-    {
-      id: "1",
-      title: "Team Performance Review Session",
-      postedBy: "Facilitator Team",
-      date: "2024-03-23",
-      time: "12:45",
-      agenda: "You've been scheduled for coaching.",
-      status: "Scheduled",
-      priority: "High",
-    },
-    {
-      id: "2",
-      title: "Q1 Training Workshop",
-      postedBy: "HR Department",
-      date: "2024-03-25",
-      time: "14:30",
-      agenda: "Mandatory skills development training.",
-      status: "Scheduled",
-      priority: "Medium",
-    },
-    {
-      id: "3",
-      title: "Client Feedback Review",
-      postedBy: "Quality Assurance",
-      date: "2024-03-27",
-      time: "10:00",
-      agenda: "Discussion on recent client feedback.",
-      status: "Scheduled",
-      priority: "Low",
-    },
-  ]);
+// Memoized component for display, though not strictly needed here
+const TimeBox = memo(({ value, label }) => (
+  <span className="text-center">
+    <h1 className="bg-white border-light text-light rounded-md">{value}</h1>
+    <span className="text-light">{label}</span>
+  </span>
+));
 
-  const announcementHistory = [
-    {
-      date: "August 8, 2025",
-      facilitator: "Juana Dela Cruz",
-      type: "Meeting",
-      time: "3:00 P.M.",
-      agenda: "Incorrect ticket handling",
-      status: "Completed",
-      remarks: "Missed escalation step – discussed proper escalation flow.",
-    },
-    {
-      date: "August 8, 2025",
-      facilitator: "Juana Dela Cruz",
-      type: "Meeting",
-      time: "3:00 P.M.",
-      agenda: "Recognition of employee achievements",
-      status: "Cancelled",
-      remarks: "-",
-    },
-  ];
+const TeamLeaderAnnouncement = () => {
+  const [announcements, setAnnouncements] = useState([]);
+  const [announcementHistory, setAnnouncementHistory] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Form states
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
-  // Form data states
   const [formData, setFormData] = useState({
     title: "",
-    date: "",
-    time: "",
+    dateTime: "", // Combined date and time as a single ISO string
     postedBy: "",
     agenda: "",
     priority: "Medium",
+    // These are for the input fields only, not sent to the backend
+    dateInput: "",
+    timeInput: "",
   });
 
+  const fetchAnnouncements = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await api.get("/announcements"); // Use the 'api' instance
+      const active = response.data.filter((a) => a.status !== "Completed");
+      const history = response.data.filter((a) => a.status === "Completed");
+
+      setAnnouncements(active);
+      setAnnouncementHistory(history);
+      setIsLoading(false);
+    } catch (err) {
+      console.error("Error fetching announcements:", err);
+      setError("Failed to load announcements. Please check server connection.");
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnnouncements();
+  }, []);
+
   const handleInputChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleFileUpload = (file) => {
     if (file && file.size <= 10 * 1024 * 1024) {
-      // 10MB limit
       setSelectedFile(file);
     } else {
       alert("File size must be less than 10MB");
@@ -116,29 +96,12 @@ const AdminAnnouncement = () => {
     setIsDragOver(false);
   };
 
-  const handleEdit = (announcement) => {
-    setIsEditMode(true);
-    setEditingId(announcement.id);
-    setFormData({
-      title: announcement.title,
-      date: announcement.date,
-      time: announcement.time,
-      postedBy: announcement.postedBy,
-      agenda: announcement.agenda,
-      priority: announcement.priority,
-    });
-    setSelectedFile(null);
-  };
-
-  const handleCancel = (id) => {
-    setAnnouncements((prev) => prev.filter((a) => a.id !== id));
-  };
-
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    // Basic check for empty fields
     if (
       !formData.title ||
-      !formData.date ||
-      !formData.time ||
+      !formData.dateInput ||
+      !formData.timeInput ||
       !formData.postedBy ||
       !formData.agenda
     ) {
@@ -146,35 +109,91 @@ const AdminAnnouncement = () => {
       return;
     }
 
-    if (isEditMode) {
-      // Update existing announcement
-      setAnnouncements((prev) =>
-        prev.map((a) =>
-          a.id === editingId ? { ...a, ...formData, status: "Scheduled" } : a
-        )
-      );
-      setIsEditMode(false);
-      setEditingId(null);
-    } else {
-      // Create new announcement
-      const newAnnouncement = {
-        id: Date.now().toString(),
-        ...formData,
-        status: "Scheduled",
-      };
-      setAnnouncements((prev) => [newAnnouncement, ...prev]);
+    // Combine date and time to create a Luxon DateTime object
+    const combinedDateTime = DateTime.fromISO(
+      `${formData.dateInput}T${formData.timeInput}`
+    );
+
+    // Validate the combined date and time
+    if (!combinedDateTime.isValid) {
+      alert("Invalid date or time. Please check your input.");
+      return;
     }
 
-    // Reset form
+    try {
+      const payload = {
+        title: formData.title,
+        postedBy: formData.postedBy,
+        agenda: formData.agenda,
+        priority: formData.priority,
+        // Use the validated ISO string from Luxon
+        dateTime: combinedDateTime.toISO(),
+      };
+
+      if (isEditMode) {
+        await api.put(`/announcements/${editingId}`, payload); // Use PUT for update
+      } else {
+        await api.post(`/announcements`, { // Use POST for create
+          ...payload,
+          status: "Scheduled",
+        });
+      }
+
+      await fetchAnnouncements();
+
+      setFormData({
+        title: "",
+        dateTime: "",
+        postedBy: "",
+        agenda: "",
+        priority: "Medium",
+        dateInput: "",
+        timeInput: "",
+      });
+      setSelectedFile(null);
+      setIsEditMode(false);
+      setEditingId(null);
+
+      alert(`Announcement ${isEditMode ? "updated" : "created"} successfully!`);
+    } catch (error) {
+      console.error("Error submitting announcement:", error);
+      alert(
+        `Failed to ${
+          isEditMode ? "update" : "create"
+        } announcement. Please try again.`
+      );
+    }
+  };
+
+  const handleEdit = (announcement) => {
+    setIsEditMode(true);
+    setEditingId(announcement._id);
+
+    // Parse the ISO string to populate the date and time inputs
+    const dt = DateTime.fromISO(announcement.dateTime);
     setFormData({
-      title: "",
-      date: "",
-      time: "",
-      postedBy: "",
-      agenda: "",
-      priority: "Medium",
+      title: announcement.title,
+      dateTime: announcement.dateTime,
+      postedBy: announcement.postedBy,
+      agenda: announcement.agenda,
+      priority: announcement.priority,
+      dateInput: dt.toISODate(),
+      timeInput: dt.toFormat("HH:mm"),
     });
     setSelectedFile(null);
+  };
+
+  const handleCancel = async (id) => {
+    if (window.confirm("Are you sure you want to cancel this announcement?")) {
+      try {
+        await api.delete(`/announcements/${id}`); // Use 'api' instance
+        await fetchAnnouncements();
+        alert("Announcement cancelled successfully!");
+      } catch (error) {
+        console.error("Error cancelling announcement:", error);
+        alert("Failed to cancel announcement. Please try again.");
+      }
+    }
   };
 
   const cancelEdit = () => {
@@ -182,11 +201,12 @@ const AdminAnnouncement = () => {
     setEditingId(null);
     setFormData({
       title: "",
-      date: "",
-      time: "",
+      dateTime: "",
       postedBy: "",
       agenda: "",
       priority: "Medium",
+      dateInput: "",
+      timeInput: "",
     });
     setSelectedFile(null);
   };
@@ -204,57 +224,77 @@ const AdminAnnouncement = () => {
     }
   };
 
-  const formatDisplayDate = (dateStr) => {
-    if (!dateStr) return "";
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+  const formatDisplayDate = (isoDateStr) => {
+    if (!isoDateStr) return "";
+    const date = DateTime.fromISO(isoDateStr);
+    return date.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY);
   };
 
-  const formatDisplayTime = (timeStr) => {
-    if (!timeStr) return "";
-    const [hours, minutes] = timeStr.split(":");
-    const hour12 = hours % 12 || 12;
-    const ampm = hours >= 12 ? "pm" : "am";
-    return `${hour12}:${minutes} ${ampm}`;
+  const formatDisplayTime = (isoDateStr) => {
+    if (!isoDateStr) return "";
+    const time = DateTime.fromISO(isoDateStr);
+    return time.toLocaleString(DateTime.TIME_SIMPLE);
   };
 
-  // Column definitions for the Table component
+  const formatTimeAgo = (isoDateStr) => {
+    if (!isoDateStr) return "";
+    const combinedDateTime = DateTime.fromISO(isoDateStr);
+    if (!combinedDateTime.isValid) {
+      return "";
+    }
+    const diff = DateTime.local()
+      .diff(combinedDateTime, ["minutes", "hours", "days"])
+      .toObject();
+
+    if (diff.days > 0) {
+      return `${Math.floor(diff.days)} day${
+        Math.floor(diff.days) > 1 ? "s" : ""
+      } ago`;
+    }
+    if (diff.hours > 0) {
+      return `${Math.floor(diff.hours)} hour${
+        Math.floor(diff.hours) > 1 ? "s" : ""
+      } ago`;
+    }
+    if (diff.minutes > 0) {
+      return `${Math.floor(diff.minutes)} minute${
+        Math.floor(diff.minutes) > 1 ? "s" : ""
+      } ago`;
+    }
+    return "just now";
+  };
+
   const columns = useMemo(
     () => [
       {
         headerName: "DATE",
-        field: "date",
+        field: "dateTime",
         sortable: true,
         filter: true,
         width: 150,
+        cellRenderer: (params) => formatDisplayDate(params.value),
       },
       {
         headerName: "FACILITATOR",
-        field: "facilitator",
+        field: "postedBy",
         sortable: true,
         filter: true,
         width: 180,
       },
       {
         headerName: "TYPE",
-        field: "type",
+        field: "title",
         sortable: true,
         filter: true,
         width: 120,
-        cellRenderer: (params) => {
-          return `<span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium">${params.value}</span>`;
-        },
       },
       {
         headerName: "TIME",
-        field: "time",
+        field: "dateTime",
         sortable: true,
         filter: true,
         width: 120,
+        cellRenderer: (params) => formatDisplayTime(params.value),
       },
       {
         headerName: "AGENDA",
@@ -292,16 +332,14 @@ const AdminAnnouncement = () => {
 
   return (
     <div>
-      <div>
-        <section className="flex flex-col mb-2">
-          <div className="flex items-center gap-1">
-            <h2>Announcement</h2>
-          </div>
-          <p className="text-light">
-            Records of employees with late attendance.
-          </p>
-        </section>
-      </div>
+      <section className="flex flex-col mb-2">
+        <div className="flex items-center gap-1">
+          <h2>Announcement</h2>
+        </div>
+        <p className="text-light">
+          Manage and view all company announcements.
+        </p>
+      </section>
 
       {/* Two-Column Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
@@ -333,9 +371,7 @@ const AdminAnnouncement = () => {
               </button>
             )}
           </div>
-
           <div className="space-y-6">
-            {/* Title Input */}
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                 Title *
@@ -348,10 +384,7 @@ const AdminAnnouncement = () => {
                 className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
               />
             </div>
-
-            {/* Date and Time Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              {/* Date Input */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Date *
@@ -360,14 +393,14 @@ const AdminAnnouncement = () => {
                   <Calendar className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-red-500 z-10" />
                   <input
                     type="date"
-                    value={formData.date}
-                    onChange={(e) => handleInputChange("date", e.target.value)}
+                    value={formData.dateInput}
+                    onChange={(e) =>
+                      handleInputChange("dateInput", e.target.value)
+                    }
                     className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
                   />
                 </div>
               </div>
-
-              {/* Time Input */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Time *
@@ -376,15 +409,15 @@ const AdminAnnouncement = () => {
                   <Clock className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-red-500 z-10" />
                   <input
                     type="time"
-                    value={formData.time}
-                    onChange={(e) => handleInputChange("time", e.target.value)}
+                    value={formData.timeInput}
+                    onChange={(e) =>
+                      handleInputChange("timeInput", e.target.value)
+                    }
                     className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
                   />
                 </div>
               </div>
             </div>
-
-            {/* Posted By and Priority */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -403,7 +436,6 @@ const AdminAnnouncement = () => {
                   />
                 </div>
               </div>
-
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Priority
@@ -421,8 +453,6 @@ const AdminAnnouncement = () => {
                 </select>
               </div>
             </div>
-
-            {/* File Upload */}
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                 Attachment
@@ -476,8 +506,6 @@ const AdminAnnouncement = () => {
                 </div>
               </div>
             </div>
-
-            {/* Agenda */}
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                 Agenda *
@@ -489,8 +517,6 @@ const AdminAnnouncement = () => {
                 className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 resize-none text-sm sm:text-base"
               ></textarea>
             </div>
-
-            {/* Submit Button */}
             <button
               onClick={handleSubmit}
               className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all duration-300 font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
@@ -516,85 +542,95 @@ const AdminAnnouncement = () => {
             </span>
           </div>
 
-          <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-200px)] sm:max-h-[calc(100vh-150px)] pr-2">
-            {announcements.map((a) => (
-              <div
-                key={a.id}
-                className={`group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border ${
-                  editingId === a.id
-                    ? "border-red-300 ring-2 ring-red-100"
-                    : "border-gray-100"
-                }`}
-              >
-                <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
-                  <div className="flex items-start gap-3 sm:gap-4">
-                    <div className="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
-                      <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-2 group-hover:text-indigo-600 transition-colors">
-                        {a.title}
-                      </h4>
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
-                        <span
-                          className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium border ${getPriorityColor(
-                            a.priority
-                          )}`}
-                        >
-                          {a.priority} Priority
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          2 hours ago
-                        </span>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-10 text-gray-500 italic">
+              Loading announcements...
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center py-10 text-red-500 italic">
+              {error}
+            </div>
+          ) : announcements.length > 0 ? (
+            <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-200px)] sm:max-h-[calc(100vh-150px)] pr-2">
+              {announcements.map((a) => (
+                <div
+                  key={a._id}
+                  className={`group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border ${
+                    editingId === a._id
+                      ? "border-red-300 ring-2 ring-red-100"
+                      : "border-gray-100"
+                  }`}
+                >
+                  <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
+                    <div className="flex items-start gap-3 sm:gap-4">
+                      <div className="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
+                        <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-2 group-hover:text-indigo-600 transition-colors">
+                          {a.title}
+                        </h4>
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
+                          <span
+                            className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium border ${getPriorityColor(
+                              a.priority
+                            )}`}
+                          >
+                            {a.priority} Priority
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {formatTimeAgo(a.dateTime)}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-
-                <div className="space-y-3 mb-4">
-                  <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                    <User className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Posted by: <span className="font-medium">{a.postedBy}</span>
-                  </p>
-
-                  <div className="flex flex-wrap gap-4 sm:gap-6 text-xs sm:text-sm text-gray-700">
-                    <span className="flex items-center gap-2">
-                      <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
-                      {formatDisplayDate(a.date)}
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
-                      {formatDisplayTime(a.time)}
-                    </span>
-                  </div>
-
-                  <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border-l-4 border-red-500">
-                    <p className="text-xs sm:text-sm text-gray-700">
-                      <span className="font-semibold text-gray-800">
-                        Agenda:
-                      </span>{" "}
-                      {a.agenda}
+                  <div className="space-y-3 mb-4">
+                    <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
+                      <User className="w-3 h-3 sm:w-4 sm:h-4" />
+                      Posted by: <span className="font-medium">{a.postedBy}</span>
                     </p>
+                    <div className="flex flex-wrap gap-4 sm:gap-6 text-xs sm:text-sm text-gray-700">
+                      <span className="flex items-center gap-2">
+                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
+                        {formatDisplayDate(a.dateTime)}
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
+                        {formatDisplayTime(a.dateTime)}
+                      </span>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border-l-4 border-red-500">
+                      <p className="text-xs sm:text-sm text-gray-700">
+                        <span className="font-semibold text-gray-800">
+                          Agenda:
+                        </span>{" "}
+                        {a.agenda}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleCancel(a._id)}
+                      className="flex-1 bg-white border-2 border-red-500 text-red-600 p-2 sm:p-3 rounded-xl hover:bg-red-50 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => handleEdit(a)}
+                      className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
+                    >
+                      Edit
+                    </button>
                   </div>
                 </div>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => handleCancel(a.id)}
-                    className="flex-1 bg-white border-2 border-red-500 text-red-600 p-2 sm:p-3 rounded-xl hover:bg-red-50 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => handleEdit(a)}
-                    className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
-                  >
-                    Edit
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center py-10 text-gray-500 italic">
+              No active announcements found.
+            </div>
+          )}
         </div>
       </div>
 
@@ -617,7 +653,7 @@ const AdminAnnouncement = () => {
           />
         ) : (
           <div className="flex items-center justify-center py-10 text-gray-500 italic">
-            No announcement yet
+            No announcement history found.
           </div>
         )}
       </div>
@@ -625,4 +661,4 @@ const AdminAnnouncement = () => {
   );
 };
 
-export default AdminAnnouncement;
+export default TeamLeaderAnnouncement;
