@@ -46,16 +46,59 @@ const TeamLeaderAnnouncement = () => {
     timeInput: "",
   });
 
+  const checkAndUpdateExpiredAnnouncements = async () => {
+    try {
+      const response = await api.get("/announcements");
+      const activeAnnouncements = response.data.filter(
+        (a) => a.status !== "Completed"
+      );
+      const now = DateTime.local();
+
+      const updates = activeAnnouncements.map(async (announcement) => {
+        const announcementDateTime = DateTime.fromISO(announcement.dateTime);
+        if (announcementDateTime.isValid && announcementDateTime < now) {
+          // If the announcement date/time is in the past, update its status
+          await api.put(`/announcements/${announcement._id}`, {
+            ...announcement,
+            status: "Completed",
+          });
+        }
+      });
+      // Wait for all updates to complete
+      await Promise.all(updates);
+    } catch (err) {
+      console.error("Error checking for expired announcements:", err);
+      // We'll let the main fetch handle the error state for the user
+    }
+  };
+
   const fetchAnnouncements = async () => {
     setIsLoading(true);
     setError(null);
     try {
+      // First, check and update any expired announcements
+      await checkAndUpdateExpiredAnnouncements();
+
+      // Then, fetch the updated list
       const response = await api.get("/announcements"); // Use the 'api' instance
       const active = response.data.filter((a) => a.status !== "Completed");
       const history = response.data.filter((a) => a.status === "Completed");
 
-      setAnnouncements(active);
-      setAnnouncementHistory(history);
+      // Sort announcements by date in descending order (newest first)
+      const sortedActive = active.sort(
+        (a, b) =>
+          DateTime.fromISO(b.dateTime).toMillis() -
+          DateTime.fromISO(a.dateTime).toMillis()
+      );
+      // Sort history by date in descending order (newest first)
+      const sortedHistory = history.sort(
+        (a, b) =>
+          DateTime.fromISO(b.dateTime).toMillis() -
+          DateTime.fromISO(a.dateTime).toMillis()
+      );
+
+      setAnnouncements(sortedActive);
+      setAnnouncementHistory(sortedHistory);
       setIsLoading(false);
     } catch (err) {
       console.error("Error fetching announcements:", err);
@@ -66,6 +109,13 @@ const TeamLeaderAnnouncement = () => {
 
   useEffect(() => {
     fetchAnnouncements();
+    // Set up an interval to check for expired announcements every minute
+    const interval = setInterval(() => {
+      checkAndUpdateExpiredAnnouncements().then(() => fetchAnnouncements());
+    }, 60000); // 60000 milliseconds = 1 minute
+
+    // Clear the interval when the component unmounts
+    return () => clearInterval(interval);
   }, []);
 
   const handleInputChange = (field, value) => {
@@ -133,7 +183,8 @@ const TeamLeaderAnnouncement = () => {
       if (isEditMode) {
         await api.put(`/announcements/${editingId}`, payload); // Use PUT for update
       } else {
-        await api.post(`/announcements`, { // Use POST for create
+        await api.post(`/announcements`, {
+          // Use POST for create
           ...payload,
           status: "Scheduled",
         });
