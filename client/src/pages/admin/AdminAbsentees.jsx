@@ -22,10 +22,9 @@ const AdminAbsentees = () => {
   const filter = {
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
-    status: "timeIn",
   };
 
-  const { attendancesByStatus, loading } = useAttendance(null, filter);
+  const { absentees, loading } = useAttendance(null, filter);
 
   const handleDatePicker = (date, field) => {
     if (!date) return;
@@ -70,6 +69,14 @@ const AdminAbsentees = () => {
 
   const columns = [
     { headerName: "ID", field: "id", sortable: true, filter: true, flex: 1 },
+
+    {
+      headerName: "Date",
+      field: "date",
+      sortable: true,
+      filter: true,
+      flex: 2,
+    },
     {
       headerName: "Name",
       field: "name",
@@ -83,22 +90,6 @@ const AdminAbsentees = () => {
       sortable: true,
       filter: true,
       flex: 2,
-    },
-    {
-      headerName: "Account",
-      field: "accounts",
-      sortable: true,
-      filter: true,
-      flex: 1,
-      cellRenderer: (params) =>
-        Array.isArray(params.value) ? params.value.join(", ") : params.value,
-    },
-    {
-      headerName: "Status",
-      field: "status",
-      sortable: true,
-      filter: true,
-      flex: 1,
     },
     {
       headerName: "Valid / Invalid",
@@ -154,7 +145,7 @@ const AdminAbsentees = () => {
       </section>
 
       {/* Table */}
-      <Table columns={columns} data={attendancesByStatus} />
+      <Table columns={columns} data={absentees} />
 
       <Modal
         isOpen={isModalOpen}
