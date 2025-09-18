@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Calendar,
   Clock,
@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Table from "../../components/Table";
 
-const TeamLeaderAnnouncement = () => {
+const AdminAnnouncement = () => {
   const [announcements, setAnnouncements] = useState([
     {
       id: "1",
@@ -69,7 +69,6 @@ const TeamLeaderAnnouncement = () => {
   ];
 
   // Form states
-  const [currentPage, setCurrentPage] = useState(1);
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -84,17 +83,6 @@ const TeamLeaderAnnouncement = () => {
     agenda: "",
     priority: "Medium",
   });
-
-  const itemsPerPage = 5;
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = announcementHistory.slice(
-    indexOfFirstItem,
-    indexOfLastItem
-  );
-  const totalPages = Math.ceil(announcementHistory.length / itemsPerPage);
-
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -233,6 +221,74 @@ const TeamLeaderAnnouncement = () => {
     const ampm = hours >= 12 ? "pm" : "am";
     return `${hour12}:${minutes} ${ampm}`;
   };
+
+  // Column definitions for the Table component
+  const columns = useMemo(
+    () => [
+      {
+        headerName: "DATE",
+        field: "date",
+        sortable: true,
+        filter: true,
+        width: 150,
+      },
+      {
+        headerName: "FACILITATOR",
+        field: "facilitator",
+        sortable: true,
+        filter: true,
+        width: 180,
+      },
+      {
+        headerName: "TYPE",
+        field: "type",
+        sortable: true,
+        filter: true,
+        width: 120,
+        cellRenderer: (params) => {
+          return `<span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium">${params.value}</span>`;
+        },
+      },
+      {
+        headerName: "TIME",
+        field: "time",
+        sortable: true,
+        filter: true,
+        width: 120,
+      },
+      {
+        headerName: "AGENDA",
+        field: "agenda",
+        sortable: true,
+        filter: true,
+        width: 300,
+        tooltipField: "agenda",
+      },
+      {
+        headerName: "STATUS",
+        field: "status",
+        sortable: true,
+        filter: true,
+        width: 120,
+        cellRenderer: (params) => {
+          const statusClass =
+            params.value === "Completed"
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-600";
+          return `<span class="px-4 py-2 rounded-xl text-sm font-semibold ${statusClass}">${params.value}</span>`;
+        },
+      },
+      {
+        headerName: "REMARKS",
+        field: "remarks",
+        sortable: true,
+        filter: true,
+        width: 300,
+        tooltipField: "remarks",
+      },
+    ],
+    []
+  );
 
   return (
     <div>
@@ -542,107 +598,31 @@ const TeamLeaderAnnouncement = () => {
         </div>
       </div>
 
-      {/* Announcement History */}
-      <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-4 sm:p-6 lg:p-8 border border-white/20 w-full max-w-none">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-3 mb-6 sm:mb-2">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gray-100 rounded-lg">
-              <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
-            </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
-              Announcement History
-            </h3>
+      {/* Announcement History with Table Component */}
+      <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
+        <h3 className="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-3">
+          <div className="p-2 bg-gray-100 rounded-lg">
+            <Clock className="w-6 h-6 text-gray-600" />
           </div>
-          <span className="sm:ml-auto bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
-            {announcements.length} Records
-          </span>
-        </div>
-        <div className="overflow-x-auto">
+          Announcement History
+        </h3>
+
+        {announcementHistory && announcementHistory.length > 0 ? (
           <Table
-            columns={[
-              { Header: "TITLE", accessor: "title" },
-              { Header: "POSTED BY", accessor: "postedBy" },
-              {
-                Header: "PRIORITY",
-                accessor: "priority",
-                Cell: ({ value }) => (
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs sm:text-sm font-medium border ${
-                      value === "High"
-                        ? "bg-red-100 text-red-700 border-red-200"
-                        : value === "Medium"
-                        ? "bg-yellow-100 text-yellow-700 border-yellow-200"
-                        : "bg-green-100 text-green-700 border-green-200"
-                    }`}
-                  >
-                    {value} Priority
-                  </span>
-                ),
-              },
-              {
-                Header: "DATE",
-                accessor: "date",
-                Cell: ({ value }) => formatDisplayDate(value),
-              },
-              {
-                Header: "TIME",
-                accessor: "time",
-                Cell: ({ value }) => formatDisplayTime(value),
-              },
-              { Header: "AGENDA", accessor: "agenda" },
-              {
-                Header: "ACTIONS",
-                accessor: "id",
-                Cell: ({ row }) => (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleCancel(row.original.id)}
-                      className="bg-white border-2 border-red-500 text-red-600 px-3 py-2 rounded-xl hover:bg-red-50 transition-all font-medium shadow-md hover:shadow-lg text-xs sm:text-sm"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => handleEdit(row.original)}
-                      className="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-2 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-xs sm:text-sm"
-                    >
-                      Edit
-                    </button>
-                  </div>
-                ),
-              },
-            ]}
-            data={announcements}
+            data={announcementHistory}
+            columns={columns}
+            pagination={{
+              pageSize: 10,
+            }}
           />
-        </div>
-        {/* Summary Stats */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mt-6 sm:mt-8 text-xs sm:text-sm text-gray-600 bg-gradient-to-r from-gray-50 to-gray-100 p-3 sm:p-4 rounded-2xl border border-gray-200">
-          <div className="flex gap-3 sm:gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-              <span className="text-xs">
-                High Priority:{" "}
-                {announcements.filter((s) => s.priority === "High").length}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-              <span className="text-xs">
-                Medium Priority:{" "}
-                {announcements.filter((s) => s.priority === "Medium").length}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-              <span className="text-xs">
-                Low Priority:{" "}
-                {announcements.filter((s) => s.priority === "Low").length}
-              </span>
-            </div>
+        ) : (
+          <div className="flex items-center justify-center py-10 text-gray-500 italic">
+            No announcement yet
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default TeamLeaderAnnouncement;
+export default AdminAnnouncement;
