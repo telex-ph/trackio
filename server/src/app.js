@@ -9,6 +9,7 @@ import "./cron.js";
 import authRoutes from "../src/routes/authRoutes.js";
 import accountRoutes from "../src/routes/accountRoutes.js";
 import attendanceRoutes from "../src/routes/attendanceRoutes.js";
+import absenceRoutes from "../src/routes/absenceRoutes.js";
 
 const app = express();
 dotenv.config();
@@ -28,5 +29,6 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/accounts", accountRoutes);
 app.use("/api/attendance", attendanceRoutes);
+app.use("/api/absence", absenceRoutes);
 
 export default app;
