@@ -125,14 +125,24 @@ export const useAttendance = (userId, filter) => {
   const fetchAbsentees = useCallback(async () => {
     try {
       setError(null);
-      const response = await api.get("/attendance/get-attendances", {
+      const response = await api.get("/absence/get-absentees", {
         params: {
           startDate: filter?.startDate,
           endDate: filter?.endDate,
           filter: filter?.status,
         },
       });
-      setAbsentees(response.data);
+
+      const formattedData = response.data.map((item) => {
+        return {
+          id: item.user._id,
+          date: formatDate(item.createdAt),
+          name: `${item.user.firstName} ${item.user.lastName}`,
+          email: item.user.email,
+        };
+      });
+
+      setAbsentees(formattedData);
     } catch (error) {
       console.error("Error fetching absentees:", error);
       setError("Failed to fetch absenteees");
@@ -200,7 +210,7 @@ export const useAttendance = (userId, filter) => {
 
   useEffect(() => {
     if (filter) {
-      fetchAttendancesByStatus(filter);
+      fetchAbsentees(filter);
     }
   }, [filter?.startDate, filter?.endDate, fetchAbsentees]);
 
