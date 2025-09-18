@@ -3,171 +3,92 @@ import Attendance from "../model/Attendance.js";
 import User from "../model/User.js";
 import { DateTime } from "luxon";
 
-// export const checkAbsences = async () => {
-//   try {
-//     const now = DateTime.utc();
-
-//     // Get all users scheduled today
-//     const usersOnShift = await User.onShifts();
-
-//     if (usersOnShift.length === 0) return [];
-
-//     // Build today's shift windows
-//     const userShiftWindows = usersOnShift.map((user) => {
-//       const shiftStartTime = DateTime.fromJSDate(user.shiftStart, {
-//         zone: "utc",
-//       });
-//       const shiftEndTime = DateTime.fromJSDate(user.shiftEnd, { zone: "utc" });
-
-//       let shiftStartToday = now.startOf("day").set({
-//         hour: shiftStartTime.hour,
-//         minute: shiftStartTime.minute,
-//         second: 0,
-//       });
-
-//       let shiftEndToday = now.startOf("day").set({
-//         hour: shiftEndTime.hour,
-//         minute: shiftEndTime.minute,
-//         second: 0,
-//       });
-
-//       // overnight shift
-//       if (shiftEndToday <= shiftStartToday) {
-//         shiftEndToday = shiftEndToday.plus({ days: 1 });
-//         console.log(
-//           `user: ${user.firstName} / is now > shiftEndToday ? ${
-//             now > shiftEndToday
-//           }, since now is ${now} and shiftEndToday is ${shiftEndToday} - night shift`
-//         );
-//       } else {
-//         console.log(
-//           `user: ${user.firstName} / is now > shiftEndToday ? ${
-//             now > shiftEndToday
-//           }, since now is ${now} and shiftEndToday is ${shiftEndToday} day shift`
-//         );
-//       }
-
-//       return { user, shiftStartToday, shiftEndToday };
-//     });
-
-//     // Get attendance for today's shift window
-//     const earliestShiftStart = DateTime.min(
-//       ...userShiftWindows.map((u) => u.shiftStartToday)
-//     );
-//     const latestShiftEnd = DateTime.max(
-//       ...userShiftWindows.map((u) => u.shiftEndToday)
-//     );
-
-//     const userIds = usersOnShift.map((u) => u._id);
-
-//     const attendanceRecords = await Attendance.getShift(
-//       userIds,
-//       earliestShiftStart,
-//       latestShiftEnd
-//     );
-
-//     // Determine absentees (only after shift end)
-//     // TODO: improve the logic since sabi ni ma'am trachelle, we mark
-//     // them absent only if the working hour is below 4hrs na.
-//     const absentees = [];
-//     for (const { user, shiftEndToday } of userShiftWindows) {
-//       // console.log(`user: ${user.firstName} / is now > shiftEndToday ? ${now > shiftEndToday}, since now is ${now} and shiftEndToday is ${shiftEndToday}`);
-
-//       if (now < shiftEndToday) continue; // Skip shift kasi still ongoing
-
-//       const hasAttendance = attendanceRecords.some((record) =>
-//         record.userId.equals(user._id)
-//       );
-
-//       if (!hasAttendance) {
-//         absentees.push(user);
-//       }
-//     }
-
-//     return absentees;
-//   } catch (error) {
-//     console.error("Error fetching absences: ", error);
-//   }
-// };
-
 export const checkAbsences = async () => {
   try {
-    // Hardcoded 'now' for testing: 7 PM PH time (11 AM UTC)
-    const now = DateTime.utc(2025, 9, 17, 11, 0, 0); // YYYY, MM, DD, HH, mm, ss
+    // Work in PH timezone
+    const nowPH = DateTime.now().setZone("Asia/Manila");
 
     // Get all users scheduled today
     const usersOnShift = await User.onShifts();
-
     if (usersOnShift.length === 0) return [];
 
-    // Build today's shift windows
     const userShiftWindows = usersOnShift.map((user) => {
-      const shiftStartTime = DateTime.fromJSDate(user.shiftStart, {
+      // Interpret stored times (UTC) as PH times
+      const shiftStartPH = DateTime.fromJSDate(user.shiftStart, {
         zone: "utc",
-      });
-      const shiftEndTime = DateTime.fromJSDate(user.shiftEnd, { zone: "utc" });
+      }).setZone("Asia/Manila");
 
-      let shiftStartToday = now.startOf("day").set({
-        hour: shiftStartTime.hour,
-        minute: shiftStartTime.minute,
-        second: 0,
-      });
+      const shiftEndPH = DateTime.fromJSDate(user.shiftEnd, {
+        zone: "utc",
+      }).setZone("Asia/Manila");
 
-      let shiftEndToday = now.startOf("day").set({
-        hour: shiftEndTime.hour,
-        minute: shiftEndTime.minute,
-        second: 0,
+      // Build today's shift in PH time
+      let shiftStartTodayPH = shiftStartPH.set({
+        year: nowPH.year,
+        month: nowPH.month,
+        day: nowPH.day,
       });
 
-      // overnight shift
-      if (shiftEndToday <= shiftStartToday) {
-        shiftEndToday = shiftEndToday.plus({ days: 1 });
-        console.log(
-          `user: ${user.firstName} / is now > shiftEndToday ? ${
-            now > shiftEndToday
-          }, since now is ${now} and shiftEndToday is ${shiftEndToday} - night shift`
-        );
-      } else {
-        console.log(
-          `user: ${user.firstName} / is now > shiftEndToday ? ${
-            now > shiftEndToday
-          }, since now is ${now} and shiftEndToday is ${shiftEndToday} day shift`
-        );
+      let shiftEndTodayPH = shiftEndPH.set({
+        year: nowPH.year,
+        month: nowPH.month,
+        day: nowPH.day,
+      });
+
+      // Handle overnight shift (e.g., 9PM–6AM)
+      if (shiftEndTodayPH <= shiftStartTodayPH) {
+        shiftEndTodayPH = shiftEndTodayPH.plus({ days: 1 });
       }
 
-      return { user, shiftStartToday, shiftEndToday };
+      // Convert PH times back to UTC for querying Attendance
+      return {
+        user,
+        shiftStartTodayUTC: shiftStartTodayPH.toUTC(),
+        shiftEndTodayUTC: shiftEndTodayPH.toUTC(),
+      };
     });
 
-    // Get attendance for today's shift window
+    // Determine earliest start / latest end (in UTC) for Attendance query
     const earliestShiftStart = DateTime.min(
-      ...userShiftWindows.map((u) => u.shiftStartToday)
+      ...userShiftWindows.map((u) => u.shiftStartTodayUTC)
     );
     const latestShiftEnd = DateTime.max(
-      ...userShiftWindows.map((u) => u.shiftEndToday)
+      ...userShiftWindows.map((u) => u.shiftEndTodayUTC)
     );
 
     const userIds = usersOnShift.map((u) => u._id);
 
+    // Get attendance for today's PH shift window (query still in UTC)
     const attendanceRecords = await Attendance.getShift(
       userIds,
       earliestShiftStart,
       latestShiftEnd
     );
 
-    // Determine absentees (only after shift end)
-    // TODO: improve the logic since sabi ni ma'am trachelle, we mark
-    // them absent only if the working hour is below 4hrs na.
+    // Determine absentees
     const absentees = [];
-    for (const { user, shiftEndToday } of userShiftWindows) {
-      // console.log(`user: ${user.firstName} / is now > shiftEndToday ? ${now > shiftEndToday}, since now is ${now} and shiftEndToday is ${shiftEndToday}`);
+    for (const { user, shiftEndTodayUTC } of userShiftWindows) {
+      // Skip if shift still ongoing (compare in UTC)
+      if (DateTime.utc() < shiftEndTodayUTC) continue;
 
-      if (now < shiftEndToday) continue; // Skip shift kasi still ongoing
+      const userAttendance = attendanceRecords
+        .filter((record) => record.userId.equals(user._id))
+        .map((record) => {
+          const timeIn = DateTime.fromJSDate(record.timeIn, { zone: "utc" });
+          const timeOut = record.timeOut
+            ? DateTime.fromJSDate(record.timeOut, { zone: "utc" })
+            : DateTime.utc();
+          return Interval.fromDateTimes(timeIn, timeOut);
+        });
 
-      const hasAttendance = attendanceRecords.some((record) =>
-        record.userId.equals(user._id)
+      // Total worked hours
+      const totalWorkedHours = userAttendance.reduce(
+        (sum, interval) => sum + interval.length("hours"),
+        0
       );
 
-      if (!hasAttendance) {
+      // Mark absent if walang attendance or worked < 4 hours
+      if (totalWorkedHours < 4) {
         absentees.push(user);
       }
     }
@@ -175,15 +96,50 @@ export const checkAbsences = async () => {
     return absentees;
   } catch (error) {
     console.error("Error fetching absences: ", error);
+    return [];
   }
 };
 
 export const markAbsences = async (absentees) => {
-  const ids = absentees.map((absentee) => absentee._id);
+  if (!absentees.length) return console.log("No absentees to mark.");
 
-  Absence.mark();
+  const now = DateTime.utc();
+  const recordsToMark = [];
+
+  for (const absentee of absentees) {
+    // Parse their stored shiftStart (always UTC in DB)
+    const userShiftStart = DateTime.fromJSDate(absentee.shiftStart, {
+      zone: "utc",
+    });
+
+    // Build today’s shift start for this user
+    const shiftStartToday = now.set({
+      hour: userShiftStart.hour,
+      minute: userShiftStart.minute,
+      second: 0,
+      millisecond: 0,
+    });
+
+    // Decide shift date (handle night shift wrap)
+    const derivedShiftDate =
+      now < shiftStartToday
+        ? shiftStartToday.minus({ days: 1 }).startOf("day")
+        : shiftStartToday.startOf("day");
+
+    recordsToMark.push({
+      userId: absentee._id,
+      shiftDate: derivedShiftDate.toJSDate(),
+    });
+  }
+
   try {
+    const result = await Absence.mark(recordsToMark);
+    if (result) {
+      console.log("Generated new records of absentees");
+    } else {
+      console.log("No generated records");
+    }
   } catch (error) {
-    console.error("Error marking absences: ", error);
+    console.error("Error marking absences:", error);
   }
 };

@@ -2,19 +2,64 @@ import connectDB from "../config/db.js";
 import { DateTime } from "luxon";
 
 class Absence {
-  static #collection = "absence";
+  static #collection = "absences";
+
+  static async getAll({ startDate = null, endDate = null }) {
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+
+    const matchStage = {};
+    if (startDate && endDate) {
+      matchStage.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      };
+    } else if (startDate) {
+      matchStage.createdAt = { $gte: new Date(startDate) };
+    } else if (endDate) {
+      matchStage.createdAt = { $lte: new Date(endDate) };
+    }
+
+    const absentees = await collection
+      .aggregate([
+        // Filter first if matchStage exists
+        ...(Object.keys(matchStage).length > 0 ? [{ $match: matchStage }] : []),
+
+        // Sort latest first
+        { $sort: { createdAt: -1 } },
+
+        // Lookup User
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: "$user" },
+
+        // Remove sensitive fields
+        {
+          $project: {
+            "user.password": 0,
+          },
+        },
+      ])
+      .toArray();
+
+    return absentees;
+  }
 
   /**
    * Marks users as absent for a specific shift date.
    * Checks for existing absence records to prevent duplicates.
    *
    * @param {Array<string|ObjectId>} userIds - Array of user IDs to mark as absent.
-   * @param {Date} shiftDate - The date of the shift.
    * @returns {Promise<InsertManyResult|undefined>} Returns the result of insertMany if records were added, otherwise undefined.
    */
-  static async mark(userIds, shiftDate = null) {
-    return;
-    if (!userIds.length) return;
+  static async mark(users) {
+    if (!users.length) return;
 
     const db = await connectDB();
     const collection = db.collection(this.#collection);
@@ -22,9 +67,8 @@ class Absence {
 
     const recordsToInsert = [];
 
-    for (const userId of userIds) {
-      // const exists = await collection.findOne({ userId, shiftDate });
-      const exists = await collection.findOne({ userId });
+    for (const { userId, shiftDate } of users) {
+      const exists = await collection.findOne({ userId, shiftDate });
 
       if (!exists) {
         recordsToInsert.push({ userId, shiftDate, createdAt: now });
@@ -35,25 +79,6 @@ class Absence {
 
     return collection.insertMany(recordsToInsert);
   }
-  // static async mark(userIds, shiftDate) {
-  //   if (!userIds.length) return;
-
-  //   const db = await connectDB();
-  //   const collection = db.collection(this.#collection);
-
-  //   const now = DateTime.utc().toJSDate(); // UTC timestamp as JS Date
-
-  //   // Build documents to insert
-  //   const records = userIds.map((userId) => ({
-  //     userId,
-  //     shiftDate,
-  //     createdAt: now,
-  //   }));
-
-  //   // Insert into MongoDB
-  //   const result = await collection.insertMany(records);
-  //   return result;
-  // }
 }
 
 export default Absence;
