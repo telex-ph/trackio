@@ -1,9 +1,18 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import flowbiteReact from "flowbite-react/plugin/vite";
+import fs from "fs";
+import path from "path";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [tailwindcss(), react(), flowbiteReact()],
-})
+plugins: [tailwindcss(), react(), flowbiteReact()],
+  server: {
+    https: {
+      key: fs.readFileSync(path.resolve(__dirname, "keys/localhost-key.pem")),
+      cert: fs.readFileSync(path.resolve(__dirname, "keys/localhost.pem")),
+    },
+    port: 5173,
+  },
+});
