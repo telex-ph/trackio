@@ -23,7 +23,7 @@ import TeamLeaderSchedule from "../pages/team-leader/TeamLeaderSchedule";
 import TeamLeaderPerformance from "../pages/team-leader/TeamLeaderPerformance";
 import TeamLeaderBioBreak from "../pages/team-leader/TeamLeaderBioBreak";
 import TeamLeaderCoaching from "../pages/team-leader/TeamLeaderCoaching";
-import TeamLeaderAnnouncement from "../pages/team-leader/TeamLeaderAnnouncement";
+import TeamLeaderAgentRequest from "../pages/team-leader/TeamLeaderAgentRequest";
 import TeamLeaderAccountSettings from "../pages/team-leader/TeamLeaderAccountSettings";
 
 // Admin Routes
@@ -124,7 +124,7 @@ const router = createBrowserRouter([
               { path: "performance", element: <TeamLeaderPerformance /> },
               { path: "bio-break", element: <TeamLeaderBioBreak /> },
               { path: "coaching", element: <TeamLeaderCoaching /> },
-              { path: "announcement", element: <TeamLeaderAnnouncement /> },
+              { path: "agentrequest", element: <TeamLeaderAgentRequest /> },
               {
                 path: "account-settings",
                 element: <TeamLeaderAccountSettings />,
