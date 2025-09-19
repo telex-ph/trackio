@@ -122,7 +122,7 @@ export const useAttendance = (userId, filter) => {
     }
   }, []);
 
-  const fetchAbsentees = useCallback(async () => {
+  const fetchAbsentees = useCallback(async (filter) => {
     try {
       setError(null);
       const response = await api.get("/absence/get-absentees", {
