@@ -21,7 +21,7 @@ const TimeBox = memo(({ value, label }) => (
   </span>
 ));
 
-const AgentRequest = () => {
+const TeamLeaderAgentRequest = () => {
   const [requests, setRequests] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -395,19 +395,6 @@ const AgentRequest = () => {
             </div>
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Additional Notes
-              </label>
-              <textarea
-                value={formData.additionalNotes}
-                onChange={(e) =>
-                  handleInputChange("additionalNotes", e.target.value)
-                }
-                placeholder="Add any extra details..."
-                className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 resize-none text-sm sm:text-base"
-              ></textarea>
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                 Choose File
               </label>
               <div
@@ -458,6 +445,19 @@ const AgentRequest = () => {
                   )}
                 </div>
               </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                Additional Notes
+              </label>
+              <textarea
+                value={formData.additionalNotes}
+                onChange={(e) =>
+                  handleInputChange("additionalNotes", e.target.value)
+                }
+                placeholder="Add any extra details..."
+                className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 resize-none text-sm sm:text-base"
+              ></textarea>
             </div>
             <button
               onClick={handleSubmit}
@@ -580,4 +580,4 @@ const AgentRequest = () => {
   );
 };
 
-export default AgentRequest;
+export default TeamLeaderAgentRequest;
