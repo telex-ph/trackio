@@ -1,11 +1,6 @@
 import App from "../App";
 import AppLayout from "../layout/AppLayout";
 
-// Routes Protection
-import TeamLeaderProtectedRoutes from "./TeamLeaderProtectedRoutes";
-import AgentProtectedRoute from "./AgentProtectedRoute";
-import AdminProtectedRoute from "./AdminProtectedRoutes";
-
 // Agent Routes
 import AgentDashboard from "../pages/agent/AgentDashboard";
 import AgentAttendance from "../pages/agent/AgentAttendance";
@@ -25,6 +20,9 @@ import TeamLeaderBioBreak from "../pages/team-leader/TeamLeaderBioBreak";
 import TeamLeaderCoaching from "../pages/team-leader/TeamLeaderCoaching";
 import TeamLeaderAnnouncement from "../pages/team-leader/TeamLeaderAnnouncement";
 import TeamLeaderAccountSettings from "../pages/team-leader/TeamLeaderAccountSettings";
+
+// Operation Manager Routes
+import OMDashboard from "../pages/om/OMDashboard";
 
 // Admin Routes
 import AdminDashboard from "../pages/admin/AdminDashboard";
@@ -49,7 +47,10 @@ import Login from "../pages/global/Login";
 import Unauthorized from "../pages/global/Unauthorized";
 import ForgotPassword from "../pages/global/ForgotPassword";
 
+// Others
 import { createBrowserRouter, Navigate } from "react-router-dom";
+import ProtectedRoutes from "./ProtectedRoutes";
+import Roles from "../constants/roles";
 
 const router = createBrowserRouter([
   // Public Routes
@@ -66,7 +67,7 @@ const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           {
-            element: <AdminProtectedRoute />,
+            element: <ProtectedRoutes role={Roles.ADMIN} />,
             path: "admin",
             children: [
               { index: true, element: <Navigate to="dashboard" replace /> },
@@ -100,9 +101,18 @@ const router = createBrowserRouter([
             ],
           },
 
+          {
+            element: <ProtectedRoutes role={Roles.OM} />,
+            path: "operation-manager",
+            children: [
+              { index: true, element: <Navigate to="dashboard" replace /> },
+              { path: "dashboard", element: <OMDashboard /> },
+            ],
+          },
+
           // Team Leader Routes
           {
-            element: <TeamLeaderProtectedRoutes />,
+            element: <ProtectedRoutes role={Roles.TEAM_LEADER} />,
             path: "team-leader",
             children: [
               { index: true, element: <Navigate to="dashboard" replace /> },
@@ -134,7 +144,7 @@ const router = createBrowserRouter([
 
           // Agent Routes
           {
-            element: <AgentProtectedRoute />,
+            element: <ProtectedRoutes role={Roles.AGENT} />,
             path: "agent",
             children: [
               { index: true, element: <Navigate to="dashboard" replace /> },

@@ -180,6 +180,68 @@ const TeamLeaderSidebar = ({
   </SidebarItemGroup>
 );
 
+// Team Leader Sidebar
+const OMSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
+  <SidebarItemGroup className="space-y-1">
+    <SidebarLink
+      to="/operation-manager/dashboard"
+      icon={LayoutGrid}
+      label="Dashboard"
+      isCollapsed={isCollapsed}
+    />
+
+    {/* <CustomCollapse
+      icon={<BookOpenText className="w-5 h-5" />}
+      label="Attendance"
+      isCollapsed={isCollapsed}
+      open={activeDropdown === "attendance"}
+      onToggle={() =>
+        setActiveDropdown(activeDropdown === "attendance" ? null : "attendance")
+      }
+    >
+      {[
+        { path: "basic-logs", label: "Basic Logs", Icon: FileText },
+        { path: "late", label: "Late", Icon: AlertTriangle },
+        { path: "overtime", label: "Overtime", Icon: AlarmClockCheck },
+        { path: "undertime", label: "Undertime", Icon: Clock },
+      ].map(({ path, label, Icon }) => (
+        <SidebarLink
+          key={path}
+          to={`/team-leader/attendance/${path}`}
+          icon={Icon}
+          label={label}
+          isCollapsed={isCollapsed}
+        />
+      ))}
+    </CustomCollapse>
+
+    <SidebarLink
+      to="/team-leader/coaching"
+      icon={Video}
+      label="Coaching"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
+      to="/team-leader/schedule"
+      icon={Calendar}
+      label="Schedule"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
+      to="/team-leader/performance"
+      icon={BarChart}
+      label="Performance"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
+      to="/team-leader/announcement"
+      icon={Megaphone}
+      label="Announcement"
+      isCollapsed={isCollapsed}
+    /> */}
+  </SidebarItemGroup>
+);
+
 // Admin Sidebar
 const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
   <SidebarItemGroup className="space-y-1">
@@ -275,6 +337,14 @@ export const Sidebar = ({ isCollapsed }) => {
       case Role.TEAM_LEADER:
         return (
           <TeamLeaderSidebar
+            isCollapsed={isCollapsed}
+            activeDropdown={activeDropdown}
+            setActiveDropdown={setActiveDropdown}
+          />
+        );
+      case Role.OM:
+        return (
+          <OMSidebar
             isCollapsed={isCollapsed}
             activeDropdown={activeDropdown}
             setActiveDropdown={setActiveDropdown}
