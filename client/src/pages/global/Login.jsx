@@ -14,13 +14,16 @@ import microsoftLogo from "../../assets/logos/microsoft.svg";
 import telexLogo from "../../assets/logos/telex.png";
 import ellipse from "../../assets/shapes/ellipse.svg";
 import telexvid from "../../assets/video/telexvid.mp4";
+import Spinner from "../../assets/loaders/Spinner";
+import { useAuth } from "../../hooks/useAuth";
 
 const Login = () => {
   const navigate = useNavigate();
   const [data, setData] = useState({ email: "", password: "" });
+  const { login, isLoading, error } = useAuth();
+
   const [isShowPassword, setIsShowPassword] = useState(false);
-  const [error, setError] = useState({ message: "", hasError: false });
-  const [loading, setLoading] = useState(true);
+  // const [error, setError] = useState({ message: "", hasError: false });
   const [showSplash, setShowSplash] = useState(true);
 
   // Right side animation state
@@ -48,70 +51,16 @@ const Login = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setError({ hasError: false, message: "" });
+    // setError({ hasError: false, message: "" });
     setData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleEyeClick = () => setIsShowPassword((prev) => !prev);
-
   const handleLoginClick = async (e) => {
     e.preventDefault();
-    try {
-      const response = await api.post("/auth/log-in", data);
-      const user = response.data;
-      if (user) {
-        const loginResponse = await api.post("/auth/create-token", user);
-        if (loginResponse.status === 200) {
-          navigate(`/${user.role}/dashboard`);
-        }
-      }
-    } catch (error) {
-      setError({
-        message: error.response?.data
-          ? "Oops! We couldn't log you in. Please check your email and password."
-          : error.message,
-        hasError: true,
-      });
-      console.error("Error: ", error);
-    }
+    login(data);
   };
 
-  // TODO: remove this since in microsoft azure, we cannot get thier shifts
-  const handleMicrosoftClick = async () => {
-    const microsoftResponse = await microsoftLogin();
-    const microsoftUser = await getMicrosoftUser(microsoftResponse.accessToken);
-
-    const user = {
-      id: microsoftUser.id,
-      email: microsoftUser.mail,
-      firstName: microsoftUser.givenName,
-      lastName: microsoftUser.surname,
-      jobTitle: microsoftUser.jobTitle,
-    };
-
-    const loginResponse = await api.post("/auth/create-token", user);
-    const role = await checkRole(user.id, microsoftResponse.accessToken);
-    console.log("role: ", role);
-
-    if (loginResponse.status === 200) navigate("/dashboard");
-  };
-
-  // Check auth status
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await api.get("/auth/status");
-        const user = response.data.user;
-        const isValid = response.data.isValid;
-        if (isValid && user) navigate(`/${user.role}/dashboard`);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUser();
-  }, []);
+  const handleEyeClick = () => setIsShowPassword((prev) => !prev);
 
   if (showSplash) {
     return (
@@ -132,8 +81,6 @@ const Login = () => {
     );
   }
 
-  if (loading) return <p>Checking authentication...</p>;
-
   return (
     <section className="flex h-screen">
       {/* Left Side */}
@@ -150,7 +97,7 @@ const Login = () => {
           className="flex flex-col gap-4 w-full"
           onSubmit={handleLoginClick}
         >
-          {error.hasError && (
+          {error && (
             <Alert color="failure" icon={HiInformationCircle}>
               <span>{error.message}</span>
             </Alert>
@@ -210,28 +157,14 @@ const Login = () => {
             </p>
           </div>
 
-          <Button type="submit" className="bg-[#470905] hover:bg-[#470905]">
-            Log In
+          <Button
+            type="submit"
+            className={`bg-[#470905] hover:bg-[#470905]`}
+            disabled={isLoading}
+          >
+            {isLoading ? <Spinner width={5} height={5} /> : "Log In"}
           </Button>
         </form>
-
-        {/* OR separator */}
-        <div className="relative flex items-center my-4">
-          <hr className="flex-grow border-gray-300" />
-          <span className="absolute px-2 text-gray-500 bg-white left-1/2 -translate-x-1/2">
-            OR
-          </span>
-        </div>
-
-        {/* Microsoft login */}
-        <Button
-          type="button"
-          className="flex items-center justify-center border border-light container-light rounded-md w-full gap-2 p-2"
-          onClick={handleMicrosoftClick}
-        >
-          <img src={microsoftLogo} className="size-7" alt="Microsoft" />
-          <span className="text-sm text-light ">Continue with Microsoft</span>
-        </Button>
       </div>
 
       {/* Right Side */}
