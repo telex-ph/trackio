@@ -171,12 +171,6 @@ const TeamLeaderSidebar = ({
       label="Performance"
       isCollapsed={isCollapsed}
     />
-    <SidebarLink
-      to="/team-leader/announcement"
-      icon={Megaphone}
-      label="Announcement"
-      isCollapsed={isCollapsed}
-    />
   </SidebarItemGroup>
 );
 
