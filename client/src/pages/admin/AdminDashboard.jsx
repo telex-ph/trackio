@@ -385,13 +385,35 @@ const CompanyAttendanceChart = () => {
         maintainAspectRatio: false,
         interaction: { mode: "index", intersect: false },
         scales: {
-          x: { stacked: false, grid: { display: false } },
-          y: { beginAtZero: true, suggestedMax: 100 },
+          x: {
+            stacked: false,
+            grid: { display: false },
+            ticks: {
+              font: {
+                size: window.innerWidth < 640 ? 10 : 12,
+              },
+            },
+          },
+          y: {
+            beginAtZero: true,
+            suggestedMax: 100,
+            ticks: {
+              font: {
+                size: window.innerWidth < 640 ? 10 : 12,
+              },
+            },
+          },
         },
         plugins: {
           legend: {
-            position: "bottom",
-            labels: { boxWidth: 12, padding: 12 },
+            position: window.innerWidth < 640 ? "bottom" : "bottom",
+            labels: {
+              boxWidth: window.innerWidth < 640 ? 10 : 12,
+              padding: window.innerWidth < 640 ? 8 : 12,
+              font: {
+                size: window.innerWidth < 640 ? 10 : 12,
+              },
+            },
           },
           tooltip: { mode: "index", intersect: false },
         },
@@ -401,18 +423,42 @@ const CompanyAttendanceChart = () => {
   );
 
   return (
-    <div className="h-80 md:h-96 pt-4 px-6 pb-19 bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-md border border-gray-100">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-3">
-          <BarChart2 className="w-5 h-5 text-slate-600" />
-          <h3 className="text-sm font-semibold text-slate-800">
-            Company-wide Attendance Trend
+    <div
+      className="w-full min-h-[280px] h-64 sm:h-72 md:h-80 lg:h-96 xl:h-[400px] 
+                    p-3 sm:p-4 md:p-6 
+                    bg-gradient-to-br from-white to-slate-50 
+                    rounded-lg sm:rounded-xl 
+                    shadow-sm sm:shadow-md 
+                    border border-gray-100"
+    >
+      {/* Header section */}
+      <div
+        className="flex flex-col xs:flex-row items-start xs:items-center justify-between 
+                      gap-2 xs:gap-0 mb-3 sm:mb-4"
+      >
+        {/* Title section */}
+        <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+          <BarChart2 className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600 flex-shrink-0" />
+          <h3
+            className="text-xs sm:text-sm md:text-base font-semibold text-slate-800 
+                         leading-tight"
+          >
+            <span className="hidden sm:inline">
+              Company-wide Attendance Trend
+            </span>
+            <span className="sm:hidden">Attendance Trend</span>
           </h3>
         </div>
 
         {/* Filter dropdown */}
         <select
-          className="text-sm border border-gray-300 rounded-md px-2 py-1 bg-white text-slate-700"
+          className="text-xs sm:text-sm 
+                     border border-gray-300 rounded-md 
+                     px-2 py-1 sm:px-3 sm:py-1.5
+                     bg-white text-slate-700
+                     min-w-0 w-full xs:w-auto xs:min-w-[100px]
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                     transition-all duration-200"
           value={selectedDept}
           onChange={(e) => setSelectedDept(e.target.value)}
         >
@@ -424,8 +470,9 @@ const CompanyAttendanceChart = () => {
         </select>
       </div>
 
-      <div className="w-full h-full relative">
-        <canvas ref={ref} />
+      {/* Chart container */}
+      <div className="w-full h-[calc(100%-60px)] sm:h-[calc(100%-70px)] relative overflow-hidden">
+        <canvas ref={ref} className="w-full h-full" />
       </div>
     </div>
   );
@@ -487,22 +534,35 @@ const DepartmentStatusChart = () => {
                     ],
                   ],
             borderColor: "#ffffff",
-            borderWidth: 2,
+            borderWidth: window.innerWidth < 640 ? 1 : 2,
           },
         ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: "60%",
+        cutout: window.innerWidth < 640 ? "55%" : "60%",
         plugins: {
           legend: {
-            position: "bottom",
+            position: window.innerWidth < 480 ? "bottom" : "bottom",
             labels: {
               usePointStyle: true,
-              padding: 8,
-              font: { size: 11 },
+              padding: window.innerWidth < 640 ? 6 : 8,
+              font: {
+                size:
+                  window.innerWidth < 480
+                    ? 9
+                    : window.innerWidth < 640
+                    ? 10
+                    : 11,
+              },
+              boxWidth: window.innerWidth < 640 ? 8 : 10,
             },
+          },
+        },
+        elements: {
+          arc: {
+            borderWidth: window.innerWidth < 640 ? 1 : 2,
           },
         },
       },
@@ -511,18 +571,42 @@ const DepartmentStatusChart = () => {
   );
 
   return (
-    <div className="h-80 md:h-96 p-4 pb-24 bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-md border border-gray-100">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-2">
-          <PieChart className="w-5 h-5 text-slate-600" />
-          <h3 className="text-sm font-semibold text-slate-800">
-            Employee Distribution by Department
+    <div
+      className="w-full min-h-[280px] h-64 sm:h-72 md:h-80 lg:h-96 xl:h-[400px]
+                    p-5 sm:p-4 md:p-6 
+                    bg-gradient-to-br from-white to-slate-50 
+                    rounded-lg sm:rounded-xl 
+                    shadow-sm sm:shadow-md 
+                    border border-gray-100"
+    >
+      {/* Header section */}
+      <div
+        className="flex flex-col xs:flex-row items-start xs:items-center justify-between 
+                      gap-2 xs:gap-0 mb-2 sm:mb-3"
+      >
+        {/* Title section */}
+        <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+          <PieChart className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600 flex-shrink-0" />
+          <h3
+            className="text-xs sm:text-sm md:text-base font-semibold text-slate-800 
+                         leading-tight"
+          >
+            <span className="hidden sm:inline">
+              Employee Distribution by Department
+            </span>
+            <span className="sm:hidden">Employee Distribution</span>
           </h3>
         </div>
 
         {/* Department Filter */}
         <select
-          className="text-sm border border-gray-300 rounded-md px-2 py-1 bg-white text-slate-700"
+          className="text-xs sm:text-sm 
+                     border border-gray-300 rounded-md 
+                     px-2 py-1 sm:px-3 sm:py-1.5
+                     bg-white text-slate-700
+                     min-w-0 w-full xs:w-auto xs:min-w-[100px]
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                     transition-all duration-200"
           value={selectedDept}
           onChange={(e) => setSelectedDept(e.target.value)}
         >
@@ -534,12 +618,21 @@ const DepartmentStatusChart = () => {
         </select>
       </div>
 
-      <div className="text-xs text-gray-500 mb-2 text-right">
-        Total: {totalEmployees}
+      {/* Total employees count */}
+      <div className="text-xs sm:text-sm text-gray-500 mb-2 sm:mb-3 text-right">
+        <span className="hidden xs:inline">Total: </span>
+        <span className="font-medium">{totalEmployees}</span>
+        <span className="xs:hidden ml-1 text-gray-400">employees</span>
       </div>
 
-      <div className="w-full h-full relative flex items-start justify-center">
-        <canvas ref={ref} className="max-h-78" />
+      {/* Chart container */}
+      <div
+        className="w-full h-[calc(100%-80px)] sm:h-[calc(100%-90px)] md:h-[calc(100%-100px)] 
+                      relative flex items-center justify-center"
+      >
+        <div className="w-full h-full max-w-[280px] sm:max-w-[320px] md:max-w-[360px] lg:max-w-[400px]">
+          <canvas ref={ref} className="w-full h-full" />
+        </div>
       </div>
     </div>
   );
@@ -594,8 +687,9 @@ const ProductivityChart = () => {
             fill: true,
             pointBackgroundColor: "#3b82f6",
             pointBorderColor: "#ffffff",
-            pointBorderWidth: 2,
-            pointRadius: 5,
+            pointBorderWidth: window.innerWidth < 640 ? 1 : 2,
+            pointRadius: window.innerWidth < 640 ? 3 : 5,
+            borderWidth: window.innerWidth < 640 ? 2 : 3,
           },
           {
             label: "Undertime",
@@ -606,8 +700,9 @@ const ProductivityChart = () => {
             fill: true,
             pointBackgroundColor: "#22c55e",
             pointBorderColor: "#ffffff",
-            pointBorderWidth: 2,
-            pointRadius: 5,
+            pointBorderWidth: window.innerWidth < 640 ? 1 : 2,
+            pointRadius: window.innerWidth < 640 ? 3 : 5,
+            borderWidth: window.innerWidth < 640 ? 2 : 3,
           },
         ],
       },
@@ -619,39 +714,117 @@ const ProductivityChart = () => {
             beginAtZero: false,
             min: 60,
             max: 100,
-            grid: { color: "rgba(0,0,0,0.1)" },
+            grid: {
+              color: "rgba(0,0,0,0.1)",
+              lineWidth: window.innerWidth < 640 ? 0.5 : 1,
+            },
+            ticks: {
+              font: {
+                size:
+                  window.innerWidth < 480
+                    ? 9
+                    : window.innerWidth < 640
+                    ? 10
+                    : 12,
+              },
+            },
           },
-          x: { grid: { display: false } },
+          x: {
+            grid: { display: false },
+            ticks: {
+              font: {
+                size:
+                  window.innerWidth < 480
+                    ? 9
+                    : window.innerWidth < 640
+                    ? 10
+                    : 12,
+              },
+            },
+          },
         },
         plugins: {
-          legend: { position: "bottom", labels: { padding: 15 } },
+          legend: {
+            position: "bottom",
+            labels: {
+              padding: window.innerWidth < 640 ? 10 : 15,
+              font: {
+                size:
+                  window.innerWidth < 480
+                    ? 10
+                    : window.innerWidth < 640
+                    ? 11
+                    : 12,
+              },
+              boxWidth: window.innerWidth < 640 ? 10 : 12,
+              usePointStyle: window.innerWidth < 640,
+            },
+          },
           tooltip: {
             mode: "index",
             intersect: false,
             backgroundColor: "rgba(0,0,0,0.8)",
             titleColor: "#ffffff",
             bodyColor: "#ffffff",
+            titleFont: {
+              size: window.innerWidth < 640 ? 11 : 12,
+            },
+            bodyFont: {
+              size: window.innerWidth < 640 ? 10 : 11,
+            },
           },
         },
         interaction: { mode: "index", intersect: false },
+        elements: {
+          line: {
+            borderWidth: window.innerWidth < 640 ? 2 : 3,
+          },
+          point: {
+            hoverRadius: window.innerWidth < 640 ? 5 : 7,
+          },
+        },
       },
     }),
     [chartData]
   );
 
   return (
-    <div className="h-80 md:h-96 p-6 pb-19 bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-md border border-gray-100">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-2">
-          <LineChart className="w-5 h-5 text-slate-600" />
-          <h3 className="text-sm font-semibold text-slate-800">
-            Overtime vs Undertime Trends
+    <div
+      className="w-full min-h-[280px] h-64 sm:h-72 md:h-80 lg:h-96 xl:h-[400px]
+                    p-3 sm:p-4 md:p-6 
+                    bg-gradient-to-br from-white to-slate-50 
+                    rounded-lg sm:rounded-xl 
+                    shadow-sm sm:shadow-md 
+                    border border-gray-100"
+    >
+      {/* Header section */}
+      <div
+        className="flex flex-col xs:flex-row items-start xs:items-center justify-between 
+                      gap-2 xs:gap-0 mb-3 sm:mb-4"
+      >
+        {/* Title section */}
+        <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+          <LineChart className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600 flex-shrink-0" />
+          <h3
+            className="text-xs sm:text-sm md:text-base font-semibold text-slate-800 
+                         leading-tight"
+          >
+            <span className="hidden sm:inline">
+              Overtime vs Undertime Trends
+            </span>
+            <span className="sm:hidden">Overtime vs Undertime</span>
           </h3>
         </div>
 
         {/* Filter dropdown */}
         <select
-          className="text-sm border border-gray-300 rounded-md px-2 py-1 bg-white text-slate-700"
+          className="text-xs sm:text-sm 
+                     border border-gray-300 rounded-md 
+                     px-2 py-1 sm:px-3 sm:py-1.5
+                     bg-white text-slate-700
+                     min-w-0 w-full xs:w-auto xs:min-w-[100px]
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                     transition-all duration-200"
           value={selectedDept}
           onChange={(e) => setSelectedDept(e.target.value)}
         >
@@ -663,8 +836,9 @@ const ProductivityChart = () => {
         </select>
       </div>
 
-      <div className="w-full h-full relative">
-        <canvas ref={ref} />
+      {/* Chart container */}
+      <div className="w-full h-[calc(100%-60px)] sm:h-[calc(100%-70px)] relative overflow-hidden">
+        <canvas ref={ref} className="w-full h-full" />
       </div>
     </div>
   );
@@ -701,44 +875,103 @@ const WorkHoursAnalysisChart = () => {
     () => ({
       type: "bar",
       data: {
-        labels: ["Mon", "Tues", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        labels:
+          window.innerWidth < 480
+            ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+            : ["Mon", "Tues", "Wed", "Thu", "Fri", "Sat", "Sun"],
         datasets: [
           {
-            label: "Average Work Hours",
+            label: window.innerWidth < 640 ? "Avg Hours" : "Average Work Hours",
             data: chartData.avg,
             backgroundColor: "rgba(59,130,246,0.8)",
             borderColor: "rgba(59,130,246,1)",
-            borderWidth: 1,
+            borderWidth: window.innerWidth < 640 ? 1 : 1,
             hoverBackgroundColor: "rgba(59,130,246,1)",
+            barThickness: window.innerWidth < 480 ? "flex" : undefined,
+            maxBarThickness: window.innerWidth < 480 ? 25 : 40,
           },
           {
-            label: "Overtime Hours",
+            label: window.innerWidth < 640 ? "Overtime" : "Overtime Hours",
             data: chartData.overtime,
             backgroundColor: "rgba(239,68,68,0.8)",
             borderColor: "rgba(239,68,68,1)",
-            borderWidth: 1,
+            borderWidth: window.innerWidth < 640 ? 1 : 1,
             hoverBackgroundColor: "rgba(239,68,68,1)",
+            barThickness: window.innerWidth < 480 ? "flex" : undefined,
+            maxBarThickness: window.innerWidth < 480 ? 25 : 40,
           },
         ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        animation: { duration: 500, easing: "easeOutQuart" },
+        animation: {
+          duration: window.innerWidth < 640 ? 300 : 500,
+          easing: "easeOutQuart",
+        },
         scales: {
           x: {
             grid: { display: false },
-            ticks: { maxRotation: 45, minRotation: 0 },
+            ticks: {
+              maxRotation:
+                window.innerWidth < 480 ? 0 : window.innerWidth < 640 ? 30 : 45,
+              minRotation: 0,
+              font: {
+                size:
+                  window.innerWidth < 480
+                    ? 9
+                    : window.innerWidth < 640
+                    ? 10
+                    : 12,
+              },
+            },
           },
           y: {
             beginAtZero: true,
             suggestedMax: 10,
-            grid: { color: "rgba(0,0,0,0.1)" },
+            grid: {
+              color: "rgba(0,0,0,0.1)",
+              lineWidth: window.innerWidth < 640 ? 0.5 : 1,
+            },
+            ticks: {
+              font: {
+                size:
+                  window.innerWidth < 480
+                    ? 9
+                    : window.innerWidth < 640
+                    ? 10
+                    : 12,
+              },
+            },
           },
         },
         plugins: {
-          legend: { position: "bottom", labels: { padding: 15 } },
-          tooltip: { mode: "index", intersect: false },
+          legend: {
+            position: "bottom",
+            labels: {
+              padding: window.innerWidth < 640 ? 10 : 15,
+              font: {
+                size:
+                  window.innerWidth < 480
+                    ? 10
+                    : window.innerWidth < 640
+                    ? 11
+                    : 12,
+              },
+              boxWidth: window.innerWidth < 640 ? 10 : 12,
+              usePointStyle: false,
+            },
+          },
+          tooltip: {
+            mode: "index",
+            intersect: false,
+            titleFont: {
+              size: window.innerWidth < 640 ? 11 : 12,
+            },
+            bodyFont: {
+              size: window.innerWidth < 640 ? 10 : 11,
+            },
+          },
         },
         interaction: { mode: "index", intersect: false },
       },
@@ -747,18 +980,38 @@ const WorkHoursAnalysisChart = () => {
   );
 
   return (
-    <div className="h-96 p-6 pb-20 bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-md border border-gray-100">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-2">
-          <BarChart2 className="w-5 h-5 text-slate-600" />
-          <h3 className="text-sm font-semibold text-slate-800">
-            Weekly Work Hours & Overtime
+    <div className="w-full min-h-[300px] h-72 sm:h-80 md:h-88 lg:h-[26rem] xl:h-[27.7rem] p-3 sm:p-4 md:p-6 bg-gradient-to-br from-white to-slate-50 rounded-lg sm:rounded-xl shadow-sm sm:shadow-md border border-gray-100">
+      {/* Header section */}
+      <div
+        className="flex flex-col xs:flex-row items-start xs:items-center justify-between 
+                      gap-2 xs:gap-0 mb-3 sm:mb-4"
+      >
+        {/* Title section */}
+        <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+          <BarChart2 className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600 flex-shrink-0" />
+          <h3
+            className="text-xs sm:text-sm md:text-base font-semibold text-slate-800 
+                         leading-tight"
+          >
+            <span className="hidden md:inline">
+              Weekly Work Hours & Overtime
+            </span>
+            <span className="hidden sm:inline md:hidden">
+              Work Hours & Overtime
+            </span>
+            <span className="sm:hidden">Work Hours</span>
           </h3>
         </div>
 
         {/* Filter dropdown */}
         <select
-          className="text-sm border border-gray-300 rounded-md px-2 py-1 bg-white text-slate-700"
+          className="text-xs sm:text-sm 
+                     border border-gray-300 rounded-md 
+                     px-2 py-1 sm:px-3 sm:py-1.5
+                     bg-white text-slate-700
+                     min-w-0 w-full xs:w-auto xs:min-w-[100px]
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                     transition-all duration-200"
           value={selectedDept}
           onChange={(e) => setSelectedDept(e.target.value)}
         >
@@ -770,8 +1023,9 @@ const WorkHoursAnalysisChart = () => {
         </select>
       </div>
 
-      <div className="w-full h-full relative">
-        <canvas ref={ref} />
+      {/* Chart container */}
+      <div className="w-full h-[calc(100%-60px)] sm:h-[calc(100%-70px)] relative overflow-hidden">
+        <canvas ref={ref} className="w-full h-full" />
       </div>
     </div>
   );
@@ -838,90 +1092,102 @@ const AdminDashboard = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-            <Shield className="w-8 h-8 mr-3 text-blue-600" />
-            Admin Dashboard
-          </h1>
-          <p className="text-gray-600">
-            Company-wide attendance and workforce management
-          </p>
-          <p className="text-sm text-gray-500 mt-1">
-            Last updated: {currentTime.toLocaleTimeString()} | Today:{" "}
-            {currentTime.toLocaleDateString()}
-          </p>
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-2 lg:gap-6 mb-4 sm:mb-6">
+        <div className="flex-1">
+          <section className="flex flex-col mb-2">
+            <div className="flex items-center gap-1">
+              <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
+                Admin Monitoring Dashboard
+              </h2>
+            </div>
+            <p className="text-light text-sm sm:text-base">
+              Real-time attendance and work hours monitoring
+            </p>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">
+              Last updated: {currentTime.toLocaleTimeString()} | Today:{" "}
+              {currentTime.toLocaleDateString()}
+            </p>
+          </section>
         </div>
-        <div className="flex space-x-3">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+
+        <div className="flex flex-col sm:flex-row space-y-1.5 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+          <button className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
             <Download className="w-4 h-4 mr-2" />
-            Export Data
+            <span className="text-sm sm:text-base">Export Data</span>
           </button>
-          <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+          <button className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
             <Calendar className="w-4 h-4 mr-2" />
-            Analytics
+            <span className="text-sm sm:text-base">Analytics</span>
           </button>
-          <button className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center">
+          <button className="bg-purple-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center">
             <Settings className="w-4 h-4 mr-2" />
-            Settings
+            <span className="text-sm sm:text-base">Settings</span>
           </button>
         </div>
       </div>
 
       {/* Enhanced Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-9 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <StatCard
           title="Total Employees"
           value={stats.totalEmployees}
-          icon={<Users className="w-6 h-6 text-slate-600" />}
+          icon={<Users className="w-5 h-5 sm:w-6 sm:h-6 text-slate-600" />}
           subtitle="Company-wide"
+          className="col-span-2 sm:col-span-1"
         />
         <StatCard
           title="Departments"
           value={stats.departments}
-          icon={<Building2 className="w-6 h-6 text-indigo-600" />}
+          icon={<Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />}
           subtitle="Active Depts"
         />
         <StatCard
           title="Present"
           value={stats.present}
-          icon={<UserCheck className="w-6 h-6 text-emerald-600" />}
+          icon={
+            <UserCheck className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
+          }
           subtitle="Currently Working"
         />
         <StatCard
           title="Absentees"
           value={stats.absent}
-          icon={<UserX className="w-6 h-6 text-red-500" />}
+          icon={<UserX className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />}
           subtitle="Not Present"
         />
         <StatCard
           title="Late Arrivals"
           value={stats.late}
-          icon={<Clock className="w-6 h-6 text-amber-600" />}
+          icon={<Clock className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />}
           subtitle="Late Today"
         />
         <StatCard
           title="On Break"
           value={stats.onBreak}
-          icon={<Coffee className="w-6 h-6 text-blue-600" />}
+          icon={<Coffee className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />}
           subtitle="Currently"
         />
         <StatCard
           title="On Lunch"
           value={stats.onLunch}
-          icon={<Utensils className="w-6 h-6 text-orange-600" />}
+          icon={<Utensils className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />}
           subtitle="Lunch Break"
         />
         <StatCard
           title="Overtime"
           value={stats.overtime}
-          icon={<TrendingUp className="w-6 h-6 text-violet-600" />}
+          icon={
+            <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-violet-600" />
+          }
           subtitle="Extra Hours"
         />
         <StatCard
           title="Undertime"
           value={stats.undertime}
-          icon={<TrendingDown className="w-6 h-6 text-pink-600" />}
+          icon={
+            <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 text-pink-600" />
+          }
           subtitle="Short Hours"
         />
       </div>
@@ -942,64 +1208,80 @@ const AdminDashboard = () => {
 
           {/* Employee List */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-0">
-            <div className="p-4 border-b border-gray-200">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <h3 className="font-semibold text-gray-800">
-                  Employee Directory & Status
-                </h3>
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="relative">
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Search employees..."
-                      className="pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm w-64"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+            {/* Employee List */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-0">
+              <div className="p-4 border-b border-gray-200">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-md">
+                      <Users className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight">
+                        Employee Directory & Status
+                      </h3>
+                      <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                        Complete employee management overview
+                      </p>
+                    </div>
                   </div>
-                  <select
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                    value={filterDepartment}
-                    onChange={(e) => setFilterDepartment(e.target.value)}
-                  >
-                    {departments.map((dept) => (
-                      <option key={dept} value={dept}>
-                        {dept}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                  >
-                    <option value="All">All Status</option>
-                    <option value="Present">Present</option>
-                    <option value="Absent">Absent</option>
-                    <option value="Late">Late Arrivals</option>
-                  </select>
+
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
+                    <div className="relative">
+                      <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Search employees..."
+                        className="w-full sm:w-64 bg-white border border-gray-300 hover:border-gray-400 rounded-xl pl-10 pr-3 py-2 text-xs sm:text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 shadow-sm"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+                    <select
+                      className="w-full sm:w-40 bg-white border border-gray-300 hover:border-gray-400 rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 shadow-sm"
+                      value={filterDepartment}
+                      onChange={(e) => setFilterDepartment(e.target.value)}
+                    >
+                      {departments.map((dept) => (
+                        <option key={dept} value={dept}>
+                          {dept}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      className="w-full sm:w-32 bg-white border border-gray-300 hover:border-gray-400 rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 shadow-sm"
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                    >
+                      <option value="All">All Status</option>
+                      <option value="Present">Present</option>
+                      <option value="Absent">Absent</option>
+                      <option value="Late">Late Arrivals</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-96 overflow-y-auto space-y-2 sm:space-y-2 p-2">
               {filteredEmployees.map((employee) => (
                 <div
                   key={employee.id}
-                  className="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="bg-white rounded-lg sm:rounded-xl border border-gray-200 shadow-sm hover:shadow-md p-3 sm:p-4 cursor-pointer transition-all duration-200 hover:border-gray-300"
                   onClick={() => setSelectedEmployee(employee)}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="relative">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 lg:gap-4">
+                    {/* Left section - Employee info */}
+                    <div className="flex items-center space-x-3 sm:space-x-4 flex-1">
+                      {/* Avatar with status */}
+                      <div className="relative flex-shrink-0">
                         <img
                           src={employee.avatar}
                           alt={employee.name}
-                          className="w-12 h-12 rounded-full object-cover"
+                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
                         />
                         <div
-                          className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
+                          className={`absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-white ${
                             employee.status === "Present"
                               ? "bg-green-500"
                               : employee.status === "Absent"
@@ -1012,66 +1294,78 @@ const AdminDashboard = () => {
                           }`}
                         />
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900 flex items-center">
-                          {employee.name}
+
+                      {/* Employee details */}
+                      <div className="flex-1 min-w-0">
+                        {/* Name and late badge */}
+                        <h4 className="font-semibold text-gray-900 flex items-center text-sm sm:text-base">
+                          <span className="truncate">{employee.name}</span>
                           {employee.isLate && (
-                            <span className="ml-2 text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
+                            <span className="ml-2 text-xs bg-orange-100 text-orange-800 px-2 py-0.5 sm:py-1 rounded-full flex-shrink-0">
                               Late
                             </span>
                           )}
                         </h4>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
+
+                        {/* Department and role */}
+                        <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1">
+                          <span className="px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
                             {employee.department}
                           </span>
-                          <span className="text-xs text-gray-500">•</span>
-                          <span className="text-xs text-gray-600">
+                          <span className="text-xs text-gray-500 hidden sm:inline">
+                            •
+                          </span>
+                          <span className="text-xs text-gray-600 truncate">
                             {employee.role}
                           </span>
                         </div>
-                        <div className="flex items-center space-x-2 mt-1">
+
+                        {/* Status badges */}
+                        <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1 sm:mt-2">
                           <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium border ${
+                            className={`px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium border ${
                               statusColors[employee.status]
                             }`}
                           >
                             {employee.status}
                           </span>
                           {employee.breakStatus && (
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                            <span className="px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                               {employee.breakStatus}
                             </span>
                           )}
                           {employee.lunchStatus && (
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+                            <span className="px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
                               {employee.lunchStatus}
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-gray-600 mt-1">
+
+                        {/* Last activity */}
+                        <p className="text-xs text-gray-600 mt-1 truncate">
                           {employee.lastActivity}
                         </p>
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <div className="grid grid-cols-4 gap-4 text-center">
-                        <div>
-                          <div className="text-sm font-bold text-gray-900">
+                    {/* Right section - Time data */}
+                    <div className="w-full lg:w-auto lg:flex-shrink-0">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-center lg:text-right">
+                        <div className="bg-gray-50 lg:bg-transparent rounded-lg lg:rounded-none p-2 lg:p-0">
+                          <div className="text-xs sm:text-sm font-bold text-gray-900">
                             {employee.timeIn || "--"}
                           </div>
                           <div className="text-xs text-gray-500">Time In</div>
                         </div>
-                        <div>
-                          <div className="text-sm font-bold text-gray-900">
+                        <div className="bg-gray-50 lg:bg-transparent rounded-lg lg:rounded-none p-2 lg:p-0">
+                          <div className="text-xs sm:text-sm font-bold text-gray-900">
                             {employee.workHours}
                           </div>
                           <div className="text-xs text-gray-500">Hours</div>
                         </div>
-                        <div>
+                        <div className="bg-gray-50 lg:bg-transparent rounded-lg lg:rounded-none p-2 lg:p-0">
                           <div
-                            className={`text-sm font-bold ${
+                            className={`text-xs sm:text-sm font-bold ${
                               employee.overtime !== "0:00"
                                 ? "text-purple-600"
                                 : "text-gray-900"
@@ -1081,9 +1375,9 @@ const AdminDashboard = () => {
                           </div>
                           <div className="text-xs text-gray-500">Overtime</div>
                         </div>
-                        <div>
+                        <div className="bg-gray-50 lg:bg-transparent rounded-lg lg:rounded-none p-2 lg:p-0">
                           <div
-                            className={`text-sm font-bold ${
+                            className={`text-xs sm:text-sm font-bold ${
                               employee.undertime !== "0:00"
                                 ? "text-red-600"
                                 : "text-gray-900"
@@ -1099,7 +1393,7 @@ const AdminDashboard = () => {
                 </div>
               ))}
               {filteredEmployees.length === 0 && (
-                <div className="p-8 text-center text-gray-500">
+                <div className="bg-white rounded-lg sm:rounded-xl border border-gray-200 shadow-sm p-6 sm:p-8 text-center text-gray-500 text-sm sm:text-base">
                   No employees found matching your search criteria.
                 </div>
               )}
@@ -1109,138 +1403,150 @@ const AdminDashboard = () => {
 
         {/* Sidebar */}
         <div className="col-span-12 lg:col-span-4 space-y-6">
-          {/* Live Activity Feed */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200/60 p-6 relative overflow-hidden">
+            {/* Subtle decorative elements */}
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gray-50 rounded-full -translate-y-10 translate-x-10"></div>
+            <div className="absolute bottom-0 left-0 w-16 h-16 bg-gray-100 rounded-full translate-y-8 -translate-x-8"></div>
+
             {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-base font-semibold text-gray-800 flex items-center gap-2">
-                <Bell className="w-5 h-5 text-indigo-500" />
-                Live Activity Feed
-              </h4>
-              <div className="flex items-center gap-2">
-                <span className="flex h-2.5 w-2.5">
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+            <div className="relative z-10 flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center shadow-md">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                  <div className="w-1 h-4 bg-white rounded-full ml-1"></div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">
+                    Activity Monitor
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Employee time tracking
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-sm font-medium text-gray-700">
+                  Active
                 </span>
-                <span className="text-xs text-gray-500">Updating...</span>
               </div>
             </div>
 
-            {/* Activities List */}
-            <div className="space-y-4 max-h-80 overflow-y-auto pr-1.5 custom-scrollbar">
-              {recentActivities.map((activity) => (
+            {/* Activity List */}
+            <div className="relative z-10 space-y-3 max-h-[580px] overflow-y-auto pr-1">
+              {recentActivities.map((activity, index) => (
                 <div
                   key={activity.id}
-                  className="flex items-start gap-3 p-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white hover:shadow-sm transition-all"
+                  className="group bg-gray-50/40 hover:bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all duration-200 relative"
                 >
-                  {/* Avatar */}
-                  <img
-                    src={activity.avatar}
-                    alt={activity.employee}
-                    className="w-11 h-11 rounded-full object-cover ring-2 ring-indigo-100"
+                  {/* Minimal status line */}
+                  <div
+                    className={`absolute left-0 top-4 bottom-4 w-0.5 rounded-full ${
+                      activity.type === "timein"
+                        ? "bg-green-400"
+                        : activity.type === "timeout"
+                        ? "bg-red-400"
+                        : activity.type === "break"
+                        ? "bg-blue-400"
+                        : activity.type === "break_end"
+                        ? "bg-blue-300"
+                        : activity.type === "lunch"
+                        ? "bg-orange-400"
+                        : activity.type === "lunch_end"
+                        ? "bg-orange-300"
+                        : "bg-gray-300"
+                    }`}
                   />
 
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center mb-1">
-                      <p className="font-medium text-gray-900 text-sm truncate">
-                        {activity.employee}
-                      </p>
-                      <span className="text-[11px] text-gray-400 flex-shrink-0">
-                        {activity.time}
-                      </span>
-                    </div>
-
-                    {/* Tag + Status */}
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[11px] text-gray-600 bg-gray-100 px-2 py-0.5 rounded-md">
-                        {activity.department}
-                      </span>
-                      <span
-                        className={`text-[11px] font-medium px-2 py-0.5 rounded-md capitalize ${
+                  <div className="flex items-start space-x-4 ml-3">
+                    {/* Avatar */}
+                    <div className="relative flex-shrink-0">
+                      <img
+                        src={activity.avatar}
+                        alt={activity.employee}
+                        className="w-11 h-11 rounded-lg object-cover border-2 border-white shadow-sm group-hover:shadow-md transition-shadow duration-200"
+                      />
+                      <div
+                        className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
                           activity.type === "timein"
-                            ? "bg-green-100 text-green-700"
+                            ? "bg-green-400"
                             : activity.type === "timeout"
-                            ? "bg-red-100 text-red-700"
-                            : activity.type === "break"
-                            ? "bg-blue-100 text-blue-700"
-                            : activity.type === "break_end"
-                            ? "bg-blue-50 text-blue-600"
-                            : activity.type === "lunch"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : activity.type === "lunch_end"
-                            ? "bg-yellow-50 text-yellow-600"
-                            : "bg-gray-100 text-gray-600"
+                            ? "bg-red-400"
+                            : activity.type === "break" ||
+                              activity.type === "break_end"
+                            ? "bg-blue-400"
+                            : activity.type === "lunch" ||
+                              activity.type === "lunch_end"
+                            ? "bg-orange-400"
+                            : "bg-gray-400"
                         }`}
-                      >
-                        {activity.action}
-                      </span>
+                      />
                     </div>
 
-                    {/* Timestamp */}
-                    <p className="text-[11px] text-gray-400">
-                      {activity.timestamp}
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      {/* Employee info */}
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-semibold text-gray-900 text-sm truncate">
+                            {activity.employee}
+                          </h4>
+                          <p className="text-xs text-gray-500 font-medium">
+                            {activity.department || "Customer Service"} •{" "}
+                            {activity.position || "Representative"}
+                          </p>
+                        </div>
+                        <div className="text-right flex-shrink-0 ml-4">
+                          <span className="text-xs font-medium text-gray-600 bg-white px-2 py-1 rounded-md border border-gray-200 shadow-sm">
+                            {activity.time}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Action and status */}
+                      <div className="flex items-center justify-between">
+                        <span
+                          className={`inline-flex items-center space-x-2 text-xs font-medium px-2.5 py-1 rounded-md border ${
+                            activity.type === "timein"
+                              ? "bg-green-50 text-green-700 border-green-200"
+                              : activity.type === "timeout"
+                              ? "bg-red-50 text-red-700 border-red-200"
+                              : activity.type === "break"
+                              ? "bg-blue-50 text-blue-700 border-blue-200"
+                              : activity.type === "break_end"
+                              ? "bg-blue-50 text-blue-600 border-blue-200"
+                              : activity.type === "lunch"
+                              ? "bg-orange-50 text-orange-700 border-orange-200"
+                              : activity.type === "lunch_end"
+                              ? "bg-orange-50 text-orange-600 border-orange-200"
+                              : "bg-gray-50 text-gray-700 border-gray-200"
+                          }`}
+                        >
+                          <div
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              activity.type === "timein"
+                                ? "bg-green-400"
+                                : activity.type === "timeout"
+                                ? "bg-red-400"
+                                : activity.type === "break" ||
+                                  activity.type === "break_end"
+                                ? "bg-blue-400"
+                                : activity.type === "lunch" ||
+                                  activity.type === "lunch_end"
+                                ? "bg-orange-400"
+                                : "bg-gray-400"
+                            }`}
+                          />
+                          <span>{activity.action}</span>
+                        </span>
+
+                        <span className="text-xs text-gray-400 font-medium">
+                          {activity.timestamp}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-
-          {/* Department Overview */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-200 p-5">
-            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-              <Building2 className="w-5 h-5 mr-2" />
-              Department Overview
-            </h3>
-            <div className="space-y-4">
-              {[
-                {
-                  dept: "IT Department",
-                  present: 2,
-                  total: 2,
-                  color: "bg-blue-500",
-                },
-                {
-                  dept: "Customer Service",
-                  present: 2,
-                  total: 2,
-                  color: "bg-green-500",
-                },
-                {
-                  dept: "Management",
-                  present: 1,
-                  total: 2,
-                  color: "bg-yellow-500",
-                },
-                { dept: "HR", present: 1, total: 1, color: "bg-red-500" },
-                {
-                  dept: "Finance",
-                  present: 1,
-                  total: 1,
-                  color: "bg-purple-500",
-                },
-                { dept: "Sales", present: 2, total: 2, color: "bg-cyan-500" },
-              ].map((item, index) => {
-                const percentage = (item.present / item.total) * 100;
-                return (
-                  <div key={index} className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-700">
-                        {item.dept}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {item.present}/{item.total}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`${item.color} h-2 rounded-full transition-all duration-500`}
-                        style={{ width: `${percentage}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           </div>
 

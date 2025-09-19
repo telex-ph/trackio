@@ -1,926 +1,655 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo, useEffect, memo } from "react";
+import axios from "axios";
 import {
-  Users,
+  Calendar,
   Clock,
-  AlertCircle,
+  Upload,
+  X,
+  Plus,
+  Bell,
+  User,
   FileText,
   ChevronDown,
-  ChevronUp,
-  TrendingUp,
-  TrendingDown,
-  Award,
-  Target,
-  Calendar,
-  BarChart3,
-  Download,
-  Filter,
-  Search,
-  Phone,
-  MessageSquare,
-  Star,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Timer,
-  DollarSign
+  Edit,
 } from "lucide-react";
-import { Line, Bar, Doughnut, Radar } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  RadialLinearScale,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
+import Table from "../../components/Table";
+import { DateTime } from "luxon";
+// Corrected to import axios directly, as 'api' seems to be a custom wrapper
+// that might be causing issues. Using axios directly is clearer for this example.
+// If 'api' is necessary, ensure its base URL is set correctly.
+// import api from "../../utils/axios";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  RadialLinearScale,
-  Title,
-  Tooltip,
-  Legend
-);
+// Memoized component for display, though not strictly needed here
+const TimeBox = memo(({ value, label }) => (
+  <span className="text-center">
+    <h1 className="bg-white border-light text-light rounded-md">{value}</h1>
+    <span className="text-light">{label}</span>
+  </span>
+));
 
-const TLPerformancePage = () => {
-  const [agentData, setAgentData] = useState([]);
-  const [filters, setFilters] = useState("This Week");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedMetric, setSelectedMetric] = useState("overall");
-  const [expandedSections, setExpandedSections] = useState({
-    attendance: true,
-    productivity: true,
-    quality: true,
-    goals: true
+const TeamLeaderAnnouncement = () => {
+  const [announcements, setAnnouncements] = useState([]);
+  const [announcementHistory, setAnnouncementHistory] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+
+  const [formData, setFormData] = useState({
+    title: "",
+    dateTime: "", // Combined date and time as a single ISO string
+    postedBy: "",
+    agenda: "",
+    priority: "Medium",
+    // These are for the input fields only, not sent to the backend
+    dateInput: "",
+    timeInput: "",
   });
 
-  const [summary, setSummary] = useState({
-    totalAgents: 0,
-    present: 0,
-    absent: 0,
-    late: 0,
-    overtime: 0,
-    avgProductivity: 0,
-    avgQualityScore: 0,
-    goalAchievement: 0
-  });
+  const fetchAnnouncements = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      // Use the new, simplified GET endpoint
+      const response = await axios.get("http://localhost:3000/api/announcements");
+      const active = response.data.filter((a) => a.status !== "Completed");
+      const history = response.data.filter((a) => a.status === "Completed");
 
-  useEffect(() => {
-    // Enhanced mock agent data with comprehensive performance metrics
-    const agents = [
-      { 
-        id: 1, 
-        name: "Alice Johnson", 
-        status: "Present", 
-        hoursWorked: 8, 
-        overtime: 1,
-        callsHandled: 45,
-        avgCallDuration: 6.5,
-        qualityScore: 92,
-        customerSatisfaction: 4.8,
-        salesTarget: 15,
-        salesAchieved: 18,
-        escalations: 2,
-        firstCallResolution: 88,
-        loginTime: "08:00",
-        department: "Sales",
-        teamLead: "John Smith",
-        productivity: 95
-      },
-      { 
-        id: 2, 
-        name: "Bob Williams", 
-        status: "Late", 
-        hoursWorked: 7, 
-        overtime: 0,
-        callsHandled: 38,
-        avgCallDuration: 7.2,
-        qualityScore: 85,
-        customerSatisfaction: 4.2,
-        salesTarget: 12,
-        salesAchieved: 10,
-        escalations: 4,
-        firstCallResolution: 75,
-        loginTime: "08:15",
-        department: "Support",
-        teamLead: "Jane Doe",
-        productivity: 78
-      },
-      { 
-        id: 3, 
-        name: "Charlie Brown", 
-        status: "Absent", 
-        hoursWorked: 0, 
-        overtime: 0,
-        callsHandled: 0,
-        avgCallDuration: 0,
-        qualityScore: 0,
-        customerSatisfaction: 0,
-        salesTarget: 10,
-        salesAchieved: 0,
-        escalations: 0,
-        firstCallResolution: 0,
-        loginTime: "N/A",
-        department: "Sales",
-        teamLead: "John Smith",
-        productivity: 0
-      },
-      { 
-        id: 4, 
-        name: "David Lee", 
-        status: "Present", 
-        hoursWorked: 8, 
-        overtime: 2,
-        callsHandled: 52,
-        avgCallDuration: 5.8,
-        qualityScore: 96,
-        customerSatisfaction: 4.9,
-        salesTarget: 20,
-        salesAchieved: 22,
-        escalations: 1,
-        firstCallResolution: 94,
-        loginTime: "07:55",
-        department: "Sales",
-        teamLead: "John Smith",
-        productivity: 98
-      },
-      { 
-        id: 5, 
-        name: "Eve Davis", 
-        status: "Late", 
-        hoursWorked: 7, 
-        overtime: 1,
-        callsHandled: 41,
-        avgCallDuration: 6.8,
-        qualityScore: 89,
-        customerSatisfaction: 4.5,
-        salesTarget: 14,
-        salesAchieved: 16,
-        escalations: 3,
-        firstCallResolution: 82,
-        loginTime: "08:10",
-        department: "Support",
-        teamLead: "Jane Doe",
-        productivity: 86
-      },
-      { 
-        id: 6, 
-        name: "Frank Miller", 
-        status: "Present", 
-        hoursWorked: 8, 
-        overtime: 0,
-        callsHandled: 43,
-        avgCallDuration: 6.3,
-        qualityScore: 88,
-        customerSatisfaction: 4.4,
-        salesTarget: 13,
-        salesAchieved: 15,
-        escalations: 2,
-        firstCallResolution: 86,
-        loginTime: "08:02",
-        department: "Sales",
-        teamLead: "John Smith",
-        productivity: 90
-      }
-    ];
-
-    // Calculate comprehensive performance scores
-    const agentsWithScore = agents.map((a) => {
-      const attendanceScore = a.status === "Present" ? 25 : a.status === "Late" ? 15 : 0;
-      const productivityScore = Math.min((a.callsHandled / 50) * 25, 25);
-      const qualityScore = (a.qualityScore / 100) * 25;
-      const salesScore = Math.min((a.salesAchieved / a.salesTarget) * 25, 25);
-      
-      return { 
-        ...a, 
-        performance: Math.round(attendanceScore + productivityScore + qualityScore + salesScore),
-        goalAchievementRate: a.salesTarget > 0 ? Math.round((a.salesAchieved / a.salesTarget) * 100) : 0
-      };
-    });
-
-    setAgentData(agentsWithScore);
-
-    // Calculate enhanced summary metrics
-    const totalAgents = agents.length;
-    const present = agents.filter((a) => a.status === "Present").length;
-    const absent = agents.filter((a) => a.status === "Absent").length;
-    const late = agents.filter((a) => a.status === "Late").length;
-    const overtime = agents.reduce((sum, a) => sum + a.overtime, 0);
-    
-    const activeAgents = agents.filter(a => a.status !== "Absent");
-    const avgProductivity = activeAgents.length > 0 
-      ? Math.round(activeAgents.reduce((sum, a) => sum + a.productivity, 0) / activeAgents.length)
-      : 0;
-    const avgQualityScore = activeAgents.length > 0
-      ? Math.round(activeAgents.reduce((sum, a) => sum + a.qualityScore, 0) / activeAgents.length)
-      : 0;
-    const goalAchievement = agentsWithScore.length > 0
-      ? Math.round(agentsWithScore.reduce((sum, a) => sum + a.goalAchievementRate, 0) / agentsWithScore.length)
-      : 0;
-
-    setSummary({ 
-      totalAgents, 
-      present, 
-      absent, 
-      late, 
-      overtime, 
-      avgProductivity,
-      avgQualityScore,
-      goalAchievement
-    });
-  }, []);
-
-  // Filter agents based on search term
-  const filteredAgents = agentData.filter(agent =>
-    agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    agent.department.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Top performers and improvement needed
-  const topPerformers = [...agentData]
-    .filter(a => a.status !== "Absent")
-    .sort((a, b) => b.performance - a.performance)
-    .slice(0, 3);
-
-  const needImprovement = [...agentData]
-    .filter(a => a.status !== "Absent")
-    .sort((a, b) => a.performance - b.performance)
-    .slice(0, 3);
-
-  // Enhanced chart data
-  const attendanceTrendData = {
-    labels: ["Mon", "Tue", "Wed", "Thu", "Fri"],
-    datasets: [
-      {
-        label: "Present",
-        data: [4, 5, 4, 5, 4],
-        borderColor: "#10b981",
-        backgroundColor: "rgba(16, 185, 129, 0.1)",
-        tension: 0.4,
-        fill: true,
-      },
-      {
-        label: "Late",
-        data: [1, 1, 0, 1, 0],
-        borderColor: "#f59e0b",
-        backgroundColor: "rgba(245, 158, 11, 0.1)",
-        tension: 0.4,
-        fill: true,
-      },
-      {
-        label: "Absent",
-        data: [1, 0, 1, 0, 1],
-        borderColor: "#ef4444",
-        backgroundColor: "rgba(239, 68, 68, 0.1)",
-        tension: 0.4,
-        fill: true,
-      },
-    ],
-  };
-
-  const productivityData = {
-    labels: ["Calls Handled", "Avg Duration", "Quality Score", "FCR Rate"],
-    datasets: [
-      {
-        label: "Team Average",
-        data: [42, 6.5, 88, 85],
-        backgroundColor: "rgba(79, 70, 229, 0.2)",
-        borderColor: "#4f46e5",
-        pointBackgroundColor: "#4f46e5",
-        pointBorderColor: "#fff",
-        pointHoverBackgroundColor: "#fff",
-        pointHoverBorderColor: "#4f46e5",
-      },
-      {
-        label: "Industry Benchmark",
-        data: [40, 7, 85, 80],
-        backgroundColor: "rgba(34, 197, 94, 0.2)",
-        borderColor: "#22c55e",
-        pointBackgroundColor: "#22c55e",
-        pointBorderColor: "#fff",
-        pointHoverBackgroundColor: "#fff",
-        pointHoverBorderColor: "#22c55e",
-      },
-    ],
-  };
-
-  const departmentPerformanceData = {
-    labels: ["Sales", "Support"],
-    datasets: [
-      {
-        data: [
-          agentData.filter(a => a.department === "Sales" && a.status !== "Absent").length,
-          agentData.filter(a => a.department === "Support" && a.status !== "Absent").length
-        ],
-        backgroundColor: ["#6366f1", "#8b5cf6"],
-        hoverBackgroundColor: ["#5b21b6", "#7c3aed"],
-      },
-    ],
-  };
-
-  const salesPerformanceData = {
-    labels: agentData.filter(a => a.status !== "Absent").map(a => a.name),
-    datasets: [
-      {
-        label: "Sales Target",
-        data: agentData.filter(a => a.status !== "Absent").map(a => a.salesTarget),
-        backgroundColor: "rgba(156, 163, 175, 0.7)",
-      },
-      {
-        label: "Sales Achieved",
-        data: agentData.filter(a => a.status !== "Absent").map(a => a.salesAchieved),
-        backgroundColor: "rgba(34, 197, 94, 0.7)",
-      },
-    ],
-  };
-
-  const chartOptions = {
-    responsive: true,
-    plugins: { 
-      legend: { position: "top" },
-      tooltip: {
-        backgroundColor: "rgba(0, 0, 0, 0.8)",
-        titleColor: "#fff",
-        bodyColor: "#fff",
-        borderColor: "#4f46e5",
-        borderWidth: 1,
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: "rgba(0, 0, 0, 0.1)",
-        },
-      },
-      x: {
-        grid: {
-          color: "rgba(0, 0, 0, 0.1)",
-        },
-      },
-    },
-  };
-
-  const radarOptions = {
-    responsive: true,
-    plugins: { legend: { position: "top" } },
-    scales: {
-      r: {
-        angleLines: { display: false },
-        suggestedMin: 0,
-        suggestedMax: 100,
-      },
-    },
-  };
-
-  const toggleSection = (section) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
-
-  const getPerformanceColor = (score) => {
-    if (score >= 85) return "text-green-600 bg-green-50";
-    if (score >= 70) return "text-yellow-600 bg-yellow-50";
-    return "text-red-600 bg-red-50";
-  };
-
-  const getStatusBadge = (status) => {
-    const baseClasses = "px-3 py-1 rounded-full text-xs font-semibold";
-    switch (status) {
-      case "Present":
-        return `${baseClasses} bg-green-100 text-green-800`;
-      case "Late":
-        return `${baseClasses} bg-yellow-100 text-yellow-800`;
-      case "Absent":
-        return `${baseClasses} bg-red-100 text-red-800`;
-      default:
-        return `${baseClasses} bg-gray-100 text-gray-800`;
+      setAnnouncements(active);
+      setAnnouncementHistory(history);
+      setIsLoading(false);
+    } catch (err) {
+      console.error("Error fetching announcements:", err);
+      setError("Failed to load announcements. Please check server connection.");
+      setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchAnnouncements();
+  }, []);
+
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleFileUpload = (file) => {
+    if (file && file.size <= 10 * 1024 * 1024) {
+      setSelectedFile(file);
+    } else {
+      alert("File size must be less than 10MB");
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileUpload(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleSubmit = async () => {
+    // Basic check for empty fields
+    if (
+      !formData.title ||
+      !formData.dateInput ||
+      !formData.timeInput ||
+      !formData.postedBy ||
+      !formData.agenda
+    ) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    // Combine date and time to create a Luxon DateTime object
+    const combinedDateTime = DateTime.fromISO(
+      `${formData.dateInput}T${formData.timeInput}`
+    );
+
+    // Validate the combined date and time
+    if (!combinedDateTime.isValid) {
+      alert("Invalid date or time. Please check your input.");
+      return;
+    }
+
+    try {
+      const payload = {
+        title: formData.title,
+        postedBy: formData.postedBy,
+        agenda: formData.agenda,
+        priority: formData.priority,
+        // Use the validated ISO string from Luxon
+        dateTime: combinedDateTime.toISO(),
+        // Add a default status for new announcements
+        status: "Scheduled",
+      };
+
+      if (isEditMode) {
+        // Use the PUT endpoint for updating
+        await axios.put(
+          `http://localhost:3000/api/announcements/${editingId}`,
+          payload
+        );
+      } else {
+        // Use the POST endpoint for creating
+        await axios.post("http://localhost:3000/api/announcements", payload);
+      }
+
+      await fetchAnnouncements();
+
+      setFormData({
+        title: "",
+        dateTime: "",
+        postedBy: "",
+        agenda: "",
+        priority: "Medium",
+        dateInput: "",
+        timeInput: "",
+      });
+      setSelectedFile(null);
+      setIsEditMode(false);
+      setEditingId(null);
+
+      alert(`Announcement ${isEditMode ? "updated" : "created"} successfully!`);
+    } catch (error) {
+      console.error("Error submitting announcement:", error);
+      alert(`Failed to ${isEditMode ? "update" : "create"} announcement. Please try again.`);
+    }
+  };
+
+  const handleEdit = (announcement) => {
+    setIsEditMode(true);
+    setEditingId(announcement._id);
+
+    // Parse the ISO string to populate the date and time inputs
+    const dt = DateTime.fromISO(announcement.dateTime);
+    setFormData({
+      title: announcement.title,
+      dateTime: announcement.dateTime,
+      postedBy: announcement.postedBy,
+      agenda: announcement.agenda,
+      priority: announcement.priority,
+      dateInput: dt.toISODate(),
+      timeInput: dt.toFormat("HH:mm"),
+    });
+    setSelectedFile(null);
+  };
+
+  const handleCancel = async (id) => {
+    if (window.confirm("Are you sure you want to cancel this announcement?")) {
+      try {
+        await axios.delete(`http://localhost:3000/api/announcements/${id}`);
+        await fetchAnnouncements();
+        alert("Announcement cancelled successfully!");
+      } catch (error) {
+        console.error("Error cancelling announcement:", error);
+        alert("Failed to cancel announcement. Please try again.");
+      }
+    }
+  };
+
+  const cancelEdit = () => {
+    setIsEditMode(false);
+    setEditingId(null);
+    setFormData({
+      title: "",
+      dateTime: "",
+      postedBy: "",
+      agenda: "",
+      priority: "Medium",
+      dateInput: "",
+      timeInput: "",
+    });
+    setSelectedFile(null);
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case "High":
+        return "bg-red-100 text-red-700 border-red-200";
+      case "Medium":
+        return "bg-yellow-100 text-yellow-700 border-yellow-200";
+      case "Low":
+        return "bg-green-100 text-green-700 border-green-200";
+      default:
+        return "bg-gray-100 text-gray-700 border-gray-200";
+    }
+  };
+
+  const formatDisplayDate = (isoDateStr) => {
+    if (!isoDateStr) return "";
+    const date = DateTime.fromISO(isoDateStr);
+    return date.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY);
+  };
+
+  const formatDisplayTime = (isoDateStr) => {
+    if (!isoDateStr) return "";
+    const time = DateTime.fromISO(isoDateStr);
+    return time.toLocaleString(DateTime.TIME_SIMPLE);
+  };
+
+  const formatTimeAgo = (isoDateStr) => {
+    if (!isoDateStr) return "";
+    const combinedDateTime = DateTime.fromISO(isoDateStr);
+    if (!combinedDateTime.isValid) {
+      return "";
+    }
+    const diff = DateTime.local()
+      .diff(combinedDateTime, ["minutes", "hours", "days"])
+      .toObject();
+
+    if (diff.days > 0) {
+      return `${Math.floor(diff.days)} day${
+        Math.floor(diff.days) > 1 ? "s" : ""
+      } ago`;
+    }
+    if (diff.hours > 0) {
+      return `${Math.floor(diff.hours)} hour${
+        Math.floor(diff.hours) > 1 ? "s" : ""
+      } ago`;
+    }
+    if (diff.minutes > 0) {
+      return `${Math.floor(diff.minutes)} minute${
+        Math.floor(diff.minutes) > 1 ? "s" : ""
+      } ago`;
+    }
+    return "just now";
+  };
+
+  const columns = useMemo(
+    () => [
+      {
+        headerName: "DATE",
+        field: "dateTime",
+        sortable: true,
+        filter: true,
+        width: 150,
+        cellRenderer: (params) => formatDisplayDate(params.value),
+      },
+      {
+        headerName: "FACILITATOR",
+        field: "postedBy",
+        sortable: true,
+        filter: true,
+        width: 180,
+      },
+      {
+        headerName: "TYPE",
+        field: "title",
+        sortable: true,
+        filter: true,
+        width: 120,
+      },
+      {
+        headerName: "TIME",
+        field: "dateTime",
+        sortable: true,
+        filter: true,
+        width: 120,
+        cellRenderer: (params) => formatDisplayTime(params.value),
+      },
+      {
+        headerName: "AGENDA",
+        field: "agenda",
+        sortable: true,
+        filter: true,
+        width: 300,
+        tooltipField: "agenda",
+      },
+      {
+        headerName: "STATUS",
+        field: "status",
+        sortable: true,
+        filter: true,
+        width: 120,
+        cellRenderer: (params) => {
+          const statusClass =
+            params.value === "Completed"
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-600";
+          return `<span class="px-4 py-2 rounded-xl text-sm font-semibold ${statusClass}">${params.value}</span>`;
+        },
+      },
+      {
+        headerName: "REMARKS",
+        field: "remarks",
+        sortable: true,
+        filter: true,
+        width: 300,
+        tooltipField: "remarks",
+      },
+    ],
+    []
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="space-y-6 p-6">
-        {/* Header Section */}
-        <section className="bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-indigo-100 rounded-lg">
-                  <BarChart3 className="w-6 h-6 text-indigo-600" />
-                </div>
-                <h1 className="text-3xl font-bold text-gray-900">Team Performance Dashboard</h1>
-              </div>
-              <p className="text-gray-600">Comprehensive performance analytics and team insights</p>
-            </div>
-            
-            <div className="flex flex-wrap gap-3">
-              <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                <Download className="w-4 h-4" />
-                Export Report
-              </button>
-              <select
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                value={filters}
-                onChange={(e) => setFilters(e.target.value)}
-              >
-                <option>Today</option>
-                <option>This Week</option>
-                <option>This Month</option>
-                <option>This Quarter</option>
-              </select>
-            </div>
-          </div>
-        </section>
-
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-medium">Total Agents</p>
-                <p className="text-3xl font-bold text-gray-900">{summary.totalAgents}</p>
-              </div>
-              <div className="p-3 bg-indigo-100 rounded-full">
-                <Users className="w-6 h-6 text-indigo-600" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center">
-              <span className="text-xs text-gray-500">Active today</span>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-medium">Attendance Rate</p>
-                <p className="text-3xl font-bold text-gray-900">
-                  {Math.round((summary.present / summary.totalAgents) * 100)}%
-                </p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-full">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center">
-              <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-              <span className="text-xs text-green-600">+5% from last week</span>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-medium">Avg Productivity</p>
-                <p className="text-3xl font-bold text-gray-900">{summary.avgProductivity}%</p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <TrendingUp className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center">
-              <TrendingUp className="w-4 h-4 text-blue-500 mr-1" />
-              <span className="text-xs text-blue-600">Above target</span>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-medium">Goal Achievement</p>
-                <p className="text-3xl font-bold text-gray-900">{summary.goalAchievement}%</p>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-full">
-                <Target className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center">
-              <Award className="w-4 h-4 text-purple-500 mr-1" />
-              <span className="text-xs text-purple-600">Exceeding targets</span>
-            </div>
-          </div>
+    <div>
+      <section className="flex flex-col mb-2">
+        <div className="flex items-center gap-1">
+          <h2>Announcement</h2>
         </div>
+        <p className="text-light">Manage and view all company announcements.</p>
+      </section>
 
-        {/* Search and Filter Bar */}
-        <div className="bg-white rounded-xl shadow-lg p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search agents by name or department..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <select
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-              value={selectedMetric}
-              onChange={(e) => setSelectedMetric(e.target.value)}
-            >
-              <option value="overall">Overall Performance</option>
-              <option value="attendance">Attendance</option>
-              <option value="productivity">Productivity</option>
-              <option value="quality">Quality Score</option>
-              <option value="sales">Sales Performance</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Performance Highlights */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Award className="w-6 h-6 text-yellow-600" />
-              <h3 className="text-lg font-semibold">Top Performers</h3>
-            </div>
-            <div className="space-y-3">
-              {topPerformers.map((agent, index) => (
-                <div key={agent.id} className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
-                      index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : 'bg-orange-400'
-                    }`}>
-                      {index + 1}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">{agent.name}</p>
-                      <p className="text-xs text-gray-500">{agent.department}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-green-600">{agent.performance}%</p>
-                    <p className="text-xs text-gray-500">{agent.callsHandled} calls</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <AlertTriangle className="w-6 h-6 text-orange-600" />
-              <h3 className="text-lg font-semibold">Needs Attention</h3>
-            </div>
-            <div className="space-y-3">
-              {needImprovement.map((agent) => (
-                <div key={agent.id} className="flex items-center justify-between p-3 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center">
-                      <AlertTriangle className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">{agent.name}</p>
-                      <p className="text-xs text-gray-500">{agent.department}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-orange-600">{agent.performance}%</p>
-                    <p className="text-xs text-gray-500">Needs coaching</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Attendance Analytics */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <div 
-            className="flex items-center justify-between cursor-pointer mb-4"
-            onClick={() => toggleSection('attendance')}
-          >
+      {/* Two-Column Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
+        {/* Create/Edit Announcement */}
+        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <Calendar className="w-6 h-6 text-blue-600" />
-              <h3 className="text-lg font-semibold">Attendance Analytics</h3>
-            </div>
-            {expandedSections.attendance ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </div>
-          
-          {expandedSections.attendance && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <Line data={attendanceTrendData} options={chartOptions} />
+              <div
+                className={`p-2 ${
+                  isEditMode ? "bg-red-100" : "bg-indigo-100"
+                } rounded-lg`}
+              >
+                {isEditMode ? (
+                  <Edit className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
+                ) : (
+                  <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
+                )}
               </div>
-              <div className="space-y-4">
-                <div className="p-4 bg-green-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                    <span className="font-semibold text-green-800">Present Today</span>
-                  </div>
-                  <p className="text-2xl font-bold text-green-600 mt-2">{summary.present}</p>
-                </div>
-                <div className="p-4 bg-yellow-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <Clock className="w-5 h-5 text-yellow-600" />
-                    <span className="font-semibold text-yellow-800">Late Arrivals</span>
-                  </div>
-                  <p className="text-2xl font-bold text-yellow-600 mt-2">{summary.late}</p>
-                </div>
-                <div className="p-4 bg-red-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <XCircle className="w-5 h-5 text-red-600" />
-                    <span className="font-semibold text-red-800">Absent</span>
-                  </div>
-                  <p className="text-2xl font-bold text-red-600 mt-2">{summary.absent}</p>
-                </div>
-              </div>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
+                {isEditMode ? "Edit Announcement" : "Create New Announcement"}
+              </h3>
             </div>
-          )}
-        </div>
-
-        {/* Productivity & Quality Metrics */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div 
-              className="flex items-center justify-between cursor-pointer mb-4"
-              onClick={() => toggleSection('productivity')}
-            >
-              <div className="flex items-center gap-3">
-                <TrendingUp className="w-6 h-6 text-purple-600" />
-                <h3 className="text-lg font-semibold">Productivity Metrics</h3>
-              </div>
-              {expandedSections.productivity ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-            </div>
-            
-            {expandedSections.productivity && (
-              <Radar data={productivityData} options={radarOptions} />
+            {isEditMode && (
+              <button
+                onClick={cancelEdit}
+                className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
             )}
           </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Star className="w-6 h-6 text-indigo-600" />
-              <h3 className="text-lg font-semibold">Department Distribution</h3>
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                Title *
+              </label>
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) => handleInputChange("title", e.target.value)}
+                placeholder="Enter announcement title"
+                className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
+              />
             </div>
-            <Doughnut 
-              data={departmentPerformanceData} 
-              options={{
-                responsive: true,
-                plugins: {
-                  legend: { position: "bottom" },
-                  tooltip: {
-                    backgroundColor: "rgba(0, 0, 0, 0.8)",
-                    titleColor: "#fff",
-                    bodyColor: "#fff",
-                  }
-                }
-              }} 
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  Date *
+                </label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-red-500 z-10" />
+                  <input
+                    type="date"
+                    value={formData.dateInput}
+                    onChange={(e) => handleInputChange("dateInput", e.target.value)}
+                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  Time *
+                </label>
+                <div className="relative">
+                  <Clock className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-red-500 z-10" />
+                  <input
+                    type="time"
+                    value={formData.timeInput}
+                    onChange={(e) => handleInputChange("timeInput", e.target.value)}
+                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  Posted By *
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-red-500" />
+                  <input
+                    type="text"
+                    value={formData.postedBy}
+                    onChange={(e) => handleInputChange("postedBy", e.target.value)}
+                    placeholder="Your name or department"
+                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  Priority
+                </label>
+                <select
+                  value={formData.priority}
+                  onChange={(e) => handleInputChange("priority", e.target.value)}
+                  className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                Attachment
+              </label>
+              <div
+                className={`relative border-2 border-dashed rounded-2xl p-4 transition-all duration-300 ${
+                  isDragOver
+                    ? "border-red-400 bg-red-50"
+                    : selectedFile
+                    ? "border-green-400 bg-green-50"
+                    : "border-gray-300 bg-gray-50/30"
+                }`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+              >
+                <input
+                  type="file"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  onChange={(e) => handleFileUpload(e.target.files[0])}
+                />
+                <div className="text-center">
+                  {selectedFile ? (
+                    <div className="flex items-center justify-center gap-2 sm:gap-3">
+                      <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" />
+                      <div>
+                        <p className="font-medium text-green-700 text-xs sm:text-sm">
+                          {selectedFile.name}
+                        </p>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedFile(null);
+                          }}
+                          className="text-red-500 hover:text-red-700 text-xs"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-gray-600 font-medium text-xs sm:text-sm">
+                        Drop file or <span className="text-red-600">browse</span>
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">Max 10MB</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                Agenda *
+              </label>
+              <textarea
+                value={formData.agenda}
+                onChange={(e) => handleInputChange("agenda", e.target.value)}
+                placeholder="Describe the announcement details..."
+                className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 resize-none text-sm sm:text-base"
+              ></textarea>
+            </div>
+            <button
+              onClick={handleSubmit}
+              className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all duration-300 font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+            >
+              {isEditMode ? "Update Announcement" : "Create Announcement"}
+            </button>
           </div>
         </div>
 
-        {/* Sales Performance */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <div 
-            className="flex items-center justify-between cursor-pointer mb-4"
-            onClick={() => toggleSection('goals')}
-          >
+        {/* List of Announcements */}
+        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <DollarSign className="w-6 h-6 text-green-600" />
-              <h3 className="text-lg font-semibold">Sales Performance & Goals</h3>
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
+                Active Announcements
+              </h3>
             </div>
-            {expandedSections.goals ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            <span className="bg-blue-100 text-blue-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
+              {announcements.length} Active
+            </span>
           </div>
-          
-          {expandedSections.goals && (
-            <Bar data={salesPerformanceData} options={chartOptions} />
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-10 text-gray-500 italic">
+              Loading announcements...
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center py-10 text-red-500 italic">
+              {error}
+            </div>
+          ) : announcements.length > 0 ? (
+            <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-200px)] sm:max-h-[calc(100vh-150px)] pr-2">
+              {announcements.map((a) => (
+                <div
+                  key={a._id}
+                  className={`group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border ${
+                    editingId === a._id
+                      ? "border-red-300 ring-2 ring-red-100"
+                      : "border-gray-100"
+                  }`}
+                >
+                  <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
+                    <div className="flex items-start gap-3 sm:gap-4">
+                      <div className="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
+                        <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-2 group-hover:text-indigo-600 transition-colors">
+                          {a.title}
+                        </h4>
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
+                          <span
+                            className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium border ${getPriorityColor(
+                              a.priority
+                            )}`}
+                          >
+                            {a.priority} Priority
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {formatTimeAgo(a.dateTime)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-3 mb-4">
+                    <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
+                      <User className="w-3 h-3 sm:w-4 sm:h-4" />
+                      Posted by: <span className="font-medium">{a.postedBy}</span>
+                    </p>
+                    <div className="flex flex-wrap gap-4 sm:gap-6 text-xs sm:text-sm text-gray-700">
+                      <span className="flex items-center gap-2">
+                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
+                        {formatDisplayDate(a.dateTime)}
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
+                        {formatDisplayTime(a.dateTime)}
+                      </span>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border-l-4 border-red-500">
+                      <p className="text-xs sm:text-sm text-gray-700">
+                        <span className="font-semibold text-gray-800">Agenda:</span>{" "}
+                        {a.agenda}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleCancel(a._id)}
+                      className="flex-1 bg-white border-2 border-red-500 text-red-600 p-2 sm:p-3 rounded-xl hover:bg-red-50 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => handleEdit(a)}
+                      className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center py-10 text-gray-500 italic">
+              No active announcements found.
+            </div>
           )}
         </div>
+      </div>
 
-        {/* Detailed Agent Performance Table */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center gap-3">
-              <FileText className="w-6 h-6 text-gray-600" />
-              <h3 className="text-lg font-semibold">Detailed Performance Report</h3>
-            </div>
+      {/* Announcement History with Table Component */}
+      <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
+        <h3 className="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-3">
+          <div className="p-2 bg-gray-100 rounded-lg">
+            <Clock className="w-6 h-6 text-gray-600" />
           </div>
-          
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agent</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Calls</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quality</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sales</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CSAT</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FCR</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performance</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredAgents.map((agent) => (
-                  <tr key={agent.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold">
-                          {agent.name.split(' ').map(n => n[0]).join('')}
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{agent.name}</div>
-                          <div className="text-sm text-gray-500">ID: {agent.id}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={getStatusBadge(agent.status)}>
-                        {agent.status}
-                      </span>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Login: {agent.loginTime}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{agent.department}</div>
-                      <div className="text-xs text-gray-500">{agent.teamLead}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{agent.callsHandled}</div>
-                      <div className="text-xs text-gray-500">Avg: {agent.avgCallDuration}min</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="text-sm font-medium text-gray-900">{agent.qualityScore}%</div>
-                        {agent.qualityScore >= 90 && <Star className="w-4 h-4 text-yellow-500 ml-1" />}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {agent.escalations} escalations
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {agent.salesAchieved}/{agent.salesTarget}
-                      </div>
-                      <div className={`text-xs ${
-                        agent.goalAchievementRate >= 100 ? 'text-green-600' : 
-                        agent.goalAchievementRate >= 80 ? 'text-yellow-600' : 'text-red-600'
-                      }`}>
-                        {agent.goalAchievementRate}% achieved
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <Star className="w-4 h-4 text-yellow-500 mr-1" />
-                        <span className="text-sm font-medium">{agent.customerSatisfaction}/5.0</span>
-                      </div>
-                      <div className="text-xs text-gray-500">Customer rating</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{agent.firstCallResolution}%</div>
-                      <div className="text-xs text-gray-500">First call resolution</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getPerformanceColor(agent.performance)}`}>
-                        {agent.performance}%
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {agent.performance >= 85 ? 'Excellent' : 
-                         agent.performance >= 70 ? 'Good' : 'Needs Improvement'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex gap-2">
-                        <button className="text-indigo-600 hover:text-indigo-900 p-1 rounded">
-                          <Phone className="w-4 h-4" />
-                        </button>
-                        <button className="text-blue-600 hover:text-blue-900 p-1 rounded">
-                          <MessageSquare className="w-4 h-4" />
-                        </button>
-                        <button className="text-green-600 hover:text-green-900 p-1 rounded">
-                          <FileText className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+          Announcement History
+        </h3>
 
-        {/* Performance Insights */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <AlertCircle className="w-6 h-6 text-blue-600" />
-            <h3 className="text-lg font-semibold">Performance Insights & Recommendations</h3>
+        {announcementHistory && announcementHistory.length > 0 ? (
+          <Table
+            data={announcementHistory}
+            columns={columns}
+            pagination={{
+              pageSize: 10,
+            }}
+          />
+        ) : (
+          <div className="flex items-center justify-center py-10 text-gray-500 italic">
+            No announcement history found.
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-5 h-5 text-blue-600" />
-                <h4 className="font-semibold text-blue-800">Productivity Trend</h4>
-              </div>
-              <p className="text-sm text-blue-700">
-                Overall team productivity is up 8% this week. David Lee and Alice Johnson are leading performers.
-              </p>
-            </div>
-
-            <div className="p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="w-5 h-5 text-yellow-600" />
-                <h4 className="font-semibold text-yellow-800">Areas for Improvement</h4>
-              </div>
-              <p className="text-sm text-yellow-700">
-                Focus on reducing average call duration and improving first call resolution rates in the Support team.
-              </p>
-            </div>
-
-            <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
-              <div className="flex items-center gap-2 mb-2">
-                <Award className="w-5 h-5 text-green-600" />
-                <h4 className="font-semibold text-green-800">Recognition</h4>
-              </div>
-              <p className="text-sm text-green-700">
-                3 agents exceeded their sales targets this week. Consider implementing peer mentoring programs.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Real-time Activity Feed */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Timer className="w-6 h-6 text-purple-600" />
-            <h3 className="text-lg font-semibold">Real-time Activity Feed</h3>
-          </div>
-          
-          <div className="space-y-3 max-h-64 overflow-y-auto">
-            <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm"><strong>David Lee</strong> completed a sale - Target: $2,500</span>
-              <span className="text-xs text-gray-500 ml-auto">2 min ago</span>
-            </div>
-            
-            <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="text-sm"><strong>Alice Johnson</strong> received 5-star customer rating</span>
-              <span className="text-xs text-gray-500 ml-auto">5 min ago</span>
-            </div>
-            
-            <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
-              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-              <span className="text-sm"><strong>Bob Williams</strong> marked as late arrival</span>
-              <span className="text-xs text-gray-500 ml-auto">15 min ago</span>
-            </div>
-            
-            <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
-              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-              <span className="text-sm"><strong>Frank Miller</strong> handled 10 calls in the last hour</span>
-              <span className="text-xs text-gray-500 ml-auto">18 min ago</span>
-            </div>
-
-            <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg">
-              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-              <span className="text-sm"><strong>Charlie Brown</strong> marked as absent</span>
-              <span className="text-xs text-gray-500 ml-auto">1 hour ago</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Actions Panel */}
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg p-6 text-white">
-          <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <button className="flex flex-col items-center gap-2 p-4 bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30 transition-colors">
-              <Users className="w-6 h-6" />
-              <span className="text-sm font-medium">Schedule Meeting</span>
-            </button>
-            <button className="flex flex-col items-center gap-2 p-4 bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30 transition-colors">
-              <FileText className="w-6 h-6" />
-              <span className="text-sm font-medium">Generate Report</span>
-            </button>
-            <button className="flex flex-col items-center gap-2 p-4 bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30 transition-colors">
-              <Award className="w-6 h-6" />
-              <span className="text-sm font-medium">Send Recognition</span>
-            </button>
-            <button className="flex flex-col items-center gap-2 p-4 bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30 transition-colors">
-              <Target className="w-6 h-6" />
-              <span className="text-sm font-medium">Set Goals</span>
-            </button>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default TLPerformancePage;
+export default TeamLeaderAnnouncement;
