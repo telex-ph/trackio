@@ -12,7 +12,6 @@ import accountRoutes from "../src/routes/accountRoutes.js";
 import attendanceRoutes from "../src/routes/attendanceRoutes.js";
 import announcementRoutes from "../src/routes/announcementRoutes.js";
 import absenceRoutes from "../src/routes/absenceRoutes.js";
-import requestRoutes from "../src/routes/requestRoutes.js";
 
 const app = express();
 dotenv.config();
@@ -34,6 +33,5 @@ app.use("/api/accounts", accountRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use("/api/absence", absenceRoutes);
-app.use("/api/requests", requestRoutes);
 
 export default app;
