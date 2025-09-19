@@ -5,7 +5,23 @@ import { ObjectId } from "mongodb";
 class Attendance {
   static #collection = "attendances";
 
-  // Get all timed in attendance records
+  /**
+   * Get attendance records, with optional filtering by date range or status.
+   *
+   * @param {Object} options - Optional filters for the query.
+   * @param {Date} [options.startDate=null] - Only include records created on or after this date.
+   * @param {Date} [options.endDate=null] - Only include records created on or before this date.
+   * @param {string} [options.filter="all"] - Filter by type:
+   *   "timeIn"   - Users currently timed in (no timeOut yet).
+   *   "timeOut"  - Users who have already timed out.
+   *   "late"     - Users who clocked in later than their shift start.
+   *   "onBreak"  - Users currently on break.
+   *   "onLunch"  - Users currently on lunch.
+   *   "undertime"- Users who clocked out earlier than shift end.
+   *   "all"      - No additional filter, return everything.
+   *
+   * @returns {Promise<Array>} A list of attendance records with user, group, and account details.
+   */
   static async getAll({
     startDate = null,
     endDate = null,
@@ -106,7 +122,14 @@ class Attendance {
     return attendances;
   }
 
-  // Get the user that matches with the id
+  /**
+   * Get all attendance records for a specific user for today.
+   *
+   * @param {string} id - The user ID to look up.
+   * @throws {Error} If no ID is provided.
+   * @returns {Promise<Array>} A list of today's attendance records for the user,
+   *   including the user details (via lookup).
+   */
   static async getById(id) {
     if (!id) {
       throw new Error("ID is required");
@@ -142,7 +165,15 @@ class Attendance {
     return attendances;
   }
 
-  // Update specific fields by
+  /**
+   * Update specific fields in an attendance record by its ID.
+   *
+   * @param {string} id - The attendance record ID to update.
+   * @param {Object} fields - Key/value pairs of fields to update.
+   * @param {string} [status] - Optional status to update (will override fields.status if provided).
+   * @throws {Error} If no ID or fields are provided.
+   * @returns {Promise<Object>} The result of the update operation (acknowledgement and matched count).
+   */
   static async updateById(id, fields, status) {
     if (!id) {
       throw new Error("ID is required");
@@ -168,6 +199,19 @@ class Attendance {
     return result;
   }
 
+  /**
+   * Record a user's time-in for today.
+   *
+   * Creates a new attendance record with shift start/end times,
+   * sets the current time as `timeIn`, and marks the status as "Working".
+   * Prevents duplicate records if the user has already timed in today.
+   *
+   * @param {string} id - The user ID to time in.
+   * @param {Date} shiftStart - The user's shift start time for today.
+   * @param {Date} shiftEnd - The user's shift end time for today.
+   * @throws {Error} If no ID is provided or if a record already exists for today.
+   * @returns {Promise<Object>} The result of the insert operation (new record info).
+   */
   static async timeIn(id, shiftStart, shiftEnd) {
     if (!id) {
       throw new Error("ID is required");
@@ -204,6 +248,30 @@ class Attendance {
     });
 
     return result;
+  }
+
+  /**
+   * Fetches all attendance records for the given users
+   * within today's shift window (earliest shift start to latest shift end).
+   *
+   * @param {Array<ObjectId>} userIds - Users scheduled today.
+   * @param {DateTime} earliestShiftStart - The earliest shift start time today.
+   * @param {DateTime} latestShiftEnd - The latest shift end time today.
+   * @returns {Promise<Array>} Attendance records matching the users and time window.
+   */
+  static async getShift(userIds, earliestShiftStart, latestShiftEnd) {
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+
+    return await collection
+      .find({
+        userId: { $in: userIds },
+        timeIn: {
+          $gte: earliestShiftStart.toJSDate(),
+          $lte: latestShiftEnd.toJSDate(),
+        },
+      })
+      .toArray();
   }
 }
 
