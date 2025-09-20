@@ -304,15 +304,14 @@ const AdminAnnouncement = () => {
       </div>
 
       {/* Two-Column Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 max-w-9xl mx-auto">
         {/* Create/Edit Announcement */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
+        <div className="rounded-md bg-white border-light p-4">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div
-                className={`p-2 ${
-                  isEditMode ? "bg-red-100" : "bg-indigo-100"
-                } rounded-lg`}
+                className={`p-2 ${isEditMode ? "bg-red-100" : "bg-indigo-100"
+                  } rounded-lg`}
               >
                 {isEditMode ? (
                   <Edit className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
@@ -428,13 +427,12 @@ const AdminAnnouncement = () => {
                 Attachment
               </label>
               <div
-                className={`relative border-2 border-dashed rounded-2xl p-4 transition-all duration-300 ${
-                  isDragOver
-                    ? "border-red-400 bg-red-50"
-                    : selectedFile
+                className={`relative border-2 border-dashed rounded-2xl p-4 transition-all duration-300 ${isDragOver
+                  ? "border-red-400 bg-red-50"
+                  : selectedFile
                     ? "border-green-400 bg-green-50"
                     : "border-gray-300 bg-gray-50/30"
-                }`}
+                  }`}
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -501,7 +499,7 @@ const AdminAnnouncement = () => {
         </div>
 
         {/* List of Announcements */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
+        <div className="flex-1 overflow-y-auto space-y-4 pr-2 h-full rounded-md bg-white border-light p-4">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -516,15 +514,14 @@ const AdminAnnouncement = () => {
             </span>
           </div>
 
-          <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-200px)] sm:max-h-[calc(100vh-150px)] pr-2">
+          <div className="space-y-4 overflow-y-auto pr-2 ">
             {announcements.map((a) => (
               <div
                 key={a.id}
-                className={`group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border ${
-                  editingId === a.id
-                    ? "border-red-300 ring-2 ring-red-100"
-                    : "border-gray-100"
-                }`}
+                className={`group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border ${editingId === a.id
+                  ? "border-red-300 ring-2 ring-red-100"
+                  : "border-gray-100"
+                  }`}
               >
                 <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
                   <div className="flex items-start gap-3 sm:gap-4">
@@ -598,9 +595,7 @@ const AdminAnnouncement = () => {
         </div>
       </div>
 
-      {/* Announcement History with Table Component */}
-      {/* Announcement History with Table Component */}
-      <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
+      <div className="backdrop-blur rounded-md bg-white border-light p-4">
         <h3 className="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-3">
           <div className="p-2 bg-gray-100 rounded-lg">
             <Clock className="w-6 h-6 text-gray-600" />
