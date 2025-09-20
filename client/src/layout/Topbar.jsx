@@ -60,12 +60,12 @@ const Topbar = ({ toggleSidebar }) => {
   }, []);
 
   return (
-    <nav className="flex h-full justify-between items-center p-5 bg-[#571A1A] text-white relative z-50">
+    <nav className="flex h-full justify-between items-center p-5 relative z-50">
       {/* Left Section */}
       <div className="flex items-center">
         <img src={trackio} alt="TRACKIO" className="w-45 h-auto" />
-        <button onClick={toggleSidebar} className="p-2 ml-6">
-          <Menu className="w-6 h-6" />
+        <button onClick={toggleSidebar} className="ml-6">
+          <Menu className="w-5 h-5" />
         </button>
       </div>
 

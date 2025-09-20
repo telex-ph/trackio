@@ -424,12 +424,7 @@ const CompanyAttendanceChart = () => {
 
   return (
     <div
-      className="w-full min-h-[280px] h-64 sm:h-72 md:h-80 lg:h-96 xl:h-[400px] 
-                    p-3 sm:p-4 md:p-6 
-                    bg-gradient-to-br from-white to-slate-50 
-                    rounded-lg sm:rounded-xl 
-                    shadow-sm sm:shadow-md 
-                    border border-gray-100"
+      className="bg-white border-light rounded-md min-h-[280px] h-64 sm:h-72 md:h-80 lg:h-96 xl:h-[400px] p-3 sm:p-4"
     >
       {/* Header section */}
       <div
@@ -529,10 +524,10 @@ const DepartmentStatusChart = () => {
               selectedDept === "All"
                 ? colors
                 : [
-                    colors[
-                      Object.keys(departmentData).indexOf(selectedDept) - 1
-                    ],
+                  colors[
+                  Object.keys(departmentData).indexOf(selectedDept) - 1
                   ],
+                ],
             borderColor: "#ffffff",
             borderWidth: window.innerWidth < 640 ? 1 : 2,
           },
@@ -553,8 +548,8 @@ const DepartmentStatusChart = () => {
                   window.innerWidth < 480
                     ? 9
                     : window.innerWidth < 640
-                    ? 10
-                    : 11,
+                      ? 10
+                      : 11,
               },
               boxWidth: window.innerWidth < 640 ? 8 : 10,
             },
@@ -572,12 +567,7 @@ const DepartmentStatusChart = () => {
 
   return (
     <div
-      className="w-full min-h-[280px] h-64 sm:h-72 md:h-80 lg:h-96 xl:h-[400px]
-                    p-5 sm:p-4 md:p-6 
-                    bg-gradient-to-br from-white to-slate-50 
-                    rounded-lg sm:rounded-xl 
-                    shadow-sm sm:shadow-md 
-                    border border-gray-100"
+      className="bg-white border-light rounded-md min-h-[280px] h-64 sm:h-72 md:h-80 lg:h-96 xl:h-[400px] p-3 sm:p-4"
     >
       {/* Header section */}
       <div
@@ -724,8 +714,8 @@ const ProductivityChart = () => {
                   window.innerWidth < 480
                     ? 9
                     : window.innerWidth < 640
-                    ? 10
-                    : 12,
+                      ? 10
+                      : 12,
               },
             },
           },
@@ -737,8 +727,8 @@ const ProductivityChart = () => {
                   window.innerWidth < 480
                     ? 9
                     : window.innerWidth < 640
-                    ? 10
-                    : 12,
+                      ? 10
+                      : 12,
               },
             },
           },
@@ -753,8 +743,8 @@ const ProductivityChart = () => {
                   window.innerWidth < 480
                     ? 10
                     : window.innerWidth < 640
-                    ? 11
-                    : 12,
+                      ? 11
+                      : 12,
               },
               boxWidth: window.innerWidth < 640 ? 10 : 12,
               usePointStyle: window.innerWidth < 640,
@@ -790,12 +780,7 @@ const ProductivityChart = () => {
 
   return (
     <div
-      className="w-full min-h-[280px] h-64 sm:h-72 md:h-80 lg:h-96 xl:h-[400px]
-                    p-3 sm:p-4 md:p-6 
-                    bg-gradient-to-br from-white to-slate-50 
-                    rounded-lg sm:rounded-xl 
-                    shadow-sm sm:shadow-md 
-                    border border-gray-100"
+      className="bg-white border-light rounded-md min-h-[280px] h-64 sm:h-72 md:h-80 lg:h-96 xl:h-[400px] p-3 sm:p-4"
     >
       {/* Header section */}
       <div
@@ -921,8 +906,8 @@ const WorkHoursAnalysisChart = () => {
                   window.innerWidth < 480
                     ? 9
                     : window.innerWidth < 640
-                    ? 10
-                    : 12,
+                      ? 10
+                      : 12,
               },
             },
           },
@@ -939,8 +924,8 @@ const WorkHoursAnalysisChart = () => {
                   window.innerWidth < 480
                     ? 9
                     : window.innerWidth < 640
-                    ? 10
-                    : 12,
+                      ? 10
+                      : 12,
               },
             },
           },
@@ -955,8 +940,8 @@ const WorkHoursAnalysisChart = () => {
                   window.innerWidth < 480
                     ? 10
                     : window.innerWidth < 640
-                    ? 11
-                    : 12,
+                      ? 11
+                      : 12,
               },
               boxWidth: window.innerWidth < 640 ? 10 : 12,
               usePointStyle: false,
@@ -980,7 +965,7 @@ const WorkHoursAnalysisChart = () => {
   );
 
   return (
-    <div className="w-full min-h-[300px] h-72 sm:h-80 md:h-88 lg:h-[26rem] xl:h-[27.7rem] p-3 sm:p-4 md:p-6 bg-gradient-to-br from-white to-slate-50 rounded-lg sm:rounded-xl shadow-sm sm:shadow-md border border-gray-100">
+    <div className="bg-white border-light rounded-md min-h-[280px] h-64 sm:h-72 md:h-80 lg:h-96 xl:h-[400px] p-3 sm:p-4">
       {/* Header section */}
       <div
         className="flex flex-col xs:flex-row items-start xs:items-center justify-between 
@@ -1027,7 +1012,7 @@ const WorkHoursAnalysisChart = () => {
       <div className="w-full h-[calc(100%-60px)] sm:h-[calc(100%-70px)] relative overflow-hidden">
         <canvas ref={ref} className="w-full h-full" />
       </div>
-    </div>
+    </div >
   );
 };
 
@@ -1090,8 +1075,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header */}
+    <div className="min-h-screen">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-2 lg:gap-6 mb-4 sm:mb-6">
         <div className="flex-1">
@@ -1128,88 +1112,76 @@ const AdminDashboard = () => {
       </div>
 
       {/* Enhanced Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-9 gap-3 sm:gap-4 mb-6 sm:mb-8">
+      <div className="grid grid-cols-2 gap-3 mb-4 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 grid-flow-row-dense">
         <StatCard
           title="Total Employees"
           value={stats.totalEmployees}
-          icon={<Users className="w-5 h-5 sm:w-6 sm:h-6 text-slate-600" />}
+          icon={<Users className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-slate-600 bg-slate-100 border-slate-400 border" />}
           subtitle="Company-wide"
-          className="col-span-2 sm:col-span-1"
-        />
-        <StatCard
-          title="Departments"
-          value={stats.departments}
-          icon={<Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />}
-          subtitle="Active Depts"
         />
         <StatCard
           title="Present"
           value={stats.present}
-          icon={
-            <UserCheck className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
-          }
+          icon={<UserCheck className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-emerald-600 bg-emerald-100 border-emerald-400 border" />}
           subtitle="Currently Working"
         />
         <StatCard
           title="Absentees"
           value={stats.absent}
-          icon={<UserX className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />}
+          icon={<UserX className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-red-500 bg-red-100 border-red-400 border" />}
           subtitle="Not Present"
         />
         <StatCard
           title="Late Arrivals"
           value={stats.late}
-          icon={<Clock className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />}
+          icon={<Clock className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-amber-600 bg-amber-100 border-amber-400 border" />}
           subtitle="Late Today"
         />
         <StatCard
           title="On Break"
           value={stats.onBreak}
-          icon={<Coffee className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />}
+          icon={<Coffee className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-blue-600  bg-blue-100 border-blue-400 border" />}
           subtitle="Currently"
         />
         <StatCard
           title="On Lunch"
           value={stats.onLunch}
-          icon={<Utensils className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />}
+          icon={<Utensils className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-orange-600  bg-orange-100 border-orange-400 border" />}
           subtitle="Lunch Break"
         />
         <StatCard
           title="Overtime"
           value={stats.overtime}
-          icon={
-            <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-violet-600" />
-          }
+          icon={<TrendingUp className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-violet-600  bg-violet-100 border-violet-400 border" />}
           subtitle="Extra Hours"
         />
         <StatCard
           title="Undertime"
           value={stats.undertime}
-          icon={
-            <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 text-pink-600" />
-          }
+          icon={<TrendingDown className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-pink-600  bg-pink-100 border-pink-400 border" />}
           subtitle="Short Hours"
         />
       </div>
 
+
       {/* Main Content */}
-      <div className="grid grid-cols-12 gap-6">
+      <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12 lg:col-span-8 space-y-6">
           {/* Charts Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <CompanyAttendanceChart />
             <DepartmentStatusChart />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <ProductivityChart />
             <WorkHoursAnalysisChart />
           </div>
 
           {/* Employee List */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-0">
+          <div className="bg-white border-light rounded-md p-4">
             {/* Employee List */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-0">
+            <div className="">
               <div className="p-4 border-b border-gray-200">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="flex items-center space-x-3">
@@ -1267,7 +1239,7 @@ const AdminDashboard = () => {
               {filteredEmployees.map((employee) => (
                 <div
                   key={employee.id}
-                  className="bg-white rounded-lg sm:rounded-xl border border-gray-200 shadow-sm hover:shadow-md p-3 sm:p-4 cursor-pointer transition-all duration-200 hover:border-gray-300"
+                  className="bg-white rounded-md border-light p-3 sm:p-4 cursor-pointer"
                   onClick={() => setSelectedEmployee(employee)}
                 >
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 lg:gap-4">
@@ -1281,17 +1253,16 @@ const AdminDashboard = () => {
                           className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
                         />
                         <div
-                          className={`absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-white ${
-                            employee.status === "Present"
-                              ? "bg-green-500"
-                              : employee.status === "Absent"
+                          className={`absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-white ${employee.status === "Present"
+                            ? "bg-green-500"
+                            : employee.status === "Absent"
                               ? "bg-red-500"
                               : employee.breakStatus === "On Break"
-                              ? "bg-blue-500"
-                              : employee.lunchStatus === "On Lunch"
-                              ? "bg-yellow-500"
-                              : "bg-gray-500"
-                          }`}
+                                ? "bg-blue-500"
+                                : employee.lunchStatus === "On Lunch"
+                                  ? "bg-yellow-500"
+                                  : "bg-gray-500"
+                            }`}
                         />
                       </div>
 
@@ -1323,9 +1294,8 @@ const AdminDashboard = () => {
                         {/* Status badges */}
                         <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1 sm:mt-2">
                           <span
-                            className={`px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium border ${
-                              statusColors[employee.status]
-                            }`}
+                            className={`px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium border ${statusColors[employee.status]
+                              }`}
                           >
                             {employee.status}
                           </span>
@@ -1365,11 +1335,10 @@ const AdminDashboard = () => {
                         </div>
                         <div className="bg-gray-50 lg:bg-transparent rounded-lg lg:rounded-none p-2 lg:p-0">
                           <div
-                            className={`text-xs sm:text-sm font-bold ${
-                              employee.overtime !== "0:00"
-                                ? "text-purple-600"
-                                : "text-gray-900"
-                            }`}
+                            className={`text-xs sm:text-sm font-bold ${employee.overtime !== "0:00"
+                              ? "text-purple-600"
+                              : "text-gray-900"
+                              }`}
                           >
                             {employee.overtime}
                           </div>
@@ -1377,11 +1346,10 @@ const AdminDashboard = () => {
                         </div>
                         <div className="bg-gray-50 lg:bg-transparent rounded-lg lg:rounded-none p-2 lg:p-0">
                           <div
-                            className={`text-xs sm:text-sm font-bold ${
-                              employee.undertime !== "0:00"
-                                ? "text-red-600"
-                                : "text-gray-900"
-                            }`}
+                            className={`text-xs sm:text-sm font-bold ${employee.undertime !== "0:00"
+                              ? "text-red-600"
+                              : "text-gray-900"
+                              }`}
                           >
                             {employee.undertime}
                           </div>
@@ -1403,7 +1371,7 @@ const AdminDashboard = () => {
 
         {/* Sidebar */}
         <div className="col-span-12 lg:col-span-4 space-y-6">
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200/60 p-6 relative overflow-hidden">
+          <div className="p-4 max-h-96 relative overflow-hidden bg-white border-light rounded-md ">
             {/* Subtle decorative elements */}
             <div className="absolute top-0 right-0 w-20 h-20 bg-gray-50 rounded-full -translate-y-10 translate-x-10"></div>
             <div className="absolute bottom-0 left-0 w-16 h-16 bg-gray-100 rounded-full translate-y-8 -translate-x-8"></div>
@@ -1441,21 +1409,20 @@ const AdminDashboard = () => {
                 >
                   {/* Minimal status line */}
                   <div
-                    className={`absolute left-0 top-4 bottom-4 w-0.5 rounded-full ${
-                      activity.type === "timein"
-                        ? "bg-green-400"
-                        : activity.type === "timeout"
+                    className={`absolute left-0 top-4 bottom-4 w-0.5 rounded-full ${activity.type === "timein"
+                      ? "bg-green-400"
+                      : activity.type === "timeout"
                         ? "bg-red-400"
                         : activity.type === "break"
-                        ? "bg-blue-400"
-                        : activity.type === "break_end"
-                        ? "bg-blue-300"
-                        : activity.type === "lunch"
-                        ? "bg-orange-400"
-                        : activity.type === "lunch_end"
-                        ? "bg-orange-300"
-                        : "bg-gray-300"
-                    }`}
+                          ? "bg-blue-400"
+                          : activity.type === "break_end"
+                            ? "bg-blue-300"
+                            : activity.type === "lunch"
+                              ? "bg-orange-400"
+                              : activity.type === "lunch_end"
+                                ? "bg-orange-300"
+                                : "bg-gray-300"
+                      }`}
                   />
 
                   <div className="flex items-start space-x-4 ml-3">
@@ -1467,19 +1434,18 @@ const AdminDashboard = () => {
                         className="w-11 h-11 rounded-lg object-cover border-2 border-white shadow-sm group-hover:shadow-md transition-shadow duration-200"
                       />
                       <div
-                        className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
-                          activity.type === "timein"
-                            ? "bg-green-400"
-                            : activity.type === "timeout"
+                        className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${activity.type === "timein"
+                          ? "bg-green-400"
+                          : activity.type === "timeout"
                             ? "bg-red-400"
                             : activity.type === "break" ||
                               activity.type === "break_end"
-                            ? "bg-blue-400"
-                            : activity.type === "lunch" ||
-                              activity.type === "lunch_end"
-                            ? "bg-orange-400"
-                            : "bg-gray-400"
-                        }`}
+                              ? "bg-blue-400"
+                              : activity.type === "lunch" ||
+                                activity.type === "lunch_end"
+                                ? "bg-orange-400"
+                                : "bg-gray-400"
+                          }`}
                       />
                     </div>
 
@@ -1505,36 +1471,34 @@ const AdminDashboard = () => {
                       {/* Action and status */}
                       <div className="flex items-center justify-between">
                         <span
-                          className={`inline-flex items-center space-x-2 text-xs font-medium px-2.5 py-1 rounded-md border ${
-                            activity.type === "timein"
-                              ? "bg-green-50 text-green-700 border-green-200"
-                              : activity.type === "timeout"
+                          className={`inline-flex items-center space-x-2 text-xs font-medium px-2.5 py-1 rounded-md border ${activity.type === "timein"
+                            ? "bg-green-50 text-green-700 border-green-200"
+                            : activity.type === "timeout"
                               ? "bg-red-50 text-red-700 border-red-200"
                               : activity.type === "break"
-                              ? "bg-blue-50 text-blue-700 border-blue-200"
-                              : activity.type === "break_end"
-                              ? "bg-blue-50 text-blue-600 border-blue-200"
-                              : activity.type === "lunch"
-                              ? "bg-orange-50 text-orange-700 border-orange-200"
-                              : activity.type === "lunch_end"
-                              ? "bg-orange-50 text-orange-600 border-orange-200"
-                              : "bg-gray-50 text-gray-700 border-gray-200"
-                          }`}
+                                ? "bg-blue-50 text-blue-700 border-blue-200"
+                                : activity.type === "break_end"
+                                  ? "bg-blue-50 text-blue-600 border-blue-200"
+                                  : activity.type === "lunch"
+                                    ? "bg-orange-50 text-orange-700 border-orange-200"
+                                    : activity.type === "lunch_end"
+                                      ? "bg-orange-50 text-orange-600 border-orange-200"
+                                      : "bg-gray-50 text-gray-700 border-gray-200"
+                            }`}
                         >
                           <div
-                            className={`w-1.5 h-1.5 rounded-full ${
-                              activity.type === "timein"
-                                ? "bg-green-400"
-                                : activity.type === "timeout"
+                            className={`w-1.5 h-1.5 rounded-full ${activity.type === "timein"
+                              ? "bg-green-400"
+                              : activity.type === "timeout"
                                 ? "bg-red-400"
                                 : activity.type === "break" ||
                                   activity.type === "break_end"
-                                ? "bg-blue-400"
-                                : activity.type === "lunch" ||
-                                  activity.type === "lunch_end"
-                                ? "bg-orange-400"
-                                : "bg-gray-400"
-                            }`}
+                                  ? "bg-blue-400"
+                                  : activity.type === "lunch" ||
+                                    activity.type === "lunch_end"
+                                    ? "bg-orange-400"
+                                    : "bg-gray-400"
+                              }`}
                           />
                           <span>{activity.action}</span>
                         </span>
@@ -1551,7 +1515,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* Admin Quick Actions */}
-          <div className="bg-white shadow-md rounded-xl p-5">
+          <div className="bg-white border-light rounded-md p-4 max-h-96">
             <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
               <Settings className="w-5 h-5 mr-2" />
               Admin Actions
@@ -1583,353 +1547,353 @@ const AdminDashboard = () => {
       </div>
 
       {/* Employee Detail Modal */}
-      {selectedEmployee && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setSelectedEmployee(null)}
-          ></div>
+      {
+        selectedEmployee && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div
+              className="absolute inset-0 bg-black/50"
+              onClick={() => setSelectedEmployee(null)}
+            ></div>
 
-          <div className="relative bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden shadow-xl z-10">
-            {/* Header */}
-            <div className="flex justify-between items-center p-6 border-b border-gray-200">
-              <h3 className="text-xl font-semibold text-gray-900">
-                Employee Details
-              </h3>
-              <button
-                onClick={() => setSelectedEmployee(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XCircle className="w-6 h-6" />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
-              <div className="grid grid-cols-12 gap-6">
-                {/* Left Section - Employee Details */}
-                <div className="col-span-4">
-                  <div className="space-y-4">
-                    <div className="text-center mb-6">
-                      <img
-                        src={selectedEmployee.avatar}
-                        alt={selectedEmployee.name}
-                        className="w-20 h-20 rounded-full mx-auto mb-3 object-cover"
-                      />
-                      <h4 className="text-lg font-semibold text-gray-900 mb-1">
-                        {selectedEmployee.name}
-                      </h4>
-                      <p className="text-gray-600 text-sm">
-                        {selectedEmployee.role}
-                      </p>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                          <User className="w-4 h-4 text-gray-600" />
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-500 uppercase tracking-wide">
-                            Full Name
-                          </div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {selectedEmployee.name}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                          <Hash className="w-4 h-4 text-gray-600" />
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-500 uppercase tracking-wide">
-                            Employee ID
-                          </div>
-                          <div className="text-sm font-medium text-gray-900">
-                            #EMP
-                            {selectedEmployee.id?.toString().padStart(3, "0") ||
-                              "001"}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                          <Mail className="w-4 h-4 text-gray-600" />
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-500 uppercase tracking-wide">
-                            Email Address
-                          </div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {selectedEmployee.email ||
-                              `${selectedEmployee.name
-                                .toLowerCase()
-                                .replace(" ", ".")}@company.com`}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                          <Phone className="w-4 h-4 text-gray-600" />
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-500 uppercase tracking-wide">
-                            Phone Number
-                          </div>
-                          <div className="text-sm font-medium text-gray-900">
-                            09123456789
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                          <Building className="w-4 h-4 text-gray-600" />
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-500 uppercase tracking-wide">
-                            Assigned Accounts
-                          </div>
-                          <div className="text-sm font-medium text-gray-900">
-                            N/A
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                          <Briefcase className="w-4 h-4 text-gray-600" />
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-500 uppercase tracking-wide">
-                            Position
-                          </div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {selectedEmployee.role}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                          <Users className="w-4 h-4 text-gray-600" />
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-500 uppercase tracking-wide">
-                            Department
-                          </div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {selectedEmployee.department}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Section - Work Details */}
-                <div className="col-span-8">
-                  <div className="flex items-center space-x-2 mb-6">
-                    <Clock className="w-5 h-5 text-gray-600" />
-                    <h5 className="text-lg font-medium text-gray-900">
-                      Work Details
-                    </h5>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-6 mb-6">
-                    {/* Work Duration Card */}
-                    <div className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex justify-between items-center mb-3">
-                        <h6 className="text-sm text-gray-500 uppercase tracking-wide">
-                          Work Duration
-                        </h6>
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            selectedEmployee.status === "Present"
-                              ? "bg-green-100 text-green-800"
-                              : selectedEmployee.status === "Absent"
-                              ? "bg-red-100 text-red-800"
-                              : selectedEmployee.status === "On Break"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : selectedEmployee.status === "Working"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {selectedEmployee.status}
-                        </span>
-                      </div>
-                      <div className="text-2xl font-bold text-gray-900 mb-2">
-                        {selectedEmployee.workHours}
-                      </div>
-                      <div className="space-y-1 text-sm text-gray-600">
-                        <div className="flex justify-between">
-                          <span>Time In:</span>
-                          <span className="font-medium">
-                            {selectedEmployee.timeIn || "Not yet"}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Time Out:</span>
-                          <span className="font-medium">
-                            {selectedEmployee.timeOut || "Not yet"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Status Card */}
-                    <div className="border border-gray-200 rounded-lg p-4">
-                      <h6 className="text-sm text-gray-500 uppercase tracking-wide mb-3">
-                        Status
-                      </h6>
-                      <div className="space-y-2">
-                        <div
-                          className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
-                            selectedEmployee.status === "Working"
-                              ? "bg-green-100 text-green-800"
-                              : selectedEmployee.status === "On Break"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : selectedEmployee.status === "Absent"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-blue-100 text-blue-800"
-                          }`}
-                        >
-                          {selectedEmployee.status}
-                        </div>
-                        {selectedEmployee.isLate && (
-                          <div className="block">
-                            <span className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
-                              Late Arrival
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Notes Section */}
-                  <div className="mb-6">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <FileText className="w-4 h-4 text-gray-600" />
-                      <h6 className="font-medium text-gray-900">Notes</h6>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <p className="text-sm text-gray-700">
-                        {selectedEmployee.notes ||
-                          "Currently working on project A"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Time Tracking Details */}
-                  <div className="grid grid-cols-3 gap-4 mb-6">
-                    <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
-                      <div className="text-lg font-bold text-purple-600">
-                        {selectedEmployee.overtime || "0:00"}
-                      </div>
-                      <div className="text-xs text-purple-600 font-medium">
-                        Overtime
-                      </div>
-                    </div>
-                    <div className="text-center p-4 bg-red-50 rounded-lg border border-red-200">
-                      <div className="text-lg font-bold text-red-600">
-                        {selectedEmployee.undertime || "0:00"}
-                      </div>
-                      <div className="text-xs text-red-600 font-medium">
-                        Undertime
-                      </div>
-                    </div>
-                    <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <div className="text-lg font-bold text-blue-600">
-                        {selectedEmployee.activityTime || "Just now"}
-                      </div>
-                      <div className="text-xs text-blue-600 font-medium">
-                        Last Activity
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Weekly Summary */}
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <h6 className="font-medium text-gray-900 mb-3">
-                      This Week Summary
-                    </h6>
-                    <div className="grid grid-cols-4 gap-4">
-                      <div className="text-center">
-                        <div className="text-lg font-bold text-green-600">
-                          4
-                        </div>
-                        <div className="text-xs text-gray-600">
-                          Days Present
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-lg font-bold text-red-600">1</div>
-                        <div className="text-xs text-gray-600">Days Absent</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-lg font-bold text-orange-600">
-                          2
-                        </div>
-                        <div className="text-xs text-gray-600">Late Count</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-lg font-bold text-purple-600">
-                          3.5h
-                        </div>
-                        <div className="text-xs text-gray-600">
-                          Total Overtime
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer with Action Buttons */}
-            <div className="flex justify-between items-center p-6 border-t border-gray-200 bg-gray-50">
-              <div className="text-sm text-gray-500">
-                Recorded on September 01, 2025 • 12:00 AM
-              </div>
-              <div className="flex space-x-3">
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm">
-                  <Eye className="w-4 h-4 mr-2" />
-                  Edit
-                </button>
+            <div className="relative bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden shadow-xl z-10">
+              {/* Header */}
+              <div className="flex justify-between items-center p-6 border-b border-gray-200">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Employee Details
+                </h3>
                 <button
                   onClick={() => setSelectedEmployee(null)}
-                  className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm"
+                  className="text-gray-400 hover:text-gray-600"
                 >
-                  Close
+                  <XCircle className="w-6 h-6" />
                 </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+                <div className="grid grid-cols-12 gap-6">
+                  {/* Left Section - Employee Details */}
+                  <div className="col-span-4">
+                    <div className="space-y-4">
+                      <div className="text-center mb-6">
+                        <img
+                          src={selectedEmployee.avatar}
+                          alt={selectedEmployee.name}
+                          className="w-20 h-20 rounded-full mx-auto mb-3 object-cover"
+                        />
+                        <h4 className="text-lg font-semibold text-gray-900 mb-1">
+                          {selectedEmployee.name}
+                        </h4>
+                        <p className="text-gray-600 text-sm">
+                          {selectedEmployee.role}
+                        </p>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <User className="w-4 h-4 text-gray-600" />
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 uppercase tracking-wide">
+                              Full Name
+                            </div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {selectedEmployee.name}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <Hash className="w-4 h-4 text-gray-600" />
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 uppercase tracking-wide">
+                              Employee ID
+                            </div>
+                            <div className="text-sm font-medium text-gray-900">
+                              #EMP
+                              {selectedEmployee.id?.toString().padStart(3, "0") ||
+                                "001"}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <Mail className="w-4 h-4 text-gray-600" />
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 uppercase tracking-wide">
+                              Email Address
+                            </div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {selectedEmployee.email ||
+                                `${selectedEmployee.name
+                                  .toLowerCase()
+                                  .replace(" ", ".")}@company.com`}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <Phone className="w-4 h-4 text-gray-600" />
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 uppercase tracking-wide">
+                              Phone Number
+                            </div>
+                            <div className="text-sm font-medium text-gray-900">
+                              09123456789
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <Building className="w-4 h-4 text-gray-600" />
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 uppercase tracking-wide">
+                              Assigned Accounts
+                            </div>
+                            <div className="text-sm font-medium text-gray-900">
+                              N/A
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <Briefcase className="w-4 h-4 text-gray-600" />
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 uppercase tracking-wide">
+                              Position
+                            </div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {selectedEmployee.role}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <Users className="w-4 h-4 text-gray-600" />
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 uppercase tracking-wide">
+                              Department
+                            </div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {selectedEmployee.department}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Section - Work Details */}
+                  <div className="col-span-8">
+                    <div className="flex items-center space-x-2 mb-6">
+                      <Clock className="w-5 h-5 text-gray-600" />
+                      <h5 className="text-lg font-medium text-gray-900">
+                        Work Details
+                      </h5>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6 mb-6">
+                      {/* Work Duration Card */}
+                      <div className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex justify-between items-center mb-3">
+                          <h6 className="text-sm text-gray-500 uppercase tracking-wide">
+                            Work Duration
+                          </h6>
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${selectedEmployee.status === "Present"
+                              ? "bg-green-100 text-green-800"
+                              : selectedEmployee.status === "Absent"
+                                ? "bg-red-100 text-red-800"
+                                : selectedEmployee.status === "On Break"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : selectedEmployee.status === "Working"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : "bg-gray-100 text-gray-800"
+                              }`}
+                          >
+                            {selectedEmployee.status}
+                          </span>
+                        </div>
+                        <div className="text-2xl font-bold text-gray-900 mb-2">
+                          {selectedEmployee.workHours}
+                        </div>
+                        <div className="space-y-1 text-sm text-gray-600">
+                          <div className="flex justify-between">
+                            <span>Time In:</span>
+                            <span className="font-medium">
+                              {selectedEmployee.timeIn || "Not yet"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Time Out:</span>
+                            <span className="font-medium">
+                              {selectedEmployee.timeOut || "Not yet"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Status Card */}
+                      <div className="border border-gray-200 rounded-lg p-4">
+                        <h6 className="text-sm text-gray-500 uppercase tracking-wide mb-3">
+                          Status
+                        </h6>
+                        <div className="space-y-2">
+                          <div
+                            className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${selectedEmployee.status === "Working"
+                              ? "bg-green-100 text-green-800"
+                              : selectedEmployee.status === "On Break"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : selectedEmployee.status === "Absent"
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-blue-100 text-blue-800"
+                              }`}
+                          >
+                            {selectedEmployee.status}
+                          </div>
+                          {selectedEmployee.isLate && (
+                            <div className="block">
+                              <span className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
+                                Late Arrival
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Notes Section */}
+                    <div className="mb-6">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <FileText className="w-4 h-4 text-gray-600" />
+                        <h6 className="font-medium text-gray-900">Notes</h6>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <p className="text-sm text-gray-700">
+                          {selectedEmployee.notes ||
+                            "Currently working on project A"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Time Tracking Details */}
+                    <div className="grid grid-cols-3 gap-4 mb-6">
+                      <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
+                        <div className="text-lg font-bold text-purple-600">
+                          {selectedEmployee.overtime || "0:00"}
+                        </div>
+                        <div className="text-xs text-purple-600 font-medium">
+                          Overtime
+                        </div>
+                      </div>
+                      <div className="text-center p-4 bg-red-50 rounded-lg border border-red-200">
+                        <div className="text-lg font-bold text-red-600">
+                          {selectedEmployee.undertime || "0:00"}
+                        </div>
+                        <div className="text-xs text-red-600 font-medium">
+                          Undertime
+                        </div>
+                      </div>
+                      <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="text-lg font-bold text-blue-600">
+                          {selectedEmployee.activityTime || "Just now"}
+                        </div>
+                        <div className="text-xs text-blue-600 font-medium">
+                          Last Activity
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Weekly Summary */}
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <h6 className="font-medium text-gray-900 mb-3">
+                        This Week Summary
+                      </h6>
+                      <div className="grid grid-cols-4 gap-4">
+                        <div className="text-center">
+                          <div className="text-lg font-bold text-green-600">
+                            4
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            Days Present
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-lg font-bold text-red-600">1</div>
+                          <div className="text-xs text-gray-600">Days Absent</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-lg font-bold text-orange-600">
+                            2
+                          </div>
+                          <div className="text-xs text-gray-600">Late Count</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-lg font-bold text-purple-600">
+                            3.5h
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            Total Overtime
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer with Action Buttons */}
+              <div className="flex justify-between items-center p-6 border-t border-gray-200 bg-gray-50">
+                <div className="text-sm text-gray-500">
+                  Recorded on September 01, 2025 • 12:00 AM
+                </div>
+                <div className="flex space-x-3">
+                  <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm">
+                    <Eye className="w-4 h-4 mr-2" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => setSelectedEmployee(null)}
+                    className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 
 // ---------- Reusable Components ----------
 const StatCard = ({ title, value, icon, subtitle }) => (
-  <div className="bg-gradient-to-br from-slate-50 to-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-200 ease-out">
-    <div className="flex items-center justify-between mb-2">
-      <div className="p-2 bg-white/80 rounded-xl shadow-sm">{icon}</div>
-      <div className="text-right">
-        <div className="text-2xl font-bold text-slate-800">{value}</div>
+  <div className="bg-white border-light p-4 flex items-center justify-between rounded-md">
+    <div>
+      <div className="text-4xl! font-bold">{value}</div>
+      <div className="flex items-center mb-2">
+        <div className="flex-1 flex flex-col">
+          <span className="text-sm">{title}</span>
+          <span className="text-xs text-light">{subtitle}</span>
+        </div>
       </div>
     </div>
-    <div>
-      <h3 className="font-semibold text-sm text-slate-700">{title}</h3>
-      <p className="text-xs text-slate-500">{subtitle}</p>
-    </div>
+    <div>{icon}</div>
   </div>
 );
 
