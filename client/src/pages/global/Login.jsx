@@ -142,13 +142,7 @@ const Login = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <Checkbox id="remember" />
-              <Label htmlFor="remember" className="text-light">
-                Remember me
-              </Label>
-            </div>
+          <div className="flex items-center gap-2">
             <p
               className="underline text-sm cursor-pointer text-light"
               onClick={() => navigate("/forgot-password")}
@@ -177,9 +171,8 @@ const Login = () => {
 
         {/* Logo + Title */}
         <div
-          className={`absolute inset-0 flex flex-col items-center justify-center gap-6 transition-all duration-1500 ease-in-out ${
-            showVideo ? "opacity-0" : "opacity-100"
-          }`}
+          className={`absolute inset-0 flex flex-col items-center justify-center gap-6 transition-all duration-1500 ease-in-out ${showVideo ? "opacity-0" : "opacity-100"
+            }`}
         >
           <img
             src={telexLogo}
@@ -197,9 +190,8 @@ const Login = () => {
             src={telexvid}
             autoPlay
             muted
-            className={`absolute  hidden lg:flex inset-0 w-full h-full object-cover rounded-l-lg transition-all duration-1500 ease-in-out ${
-              showVideo ? "opacity-100" : "opacity-0"
-            }`}
+            className={`absolute  hidden lg:flex inset-0 w-full h-full object-cover rounded-l-lg transition-all duration-1500 ease-in-out ${showVideo ? "opacity-100" : "opacity-0"
+              }`}
             onEnded={() => setShowVideo(false)}
           />
         )}

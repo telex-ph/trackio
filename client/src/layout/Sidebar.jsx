@@ -369,8 +369,8 @@ export const Sidebar = ({ isCollapsed }) => {
         isCollapsed ? "w-16" : "w-64"
       }`}
     >
-      <Side collapsed={isCollapsed}>
-        <SidebarItems>{renderSidebar()}</SidebarItems>
+      <Side collapsed={isCollapsed} className="[&>div]:dark:!bg-white">
+        <SidebarItems >{renderSidebar()}</SidebarItems>
       </Side>
 
       {/* Shift Schedule only for Agent */}
