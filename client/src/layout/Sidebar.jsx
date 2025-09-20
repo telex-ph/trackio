@@ -24,6 +24,7 @@ import {
   Moon,
   Video,
   AlarmClockCheck,
+  BookPlus,
 } from "lucide-react";
 import { useStore } from "../store/useStore";
 import Role from "../constants/roles";
@@ -169,9 +170,9 @@ const TeamLeaderSidebar = ({
       isCollapsed={isCollapsed}
     />
     <SidebarLink
-      to="/team-leader/announcement"
-      icon={Megaphone}
-      label="Announcement"
+      to="/team-leader/agentrequest"
+      icon={BookPlus}
+      label="Agent Request"
       isCollapsed={isCollapsed}
     />
   </SidebarItemGroup>

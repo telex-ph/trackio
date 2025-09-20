@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, memo } from "react";
+import axios from "axios";
 import {
   Calendar,
   Clock,
@@ -10,93 +11,378 @@ import {
   FileText,
   ChevronDown,
   Edit,
+  Info,
+  CheckCircle,
+  XCircle,
+  Download,
+  Paperclip,
 } from "lucide-react";
+import { DateTime } from "luxon";
 import Table from "../../components/Table";
+import api from "../../utils/axios";
+
+// Custom Notification Component
+const Notification = ({ message, type, onClose }) => {
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(false);
+      onClose();
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  if (!isVisible) return null;
+
+  const typeStyles = {
+    success: {
+      bg: "bg-green-500",
+      icon: <CheckCircle className="w-5 h-5 text-white" />,
+    },
+    error: {
+      bg: "bg-red-500",
+      icon: <XCircle className="w-5 h-5 text-white" />,
+    },
+    info: {
+      bg: "bg-blue-500",
+      icon: <Bell className="w-5 h-5 text-white" />,
+    },
+  };
+
+  const { bg, icon } = typeStyles[type] || typeStyles.info;
+
+  return (
+    <div
+      className={`fixed top-20 right-4 sm:top-20 sm:right-8 z-50 flex items-center gap-2 sm:gap-4 p-3 sm:p-4 rounded-xl shadow-lg text-white transition-all duration-300 ease-in-out transform ${bg} animate-slide-in-right`}
+    >
+      {icon}
+      <p className="text-sm sm:text-base font-medium">{message}</p>
+      <button onClick={() => setIsVisible(false)} className="ml-auto">
+        <X className="w-4 h-4 text-white" />
+      </button>
+    </div>
+  );
+};
+
+// Inline Confirmation Modal
+const ConfirmationModal = ({ isOpen, onClose, onConfirm, message }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
+      <div className="relative bg-white rounded-3xl p-6 sm:p-8 max-w-xs sm:max-w-sm w-full shadow-2xl border border-gray-200 animate-scale-up">
+        <div className="flex justify-center mb-4">
+          <Bell className="w-12 h-12 text-blue-500" />
+        </div>
+        <h3 className="text-xl font-bold text-gray-800 text-center mb-2">
+          Confirm Action
+        </h3>
+        <p className="text-center text-gray-600 mb-6 text-sm sm:text-base">{message}</p>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <button
+            onClick={onClose}
+            className="flex-1 bg-gray-200 text-gray-800 p-3 rounded-xl font-medium hover:bg-gray-300 transition-colors text-sm sm:text-base"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 bg-red-600 text-white p-3 rounded-xl font-medium hover:bg-red-700 transition-colors text-sm sm:text-base"
+          >
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// New File View Modal Component
+const FileViewModal = ({ isOpen, onClose, file }) => {
+  if (!isOpen || !file) return null;
+
+  const renderFilePreview = () => {
+    if (file.type.startsWith('image/')) {
+      return (
+        <img
+          src={file.data}
+          alt={file.name}
+          className="max-w-full max-h-[80vh] object-contain mx-auto"
+        />
+      );
+    } else if (file.type === 'application/pdf') {
+      return (
+        <embed
+          src={file.data}
+          type="application/pdf"
+          className="w-full h-[80vh]"
+        />
+      );
+    } else if (file.type.startsWith('text/')) {
+      // Decode Base64 data for text files
+      const base64Data = file.data.split(',')[1];
+      const decodedText = atob(base64Data);
+      return (
+        <pre className="p-4 bg-gray-100 rounded-lg overflow-auto max-h-[80vh] text-sm text-gray-800">
+          {decodedText}
+        </pre>
+      );
+    } else {
+      return (
+        <div className="p-6 text-center text-gray-600">
+          <p className="text-lg font-semibold mb-2">File Preview Not Available</p>
+          <p>This file type cannot be previewed in the browser.</p>
+        </div>
+      );
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm transition-opacity duration-300">
+      <div className="relative w-[90%] sm:w-[80%] lg:w-[70%] max-h-[90%] bg-white rounded-xl shadow-2xl overflow-hidden p-4">
+        <div className="flex justify-between items-center pb-2 mb-4 border-b border-gray-200">
+          <h4 className="text-lg sm:text-xl font-bold text-gray-800 truncate">
+            {file.name}
+          </h4>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="flex justify-center items-center">
+          {renderFilePreview()}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// File attachment component
+const FileAttachment = ({ file, onDownload, onView }) => {
+  const getFileIcon = (fileName) => {
+    const extension = fileName.split('.').pop().toLowerCase();
+    switch (extension) {
+      case 'pdf':
+        return <FileText className="w-4 h-4 text-red-500" />;
+      case 'doc':
+      case 'docx':
+        return <FileText className="w-4 h-4 text-blue-500" />;
+      case 'xls':
+      case 'xlsx':
+        return <FileText className="w-4 h-4 text-green-500" />;
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+        return <FileText className="w-4 h-4 text-purple-500" />;
+      default:
+        return <Paperclip className="w-4 h-4 text-gray-500" />;
+    }
+  };
+
+  const canPreview = (fileName) => {
+    const extension = fileName.split('.').pop().toLowerCase();
+    return ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'txt'].includes(extension);
+  };
+
+  return (
+    <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-xl">
+      <div className="flex items-center gap-2">
+        {getFileIcon(file.name)}
+        <span className="text-sm font-medium text-gray-700 truncate max-w-32">
+          {file.name}
+        </span>
+      </div>
+      <div className="flex gap-1">
+        {canPreview(file.name) && (
+          <button
+            onClick={() => onView(file)}
+            className="p-1 text-green-600 hover:text-green-800 hover:bg-green-100 rounded transition-colors"
+            title="View file"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          </button>
+        )}
+        <button
+          onClick={() => onDownload(file)}
+          className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
+          title="Download file"
+        >
+          <Download className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const AdminAnnouncement = () => {
-  const [announcements, setAnnouncements] = useState([
-    {
-      id: "1",
-      title: "Team Performance Review Session",
-      postedBy: "Facilitator Team",
-      date: "2024-03-23",
-      time: "12:45",
-      agenda: "You've been scheduled for coaching.",
-      status: "Scheduled",
-      priority: "High",
-    },
-    {
-      id: "2",
-      title: "Q1 Training Workshop",
-      postedBy: "HR Department",
-      date: "2024-03-25",
-      time: "14:30",
-      agenda: "Mandatory skills development training.",
-      status: "Scheduled",
-      priority: "Medium",
-    },
-    {
-      id: "3",
-      title: "Client Feedback Review",
-      postedBy: "Quality Assurance",
-      date: "2024-03-27",
-      time: "10:00",
-      agenda: "Discussion on recent client feedback.",
-      status: "Scheduled",
-      priority: "Low",
-    },
-  ]);
+  const [announcements, setAnnouncements] = useState([]);
+  const [announcementHistory, setAnnouncementHistory] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const announcementHistory = [
-    {
-      date: "August 8, 2025",
-      facilitator: "Juana Dela Cruz",
-      type: "Meeting",
-      time: "3:00 P.M.",
-      agenda: "Incorrect ticket handling",
-      status: "Completed",
-      remarks: "Missed escalation step – discussed proper escalation flow.",
-    },
-    {
-      date: "August 8, 2025",
-      facilitator: "Juana Dela Cruz",
-      type: "Meeting",
-      time: "3:00 P.M.",
-      agenda: "Recognition of employee achievements",
-      status: "Cancelled",
-      remarks: "-",
-    },
-  ];
-
-  // Form states
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
-  // Form data states
+  const [notification, setNotification] = useState({
+    message: "",
+    type: "",
+    isVisible: false,
+  });
+
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
+  const [itemToCancel, setItemToCancel] = useState(null);
+  const [fileViewModal, setFileViewModal] = useState({ isOpen: false, file: null });
+
+  // Dummy state to trigger re-renders for time display
+  const [timeTicker, setTimeTicker] = useState(Date.now());
+
   const [formData, setFormData] = useState({
     title: "",
-    date: "",
-    time: "",
+    dateTime: "",
     postedBy: "",
     agenda: "",
     priority: "Medium",
+    dateInput: "",
+    timeInput: "",
   });
 
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0];
+
+  const showNotification = (message, type) => {
+    setNotification({ message, type, isVisible: true });
+  };
+
+  const isExpired = (isoDateStr) => {
+    const announcementDateTime = DateTime.fromISO(isoDateStr);
+    const now = DateTime.local();
+    const diffInHours = now.diff(announcementDateTime, "hours").hours;
+    return diffInHours >= 24;
+  };
+
+  const checkAndUpdateExpiredAnnouncements = async () => {
+    try {
+      const response = await api.get("/announcements");
+      const activeAnnouncements = response.data.filter(
+        (a) => a.status !== "Completed"
+      );
+
+      const updatePromises = activeAnnouncements.map(async (announcement) => {
+        if (isExpired(announcement.dateTime)) {
+          await api.put(`/announcements/${announcement._id}`, {
+            ...announcement,
+            status: "Completed",
+          });
+          return announcement._id;
+        }
+        return null;
+      });
+
+      const updatedIds = (await Promise.all(updatePromises)).filter(Boolean);
+
+      if (updatedIds.length > 0) {
+        setAnnouncements((prev) =>
+          prev.filter((a) => !updatedIds.includes(a._id))
+        );
+        setAnnouncementHistory((prev) => [
+          ...prev,
+          ...announcements.filter((a) => updatedIds.includes(a._id)),
+        ]);
+      }
+    } catch (err) {
+      console.error("Error checking for expired announcements:", err);
+    }
+  };
+
+  // Helper function to get a numerical value for priority
+  const getPriorityValue = (priority) => {
+    switch (priority) {
+      case "High":
+        return 3;
+      case "Medium":
+        return 2;
+      case "Low":
+        return 1;
+      default:
+        return 0;
+    }
+  };
+
+  const fetchAnnouncements = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await api.get("/announcements");
+      const active = response.data.filter((a) => a.status !== "Completed");
+      const history = response.data.filter((a) => a.status === "Completed");
+
+      // NEW: Sort by priority first (High > Medium > Low), then by date (newest first)
+      const sortedActive = active.sort((a, b) => {
+        const priorityA = getPriorityValue(a.priority);
+        const priorityB = getPriorityValue(b.priority);
+
+        // Sort by priority first (descending)
+        if (priorityB !== priorityA) {
+          return priorityB - priorityA;
+        }
+
+        // If priorities are equal, sort by date/time (newest first)
+        return DateTime.fromISO(b.dateTime).toMillis() - DateTime.fromISO(a.dateTime).toMillis();
+      });
+
+      const sortedHistory = history.sort(
+        (a, b) =>
+          DateTime.fromISO(b.dateTime).toMillis() -
+          DateTime.fromISO(a.dateTime).toMillis()
+      );
+
+      setAnnouncements(sortedActive);
+      setAnnouncementHistory(sortedHistory);
+      setIsLoading(false);
+    } catch (err) {
+      console.error("Error fetching announcements:", err);
+      setError("Failed to load announcements. Please check server connection.");
+      setIsLoading(false);
+      showNotification(
+        "Failed to load announcements. Please check your network.",
+        "error"
+      );
+    }
+  };
+
+  useEffect(() => {
+    fetchAnnouncements();
+    const interval = setInterval(checkAndUpdateExpiredAnnouncements, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // New useEffect for real-time time display
+  useEffect(() => {
+    const timeUpdateInterval = setInterval(() => {
+      setTimeTicker(Date.now());
+    }, 60000); // Update every minute
+    return () => clearInterval(timeUpdateInterval);
+  }, []);
+
   const handleInputChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleFileUpload = (file) => {
     if (file && file.size <= 10 * 1024 * 1024) {
-      // 10MB limit
       setSelectedFile(file);
     } else {
-      alert("File size must be less than 10MB");
+      showNotification("File size must be less than 10MB", "error");
     }
   };
 
@@ -116,79 +402,180 @@ const AdminAnnouncement = () => {
     setIsDragOver(false);
   };
 
-  const handleEdit = (announcement) => {
-    setIsEditMode(true);
-    setEditingId(announcement.id);
+  const resetForm = () => {
     setFormData({
-      title: announcement.title,
-      date: announcement.date,
-      time: announcement.time,
-      postedBy: announcement.postedBy,
-      agenda: announcement.agenda,
-      priority: announcement.priority,
+      title: "",
+      dateTime: "",
+      postedBy: "",
+      agenda: "",
+      priority: "Medium",
+      dateInput: "",
+      timeInput: "",
     });
     setSelectedFile(null);
+    setIsEditMode(false);
+    setEditingId(null);
   };
 
-  const handleCancel = (id) => {
-    setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+  // Convert file to base64 for database storage
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (
       !formData.title ||
-      !formData.date ||
-      !formData.time ||
+      !formData.dateInput ||
+      !formData.timeInput ||
       !formData.postedBy ||
       !formData.agenda
     ) {
-      alert("Please fill in all required fields");
+      showNotification("Please fill in all required fields", "error");
       return;
     }
 
-    if (isEditMode) {
-      // Update existing announcement
-      setAnnouncements((prev) =>
-        prev.map((a) =>
-          a.id === editingId ? { ...a, ...formData, status: "Scheduled" } : a
-        )
+    const combinedDateTime = DateTime.fromISO(
+      `${formData.dateInput}T${formData.timeInput}`
+    );
+
+    if (!combinedDateTime.isValid) {
+      showNotification(
+        "Invalid date or time. Please check your input.",
+        "error"
       );
-      setIsEditMode(false);
-      setEditingId(null);
-    } else {
-      // Create new announcement
-      const newAnnouncement = {
-        id: Date.now().toString(),
-        ...formData,
-        status: "Scheduled",
-      };
-      setAnnouncements((prev) => [newAnnouncement, ...prev]);
+      return;
     }
 
-    // Reset form
+    try {
+      const payload = {
+        title: formData.title,
+        postedBy: formData.postedBy,
+        agenda: formData.agenda,
+        priority: formData.priority,
+        dateTime: combinedDateTime.toISO(),
+      };
+
+      // Handle file attachment
+      if (selectedFile) {
+        try {
+          const base64File = await fileToBase64(selectedFile);
+          payload.attachment = {
+            name: selectedFile.name,
+            size: selectedFile.size,
+            type: selectedFile.type,
+            data: base64File
+          };
+        } catch (error) {
+          console.error("Error converting file to base64:", error);
+          showNotification("Error processing file attachment", "error");
+          return;
+        }
+      }
+
+      if (isEditMode) {
+        await api.put(`/announcements/${editingId}`, payload);
+        setAnnouncements((prev) =>
+          prev.map((a) => (a._id === editingId ? { ...a, ...payload } : a))
+        );
+        showNotification("Announcement updated successfully!", "success");
+      } else {
+        const response = await api.post(`/announcements`, {
+          ...payload,
+          status: "Scheduled",
+        });
+        setAnnouncements((prev) => [
+          { ...response.data, status: "Scheduled" },
+          ...prev,
+        ]);
+        showNotification("Announcement created successfully!", "success");
+      }
+      resetForm();
+    } catch (error) {
+      console.error("Error submitting announcement:", error);
+      showNotification(
+        `Failed to ${isEditMode ? "update" : "create"
+        } announcement. Please try again.`,
+        "error"
+      );
+    }
+  };
+
+  const handleEdit = (announcement) => {
+    setIsEditMode(true);
+    setEditingId(announcement._id);
+
+    const dt = DateTime.fromISO(announcement.dateTime);
     setFormData({
-      title: "",
-      date: "",
-      time: "",
-      postedBy: "",
-      agenda: "",
-      priority: "Medium",
+      title: announcement.title,
+      dateTime: announcement.dateTime,
+      postedBy: announcement.postedBy,
+      agenda: announcement.agenda,
+      priority: announcement.priority,
+      dateInput: dt.toISODate(),
+      timeInput: dt.toFormat("HH:mm"),
     });
     setSelectedFile(null);
   };
 
-  const cancelEdit = () => {
-    setIsEditMode(false);
-    setEditingId(null);
-    setFormData({
-      title: "",
-      date: "",
-      time: "",
-      postedBy: "",
-      agenda: "",
-      priority: "Medium",
-    });
-    setSelectedFile(null);
+  const handleCancelClick = (id) => {
+    setItemToCancel(id);
+    setIsConfirmationModalOpen(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    try {
+      await api.delete(`/announcements/${itemToCancel}`);
+      setAnnouncements((prev) => prev.filter((a) => a._id !== itemToCancel));
+      showNotification("Announcement cancelled successfully!", "success");
+    } catch (error) {
+      console.error("Error cancelling announcement:", error);
+      showNotification("Failed to cancel announcement. Please try again.", "error");
+    } finally {
+      setIsConfirmationModalOpen(false);
+      setItemToCancel(null);
+    }
+  };
+
+  const handleFileDownload = (file) => {
+    try {
+      // Convert base64 to blob
+      const base64Data = file.data.split(',')[1];
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: file.type });
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = file.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      showNotification("File downloaded successfully!", "success");
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      showNotification("Error downloading file", "error");
+    }
+  };
+
+  const handleFileView = (file) => {
+    setFileViewModal({ isOpen: true, file });
+  };
+
+  const closeFileView = () => {
+    setFileViewModal({ isOpen: false, file: null });
   };
 
   const getPriorityColor = (priority) => {
@@ -204,57 +591,89 @@ const AdminAnnouncement = () => {
     }
   };
 
-  const formatDisplayDate = (dateStr) => {
-    if (!dateStr) return "";
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+  const formatDisplayDate = (isoDateStr) => {
+    if (!isoDateStr) return "";
+    const date = DateTime.fromISO(isoDateStr);
+    return date.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY);
   };
 
-  const formatDisplayTime = (timeStr) => {
-    if (!timeStr) return "";
-    const [hours, minutes] = timeStr.split(":");
-    const hour12 = hours % 12 || 12;
-    const ampm = hours >= 12 ? "pm" : "am";
-    return `${hour12}:${minutes} ${ampm}`;
+  const formatDisplayTime = (isoDateStr) => {
+    if (!isoDateStr) return "";
+    const time = DateTime.fromISO(isoDateStr);
+    return time.toLocaleString(DateTime.TIME_SIMPLE);
   };
 
-  // Column definitions for the Table component
+  const formatTimeAgo = (isoDateStr) => {
+    // This is now automatically updated by the timeTicker state
+    if (!isoDateStr) return "";
+    const combinedDateTime = DateTime.fromISO(isoDateStr);
+    if (!combinedDateTime.isValid) {
+      return "";
+    }
+    const diff = DateTime.local().diff(combinedDateTime, [
+      "years",
+      "months",
+      "days",
+      "hours",
+      "minutes",
+      "seconds",
+    ]);
+
+    if (diff.years > 0) {
+      return `${Math.floor(diff.years)} year${Math.floor(diff.years) > 1 ? "s" : ""
+        } ago`;
+    }
+    if (diff.months > 0) {
+      return `${Math.floor(diff.months)} month${Math.floor(diff.months) > 1 ? "s" : ""
+        } ago`;
+    }
+    if (diff.days > 0) {
+      return `${Math.floor(diff.days)} day${Math.floor(diff.days) > 1 ? "s" : ""
+        } ago`;
+    }
+    if (diff.hours > 0) {
+      return `${Math.floor(diff.hours)} hour${Math.floor(diff.hours) > 1 ? "s" : ""
+        } ago`;
+    }
+    if (diff.minutes > 0) {
+      return `${Math.floor(diff.minutes)} minute${Math.floor(diff.minutes) > 1 ? "s" : ""
+        } ago`;
+    }
+    const seconds = Math.floor(diff.seconds);
+    return seconds <= 1 ? "just now" : `${seconds} seconds ago`;
+  };
+
   const columns = useMemo(
     () => [
       {
         headerName: "DATE",
-        field: "date",
+        field: "dateTime",
         sortable: true,
         filter: true,
         width: 150,
+        cellRenderer: (params) => formatDisplayDate(params.value),
       },
       {
         headerName: "FACILITATOR",
-        field: "facilitator",
+        field: "postedBy",
         sortable: true,
         filter: true,
         width: 180,
       },
       {
         headerName: "TYPE",
-        field: "type",
+        field: "title",
         sortable: true,
         filter: true,
         width: 120,
-        cellRenderer: (params) => {
-          return `<span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium">${params.value}</span>`;
-        },
       },
       {
         headerName: "TIME",
-        field: "time",
+        field: "dateTime",
         sortable: true,
         filter: true,
         width: 120,
+        cellRenderer: (params) => formatDisplayTime(params.value),
       },
       {
         headerName: "AGENDA",
@@ -279,6 +698,19 @@ const AdminAnnouncement = () => {
         },
       },
       {
+        headerName: "ATTACHMENT",
+        field: "attachment",
+        sortable: false,
+        filter: false,
+        width: 120,
+        cellRenderer: (params) => {
+          if (params.value && params.value.name) {
+            return `<span class="flex items-center gap-1 text-blue-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>${params.value.name}</span>`;
+          }
+          return '<span class="text-gray-400">No file</span>';
+        },
+      },
+      {
         headerName: "REMARKS",
         field: "remarks",
         sortable: true,
@@ -292,21 +724,42 @@ const AdminAnnouncement = () => {
 
   return (
     <div>
-      <div>
-        <section className="flex flex-col mb-2">
-          <div className="flex items-center gap-1">
-            <h2>Announcement</h2>
-          </div>
-          <p className="text-light">
-            Records of employees with late attendance.
-          </p>
-        </section>
-      </div>
+      {notification.isVisible && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification({ ...notification, isVisible: false })}
+        />
+      )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isConfirmationModalOpen}
+        onClose={() => setIsConfirmationModalOpen(false)}
+        onConfirm={handleConfirmCancel}
+        message="Are you sure you want to cancel this announcement? This action cannot be undone."
+      />
+
+      {/* New File View Modal */}
+      <FileViewModal
+        isOpen={fileViewModal.isOpen}
+        onClose={closeFileView}
+        file={fileViewModal.file}
+      />
+
+      <section className="flex flex-col mb-2">
+        <div className="flex items-center gap-1">
+          <h2>Announcement</h2>
+        </div>
+        <p className="text-light">
+          Manage and view all company announcements.
+        </p>
+      </section>
 
       {/* Two-Column Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 max-w-9xl mx-auto">
         {/* Create/Edit Announcement */}
-        <div className="rounded-md bg-white border-light p-4">
+        < div className="rounded-md bg-white border-light p-4" >
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div
@@ -325,16 +778,14 @@ const AdminAnnouncement = () => {
             </div>
             {isEditMode && (
               <button
-                onClick={cancelEdit}
+                onClick={resetForm}
                 className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
               >
                 <X className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             )}
           </div>
-
           <div className="space-y-6">
-            {/* Title Input */}
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                 Title *
@@ -347,10 +798,7 @@ const AdminAnnouncement = () => {
                 className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
               />
             </div>
-
-            {/* Date and Time Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              {/* Date Input */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Date *
@@ -359,14 +807,15 @@ const AdminAnnouncement = () => {
                   <Calendar className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-red-500 z-10" />
                   <input
                     type="date"
-                    value={formData.date}
-                    onChange={(e) => handleInputChange("date", e.target.value)}
+                    value={formData.dateInput}
+                    min={today}
+                    onChange={(e) =>
+                      handleInputChange("dateInput", e.target.value)
+                    }
                     className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
                   />
                 </div>
               </div>
-
-              {/* Time Input */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Time *
@@ -375,15 +824,15 @@ const AdminAnnouncement = () => {
                   <Clock className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-red-500 z-10" />
                   <input
                     type="time"
-                    value={formData.time}
-                    onChange={(e) => handleInputChange("time", e.target.value)}
+                    value={formData.timeInput}
+                    onChange={(e) =>
+                      handleInputChange("timeInput", e.target.value)
+                    }
                     className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
                   />
                 </div>
               </div>
             </div>
-
-            {/* Posted By and Priority */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -402,7 +851,6 @@ const AdminAnnouncement = () => {
                   />
                 </div>
               </div>
-
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Priority
@@ -420,8 +868,6 @@ const AdminAnnouncement = () => {
                 </select>
               </div>
             </div>
-
-            {/* File Upload */}
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                 Attachment
@@ -474,8 +920,6 @@ const AdminAnnouncement = () => {
                 </div>
               </div>
             </div>
-
-            {/* Agenda */}
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                 Agenda *
@@ -487,8 +931,6 @@ const AdminAnnouncement = () => {
                 className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 resize-none text-sm sm:text-base"
               ></textarea>
             </div>
-
-            {/* Submit Button */}
             <button
               onClick={handleSubmit}
               className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all duration-300 font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
@@ -496,10 +938,10 @@ const AdminAnnouncement = () => {
               {isEditMode ? "Update Announcement" : "Create Announcement"}
             </button>
           </div>
-        </div>
+        </div >
 
         {/* List of Announcements */}
-        <div className="flex-1 overflow-y-auto space-y-4 pr-2 h-full rounded-md bg-white border-light p-4">
+        < div className="flex-1 overflow-y-auto space-y-4 pr-2 h-full rounded-md bg-white border-light p-4" >
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -509,7 +951,7 @@ const AdminAnnouncement = () => {
                 Active Announcements
               </h3>
             </div>
-            <span className="inline-flex items-center bg-blue-100 text-blue-700 px-2 sm:px-3 md:px-4 py-1 rounded-full text-xs sm:text-sm md:text-base font-medium max-w-[200px] truncate">
+            <span className="bg-blue-100 text-blue-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
               {announcements.length} Active
             </span>
           </div>
@@ -575,9 +1017,23 @@ const AdminAnnouncement = () => {
                   </div>
                 </div>
 
+                {/* File attachment section */}
+                {a.attachment && (
+                  <div className="mt-3">
+                    <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                      <Paperclip className="w-3 h-3" />
+                      Attached File:
+                    </p>
+                    <FileAttachment
+                      file={a.attachment}
+                      onDownload={handleFileDownload}
+                      onView={handleFileView}
+                    />
+                  </div>
+                )}
                 <div className="flex gap-3">
                   <button
-                    onClick={() => handleCancel(a.id)}
+                    onClick={() => handleCancelClick(a._id)}
                     className="flex-1 bg-white border-2 border-red-500 text-red-600 p-2 sm:p-3 rounded-xl hover:bg-red-50 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
                   >
                     Cancel
@@ -591,33 +1047,38 @@ const AdminAnnouncement = () => {
                 </div>
               </div>
             ))}
+          </div >
+          ) : (
+          <div className="flex items-center justify-center py-10 text-gray-500 italic">
+            No active announcements found.
           </div>
+          )
+        </div >
+
+        <div className="backdrop-blur rounded-md bg-white border-light p-4">
+          <h3 className="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-3">
+            <div className="p-2 bg-gray-100 rounded-lg">
+              <Clock className="w-6 h-6 text-gray-600" />
+            </div>
+            Announcement History
+          </h3>
+
+          {announcementHistory && announcementHistory.length > 0 ? (
+            <Table
+              data={announcementHistory}
+              columns={columns}
+              pagination={{
+                pageSize: 10,
+              }}
+            />
+          ) : (
+            <div className="flex items-center justify-center py-10 text-gray-500 italic">
+              No announcement history found.
+            </div>
+          )}
         </div>
       </div>
-
-      <div className="backdrop-blur rounded-md bg-white border-light p-4">
-        <h3 className="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-3">
-          <div className="p-2 bg-gray-100 rounded-lg">
-            <Clock className="w-6 h-6 text-gray-600" />
-          </div>
-          Announcement History
-        </h3>
-
-        {announcementHistory && announcementHistory.length > 0 ? (
-          <Table
-            data={announcementHistory}
-            columns={columns}
-            pagination={{
-              pageSize: 10, // hanggang 10 rows per page
-            }}
-          />
-        ) : (
-          <div className="flex items-center justify-center py-10 text-gray-500 italic">
-            No announcement yet
-          </div>
-        )}
-      </div>
-    </div>
+    </div >
   );
 };
 
