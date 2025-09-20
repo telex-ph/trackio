@@ -759,12 +759,10 @@ const AdminAnnouncement = () => {
       {/* Two-Column Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 max-w-9xl mx-auto">
         {/* Create/Edit Announcement */}
-        <div className="rounded-md bg-white border-light p-4">
+        < div className="rounded-md bg-white border-light p-4" >
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div
-                className={`p-2 ${isEditMode ? "bg-red-100" : "bg-indigo-100"
-                  } rounded-lg`}
                 className={`p-2 ${isEditMode ? "bg-red-100" : "bg-indigo-100"
                   } rounded-lg`}
               >
@@ -940,10 +938,10 @@ const AdminAnnouncement = () => {
               {isEditMode ? "Update Announcement" : "Create Announcement"}
             </button>
           </div>
-        </div>
+        </div >
 
         {/* List of Announcements */}
-        <div className="flex-1 overflow-y-auto space-y-4 pr-2 h-full rounded-md bg-white border-light p-4">
+        < div className="flex-1 overflow-y-auto space-y-4 pr-2 h-full rounded-md bg-white border-light p-4" >
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -1019,69 +1017,68 @@ const AdminAnnouncement = () => {
                   </div>
                 </div>
 
-                    {/* File attachment section */}
-                    {a.attachment && (
-                      <div className="mt-3">
-                        <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                          <Paperclip className="w-3 h-3" />
-                          Attached File:
-                        </p>
-                        <FileAttachment
-                          file={a.attachment}
-                          onDownload={handleFileDownload}
-                          onView={handleFileView}
-                        />
-                      </div>
-                    )}
+                {/* File attachment section */}
+                {a.attachment && (
+                  <div className="mt-3">
+                    <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                      <Paperclip className="w-3 h-3" />
+                      Attached File:
+                    </p>
+                    <FileAttachment
+                      file={a.attachment}
+                      onDownload={handleFileDownload}
+                      onView={handleFileView}
+                    />
                   </div>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => handleCancelClick(a._id)}
-                      className="flex-1 bg-white border-2 border-red-500 text-red-600 p-2 sm:p-3 rounded-xl hover:bg-red-50 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => handleEdit(a)}
-                      className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
-                    >
-                      Edit
-                    </button>
-                  </div>
+                )}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => handleCancelClick(a._id)}
+                    className="flex-1 bg-white border-2 border-red-500 text-red-600 p-2 sm:p-3 rounded-xl hover:bg-red-50 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleEdit(a)}
+                    className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
+                  >
+                    Edit
+                  </button>
                 </div>
-              ))}
+              </div>
+            ))}
+          </div >
+          ) : (
+          <div className="flex items-center justify-center py-10 text-gray-500 italic">
+            No active announcements found.
+          </div>
+          )
+        </div >
+
+        <div className="backdrop-blur rounded-md bg-white border-light p-4">
+          <h3 className="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-3">
+            <div className="p-2 bg-gray-100 rounded-lg">
+              <Clock className="w-6 h-6 text-gray-600" />
             </div>
+            Announcement History
+          </h3>
+
+          {announcementHistory && announcementHistory.length > 0 ? (
+            <Table
+              data={announcementHistory}
+              columns={columns}
+              pagination={{
+                pageSize: 10,
+              }}
+            />
           ) : (
             <div className="flex items-center justify-center py-10 text-gray-500 italic">
-              No active announcements found.
+              No announcement history found.
             </div>
           )}
         </div>
       </div>
-
-      <div className="backdrop-blur rounded-md bg-white border-light p-4">
-        <h3 className="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-3">
-          <div className="p-2 bg-gray-100 rounded-lg">
-            <Clock className="w-6 h-6 text-gray-600" />
-          </div>
-          Announcement History
-        </h3>
-
-        {announcementHistory && announcementHistory.length > 0 ? (
-          <Table
-            data={announcementHistory}
-            columns={columns}
-            pagination={{
-              pageSize: 10,
-            }}
-          />
-        ) : (
-          <div className="flex items-center justify-center py-10 text-gray-500 italic">
-            No announcement history found.
-          </div>
-        )}
-      </div>
-    </div>
+    </div >
   );
 };
 
