@@ -79,7 +79,9 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, message }) => {
         <h3 className="text-xl font-bold text-gray-800 text-center mb-2">
           Confirm Action
         </h3>
-        <p className="text-center text-gray-600 mb-6 text-sm sm:text-base">{message}</p>
+        <p className="text-center text-gray-600 mb-6 text-sm sm:text-base">
+          {message}
+        </p>
         <div className="flex flex-col sm:flex-row gap-4">
           <button
             onClick={onClose}
@@ -104,7 +106,7 @@ const FileViewModal = ({ isOpen, onClose, file }) => {
   if (!isOpen || !file) return null;
 
   const renderFilePreview = () => {
-    if (file.type.startsWith('image/')) {
+    if (file.type.startsWith("image/")) {
       return (
         <img
           src={file.data}
@@ -112,7 +114,7 @@ const FileViewModal = ({ isOpen, onClose, file }) => {
           className="max-w-full max-h-[80vh] object-contain mx-auto"
         />
       );
-    } else if (file.type === 'application/pdf') {
+    } else if (file.type === "application/pdf") {
       return (
         <embed
           src={file.data}
@@ -120,9 +122,9 @@ const FileViewModal = ({ isOpen, onClose, file }) => {
           className="w-full h-[80vh]"
         />
       );
-    } else if (file.type.startsWith('text/')) {
+    } else if (file.type.startsWith("text/")) {
       // Decode Base64 data for text files
-      const base64Data = file.data.split(',')[1];
+      const base64Data = file.data.split(",")[1];
       const decodedText = atob(base64Data);
       return (
         <pre className="p-4 bg-gray-100 rounded-lg overflow-auto max-h-[80vh] text-sm text-gray-800">
@@ -132,7 +134,9 @@ const FileViewModal = ({ isOpen, onClose, file }) => {
     } else {
       return (
         <div className="p-6 text-center text-gray-600">
-          <p className="text-lg font-semibold mb-2">File Preview Not Available</p>
+          <p className="text-lg font-semibold mb-2">
+            File Preview Not Available
+          </p>
           <p>This file type cannot be previewed in the browser.</p>
         </div>
       );
@@ -164,20 +168,20 @@ const FileViewModal = ({ isOpen, onClose, file }) => {
 // File attachment component
 const FileAttachment = ({ file, onDownload, onView }) => {
   const getFileIcon = (fileName) => {
-    const extension = fileName.split('.').pop().toLowerCase();
+    const extension = fileName.split(".").pop().toLowerCase();
     switch (extension) {
-      case 'pdf':
+      case "pdf":
         return <FileText className="w-4 h-4 text-red-500" />;
-      case 'doc':
-      case 'docx':
+      case "doc":
+      case "docx":
         return <FileText className="w-4 h-4 text-blue-500" />;
-      case 'xls':
-      case 'xlsx':
+      case "xls":
+      case "xlsx":
         return <FileText className="w-4 h-4 text-green-500" />;
-      case 'jpg':
-      case 'jpeg':
-      case 'png':
-      case 'gif':
+      case "jpg":
+      case "jpeg":
+      case "png":
+      case "gif":
         return <FileText className="w-4 h-4 text-purple-500" />;
       default:
         return <Paperclip className="w-4 h-4 text-gray-500" />;
@@ -185,8 +189,8 @@ const FileAttachment = ({ file, onDownload, onView }) => {
   };
 
   const canPreview = (fileName) => {
-    const extension = fileName.split('.').pop().toLowerCase();
-    return ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'txt'].includes(extension);
+    const extension = fileName.split(".").pop().toLowerCase();
+    return ["pdf", "jpg", "jpeg", "png", "gif", "txt"].includes(extension);
   };
 
   return (
@@ -204,9 +208,24 @@ const FileAttachment = ({ file, onDownload, onView }) => {
             className="p-1 text-green-600 hover:text-green-800 hover:bg-green-100 rounded transition-colors"
             title="View file"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+              />
             </svg>
           </button>
         )}
@@ -241,7 +260,10 @@ const AdminAnnouncement = () => {
 
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [itemToCancel, setItemToCancel] = useState(null);
-  const [fileViewModal, setFileViewModal] = useState({ isOpen: false, file: null });
+  const [fileViewModal, setFileViewModal] = useState({
+    isOpen: false,
+    file: null,
+  });
 
   // Dummy state to trigger re-renders for time display
   const [timeTicker, setTimeTicker] = useState(Date.now());
@@ -257,7 +279,7 @@ const AdminAnnouncement = () => {
   });
 
   // Get today's date in YYYY-MM-DD format
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split("T")[0];
 
   const showNotification = (message, type) => {
     setNotification({ message, type, isVisible: true });
@@ -337,7 +359,10 @@ const AdminAnnouncement = () => {
         }
 
         // If priorities are equal, sort by date/time (newest first)
-        return DateTime.fromISO(b.dateTime).toMillis() - DateTime.fromISO(a.dateTime).toMillis();
+        return (
+          DateTime.fromISO(b.dateTime).toMillis() -
+          DateTime.fromISO(a.dateTime).toMillis()
+        );
       });
 
       const sortedHistory = history.sort(
@@ -423,7 +448,7 @@ const AdminAnnouncement = () => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => resolve(reader.result);
-      reader.onerror = error => reject(error);
+      reader.onerror = (error) => reject(error);
     });
   };
 
@@ -468,7 +493,7 @@ const AdminAnnouncement = () => {
             name: selectedFile.name,
             size: selectedFile.size,
             type: selectedFile.type,
-            data: base64File
+            data: base64File,
           };
         } catch (error) {
           console.error("Error converting file to base64:", error);
@@ -498,7 +523,8 @@ const AdminAnnouncement = () => {
     } catch (error) {
       console.error("Error submitting announcement:", error);
       showNotification(
-        `Failed to ${isEditMode ? "update" : "create"
+        `Failed to ${
+          isEditMode ? "update" : "create"
         } announcement. Please try again.`,
         "error"
       );
@@ -534,7 +560,10 @@ const AdminAnnouncement = () => {
       showNotification("Announcement cancelled successfully!", "success");
     } catch (error) {
       console.error("Error cancelling announcement:", error);
-      showNotification("Failed to cancel announcement. Please try again.", "error");
+      showNotification(
+        "Failed to cancel announcement. Please try again.",
+        "error"
+      );
     } finally {
       setIsConfirmationModalOpen(false);
       setItemToCancel(null);
@@ -544,7 +573,7 @@ const AdminAnnouncement = () => {
   const handleFileDownload = (file) => {
     try {
       // Convert base64 to blob
-      const base64Data = file.data.split(',')[1];
+      const base64Data = file.data.split(",")[1];
       const byteCharacters = atob(base64Data);
       const byteNumbers = new Array(byteCharacters.length);
       for (let i = 0; i < byteCharacters.length; i++) {
@@ -555,7 +584,7 @@ const AdminAnnouncement = () => {
 
       // Create download link
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = file.name;
       document.body.appendChild(link);
@@ -620,24 +649,29 @@ const AdminAnnouncement = () => {
     ]);
 
     if (diff.years > 0) {
-      return `${Math.floor(diff.years)} year${Math.floor(diff.years) > 1 ? "s" : ""
-        } ago`;
+      return `${Math.floor(diff.years)} year${
+        Math.floor(diff.years) > 1 ? "s" : ""
+      } ago`;
     }
     if (diff.months > 0) {
-      return `${Math.floor(diff.months)} month${Math.floor(diff.months) > 1 ? "s" : ""
-        } ago`;
+      return `${Math.floor(diff.months)} month${
+        Math.floor(diff.months) > 1 ? "s" : ""
+      } ago`;
     }
     if (diff.days > 0) {
-      return `${Math.floor(diff.days)} day${Math.floor(diff.days) > 1 ? "s" : ""
-        } ago`;
+      return `${Math.floor(diff.days)} day${
+        Math.floor(diff.days) > 1 ? "s" : ""
+      } ago`;
     }
     if (diff.hours > 0) {
-      return `${Math.floor(diff.hours)} hour${Math.floor(diff.hours) > 1 ? "s" : ""
-        } ago`;
+      return `${Math.floor(diff.hours)} hour${
+        Math.floor(diff.hours) > 1 ? "s" : ""
+      } ago`;
     }
     if (diff.minutes > 0) {
-      return `${Math.floor(diff.minutes)} minute${Math.floor(diff.minutes) > 1 ? "s" : ""
-        } ago`;
+      return `${Math.floor(diff.minutes)} minute${
+        Math.floor(diff.minutes) > 1 ? "s" : ""
+      } ago`;
     }
     const seconds = Math.floor(diff.seconds);
     return seconds <= 1 ? "just now" : `${seconds} seconds ago`;
@@ -751,9 +785,7 @@ const AdminAnnouncement = () => {
         <div className="flex items-center gap-1">
           <h2>Announcement</h2>
         </div>
-        <p className="text-light">
-          Manage and view all company announcements.
-        </p>
+        <p className="text-light">Manage and view all company announcements.</p>
       </section>
 
       {/* Two-Column Layout */}
@@ -763,8 +795,9 @@ const AdminAnnouncement = () => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div
-                className={`p-2 ${isEditMode ? "bg-red-100" : "bg-indigo-100"
-                  } rounded-lg`}
+                className={`p-2 ${
+                  isEditMode ? "bg-red-100" : "bg-indigo-100"
+                } rounded-lg`}
               >
                 {isEditMode ? (
                   <Edit className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
@@ -873,12 +906,13 @@ const AdminAnnouncement = () => {
                 Attachment
               </label>
               <div
-                className={`relative border-2 border-dashed rounded-2xl p-4 transition-all duration-300 ${isDragOver
-                  ? "border-red-400 bg-red-50"
-                  : selectedFile
+                className={`relative border-2 border-dashed rounded-2xl p-4 transition-all duration-300 ${
+                  isDragOver
+                    ? "border-red-400 bg-red-50"
+                    : selectedFile
                     ? "border-green-400 bg-green-50"
                     : "border-gray-300 bg-gray-50/30"
-                  }`}
+                }`}
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -998,7 +1032,8 @@ const AdminAnnouncement = () => {
                   <div className="space-y-3 mb-4">
                     <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
                       <User className="w-3 h-3 sm:w-4 sm:h-4" />
-                      Posted by: <span className="font-medium">{a.postedBy}</span>
+                      Posted by:{" "}
+                      <span className="font-medium">{a.postedBy}</span>
                     </p>
                     <div className="flex flex-wrap gap-4 sm:gap-6 text-xs sm:text-sm text-gray-700">
                       <span className="flex items-center gap-2">
