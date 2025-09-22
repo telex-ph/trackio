@@ -757,9 +757,9 @@ const AdminAnnouncement = () => {
       </section>
 
       {/* Two-Column Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 max-w-9xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
         {/* Create/Edit Announcement */}
-        < div className="rounded-md bg-white border-light p-4" >
+        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div
@@ -938,10 +938,10 @@ const AdminAnnouncement = () => {
               {isEditMode ? "Update Announcement" : "Create Announcement"}
             </button>
           </div>
-        </div >
+        </div>
 
         {/* List of Announcements */}
-        < div className="flex-1 overflow-y-auto space-y-4 pr-2 h-full rounded-md bg-white border-light p-4" >
+        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -956,129 +956,133 @@ const AdminAnnouncement = () => {
             </span>
           </div>
 
-          <div className="space-y-4 overflow-y-auto pr-2 ">
-            {announcements.map((a) => (
-              <div
-                key={a.id}
-                className={`group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border ${editingId === a.id
-                  ? "border-red-300 ring-2 ring-red-100"
-                  : "border-gray-100"
-                  }`}
-              >
-                <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
-                  <div className="flex items-start gap-3 sm:gap-4">
-                    <div className="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
-                      <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-2 group-hover:text-indigo-600 transition-colors">
-                        {a.title}
-                      </h4>
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
-                        <span
-                          className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium border ${getPriorityColor(
-                            a.priority
-                          )}`}
-                        >
-                          {a.priority} Priority
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          2 hours ago
-                        </span>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-10 text-gray-500 italic">
+              Loading announcements...
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center py-10 text-red-500 italic">
+              {error}
+            </div>
+          ) : announcements.length > 0 ? (
+            <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-200px)] sm:max-h-[calc(100vh-150px)] pr-2">
+              {announcements.map((a) => (
+                <div
+                  key={a._id}
+                  className={`group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border border-gray-100`}
+                >
+                  <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
+                    <div className="flex items-start gap-3 sm:gap-4">
+                      <div className="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
+                        <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-2 group-hover:text-indigo-600 transition-colors">
+                          {a.title}
+                        </h4>
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
+                          <span
+                            className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium border ${getPriorityColor(
+                              a.priority
+                            )}`}
+                          >
+                            {a.priority} Priority
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {formatTimeAgo(a.dateTime)}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-
-                <div className="space-y-3 mb-4">
-                  <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                    <User className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Posted by: <span className="font-medium">{a.postedBy}</span>
-                  </p>
-
-                  <div className="flex flex-wrap gap-4 sm:gap-6 text-xs sm:text-sm text-gray-700">
-                    <span className="flex items-center gap-2">
-                      <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
-                      {formatDisplayDate(a.date)}
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
-                      {formatDisplayTime(a.time)}
-                    </span>
-                  </div>
-
-                  <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border-l-4 border-red-500">
-                    <p className="text-xs sm:text-sm text-gray-700">
-                      <span className="font-semibold text-gray-800">
-                        Agenda:
-                      </span>{" "}
-                      {a.agenda}
+                  <div className="space-y-3 mb-4">
+                    <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
+                      <User className="w-3 h-3 sm:w-4 sm:h-4" />
+                      Posted by: <span className="font-medium">{a.postedBy}</span>
                     </p>
+                    <div className="flex flex-wrap gap-4 sm:gap-6 text-xs sm:text-sm text-gray-700">
+                      <span className="flex items-center gap-2">
+                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
+                        {formatDisplayDate(a.dateTime)}
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
+                        {formatDisplayTime(a.dateTime)}
+                      </span>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border-l-4 border-red-500">
+                      <p className="text-xs sm:text-sm text-gray-700">
+                        <span className="font-semibold text-gray-800">
+                          Agenda:
+                        </span>{" "}
+                        {a.agenda}
+                      </p>
+                    </div>
+
+                    {/* File attachment section */}
+                    {a.attachment && (
+                      <div className="mt-3">
+                        <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                          <Paperclip className="w-3 h-3" />
+                          Attached File:
+                        </p>
+                        <FileAttachment
+                          file={a.attachment}
+                          onDownload={handleFileDownload}
+                          onView={handleFileView}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleCancelClick(a._id)}
+                      className="flex-1 bg-white border-2 border-red-500 text-red-600 p-2 sm:p-3 rounded-xl hover:bg-red-50 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => handleEdit(a)}
+                      className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
+                    >
+                      Edit
+                    </button>
                   </div>
                 </div>
-
-                {/* File attachment section */}
-                {a.attachment && (
-                  <div className="mt-3">
-                    <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                      <Paperclip className="w-3 h-3" />
-                      Attached File:
-                    </p>
-                    <FileAttachment
-                      file={a.attachment}
-                      onDownload={handleFileDownload}
-                      onView={handleFileView}
-                    />
-                  </div>
-                )}
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => handleCancelClick(a._id)}
-                    className="flex-1 bg-white border-2 border-red-500 text-red-600 p-2 sm:p-3 rounded-xl hover:bg-red-50 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => handleEdit(a)}
-                    className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
-                  >
-                    Edit
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div >
-          ) : (
-          <div className="flex items-center justify-center py-10 text-gray-500 italic">
-            No active announcements found.
-          </div>
-          )
-        </div >
-
-        <div className="backdrop-blur rounded-md bg-white border-light p-4">
-          <h3 className="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-3">
-            <div className="p-2 bg-gray-100 rounded-lg">
-              <Clock className="w-6 h-6 text-gray-600" />
+              ))}
             </div>
-            Announcement History
-          </h3>
-
-          {announcementHistory && announcementHistory.length > 0 ? (
-            <Table
-              data={announcementHistory}
-              columns={columns}
-              pagination={{
-                pageSize: 10,
-              }}
-            />
           ) : (
             <div className="flex items-center justify-center py-10 text-gray-500 italic">
-              No announcement history found.
+              No active announcements found.
             </div>
           )}
         </div>
       </div>
-    </div >
+
+      {/* Announcement History with Table Component */}
+      <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
+        <h3 className="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-3">
+          <div className="p-2 bg-gray-100 rounded-lg">
+            <Clock className="w-6 h-6 text-gray-600" />
+          </div>
+          Announcement History
+        </h3>
+
+        {announcementHistory && announcementHistory.length > 0 ? (
+          <Table
+            data={announcementHistory}
+            columns={columns}
+            pagination={{
+              pageSize: 10,
+            }}
+          />
+        ) : (
+          <div className="flex items-center justify-center py-10 text-gray-500 italic">
+            No announcement history found.
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
