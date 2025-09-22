@@ -40,6 +40,7 @@ import AdminHistory from "../pages/admin/AdminHistory";
 import AdminSchedule from "../pages/admin/AdminSchedule";
 import AdminAnnouncement from "../pages/admin/AdminAnnouncement";
 import AdminAccountSettings from "../pages/admin/AdminAccountSettings";
+import AdminAgentRequest from "../pages/admin/AdminAgentRequest";
 
 // Global Routes
 import NotFound from "../pages/global/NotFound";
@@ -98,6 +99,7 @@ const router = createBrowserRouter([
               { path: "schedule", element: <AdminSchedule /> },
               { path: "announcement", element: <AdminAnnouncement /> },
               { path: "account-settings", element: <AdminAccountSettings /> },
+              { path: "agentrequest", element: <AdminAgentRequest /> },
             ],
           },
 
