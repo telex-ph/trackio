@@ -791,7 +791,7 @@ const AdminAnnouncement = () => {
       {/* Two-Column Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
         {/* Create/Edit Announcement */}
-        <div className="rounded-md bg-white border-light p-4">
+        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div
@@ -973,10 +973,9 @@ const AdminAnnouncement = () => {
             </button>
           </div>
         </div>
-        </div>
 
         {/* List of Announcements */}
-        <div className="flex-1 overflow-y-auto space-y-4 pr-2 h-full rounded-md bg-white border-light p-4">
+        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -1033,7 +1032,8 @@ const AdminAnnouncement = () => {
                   <div className="space-y-3 mb-4">
                     <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
                       <User className="w-3 h-3 sm:w-4 sm:h-4" />
-                      Posted by: <span className="font-medium">{a.postedBy}</span>
+                      Posted by:{" "}
+                      <span className="font-medium">{a.postedBy}</span>
                     </p>
                     <div className="flex flex-wrap gap-4 sm:gap-6 text-xs sm:text-sm text-gray-700">
                       <span className="flex items-center gap-2">
