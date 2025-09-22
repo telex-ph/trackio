@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo, memo, useEffect } from "react";
 import {
   Calendar,
   Clock,
@@ -14,9 +14,9 @@ import {
   Bell,
 } from "lucide-react";
 import { DateTime } from "luxon";
-import api from "../../utils/axios"; // baseURL should point to /api
+import api from "../../utils/axios";
 
-// =================== Notification ===================
+// Custom Notification Component
 const Notification = ({ message, type, onClose }) => {
   const [isVisible, setIsVisible] = useState(true);
 
@@ -60,7 +60,7 @@ const Notification = ({ message, type, onClose }) => {
   );
 };
 
-// =================== Confirmation Modal ===================
+// Confirmation Modal
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, message }) => {
   if (!isOpen) return null;
 
@@ -96,15 +96,16 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, message }) => {
   );
 };
 
-// =================== Main Component ===================
-const TeamLeaderAgentRequest = () => {
+const AdminAgentRequest = () => {
   const [requests, setRequests] = useState([]);
   const [requestHistory, setRequestHistory] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [remarks, setRemarks] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
-  const [isDragOver, setIsDragOver] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState(null);
 
   const [notification, setNotification] = useState({
@@ -131,7 +132,6 @@ const TeamLeaderAgentRequest = () => {
     setNotification({ message, type, isVisible: true });
   };
 
-  // =================== Fetch Requests ===================
   const fetchRequests = async () => {
     setIsLoading(true);
     setError(null);
@@ -140,10 +140,12 @@ const TeamLeaderAgentRequest = () => {
       const allRequests = response.data;
       const now = DateTime.now();
 
+      // Check and update statuses of pending requests that have passed their end time
       const pendingRequests = allRequests.filter((r) => r.status === "Pending");
       for (const req of pendingRequests) {
         const endTime = DateTime.fromISO(req.endTime);
         if (endTime < now) {
+          // If the request's end time is in the past, update its status
           await api.put(`/requests/${req._id}`, { status: "Approved" });
         }
       }
@@ -159,6 +161,7 @@ const TeamLeaderAgentRequest = () => {
           DateTime.fromISO(b.createdAt || b.startTime).toMillis() -
           DateTime.fromISO(a.createdAt || a.startTime).toMillis()
       );
+
       const sortedHistory = history.sort(
         (a, b) =>
           DateTime.fromISO(b.createdAt || b.startTime).toMillis() -
@@ -167,15 +170,15 @@ const TeamLeaderAgentRequest = () => {
 
       setRequests(sortedActive);
       setRequestHistory(sortedHistory);
+      setIsLoading(false);
     } catch (err) {
       console.error("Error fetching or updating requests:", err);
       setError("Failed to load requests. Please check server connection.");
+      setIsLoading(false);
       showNotification(
         "Failed to load requests. Please check your network.",
         "error"
       );
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -183,7 +186,6 @@ const TeamLeaderAgentRequest = () => {
     fetchRequests();
   }, []);
 
-  // =================== Duration Calculation ===================
   useEffect(() => {
     if (formData.startTime && formData.endTime && formData.dateInput) {
       calculateDuration();
@@ -192,16 +194,20 @@ const TeamLeaderAgentRequest = () => {
 
   const calculateDuration = () => {
     const { startTime, endTime, dateInput } = formData;
+
     if (!startTime || !endTime || !dateInput) {
       setFormData((prev) => ({ ...prev, duration: "" }));
       return;
     }
+
     try {
       let startDateTime = DateTime.fromISO(`${dateInput}T${startTime}`);
       let endDateTime = DateTime.fromISO(`${dateInput}T${endTime}`);
+
       if (endDateTime <= startDateTime) {
         endDateTime = endDateTime.plus({ days: 1 });
       }
+
       const diff = endDateTime
         .diff(startDateTime, ["hours", "minutes"])
         .toObject();
@@ -209,7 +215,9 @@ const TeamLeaderAgentRequest = () => {
       const minutes = Math.floor(diff.minutes || 0);
 
       let durationText = "";
-      if (hours > 0) durationText += `${hours} hour${hours !== 1 ? "s" : ""}`;
+      if (hours > 0) {
+        durationText += `${hours} hour${hours !== 1 ? "s" : ""}`;
+      }
       if (minutes > 0) {
         if (durationText) durationText += " ";
         durationText += `${minutes} minute${minutes !== 1 ? "s" : ""}`;
@@ -225,11 +233,38 @@ const TeamLeaderAgentRequest = () => {
     }
   };
 
+  const handleDecision = async (status) => {
+    if (!selectedRequest) {
+      console.error("No request selected for decision.");
+      showNotification("Please select a request first.", "info");
+      return;
+    }
+
+    const requestId = selectedRequest._id; // ✅ fix
+    const url = `/requests/${requestId}`;
+    console.log(`Attempting to update request with ID: ${requestId}`);
+
+    try {
+      await api.put(url, { status, remarks });
+      showNotification(`Request ${status}`, "success");
+
+      fetchRequests();
+    } catch (err) {
+      console.error(
+        "Failed to update request:",
+        err.response ? err.response.data : err.message
+      );
+      showNotification("Failed to update request", "error");
+    } finally {
+      setSelectedRequest(null);
+      setRemarks("");
+    }
+  };
+
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // =================== File Upload ===================
   const handleFileUpload = (file) => {
     if (file && file.size <= 10 * 1024 * 1024) {
       setSelectedFile(file);
@@ -237,14 +272,6 @@ const TeamLeaderAgentRequest = () => {
       showNotification("File size must be less than 10MB", "error");
     }
   };
-
-  const fileToBase64 = (file) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
 
   const handleDrop = (e) => {
     e.preventDefault();
@@ -262,7 +289,15 @@ const TeamLeaderAgentRequest = () => {
     setIsDragOver(false);
   };
 
-  // =================== Submit ===================
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
   const handleSubmit = async () => {
     if (
       !formData.agentName ||
@@ -289,6 +324,7 @@ const TeamLeaderAgentRequest = () => {
       let endDateTime = DateTime.fromISO(
         `${formData.dateInput}T${formData.endTime}`
       );
+
       if (endDateTime <= startDateTime) {
         endDateTime = endDateTime.plus({ days: 1 });
       }
@@ -306,48 +342,40 @@ const TeamLeaderAgentRequest = () => {
       };
 
       if (selectedFile) {
-        const base64File = await fileToBase64(selectedFile);
-        payload.attachment = {
-          name: selectedFile.name,
-          size: selectedFile.size,
-          type: selectedFile.type,
-          data: base64File,
-        };
+        try {
+          const base64File = await fileToBase64(selectedFile);
+          payload.attachment = {
+            name: selectedFile.name,
+            size: selectedFile.size,
+            type: selectedFile.type,
+            data: base64File,
+          };
+        } catch (error) {
+          console.error("Error converting file to base64:", error);
+          showNotification("Error processing file attachment", "error");
+          return;
+        }
       }
 
       if (isEditMode) {
         await api.put(`/requests/${editingId}`, payload);
         showNotification("Request updated successfully!", "success");
+        fetchRequests();
       } else {
         await api.post("/requests", payload);
         showNotification("Request submitted successfully!", "success");
+        fetchRequests();
       }
 
-      fetchRequests();
       resetForm();
     } catch (error) {
-      console.error("Error submitting request:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        editingId,
-      });
-      if (error.response?.status === 404) {
-        showNotification(
-          "Request not found. It may have been deleted.",
-          "error"
-        );
-        setIsEditMode(false);
-        setEditingId(null);
-        fetchRequests();
-      } else {
-        showNotification(
-          `Failed to ${
-            isEditMode ? "update" : "submit"
-          } request. Please try again.`,
-          "error"
-        );
-      }
+      console.error("Error submitting request:", error);
+      showNotification(
+        `Failed to ${
+          isEditMode ? "update" : "submit"
+        } request. Please try again.`,
+        "error"
+      );
     }
   };
 
@@ -367,12 +395,13 @@ const TeamLeaderAgentRequest = () => {
     setEditingId(null);
   };
 
-  // =================== Edit & Cancel ===================
   const handleEdit = (request) => {
     setIsEditMode(true);
     setEditingId(request._id);
+
     const startDt = DateTime.fromISO(request.startTime);
     const endDt = DateTime.fromISO(request.endTime);
+
     setFormData({
       agentName: request.agentName,
       requestType: request.requestType,
@@ -405,16 +434,17 @@ const TeamLeaderAgentRequest = () => {
     }
   };
 
-  // =================== Formatting ===================
-  const formatDisplayDate = (dateStr) =>
-    dateStr
-      ? DateTime.fromISO(dateStr).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)
-      : "";
+  const formatDisplayDate = (dateStr) => {
+    if (!dateStr) return "";
+    const date = DateTime.fromISO(dateStr);
+    return date.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY);
+  };
 
-  const formatDisplayTime = (isoDateStr) =>
-    isoDateStr
-      ? DateTime.fromISO(isoDateStr).toLocaleString(DateTime.TIME_SIMPLE)
-      : "";
+  const formatDisplayTime = (isoDateStr) => {
+    if (!isoDateStr) return "";
+    const time = DateTime.fromISO(isoDateStr);
+    return time.toLocaleString(DateTime.TIME_SIMPLE);
+  };
 
   return (
     <div>
@@ -444,263 +474,163 @@ const TeamLeaderAgentRequest = () => {
 
       {/* Two-Column Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
-        {/* Create/Edit Request */}
+        <div className="group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-indigo-100 rounded-lg">
+                <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
+                Request Details
+              </h3>
+            </div>
+          </div>
+
+          {selectedRequest ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-xs font-semibold text-gray-600">
+                    Agent Name
+                  </p>
+                  <p className="text-gray-800 font-medium">
+                    {selectedRequest.agentName}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-600">
+                    Supervisor
+                  </p>
+                  <p className="text-gray-800 font-medium">
+                    {selectedRequest.supervisor}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-600">
+                    Request Type
+                  </p>
+                  <p className="text-gray-800 font-medium">
+                    {selectedRequest.requestType}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-600">Date</p>
+                  <p className="text-gray-800 font-medium">
+                    {formatDisplayDate(selectedRequest.date)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-600">
+                    Start Time
+                  </p>
+                  <p className="text-gray-800 font-medium">
+                    {formatDisplayTime(selectedRequest.startTime)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-600">
+                    End Time
+                  </p>
+                  <p className="text-gray-800 font-medium">
+                    {formatDisplayTime(selectedRequest.endTime)}
+                  </p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-xs font-semibold text-gray-600">
+                    Duration
+                  </p>
+                  <p className="text-gray-800 font-medium">
+                    {selectedRequest.duration}
+                  </p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-xs font-semibold text-gray-600">Reason</p>
+                  <p className="text-gray-800">{selectedRequest.reason}</p>
+                </div>
+                {selectedRequest.attachment && (
+                  <div className="col-span-2">
+                    <p className="text-xs font-semibold text-gray-600">
+                      Attachment
+                    </p>
+                    <p className="text-purple-700">
+                      {selectedRequest.attachment.name}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Remarks input */}
+              <div>
+                <label className="text-xs font-semibold text-gray-700">
+                  Remarks (optional)
+                </label>
+                <textarea
+                  value={remarks}
+                  onChange={(e) => setRemarks(e.target.value)}
+                  placeholder="Enter remarks..."
+                  className="w-full mt-2 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-indigo-500 focus:bg-white text-gray-800 text-sm"
+                />
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={() => handleDecision("Approved")}
+                  className="flex-1 bg-green-500 text-white p-3 rounded-xl font-medium hover:bg-green-600 transition-colors"
+                >
+                  Approve
+                </button>
+                <button
+                  onClick={() => handleDecision("Rejected")}
+                  className="flex-1 bg-red-500 text-white p-3 rounded-xl font-medium hover:bg-red-600 transition-colors"
+                >
+                  Reject
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-gray-500 italic">
+              Select a request to view details.
+            </p>
+          )}
+        </div>
+
         <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div
-                className={`p-2 ${
-                  isEditMode ? "bg-red-100" : "bg-indigo-100"
-                } rounded-lg`}
-              >
-                {isEditMode ? (
-                  <Edit className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
-                ) : (
-                  <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
-                )}
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
-                {isEditMode ? "Edit Request" : "Create New Request"}
-              </h3>
-            </div>
-            {isEditMode && (
-              <button
-                onClick={resetForm}
-                className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-              >
-                <X className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
-            )}
-          </div>
-
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Agent Name *
-              </label>
-              <input
-                type="text"
-                value={formData.agentName}
-                onChange={(e) => handleInputChange("agentName", e.target.value)}
-                placeholder="Enter your name"
-                className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Supervisor/Team Leader *
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-red-500" />
-                <input
-                  type="text"
-                  value={formData.supervisor}
-                  onChange={(e) =>
-                    handleInputChange("supervisor", e.target.value)
-                  }
-                  placeholder="Enter supervisor's name"
-                  className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Request Type *
-                </label>
-                <select
-                  value={formData.requestType}
-                  onChange={(e) =>
-                    handleInputChange("requestType", e.target.value)
-                  }
-                  className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-                >
-                  <option value="Overtime">Overtime</option>
-                  <option value="Undertime">Undertime</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Date *
-                </label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-red-500 z-10" />
-                  <input
-                    type="date"
-                    value={formData.dateInput}
-                    onChange={(e) =>
-                      handleInputChange("dateInput", e.target.value)
-                    }
-                    // Binagong Bahagi
-                    min={new Date().toISOString().split("T")[0]}
-                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Start Time *
-                </label>
-                <div className="relative">
-                  <Clock className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-red-500 z-10" />
-                  <input
-                    type="time"
-                    value={formData.startTime}
-                    onChange={(e) =>
-                      handleInputChange("startTime", e.target.value)
-                    }
-                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  End Time *
-                </label>
-                <div className="relative">
-                  <Clock className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-red-500 z-10" />
-                  <input
-                    type="time"
-                    value={formData.endTime}
-                    onChange={(e) =>
-                      handleInputChange("endTime", e.target.value)
-                    }
-                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Duration Display */}
-            {formData.duration && (
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Duration (Auto-calculated)
-                </label>
-                <div className="p-3 sm:p-4 bg-blue-50 border-2 border-blue-200 rounded-2xl">
-                  <p className="text-blue-700 font-semibold text-sm sm:text-base">
-                    {formData.duration}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Reason *
-              </label>
-              <textarea
-                value={formData.reason}
-                onChange={(e) => handleInputChange("reason", e.target.value)}
-                placeholder="Explain the reason for your request..."
-                className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 resize-none text-sm sm:text-base"
-              ></textarea>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Choose File
-              </label>
-              <div
-                className={`relative border-2 border-dashed rounded-2xl p-4 transition-all duration-300 ${
-                  isDragOver
-                    ? "border-red-400 bg-red-50"
-                    : selectedFile
-                    ? "border-green-400 bg-green-50"
-                    : "border-gray-300 bg-gray-50/30"
-                }`}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-              >
-                <input
-                  type="file"
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  onChange={(e) => handleFileUpload(e.target.files[0])}
-                />
-                <div className="text-center">
-                  {selectedFile ? (
-                    <div className="flex items-center justify-center gap-2 sm:gap-3">
-                      <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" />
-                      <div>
-                        <p className="font-medium text-green-700 text-xs sm:text-sm">
-                          {selectedFile.name}
-                        </p>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedFile(null);
-                          }}
-                          className="text-red-500 hover:text-red-700 text-xs"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-600 font-medium text-xs sm:text-sm">
-                        Drop file or{" "}
-                        <span className="text-red-600">browse</span>
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">Max 10MB</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={handleSubmit}
-              className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all duration-300 font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
-            >
-              {isEditMode ? "Update Request" : "Submit Request"}
-            </button>
-          </div>
-        </div>
-
-        <div class="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
-          <div class="flex items-center justify-between mb-6">
-            <div class="flex items-center gap-3">
-              <div class="p-2 bg-blue-100 rounded-lg">
-                <FileText class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-              </div>
-              <h3 class="text-xl sm:text-2xl font-bold text-gray-800">
                 Active Requests
               </h3>
             </div>
-            <span class="bg-blue-100 text-blue-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
+            <span className="bg-blue-100 text-blue-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
               {requests.length} Active
             </span>
           </div>
 
           {requests.length > 0 ? (
-            <div class="space-y-4 overflow-y-auto max-h-200 pr-2">
+            <div className="space-y-4 overflow-y-auto max-h-96 pr-2">
               {requests.map((req) => (
                 <div
-                  key={req._id}
-                  class="group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border border-gray-100"
+                  key={`${req._id}-${req.requestType}`}
+                  onClick={() => setSelectedRequest(req)}
+                  className="cursor-pointer group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border border-gray-100"
                 >
-                  <div class="flex flex-col sm:flex-row justify-between items-start mb-4">
-                    <div class="flex items-start gap-3 sm:gap-4">
-                      <div class="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
-                        <Clock class="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
+                  <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
+                    <div className="flex items-start gap-3 sm:gap-4">
+                      <div className="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
+                        <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
                       </div>
-                      <div class="flex-1">
-                        <h4 class="text-base sm:text-lg font-bold text-gray-800 mb-2 group-hover:text-indigo-600 transition-colors">
+                      <div className="flex-1">
+                        <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-2 group-hover:text-indigo-600 transition-colors">
                           {req.requestType} Request
                         </h4>
-                        <div class="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
-                          <span class="text-xs text-gray-500">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
+                          <span className="text-xs text-gray-500">
                             Filed: {formatDisplayDate(req.date)}
                           </span>
-                          <span class="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
                             {req.status}
                           </span>
                         </div>
@@ -708,61 +638,64 @@ const TeamLeaderAgentRequest = () => {
                     </div>
                   </div>
 
-                  <div class="space-y-3 mb-4">
-                    <p class="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                      <User class="w-3 h-3 sm:w-4 sm:h-4" />
-                      Agent: <span class="font-medium">{req.agentName}</span>
+                  <div className="space-y-3 mb-4">
+                    <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
+                      <User className="w-3 h-3 sm:w-4 sm:h-4" />
+                      Agent:{" "}
+                      <span className="font-medium">{req.agentName}</span>
                     </p>
-                    <p class="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                      <ChevronDown class="w-3 h-3 sm:w-4 sm:h-4" />
+                    <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
+                      <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
                       Supervisor:{" "}
-                      <span class="font-medium">{req.supervisor}</span>
+                      <span className="font-medium">{req.supervisor}</span>
                     </p>
 
-                    <div class="bg-blue-50 rounded-xl p-3 sm:p-4 border-l-4 border-blue-500">
-                      <div class="grid grid-cols-2 gap-4 mb-2">
+                    <div className="bg-blue-50 rounded-xl p-3 sm:p-4 border-l-4 border-blue-500">
+                      <div className="grid grid-cols-2 gap-4 mb-2">
                         <div>
-                          <p class="text-xs text-blue-600 font-semibold">
+                          <p className="text-xs text-blue-600 font-semibold">
                             Start Time
                           </p>
-                          <p class="text-sm text-blue-800">
+                          <p className="text-sm text-blue-800">
                             {formatDisplayTime(req.startTime)}
                           </p>
                         </div>
                         <div>
-                          <p class="text-xs text-blue-600 font-semibold">
+                          <p className="text-xs text-blue-600 font-semibold">
                             End Time
                           </p>
-                          <p class="text-sm text-blue-800">
+                          <p className="text-sm text-blue-800">
                             {formatDisplayTime(req.endTime)}
                           </p>
                         </div>
                       </div>
                       <div>
-                        <p class="text-xs text-blue-600 font-semibold">
+                        <p className="text-xs text-blue-600 font-semibold">
                           Duration
                         </p>
-                        <p class="text-sm text-blue-800 font-medium">
+                        <p className="text-sm text-blue-800 font-medium">
                           {req.duration}
                         </p>
                       </div>
                     </div>
 
-                    <div class="bg-gray-50 rounded-xl p-3 sm:p-4 border-l-4 border-red-500">
-                      <p class="text-xs sm:text-sm text-gray-700">
-                        <span class="font-semibold text-gray-800">Reason:</span>{" "}
+                    <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border-l-4 border-red-500">
+                      <p className="text-xs sm:text-sm text-gray-700">
+                        <span className="font-semibold text-gray-800">
+                          Reason:
+                        </span>{" "}
                         {req.reason}
                       </p>
                     </div>
 
                     {req.attachment && (
-                      <div class="bg-purple-50 rounded-xl p-3 sm:p-4 border-l-4 border-purple-500">
-                        <p class="text-xs sm:text-sm text-gray-700 flex items-center gap-2">
-                          <FileText class="w-4 h-4 text-purple-600" />
-                          <span class="font-semibold text-gray-800">
+                      <div className="bg-purple-50 rounded-xl p-3 sm:p-4 border-l-4 border-purple-500">
+                        <p className="text-xs sm:text-sm text-gray-700 flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-purple-600" />
+                          <span className="font-semibold text-gray-800">
                             Attachment:
                           </span>
-                          <span class="text-purple-700">
+                          <span className="text-purple-700">
                             {req.attachment.name}
                           </span>
                         </p>
@@ -770,16 +703,22 @@ const TeamLeaderAgentRequest = () => {
                     )}
                   </div>
 
-                  <div class="flex gap-3">
+                  <div className="flex gap-3">
                     <button
-                      onClick={() => handleCancelClick(req._id)}
-                      class="flex-1 bg-white border-2 border-red-500 text-red-600 p-2 sm:p-3 rounded-xl hover:bg-red-50 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCancelClick(req._id);
+                      }}
+                      className="flex-1 bg-white border-2 border-red-500 text-red-600 p-2 sm:p-3 rounded-xl hover:bg-red-50 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
                     >
                       Cancel
                     </button>
                     <button
-                      onClick={() => handleEdit(req)}
-                      class="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit(req);
+                      }}
+                      className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
                     >
                       Edit
                     </button>
@@ -788,7 +727,7 @@ const TeamLeaderAgentRequest = () => {
               ))}
             </div>
           ) : (
-            <div class="flex items-center justify-center py-10 text-gray-500 italic">
+            <div className="flex items-center justify-center py-10 text-gray-500 italic">
               {isLoading ? "Loading requests..." : "No active requests found."}
             </div>
           )}
@@ -832,7 +771,6 @@ const TeamLeaderAgentRequest = () => {
                   <th className="text-left p-4 font-semibold text-gray-700">
                     Supervisor
                   </th>
-                  {/* BAGONG LUGAR para sa Remarks */}
                   <th className="text-left p-4 font-semibold text-gray-700">
                     Remarks
                   </th>
@@ -841,7 +779,7 @@ const TeamLeaderAgentRequest = () => {
               <tbody>
                 {requestHistory.map((req) => (
                   <tr
-                    key={req._id}
+                    key={`${req._id}-${req.requestType}`}
                     className="border-b border-gray-100 hover:bg-gray-50"
                   >
                     <td className="p-4 text-sm text-gray-600">
@@ -878,7 +816,6 @@ const TeamLeaderAgentRequest = () => {
                     <td className="p-4 text-sm text-gray-600">
                       {req.supervisor}
                     </td>
-                    {/* BAGONG LUGAR para sa Remarks */}
                     <td className="p-4 text-sm text-gray-600">
                       {req.remarks || "—"}
                     </td>
@@ -897,4 +834,4 @@ const TeamLeaderAgentRequest = () => {
   );
 };
 
-export default TeamLeaderAgentRequest;
+export default AdminAgentRequest;

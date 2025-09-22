@@ -52,14 +52,16 @@ const CustomCollapse = ({
 
         {/* Arrow always visible */}
         <ChevronDown
-          className={`w-4 h-4 transition-transform duration-300 ${open ? "rotate-180" : "rotate-0"
-            }`}
+          className={`w-4 h-4 transition-transform duration-300 ${
+            open ? "rotate-180" : "rotate-0"
+          }`}
         />
       </button>
 
       <div
-        className={`flex flex-col overflow-hidden transition-all duration-300 ${!isCollapsed && "pl-3"
-          } ${open ? "max-h-screen mt-1" : "max-h-0"}`}
+        className={`flex flex-col overflow-hidden transition-all duration-300 ${
+          !isCollapsed && "pl-3"
+        } ${open ? "max-h-screen mt-1" : "max-h-0"}`}
       >
         {children}
       </div>
@@ -72,7 +74,8 @@ const SidebarLink = ({ to, icon: Icon, label, isCollapsed }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>
-      `flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-200 ${isActive ? "bg-[#571A1A] text-white" : "text-gray-700 hover:bg-gray-100"
+      `flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
+        isActive ? "bg-[#571A1A] text-white" : "text-gray-700 hover:bg-gray-100"
       }`
     }
   >
@@ -103,12 +106,6 @@ const AgentSidebar = ({ isCollapsed }) => (
       isCollapsed={isCollapsed}
     />
     {/* ➕ New Employee Request Link */}
-    <SidebarLink
-      to="/agent/request"
-      icon={FileText}
-      label="Employee Request"
-      isCollapsed={isCollapsed}
-    />
   </SidebarItemGroup>
 );
 
@@ -315,6 +312,12 @@ const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       isCollapsed={isCollapsed}
     />
     <SidebarLink
+      to="/admin/agentrequest"
+      icon={BookPlus}
+      label="Agent Request"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
       to="/admin/announcement"
       icon={Megaphone}
       label="Announcement"
@@ -363,11 +366,12 @@ export const Sidebar = ({ isCollapsed }) => {
 
   return (
     <aside
-      className={`flex flex-col h-full justify-between bg-white shadow-sm transition-all duration-300 overflow-y-auto ${isCollapsed ? "w-16" : "w-64"
-        }`}
+      className={`flex flex-col h-full justify-between bg-white shadow-sm transition-all duration-300 overflow-y-auto ${
+        isCollapsed ? "w-16" : "w-64"
+      }`}
     >
       <Side collapsed={isCollapsed} className="[&>div]:dark:!bg-white">
-        <SidebarItems >{renderSidebar()}</SidebarItems>
+        <SidebarItems>{renderSidebar()}</SidebarItems>
       </Side>
 
       {/* Shift Schedule only for Agent */}
