@@ -64,25 +64,28 @@ const Topbar = ({ toggleSidebar }) => {
       {/* Left Section */}
       <div className="flex items-center">
         <img src={trackio} alt="TRACKIO" className="w-45 h-auto" />
-        <button onClick={toggleSidebar} className="ml-6">
+        <button onClick={toggleSidebar} className="hidden md:block ml-6">
           <Menu className="w-5 h-5" />
         </button>
       </div>
 
       {/* Right Section */}
-      <div className="flex items-center gap-3 relative" ref={dropdownRef}>
+      <div
+        className="flex items-center gap-0 md:gap-2 relative"
+        ref={dropdownRef}
+      >
         <img src={telex} alt="TELEX" className="w-12 h-auto" />
-        <div className="flex flex-col">
+        <div className="hidden sm:flex flex-col">
           <span className="font-bold">{user?.name || "TELEX"}</span>
           <span className="text-sm">
-            {user?.role?.replace("-", " ") || "Employee Account"}
+            {user?.role?.replace("-", " ").toUpperCase()}
           </span>
         </div>
 
         {/* Dropdown Toggle */}
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="ml-2 p-2 rounded hover:bg-[#6f2a2a] transition"
+          className="p-2 rounded hover:bg-[#6f2a2a] hover:[&>*]:text-white cursor-pointer"
           aria-label="Open Account Dropdown"
         >
           <ChevronDown className="w-5 h-5" />
