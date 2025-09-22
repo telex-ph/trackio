@@ -1,655 +1,701 @@
-import React, { useState, useMemo, useEffect, memo } from "react";
-import axios from "axios";
+import React, { useState, useEffect, useRef, memo } from "react";
 import {
+  Users,
   Calendar,
   Clock,
-  Upload,
-  X,
-  Plus,
-  Bell,
+  TrendingUp,
+  TrendingDown,
+  Target,
+  Award,
+  AlertTriangle,
+  Filter,
+  Download,
+  RefreshCw,
+  Eye,
   User,
-  FileText,
-  ChevronDown,
-  Edit,
+  CheckCircle,
+  XCircle,
+  Timer,
 } from "lucide-react";
+import Chart from "chart.js/auto";
 import Table from "../../components/Table";
-import { DateTime } from "luxon";
-// Corrected to import axios directly, as 'api' seems to be a custom wrapper
-// that might be causing issues. Using axios directly is clearer for this example.
-// If 'api' is necessary, ensure its base URL is set correctly.
-// import api from "../../utils/axios";
 
-// Memoized component for display, though not strictly needed here
-const TimeBox = memo(({ value, label }) => (
-  <span className="text-center">
-    <h1 className="bg-white border-light text-light rounded-md">{value}</h1>
-    <span className="text-light">{label}</span>
-  </span>
+const StatCard = memo(({ icon: Icon, title, value, change, changeType, color }) => (
+  <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-lg p-6 border border-white/20 hover:shadow-xl transition-all duration-300">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className={`p-3 ${color} rounded-lg`}>
+          <Icon className="w-6 h-6 text-white" />
+        </div>
+        <div>
+          <p className="text-sm text-gray-600 font-medium">{title}</p>
+          <p className="text-2xl font-bold text-gray-800">{value}</p>
+        </div>
+      </div>
+      {change && (
+        <div className={`flex items-center gap-1 ${changeType === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+          {changeType === 'up' ? (
+            <TrendingUp className="w-4 h-4" />
+          ) : (
+            <TrendingDown className="w-4 h-4" />
+          )}
+          <span className="text-sm font-medium">{change}</span>
+        </div>
+      )}
+    </div>
+  </div>
 ));
 
-const TeamLeaderAnnouncement = () => {
-  const [announcements, setAnnouncements] = useState([]);
-  const [announcementHistory, setAnnouncementHistory] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+const TeamLeaderPerformance = () => {
+  const [selectedPeriod, setSelectedPeriod] = useState("week");
+  const [selectedTeam, setSelectedTeam] = useState("all");
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Chart refs
+  const attendanceChartRef = useRef(null);
+  const performanceChartRef = useRef(null);
+  const trendsChartRef = useRef(null);
+  const departmentChartRef = useRef(null);
+  
+  // Chart instances
+  const attendanceChartInstance = useRef(null);
+  const performanceChartInstance = useRef(null);
+  const trendsChartInstance = useRef(null);
+  const departmentChartInstance = useRef(null);
 
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-
-  const [formData, setFormData] = useState({
-    title: "",
-    dateTime: "", // Combined date and time as a single ISO string
-    postedBy: "",
-    agenda: "",
-    priority: "Medium",
-    // These are for the input fields only, not sent to the backend
-    dateInput: "",
-    timeInput: "",
+  // Mock data
+  const [dashboardData] = useState({
+    totalEmployees: 156,
+    presentToday: 142,
+    absentToday: 8,
+    lateToday: 6,
+    attendanceRate: 91.0,
+    averageHours: 8.2,
+    overtimeHours: 124,
+    leaveRequests: 12
   });
 
-  const fetchAnnouncements = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      // Use the new, simplified GET endpoint
-      const response = await axios.get("http://localhost:3000/api/announcements");
-      const active = response.data.filter((a) => a.status !== "Completed");
-      const history = response.data.filter((a) => a.status === "Completed");
+  const [teamMembers] = useState([
+    {
+      id: 1,
+      name: "Juan Dela Cruz",
+      position: "Senior Developer",
+      department: "Development",
+      status: "Present",
+      timeIn: "08:00",
+      timeOut: "17:00",
+      hoursWorked: 8.0,
+      overtimeHours: 1.5,
+      attendanceRate: 95.2,
+      lateCount: 2,
+      absentCount: 1,
+      leaveBalance: 12
+    },
+    {
+      id: 2,
+      name: "Maria Santos",
+      position: "QA Engineer",
+      department: "Quality Assurance", 
+      status: "Late",
+      timeIn: "08:30",
+      timeOut: "17:30",
+      hoursWorked: 8.0,
+      overtimeHours: 0.5,
+      attendanceRate: 88.7,
+      lateCount: 5,
+      absentCount: 2,
+      leaveBalance: 8
+    },
+    {
+      id: 3,
+      name: "Pedro Garcia",
+      position: "Project Manager",
+      department: "Management",
+      status: "Absent",
+      timeIn: "-",
+      timeOut: "-",
+      hoursWorked: 0,
+      overtimeHours: 0,
+      attendanceRate: 92.1,
+      lateCount: 1,
+      absentCount: 3,
+      leaveBalance: 15
+    },
+    {
+      id: 4,
+      name: "Ana Rodriguez",
+      position: "UI/UX Designer",
+      department: "Design",
+      status: "Present",
+      timeIn: "07:45",
+      timeOut: "16:45",
+      hoursWorked: 8.0,
+      overtimeHours: 2.0,
+      attendanceRate: 96.8,
+      lateCount: 1,
+      absentCount: 0,
+      leaveBalance: 18
+    },
+    {
+      id: 5,
+      name: "Carlos Mendoza",
+      position: "DevOps Engineer",
+      department: "Development",
+      status: "Present",
+      timeIn: "08:15",
+      timeOut: "17:15",
+      hoursWorked: 8.0,
+      overtimeHours: 1.0,
+      attendanceRate: 89.3,
+      lateCount: 4,
+      absentCount: 2,
+      leaveBalance: 10
+    }
+  ]);
 
-      setAnnouncements(active);
-      setAnnouncementHistory(history);
-      setIsLoading(false);
-    } catch (err) {
-      console.error("Error fetching announcements:", err);
-      setError("Failed to load announcements. Please check server connection.");
-      setIsLoading(false);
+  const initializeCharts = () => {
+    // Destroy existing charts
+    if (attendanceChartInstance.current) {
+      attendanceChartInstance.current.destroy();
+    }
+    if (performanceChartInstance.current) {
+      performanceChartInstance.current.destroy();
+    }
+    if (trendsChartInstance.current) {
+      trendsChartInstance.current.destroy();
+    }
+    if (departmentChartInstance.current) {
+      departmentChartInstance.current.destroy();
+    }
+
+    // Attendance Overview Chart (Doughnut)
+    if (attendanceChartRef.current) {
+      const ctx = attendanceChartRef.current.getContext('2d');
+      attendanceChartInstance.current = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Present', 'Late', 'Absent', 'On Leave'],
+          datasets: [{
+            data: [142, 6, 8, 12],
+            backgroundColor: [
+              '#10B981', // Green for Present
+              '#F59E0B', // Yellow for Late  
+              '#EF4444', // Red for Absent
+              '#6366F1'  // Blue for On Leave
+            ],
+            borderWidth: 0,
+            cutout: '70%'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 20,
+                usePointStyle: true
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Performance Trends Chart (Line)
+    if (performanceChartRef.current) {
+      const ctx = performanceChartRef.current.getContext('2d');
+      performanceChartInstance.current = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+          datasets: [
+            {
+              label: 'Attendance Rate (%)',
+              data: [88, 92, 87, 94, 91, 89],
+              borderColor: '#10B981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'Performance Score',
+              data: [85, 88, 86, 92, 90, 87],
+              borderColor: '#3B82F6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              tension: 0.4,
+              fill: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: false,
+              min: 80,
+              max: 100
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top'
+            }
+          }
+        }
+      });
+    }
+
+    // Weekly Attendance Trends (Bar)
+    if (trendsChartRef.current) {
+      const ctx = trendsChartRef.current.getContext('2d');
+      trendsChartInstance.current = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          datasets: [
+            {
+              label: 'Present',
+              data: [145, 148, 144, 142, 140, 82, 45],
+              backgroundColor: '#10B981'
+            },
+            {
+              label: 'Late',
+              data: [8, 5, 9, 6, 12, 4, 2],
+              backgroundColor: '#F59E0B'
+            },
+            {
+              label: 'Absent',
+              data: [3, 3, 3, 8, 4, 2, 1],
+              backgroundColor: '#EF4444'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              stacked: true
+            },
+            y: {
+              stacked: true
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top'
+            }
+          }
+        }
+      });
+    }
+
+    // Department Performance (Radar)
+    if (departmentChartRef.current) {
+      const ctx = departmentChartRef.current.getContext('2d');
+      departmentChartInstance.current = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: ['Attendance', 'Punctuality', 'Performance', 'Overtime', 'Leave Usage'],
+          datasets: [
+            {
+              label: 'Development',
+              data: [92, 88, 94, 85, 78],
+              borderColor: '#3B82F6',
+              backgroundColor: 'rgba(59, 130, 246, 0.2)',
+              pointBackgroundColor: '#3B82F6'
+            },
+            {
+              label: 'Design',
+              data: [96, 94, 90, 92, 85],
+              borderColor: '#10B981',
+              backgroundColor: 'rgba(16, 185, 129, 0.2)',
+              pointBackgroundColor: '#10B981'
+            },
+            {
+              label: 'QA',
+              data: [89, 85, 88, 75, 82],
+              borderColor: '#F59E0B',
+              backgroundColor: 'rgba(245, 158, 11, 0.2)',
+              pointBackgroundColor: '#F59E0B'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              beginAtZero: true,
+              max: 100
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
     }
   };
 
   useEffect(() => {
-    fetchAnnouncements();
-  }, []);
-
-  const handleInputChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleFileUpload = (file) => {
-    if (file && file.size <= 10 * 1024 * 1024) {
-      setSelectedFile(file);
-    } else {
-      alert("File size must be less than 10MB");
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleFileUpload(file);
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragOver(false);
-  };
-
-  const handleSubmit = async () => {
-    // Basic check for empty fields
-    if (
-      !formData.title ||
-      !formData.dateInput ||
-      !formData.timeInput ||
-      !formData.postedBy ||
-      !formData.agenda
-    ) {
-      alert("Please fill in all required fields");
-      return;
-    }
-
-    // Combine date and time to create a Luxon DateTime object
-    const combinedDateTime = DateTime.fromISO(
-      `${formData.dateInput}T${formData.timeInput}`
-    );
-
-    // Validate the combined date and time
-    if (!combinedDateTime.isValid) {
-      alert("Invalid date or time. Please check your input.");
-      return;
-    }
-
-    try {
-      const payload = {
-        title: formData.title,
-        postedBy: formData.postedBy,
-        agenda: formData.agenda,
-        priority: formData.priority,
-        // Use the validated ISO string from Luxon
-        dateTime: combinedDateTime.toISO(),
-        // Add a default status for new announcements
-        status: "Scheduled",
-      };
-
-      if (isEditMode) {
-        // Use the PUT endpoint for updating
-        await axios.put(
-          `http://localhost:3000/api/announcements/${editingId}`,
-          payload
-        );
-      } else {
-        // Use the POST endpoint for creating
-        await axios.post("http://localhost:3000/api/announcements", payload);
+    initializeCharts();
+    
+    return () => {
+      // Cleanup charts on unmount
+      if (attendanceChartInstance.current) {
+        attendanceChartInstance.current.destroy();
       }
-
-      await fetchAnnouncements();
-
-      setFormData({
-        title: "",
-        dateTime: "",
-        postedBy: "",
-        agenda: "",
-        priority: "Medium",
-        dateInput: "",
-        timeInput: "",
-      });
-      setSelectedFile(null);
-      setIsEditMode(false);
-      setEditingId(null);
-
-      alert(`Announcement ${isEditMode ? "updated" : "created"} successfully!`);
-    } catch (error) {
-      console.error("Error submitting announcement:", error);
-      alert(`Failed to ${isEditMode ? "update" : "create"} announcement. Please try again.`);
-    }
-  };
-
-  const handleEdit = (announcement) => {
-    setIsEditMode(true);
-    setEditingId(announcement._id);
-
-    // Parse the ISO string to populate the date and time inputs
-    const dt = DateTime.fromISO(announcement.dateTime);
-    setFormData({
-      title: announcement.title,
-      dateTime: announcement.dateTime,
-      postedBy: announcement.postedBy,
-      agenda: announcement.agenda,
-      priority: announcement.priority,
-      dateInput: dt.toISODate(),
-      timeInput: dt.toFormat("HH:mm"),
-    });
-    setSelectedFile(null);
-  };
-
-  const handleCancel = async (id) => {
-    if (window.confirm("Are you sure you want to cancel this announcement?")) {
-      try {
-        await axios.delete(`http://localhost:3000/api/announcements/${id}`);
-        await fetchAnnouncements();
-        alert("Announcement cancelled successfully!");
-      } catch (error) {
-        console.error("Error cancelling announcement:", error);
-        alert("Failed to cancel announcement. Please try again.");
+      if (performanceChartInstance.current) {
+        performanceChartInstance.current.destroy();
       }
-    }
-  };
+      if (trendsChartInstance.current) {
+        trendsChartInstance.current.destroy();
+      }
+      if (departmentChartInstance.current) {
+        departmentChartInstance.current.destroy();
+      }
+    };
+  }, [selectedPeriod]);
 
-  const cancelEdit = () => {
-    setIsEditMode(false);
-    setEditingId(null);
-    setFormData({
-      title: "",
-      dateTime: "",
-      postedBy: "",
-      agenda: "",
-      priority: "Medium",
-      dateInput: "",
-      timeInput: "",
-    });
-    setSelectedFile(null);
-  };
-
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case "High":
-        return "bg-red-100 text-red-700 border-red-200";
-      case "Medium":
-        return "bg-yellow-100 text-yellow-700 border-yellow-200";
-      case "Low":
-        return "bg-green-100 text-green-700 border-green-200";
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Present':
+        return 'bg-green-100 text-green-700 border-green-200';
+      case 'Late':
+        return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'Absent':
+        return 'bg-red-100 text-red-700 border-red-200';
       default:
-        return "bg-gray-100 text-gray-700 border-gray-200";
+        return 'bg-gray-100 text-gray-700 border-gray-200';
     }
   };
 
-  const formatDisplayDate = (isoDateStr) => {
-    if (!isoDateStr) return "";
-    const date = DateTime.fromISO(isoDateStr);
-    return date.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY);
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'Present':
+        return <CheckCircle className="w-4 h-4 text-green-600" />;
+      case 'Late':
+        return <Timer className="w-4 h-4 text-yellow-600" />;
+      case 'Absent':
+        return <XCircle className="w-4 h-4 text-red-600" />;
+      default:
+        return <User className="w-4 h-4 text-gray-600" />;
+    }
   };
 
-  const formatDisplayTime = (isoDateStr) => {
-    if (!isoDateStr) return "";
-    const time = DateTime.fromISO(isoDateStr);
-    return time.toLocaleString(DateTime.TIME_SIMPLE);
+  const columns = [
+    {
+      headerName: "EMPLOYEE",
+      field: "name",
+      sortable: true,
+      filter: true,
+      width: 200,
+      cellRenderer: (params) => {
+        return `
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+              <span class="text-indigo-600 font-semibold text-sm">${params.data.name.charAt(0)}</span>
+            </div>
+            <div>
+              <div class="font-semibold text-gray-800">${params.data.name}</div>
+              <div class="text-sm text-gray-500">${params.data.position}</div>
+            </div>
+          </div>
+        `;
+      }
+    },
+    {
+      headerName: "DEPARTMENT",
+      field: "department",
+      sortable: true,
+      filter: true,
+      width: 150
+    },
+    {
+      headerName: "STATUS",
+      field: "status",
+      sortable: true,
+      filter: true,
+      width: 120,
+      cellRenderer: (params) => {
+        const statusClass = getStatusColor(params.value);
+        return `<span class="px-3 py-1 rounded-full text-sm font-medium border ${statusClass}">${params.value}</span>`;
+      }
+    },
+    {
+      headerName: "TIME IN",
+      field: "timeIn",
+      sortable: true,
+      width: 100,
+      cellRenderer: (params) => {
+        return params.value === '-' ? 
+          '<span class="text-gray-400">-</span>' : 
+          `<span class="font-mono text-sm">${params.value}</span>`;
+      }
+    },
+    {
+      headerName: "TIME OUT",
+      field: "timeOut",
+      sortable: true,
+      width: 100,
+      cellRenderer: (params) => {
+        return params.value === '-' ? 
+          '<span class="text-gray-400">-</span>' : 
+          `<span class="font-mono text-sm">${params.value}</span>`;
+      }
+    },
+    {
+      headerName: "HOURS WORKED",
+      field: "hoursWorked",
+      sortable: true,
+      width: 130,
+      cellRenderer: (params) => {
+        return params.value === 0 ? 
+          '<span class="text-gray-400">0.0h</span>' : 
+          `<span class="font-semibold">${params.value}h</span>`;
+      }
+    },
+    {
+      headerName: "ATTENDANCE RATE",
+      field: "attendanceRate",
+      sortable: true,
+      width: 150,
+      cellRenderer: (params) => {
+        const rate = params.value;
+        const color = rate >= 95 ? 'text-green-600' : rate >= 85 ? 'text-yellow-600' : 'text-red-600';
+        return `<span class="font-semibold ${color}">${rate}%</span>`;
+      }
+    },
+    {
+      headerName: "LATE COUNT",
+      field: "lateCount",
+      sortable: true,
+      width: 120,
+      cellRenderer: (params) => {
+        const count = params.value;
+        const color = count === 0 ? 'text-green-600' : count <= 2 ? 'text-yellow-600' : 'text-red-600';
+        return `<span class="font-semibold ${color}">${count}</span>`;
+      }
+    },
+    {
+      headerName: "ACTIONS",
+      field: "actions",
+      sortable: false,
+      filter: false,
+      width: 120,
+      cellRenderer: (params) => {
+        return `
+          <div class="flex gap-2">
+            <button class="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors" title="View Details">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+              </svg>
+            </button>
+          </div>
+        `;
+      }
+    }
+  ];
+
+  const handleRefresh = () => {
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      // Reinitialize charts with new data
+      initializeCharts();
+    }, 1000);
   };
 
-  const formatTimeAgo = (isoDateStr) => {
-    if (!isoDateStr) return "";
-    const combinedDateTime = DateTime.fromISO(isoDateStr);
-    if (!combinedDateTime.isValid) {
-      return "";
-    }
-    const diff = DateTime.local()
-      .diff(combinedDateTime, ["minutes", "hours", "days"])
-      .toObject();
-
-    if (diff.days > 0) {
-      return `${Math.floor(diff.days)} day${
-        Math.floor(diff.days) > 1 ? "s" : ""
-      } ago`;
-    }
-    if (diff.hours > 0) {
-      return `${Math.floor(diff.hours)} hour${
-        Math.floor(diff.hours) > 1 ? "s" : ""
-      } ago`;
-    }
-    if (diff.minutes > 0) {
-      return `${Math.floor(diff.minutes)} minute${
-        Math.floor(diff.minutes) > 1 ? "s" : ""
-      } ago`;
-    }
-    return "just now";
+  const handleExport = () => {
+    // Mock export functionality
+    const csvContent = teamMembers.map(member => 
+      `${member.name},${member.department},${member.status},${member.timeIn},${member.timeOut},${member.hoursWorked},${member.attendanceRate}%`
+    ).join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'attendance_report.csv';
+    a.click();
   };
-
-  const columns = useMemo(
-    () => [
-      {
-        headerName: "DATE",
-        field: "dateTime",
-        sortable: true,
-        filter: true,
-        width: 150,
-        cellRenderer: (params) => formatDisplayDate(params.value),
-      },
-      {
-        headerName: "FACILITATOR",
-        field: "postedBy",
-        sortable: true,
-        filter: true,
-        width: 180,
-      },
-      {
-        headerName: "TYPE",
-        field: "title",
-        sortable: true,
-        filter: true,
-        width: 120,
-      },
-      {
-        headerName: "TIME",
-        field: "dateTime",
-        sortable: true,
-        filter: true,
-        width: 120,
-        cellRenderer: (params) => formatDisplayTime(params.value),
-      },
-      {
-        headerName: "AGENDA",
-        field: "agenda",
-        sortable: true,
-        filter: true,
-        width: 300,
-        tooltipField: "agenda",
-      },
-      {
-        headerName: "STATUS",
-        field: "status",
-        sortable: true,
-        filter: true,
-        width: 120,
-        cellRenderer: (params) => {
-          const statusClass =
-            params.value === "Completed"
-              ? "bg-green-100 text-green-700"
-              : "bg-red-100 text-red-600";
-          return `<span class="px-4 py-2 rounded-xl text-sm font-semibold ${statusClass}">${params.value}</span>`;
-        },
-      },
-      {
-        headerName: "REMARKS",
-        field: "remarks",
-        sortable: true,
-        filter: true,
-        width: 300,
-        tooltipField: "remarks",
-      },
-    ],
-    []
-  );
 
   return (
-    <div>
-      <section className="flex flex-col mb-2">
-        <div className="flex items-center gap-1">
-          <h2>Announcement</h2>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      {/* Header */}
+      <section className="flex flex-col mb-8">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-100 rounded-lg">
+            <TrendingUp className="w-6 h-6 text-blue-600" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-800">Team Performance</h2>
         </div>
-        <p className="text-light">Manage and view all company announcements.</p>
+        <p className="text-gray-600 mt-2">Monitor and analyze team attendance and performance metrics</p>
       </section>
 
-      {/* Two-Column Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
-        {/* Create/Edit Announcement */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div
-                className={`p-2 ${
-                  isEditMode ? "bg-red-100" : "bg-indigo-100"
-                } rounded-lg`}
+      {/* Controls */}
+      <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-lg p-6 mb-8 border border-white/20">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-gray-500" />
+              <select
+                value={selectedPeriod}
+                onChange={(e) => setSelectedPeriod(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                {isEditMode ? (
-                  <Edit className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
-                ) : (
-                  <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
-                )}
-              </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
-                {isEditMode ? "Edit Announcement" : "Create New Announcement"}
-              </h3>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="quarter">This Quarter</option>
+              </select>
             </div>
-            {isEditMode && (
-              <button
-                onClick={cancelEdit}
-                className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-gray-500" />
+              <select
+                value={selectedTeam}
+                onChange={(e) => setSelectedTeam(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <X className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
-            )}
+                <option value="all">All Teams</option>
+                <option value="development">Development</option>
+                <option value="design">Design</option>
+                <option value="qa">Quality Assurance</option>
+                <option value="management">Management</option>
+              </select>
+            </div>
           </div>
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Title *
-              </label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => handleInputChange("title", e.target.value)}
-                placeholder="Enter announcement title"
-                className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
-              />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Date *
-                </label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-red-500 z-10" />
-                  <input
-                    type="date"
-                    value={formData.dateInput}
-                    onChange={(e) => handleInputChange("dateInput", e.target.value)}
-                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Time *
-                </label>
-                <div className="relative">
-                  <Clock className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-red-500 z-10" />
-                  <input
-                    type="time"
-                    value={formData.timeInput}
-                    onChange={(e) => handleInputChange("timeInput", e.target.value)}
-                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Posted By *
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-red-500" />
-                  <input
-                    type="text"
-                    value={formData.postedBy}
-                    onChange={(e) => handleInputChange("postedBy", e.target.value)}
-                    placeholder="Your name or department"
-                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Priority
-                </label>
-                <select
-                  value={formData.priority}
-                  onChange={(e) => handleInputChange("priority", e.target.value)}
-                  className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-                >
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
-                </select>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Attachment
-              </label>
-              <div
-                className={`relative border-2 border-dashed rounded-2xl p-4 transition-all duration-300 ${
-                  isDragOver
-                    ? "border-red-400 bg-red-50"
-                    : selectedFile
-                    ? "border-green-400 bg-green-50"
-                    : "border-gray-300 bg-gray-50/30"
-                }`}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-              >
-                <input
-                  type="file"
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  onChange={(e) => handleFileUpload(e.target.files[0])}
-                />
-                <div className="text-center">
-                  {selectedFile ? (
-                    <div className="flex items-center justify-center gap-2 sm:gap-3">
-                      <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" />
-                      <div>
-                        <p className="font-medium text-green-700 text-xs sm:text-sm">
-                          {selectedFile.name}
-                        </p>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedFile(null);
-                          }}
-                          className="text-red-500 hover:text-red-700 text-xs"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-600 font-medium text-xs sm:text-sm">
-                        Drop file or <span className="text-red-600">browse</span>
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">Max 10MB</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Agenda *
-              </label>
-              <textarea
-                value={formData.agenda}
-                onChange={(e) => handleInputChange("agenda", e.target.value)}
-                placeholder="Describe the announcement details..."
-                className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 resize-none text-sm sm:text-base"
-              ></textarea>
-            </div>
+          <div className="flex items-center gap-3">
             <button
-              onClick={handleSubmit}
-              className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all duration-300 font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
-              {isEditMode ? "Update Announcement" : "Create Announcement"}
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Export
             </button>
           </div>
         </div>
+      </div>
 
-        {/* List of Announcements */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-              </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
-                Active Announcements
-              </h3>
-            </div>
-            <span className="bg-blue-100 text-blue-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
-              {announcements.length} Active
-            </span>
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard
+          icon={Users}
+          title="Total Employees"
+          value={dashboardData.totalEmployees}
+          color="bg-blue-600"
+        />
+        <StatCard
+          icon={CheckCircle}
+          title="Present Today"
+          value={dashboardData.presentToday}
+          change="+5.2%"
+          changeType="up"
+          color="bg-green-600"
+        />
+        <StatCard
+          icon={XCircle}
+          title="Absent Today"
+          value={dashboardData.absentToday}
+          change="-2.1%"
+          changeType="down"
+          color="bg-red-600"
+        />
+        <StatCard
+          icon={Timer}
+          title="Average Hours"
+          value={`${dashboardData.averageHours}h`}
+          change="+0.3h"
+          changeType="up"
+          color="bg-purple-600"
+        />
+      </div>
+
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        {/* Attendance Overview */}
+        <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-lg p-6 border border-white/20">
+          <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            Attendance Overview
+          </h3>
+          <div className="h-80">
+            <canvas ref={attendanceChartRef}></canvas>
           </div>
+        </div>
 
-          {isLoading ? (
-            <div className="flex items-center justify-center py-10 text-gray-500 italic">
-              Loading announcements...
-            </div>
-          ) : error ? (
-            <div className="flex items-center justify-center py-10 text-red-500 italic">
-              {error}
-            </div>
-          ) : announcements.length > 0 ? (
-            <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-200px)] sm:max-h-[calc(100vh-150px)] pr-2">
-              {announcements.map((a) => (
-                <div
-                  key={a._id}
-                  className={`group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border ${
-                    editingId === a._id
-                      ? "border-red-300 ring-2 ring-red-100"
-                      : "border-gray-100"
-                  }`}
-                >
-                  <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
-                    <div className="flex items-start gap-3 sm:gap-4">
-                      <div className="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
-                        <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-2 group-hover:text-indigo-600 transition-colors">
-                          {a.title}
-                        </h4>
-                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
-                          <span
-                            className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium border ${getPriorityColor(
-                              a.priority
-                            )}`}
-                          >
-                            {a.priority} Priority
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {formatTimeAgo(a.dateTime)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-3 mb-4">
-                    <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                      <User className="w-3 h-3 sm:w-4 sm:h-4" />
-                      Posted by: <span className="font-medium">{a.postedBy}</span>
-                    </p>
-                    <div className="flex flex-wrap gap-4 sm:gap-6 text-xs sm:text-sm text-gray-700">
-                      <span className="flex items-center gap-2">
-                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
-                        {formatDisplayDate(a.dateTime)}
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
-                        {formatDisplayTime(a.dateTime)}
-                      </span>
-                    </div>
-                    <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border-l-4 border-red-500">
-                      <p className="text-xs sm:text-sm text-gray-700">
-                        <span className="font-semibold text-gray-800">Agenda:</span>{" "}
-                        {a.agenda}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => handleCancel(a._id)}
-                      className="flex-1 bg-white border-2 border-red-500 text-red-600 p-2 sm:p-3 rounded-xl hover:bg-red-50 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => handleEdit(a)}
-                      className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
-                    >
-                      Edit
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex items-center justify-center py-10 text-gray-500 italic">
-              No active announcements found.
-            </div>
-          )}
+        {/* Performance Trends */}
+        <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-lg p-6 border border-white/20">
+          <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+            Performance Trends
+          </h3>
+          <div className="h-80">
+            <canvas ref={performanceChartRef}></canvas>
+          </div>
+        </div>
+
+        {/* Weekly Trends */}
+        <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-lg p-6 border border-white/20">
+          <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+            Weekly Attendance Trends
+          </h3>
+          <div className="h-80">
+            <canvas ref={trendsChartRef}></canvas>
+          </div>
+        </div>
+
+        {/* Department Performance */}
+        <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-lg p-6 border border-white/20">
+          <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+            Department Performance
+          </h3>
+          <div className="h-80">
+            <canvas ref={departmentChartRef}></canvas>
+          </div>
         </div>
       </div>
 
-      {/* Announcement History with Table Component */}
-      <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
-        <h3 className="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-3">
-          <div className="p-2 bg-gray-100 rounded-lg">
-            <Clock className="w-6 h-6 text-gray-600" />
+      {/* Team Members Table */}
+      <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-lg p-8 border border-white/20">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+            Team Members
+          </h3>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Users className="w-4 h-4" />
+            <span>{teamMembers.length} employees</span>
           </div>
-          Announcement History
-        </h3>
+        </div>
 
-        {announcementHistory && announcementHistory.length > 0 ? (
-          <Table
-            data={announcementHistory}
-            columns={columns}
-            pagination={{
-              pageSize: 10,
-            }}
-          />
-        ) : (
-          <div className="flex items-center justify-center py-10 text-gray-500 italic">
-            No announcement history found.
-          </div>
-        )}
+        <Table
+          data={teamMembers}
+          columns={columns}
+          pagination={{
+            pageSize: 10,
+          }}
+        />
       </div>
     </div>
   );
 };
 
-export default TeamLeaderAnnouncement;
+export default TeamLeaderPerformance;

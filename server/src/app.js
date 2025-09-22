@@ -23,7 +23,11 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: ["https://localhost:5173", "https://trackio-frontend.vercel.app"],
+    origin: [
+      "https://localhost:5173",
+      "https://trackio-frontend.vercel.app",
+      "https://www.telextrackio.com",
+    ],
     credentials: true,
   })
 );
