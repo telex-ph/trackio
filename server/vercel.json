@@ -5,5 +5,11 @@
   ],
   "routes": [
     { "src": "/(.*)", "dest": "api/index.js" }
+  ],
+  "crons": [
+    {
+      "path": "/api/absence/add-absentees",
+      "schedule": "0 1 * * *"
+    }
   ]
 }
