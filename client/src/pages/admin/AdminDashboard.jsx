@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Calendar, Settings, Download } from "lucide-react";
-import CompanyAttendanceChart from "../../components/charts/CompanyAttendanceChart";
+import WeeklyAttendanceChart from "../../components/charts/WeeklyAttendanceChart";
 import DepartmentStatusChart from "../../components/charts/DepartmentStatusChart";
 import ProductivityChart from "../../components/charts/ProductivityChart";
 import WorkHoursAnalysisChart from "../../components/charts/WorkHoursAnalysisChart";
@@ -155,7 +155,7 @@ const AdminDashboard = () => {
 
       <main className="grid grid-cols-1 grid-rows-[20rem_20rem_50rem_20rem_20rem_50rem_20rem] lg:grid-cols-3 lg:grid-rows-[25rem_23rem_23rem_23rem] gap-4">
         <section className="lg:col-start-1 lg:col-end-2 lg:row-start-1 lg:row-end-2">
-          <CompanyAttendanceChart />
+          <WeeklyAttendanceChart />
         </section>
 
         <section className="lg:col-start-2 lg:col-end-3 lg:row-start-1 lg:row-end-2">

@@ -68,9 +68,9 @@ const TeamStatusChart = () => {
         <div className="flex items-center space-x-2">
           <PieChart className="w-5 h-5 text-slate-600" />
           <span className="hidden sm:inline font-bold">
-            Employee Distribution by Department
+            Current Team Status
           </span>
-          <span className="sm:hidden">Employee Distribution</span>
+          <span className="sm:hidden">Team Status</span>
         </div>
         <div className="text-xs text-gray-500">Live snapshot</div>
       </div>
