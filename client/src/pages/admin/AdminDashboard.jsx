@@ -7,8 +7,18 @@ import WorkHoursAnalysisChart from "../../components/charts/WorkHoursAnalysisCha
 import ActivityMonitorList from "../../components/lists/ActivityMonitorList";
 import AdminActionsList from "../../components/lists/AdminActionsList";
 import EmployeeDirectoryList from "../../components/lists/EmployeeDirectoryList";
-import StatCardContainer from "../../components/cards/StatCardContainer";
+import StatCards from "../../components/cards/StatCards";
 import EmployeeModal from "../../components/modals/EmployeeModal";
+import {
+  Users,
+  UserCheck,
+  UserX,
+  Clock,
+  Coffee,
+  Utensils,
+  TrendingUp,
+  TrendingDown,
+} from "lucide-react";
 
 const AdminDashboard = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -23,10 +33,85 @@ const AdminDashboard = () => {
   const handleSelectedEmployee = (employee) => {
     setSelectedEmployee(employee);
     setIsEmployeeClicked(true);
-  }
+  };
   const handleModalOnClose = () => {
     setIsEmployeeClicked(false);
-  }
+  };
+
+  const stats = [
+    {
+      key: "totalEmployees",
+      value: 25,
+      title: "Total Employees",
+      subTitle: "Company-wide",
+      icon: (
+        <Users className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-slate-600 bg-slate-100 border-slate-400 border" />
+      ),
+    },
+    {
+      key: "present",
+      value: 20,
+      title: "Present",
+      subTitle: "Currently Working",
+      icon: (
+        <UserCheck className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-emerald-600 bg-emerald-100 border-emerald-400 border" />
+      ),
+    },
+    {
+      key: "absent",
+      value: 3,
+      title: "Absentees",
+      subTitle: "Not Present",
+      icon: (
+        <UserX className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-red-500 bg-red-100 border-red-400 border" />
+      ),
+    },
+    {
+      key: "late",
+      value: 2,
+      title: "Late Arrivals",
+      subTitle: "Late Today",
+      icon: (
+        <Clock className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-amber-600 bg-amber-100 border-amber-400 border" />
+      ),
+    },
+    {
+      key: "onBreak",
+      value: 4,
+      title: "On Break",
+      subTitle: "Currently",
+      icon: (
+        <Coffee className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-blue-600 bg-blue-100 border-blue-400 border" />
+      ),
+    },
+    {
+      key: "onLunch",
+      value: 5,
+      title: "On Lunch",
+      subTitle: "Lunch Break",
+      icon: (
+        <Utensils className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-orange-600 bg-orange-100 border-orange-400 border" />
+      ),
+    },
+    {
+      key: "overtime",
+      value: 1,
+      title: "Overtime",
+      subTitle: "Extra Hours",
+      icon: (
+        <TrendingUp className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-violet-600 bg-violet-100 border-violet-400 border" />
+      ),
+    },
+    {
+      key: "undertime",
+      value: 0,
+      title: "Undertime",
+      subTitle: "Short Hours",
+      icon: (
+        <TrendingDown className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-pink-600 bg-pink-100 border-pink-400 border" />
+      ),
+    },
+  ];
 
   return (
     <div className="min-h-screen">
@@ -66,7 +151,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Enhanced Stats */}
-      <StatCardContainer role="admin"/>
+      <StatCards stats={stats} />
 
       <main className="grid grid-cols-1 grid-rows-[20rem_20rem_50rem_20rem_20rem_50rem_20rem] lg:grid-cols-3 lg:grid-rows-[25rem_23rem_23rem_23rem] gap-4">
         <section className="lg:col-start-1 lg:col-end-2 lg:row-start-1 lg:row-end-2">
@@ -96,36 +181,16 @@ const AdminDashboard = () => {
         <section className="lg:col-start-3 lg:col-end-4 lg:row-start-4 lg:row-end-5">
           <AdminActionsList />
         </section>
-        {/* Admin Quick Actions */}
       </main>
 
-
-      {/* Main Content */}
-      {/* <div className="grid grid-cols-12 gap-4">
-        <div className=" col-span-12 lg:col-span-8 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <CompanyAttendanceChart />
-            <DepartmentStatusChart />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <ProductivityChart />
-            <WorkHoursAnalysisChart />
-          </div>
-
-          <EmployeeDirectoryList onClick={handleSelectedEmployee} />
-        </div>
-
-        <div className="col-span-12 lg:col-span-4 space-y-6">
-          <ActivityMonitorList />
-
-          <AdminActionsList />
-        </div>
-      </div> */}
-
       {/* Employee Detail Modal */}
-      {isEmployeeClicked && <EmployeeModal employee={selectedEmployee} onClose={handleModalOnClose} />}
-    </div >
+      {isEmployeeClicked && (
+        <EmployeeModal
+          employee={selectedEmployee}
+          onClose={handleModalOnClose}
+        />
+      )}
+    </div>
   );
 };
 

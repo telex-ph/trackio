@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Calendar, Eye } from "lucide-react";
-import StatCardContainer from "../../components/cards/StatCardContainer";
+import StatCards from "../../components/cards/StatCards";
 import CompanyAttendanceChart from "../../components/charts/CompanyAttendanceChart";
 import TeamStatusChart from "../../components/charts/TeamStatusChart";
 import ActivityMonitorList from "../../components/lists/ActivityMonitorList";
@@ -8,6 +8,16 @@ import AdminActionsList from "../../components/lists/AdminActionsList";
 import ProductivityChart from "../../components/charts/ProductivityChart";
 import EmployeeDirectoryList from "../../components/lists/EmployeeDirectoryList";
 import EmployeeModal from "../../components/modals/EmployeeModal";
+import {
+  Users,
+  UserCheck,
+  UserX,
+  Clock,
+  Coffee,
+  Utensils,
+  TrendingUp,
+  TrendingDown,
+} from "lucide-react";
 
 const TeamLeaderDashboard = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -26,6 +36,81 @@ const TeamLeaderDashboard = () => {
     const t = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(t);
   }, []);
+
+  const stats = [
+    {
+      key: "totalAgents",
+      value: 25,
+      title: "Total Agents",
+      subTitle: "Team Members",
+      icon: (
+        <Users className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-slate-600 bg-slate-100 border-slate-400 border" />
+      ),
+    },
+    {
+      key: "present",
+      value: 9,
+      title: "Present",
+      subTitle: "Currently Working",
+      icon: (
+        <UserCheck className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-emerald-600 bg-emerald-100 border-emerald-400 border" />
+      ),
+    },
+    {
+      key: "absent",
+      value: 2,
+      title: "Absentees",
+      subTitle: "Not Present",
+      icon: (
+        <UserX className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-red-500 bg-red-100 border-red-400 border" />
+      ),
+    },
+    {
+      key: "late",
+      value: 1,
+      title: "Late Arrivals",
+      subTitle: "Late Today",
+      icon: (
+        <Clock className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-amber-600 bg-amber-100 border-amber-400 border" />
+      ),
+    },
+    {
+      key: "onBreak",
+      value: 3,
+      title: "On Break",
+      subTitle: "Currently",
+      icon: (
+        <Coffee className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-blue-600 bg-blue-100 border-blue-400 border" />
+      ),
+    },
+    {
+      key: "onLunch",
+      value: 4,
+      title: "On Lunch",
+      subTitle: "Lunch Break",
+      icon: (
+        <Utensils className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-orange-600 bg-orange-100 border-orange-400 border" />
+      ),
+    },
+    {
+      key: "overtime",
+      value: 1,
+      title: "Overtime",
+      subTitle: "Extra Hours",
+      icon: (
+        <TrendingUp className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-violet-600 bg-violet-100 border-violet-400 border" />
+      ),
+    },
+    {
+      key: "undertime",
+      value: 0,
+      title: "Undertime",
+      subTitle: "Short Hours",
+      icon: (
+        <TrendingDown className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-pink-600 bg-pink-100 border-pink-400 border" />
+      ),
+    },
+  ];
 
   return (
     <div className="min-h-screen">
@@ -60,7 +145,7 @@ const TeamLeaderDashboard = () => {
         </div>
       </div>
 
-      <StatCardContainer role="team-leader" />
+      <StatCards stats={stats} />
 
       <main className="grid grid-cols-1 grid-rows-[20rem_20rem_50rem_20rem_20rem_50rem_20rem_20rem] lg:grid-cols-3 lg:grid-rows-[25rem_23rem_23rem_23rem_23rem] gap-4">
         <section className="lg:col-start-1 lg:col-end-2 lg:row-start-1 lg:row-end-2">
