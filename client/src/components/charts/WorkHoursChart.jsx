@@ -29,31 +29,31 @@ function useChart(canvasRef, buildConfig, deps = []) {
   return chartRef;
 }
 
-// Fake productivity dataset per department
+// ---------- Weekly Productivity Data for Current Month ----------
 const productivityData = {
   All: {
-    overtime: [75, 78, 82, 79, 85, 88],
-    undertime: [88, 85, 90, 87, 92, 89],
+    overtime: [82, 85, 79, 88, 84], // 5 weeks (could be 4 if month is shorter)
+    undertime: [90, 88, 92, 91, 89],
   },
   "Call Center": {
-    overtime: [72, 76, 81, 77, 84, 86],
-    undertime: [90, 87, 91, 86, 93, 88],
+    overtime: [80, 83, 77, 85, 82],
+    undertime: [91, 89, 93, 92, 88],
   },
   IT: {
-    overtime: [80, 82, 85, 83, 87, 90],
-    undertime: [84, 82, 86, 85, 88, 86],
+    overtime: [85, 87, 82, 89, 86],
+    undertime: [86, 84, 88, 87, 85],
   },
   HR: {
-    overtime: [70, 72, 75, 74, 78, 80],
-    undertime: [92, 90, 93, 91, 94, 92],
+    overtime: [72, 75, 70, 77, 74],
+    undertime: [93, 91, 95, 94, 92],
   },
   Finance: {
-    overtime: [77, 79, 83, 80, 86, 87],
-    undertime: [87, 85, 89, 86, 91, 88],
+    overtime: [81, 84, 78, 86, 83],
+    undertime: [89, 87, 91, 90, 88],
   },
 };
 
-const ProductivityChart = () => {
+const WorkHoursChart = () => {
   const ref = useRef(null);
   const [selectedDept, setSelectedDept] = useState("All");
 
@@ -67,7 +67,7 @@ const ProductivityChart = () => {
     () => ({
       type: "line",
       data: {
-        labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+        labels: ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5"], // weekly view
         datasets: [
           {
             label: "Overtime",
@@ -182,30 +182,17 @@ const ProductivityChart = () => {
   return (
     <div className="bg-white border-light rounded-md h-full p-4">
       {/* Header section */}
-      <div
-        className="flex flex-col xs:flex-row items-start xs:items-center justify-between 
-                      gap-2 xs:gap-0 mb-3 sm:mb-4"
-      >
-        {/* Title section */}
+      <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 xs:gap-0 mb-3 sm:mb-4">
         <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
           <LineChart className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600 flex-shrink-0" />
-          <h3
-            className="text-xs sm:text-sm md:text-base font-semibold text-slate-800 
-                         leading-tight"
-          >
+          <h3 className="text-xs sm:text-sm md:text-base font-semibold text-slate-800 leading-tight">
             <span className="inline">Work Hours Analysis</span>
           </h3>
         </div>
 
         {/* Filter dropdown */}
         <select
-          className="text-xs sm:text-sm 
-                     border border-gray-300 rounded-md 
-                     px-2 py-1 sm:px-3 sm:py-1.5
-                     bg-white text-slate-700
-                     min-w-0 w-full xs:w-auto xs:min-w-[100px]
-                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                     transition-all duration-200"
+          className="text-xs sm:text-sm border border-gray-300 rounded-md px-2 py-1 sm:px-3 sm:py-1.5 bg-white text-slate-700 min-w-0 w-full xs:w-auto xs:min-w-[100px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
           value={selectedDept}
           onChange={(e) => setSelectedDept(e.target.value)}
         >
@@ -225,4 +212,4 @@ const ProductivityChart = () => {
   );
 };
 
-export default ProductivityChart;
+export default WorkHoursChart;

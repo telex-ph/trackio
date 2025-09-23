@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Calendar, Settings, Download } from "lucide-react";
 import WeeklyAttendanceChart from "../../components/charts/WeeklyAttendanceChart";
 import DepartmentStatusChart from "../../components/charts/DepartmentStatusChart";
-import ProductivityChart from "../../components/charts/ProductivityChart";
+import WorkHoursChart from "../../components/charts/WorkHoursChart";
 import WorkHoursAnalysisChart from "../../components/charts/WorkHoursAnalysisChart";
 import ActivityMonitorList from "../../components/lists/ActivityMonitorList";
 import AdminActionsList from "../../components/lists/AdminActionsList";
@@ -166,13 +166,13 @@ const AdminDashboard = () => {
           <ActivityMonitorList />
         </section>
 
-        <section className="lg:col-start-1 lg:col-end-2 lg:row-start-2 lg:row-end-3">
-          <ProductivityChart />
+        <section className="lg:col-start-1 lg:col-end-3 lg:row-start-2 lg:row-end-3">
+          <WorkHoursChart />
         </section>
 
-        <section className="lg:col-start-2 lg:col-end-3 lg:row-start-2 lg:row-end-3">
+        {/* <section className="lg:col-start-2 lg:col-end-3 lg:row-start-2 lg:row-end-3">
           <WorkHoursAnalysisChart />
-        </section>
+        </section> */}
 
         <section className="lg:col-start-1 lg:col-end-3 lg:row-start-3 lg:row-end-5">
           <EmployeeDirectoryList onClick={handleSelectedEmployee} />

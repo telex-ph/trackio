@@ -5,7 +5,7 @@ import WeeklyAttendanceChart from "../../components/charts/WeeklyAttendanceChart
 import TeamStatusChart from "../../components/charts/TeamStatusChart";
 import ActivityMonitorList from "../../components/lists/ActivityMonitorList";
 import AdminActionsList from "../../components/lists/AdminActionsList";
-import ProductivityChart from "../../components/charts/ProductivityChart";
+import WorkHoursChart from "../../components/charts/WorkHoursChart";
 import EmployeeDirectoryList from "../../components/lists/EmployeeDirectoryList";
 import EmployeeModal from "../../components/modals/EmployeeModal";
 import {
@@ -158,7 +158,7 @@ const TeamLeaderDashboard = () => {
           <ActivityMonitorList />
         </section>
         <section className="lg:col-start-1 lg:col-end-3 lg:row-start-2 lg:row-end-4">
-          <ProductivityChart />
+          <WorkHoursChart />
         </section>
 
         <section className="row-start-4 row-end-7 lg:col-start-1 lg:col-end-3 lg:row-start-4 lg:row-end-6">
