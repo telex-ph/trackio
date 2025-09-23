@@ -175,7 +175,7 @@ const TeamLeaderSidebar = ({
   </SidebarItemGroup>
 );
 
-// Team Leader Sidebar
+// OM Sidebar
 const OMSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
   <SidebarItemGroup className="space-y-1">
     <SidebarLink
@@ -184,56 +184,30 @@ const OMSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       label="Dashboard"
       isCollapsed={isCollapsed}
     />
-
-    {/* <CustomCollapse
-      icon={<BookOpenText className="w-5 h-5" />}
-      label="Attendance"
-      isCollapsed={isCollapsed}
-      open={activeDropdown === "attendance"}
-      onToggle={() =>
-        setActiveDropdown(activeDropdown === "attendance" ? null : "attendance")
-      }
-    >
-      {[
-        { path: "basic-logs", label: "Basic Logs", Icon: FileText },
-        { path: "late", label: "Late", Icon: AlertTriangle },
-        { path: "overtime", label: "Overtime", Icon: AlarmClockCheck },
-        { path: "undertime", label: "Undertime", Icon: Clock },
-      ].map(({ path, label, Icon }) => (
-        <SidebarLink
-          key={path}
-          to={`/team-leader/attendance/${path}`}
-          icon={Icon}
-          label={label}
-          isCollapsed={isCollapsed}
-        />
-      ))}
-    </CustomCollapse>
-
     <SidebarLink
-      to="/team-leader/coaching"
+      to="/operation-manager/coaching"
       icon={Video}
       label="Coaching"
       isCollapsed={isCollapsed}
     />
     <SidebarLink
-      to="/team-leader/schedule"
+      to="/operation-manager/schedule"
       icon={Calendar}
       label="Schedule"
       isCollapsed={isCollapsed}
     />
     <SidebarLink
-      to="/team-leader/performance"
+      to="/operation-manager/performance"
       icon={BarChart}
       label="Performance"
       isCollapsed={isCollapsed}
     />
     <SidebarLink
-      to="/team-leader/announcement"
+      to="/operation-manager/announcement"
       icon={Megaphone}
       label="Announcement"
       isCollapsed={isCollapsed}
-    /> */}
+    /> 
   </SidebarItemGroup>
 );
 

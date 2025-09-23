@@ -23,6 +23,7 @@ import TeamLeaderAccountSettings from "../pages/team-leader/TeamLeaderAccountSet
 
 // Operation Manager Routes
 import OMDashboard from "../pages/om/OMDashboard";
+import OMSchedule from "../pages/om/OMSchedule";
 
 // Admin Routes
 import AdminDashboard from "../pages/admin/AdminDashboard";
@@ -103,12 +104,14 @@ const router = createBrowserRouter([
             ],
           },
 
+          // Operation Manager Routes
           {
             element: <ProtectedRoutes role={Roles.OM} />,
             path: "operation-manager",
             children: [
               { index: true, element: <Navigate to="dashboard" replace /> },
               { path: "dashboard", element: <OMDashboard /> },
+              { path: "schedule", element: <OMSchedule /> },
             ],
           },
 
