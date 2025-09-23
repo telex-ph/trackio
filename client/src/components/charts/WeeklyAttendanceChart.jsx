@@ -58,7 +58,7 @@ const attendanceData = {
   },
 };
 
-const CompanyAttendanceChart = () => {
+const WeeklyAttendanceChart = () => {
   const ref = useRef(null);
 
   const [selectedDept, setSelectedDept] = useState("All");
@@ -184,4 +184,4 @@ const CompanyAttendanceChart = () => {
   );
 };
 
-export default CompanyAttendanceChart;
+export default WeeklyAttendanceChart;
