@@ -161,7 +161,7 @@ const TeamLeaderDashboard = () => {
           <ProductivityChart />
         </section>
 
-        <section className="lg:col-start-1 lg:col-end-3 lg:row-start-4 lg:row-end-6">
+        <section className="row-start-4 row-end-7 lg:col-start-1 lg:col-end-3 lg:row-start-4 lg:row-end-6">
           <EmployeeDirectoryList onClick={handleSelectedEmployee} />
         </section>
 
