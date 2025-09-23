@@ -280,15 +280,15 @@ const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       isCollapsed={isCollapsed}
     />
     <SidebarLink
-      to="/admin/schedule"
+      to="/admin/offences"
       icon={Calendar}
-      label="Schedule"
+      label="Employee Offences"
       isCollapsed={isCollapsed}
     />
     <SidebarLink
       to="/admin/agentrequest"
       icon={BookPlus}
-      label="Agent Request"
+      label="Employee Request"
       isCollapsed={isCollapsed}
     />
     <SidebarLink
