@@ -12,9 +12,9 @@ const OMDashboard = () => {
   const uploadMedia = async () => {
     try {
       const formData = new FormData();
-
       files.forEach((file) => formData.append("files", file));
 
+      formData.append("folder", "test");
       const response = await api.post("/media/upload-media", formData, {
         headers: {
           "Content-Type": "multipart/form-data",

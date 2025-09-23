@@ -1,6 +1,8 @@
 import cloudUpload from "../config/cloudinary.js";
 
 export const uploadMedia = async (req, res) => {
+  const folder = req.body.folder;
+
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: "No files uploaded" });
@@ -9,7 +11,7 @@ export const uploadMedia = async (req, res) => {
     const uploads = await Promise.all(
       req.files.map((file) =>
         cloudUpload(file.buffer, {
-          folder: "trackio",
+          folder: `trackio/${folder}`,
           resource_type: "auto",
         })
       )
