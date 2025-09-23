@@ -13,6 +13,7 @@ import announcementRoutes from "../src/routes/announcementRoutes.js";
 import absenceRoutes from "../src/routes/absenceRoutes.js";
 import mediaRoutes from "../src/routes/mediaRoutes.js";
 import requestRoutes from "../src/routes/requestRoutes.js";
+import offenseRoutes from "./routes/offenseRoutes.js";
 
 const app = express();
 dotenv.config();
@@ -40,5 +41,6 @@ app.use("/api/announcements", announcementRoutes);
 app.use("/api/absence", absenceRoutes);
 app.use("/api/media", mediaRoutes);
 app.use("/api/requests", requestRoutes);
+app.use("/api/offenses", offenseRoutes);
 
 export default app;
