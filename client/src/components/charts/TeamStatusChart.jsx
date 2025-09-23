@@ -67,9 +67,10 @@ const TeamStatusChart = () => {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-2">
           <PieChart className="w-5 h-5 text-slate-600" />
-          <h3 className="text-sm font-semibold text-slate-800">
+          <span className="hidden sm:inline font-bold">
             Current Team Status
-          </h3>
+          </span>
+          <span className="sm:hidden">Team Status</span>
         </div>
         <div className="text-xs text-gray-500">Live snapshot</div>
       </div>
