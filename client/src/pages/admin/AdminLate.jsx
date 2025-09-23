@@ -121,16 +121,6 @@ const AdminLate = () => {
 
   return (
     <div>
-      <section className="flex flex-col mb-2">
-        <div className="flex items-center gap-1">
-          <h2>Tracking</h2> <ChevronRight className="w-6 h-6" />
-          <h2>Late</h2>
-        </div>
-        <p className="text-light">
-          This page displays employee attendance records within the selected
-          date range, providing an overview of time out activities.
-        </p>
-      </section>
       <section className="flex gap-4 mb-4">
         <div>
           <label className="block text-sm font-medium mb-1">Start Date</label>

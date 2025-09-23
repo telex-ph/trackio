@@ -1,5 +1,6 @@
 import App from "../App";
 import AppLayout from "../layout/AppLayout";
+import TrackingLayout from "../layout/TrackingLayout";
 
 // Agent Routes
 import AgentDashboard from "../pages/agent/AgentDashboard";
@@ -52,6 +53,7 @@ import ForgotPassword from "../pages/global/ForgotPassword";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import ProtectedRoutes from "./ProtectedRoutes";
 import Roles from "../constants/roles";
+import MonitoringLayout from "../layout/MonitoringLayout";
 
 const router = createBrowserRouter([
   // Public Routes
@@ -75,6 +77,7 @@ const router = createBrowserRouter([
               { path: "dashboard", element: <AdminDashboard /> },
               {
                 path: "tracking",
+                element: <TrackingLayout />,
                 children: [
                   { index: true, element: <Navigate to="time-in" replace /> },
                   { path: "time-in", element: <AdminTimeIn /> },
@@ -86,6 +89,7 @@ const router = createBrowserRouter([
               },
               {
                 path: "monitoring",
+                element: <MonitoringLayout />,
                 children: [
                   { path: "status", element: <AdminStatus /> },
                   { path: "on-break", element: <AdminOnBreak /> },

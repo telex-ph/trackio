@@ -91,18 +91,6 @@ const AdminOnLunch = () => {
 
   return (
     <div>
-      <section className="flex flex-col mb-4">
-        <div className="flex items-center gap-1">
-          <h2>Monitoring</h2> <ChevronRight className="w-6 h-6" />{" "}
-          <h2>On Lunch</h2>
-        </div>
-        <p className="text-light">
-          View employees who are currently on their lunch break and monitor the
-          duration. This helps manage overall team availability throughout the
-          day.
-        </p>
-      </section>
-
       <Table data={attendancesByStatus} columns={columns} />
     </div>
   );

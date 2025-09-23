@@ -1,0 +1,114 @@
+import { useState, useEffect } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
+import {
+  AlarmClockCheck,
+  Clock,
+  AlertTriangle,
+  Coffee,
+  UserCheck,
+  ChevronRight,
+} from "lucide-react";
+
+const TrackingLayout = () => {
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(null);
+
+  useEffect(() => {
+    const segments = location.pathname.split("/").filter(Boolean);
+    const trackingIndex = segments.indexOf("tracking");
+    let tab = trackingIndex !== -1 ? segments[trackingIndex + 1] : null;
+
+    if (tab) {
+      tab = tab
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+    }
+
+    setActiveTab(tab);
+  }, [location]);
+
+  return (
+    <div>
+      {/* Page Header */}
+      <section className="flex flex-col gap-2 items-start lg:flex-row lg:items-center lg:justify-between mb-2">
+        <div className="basis-2/5">
+          <div className="flex items-center gap-1">
+            <h2>Tracking</h2> <ChevronRight className="w-6 h-6" />
+            <h2>{activeTab || ""}</h2>
+          </div>
+          <p className="text-light">
+            View employee attendance for the selected date range.
+          </p>
+        </div>
+
+        <nav className="flex gap-2 justify-end flex-1">
+          <NavLink
+            className={({ isActive }) =>
+              `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
+                isActive ? "underline" : ""
+              }`
+            }
+            to="time-in"
+          >
+            <AlarmClockCheck className="h-4 w-4" />
+            <span className="hidden sm:inline">Time In</span>
+          </NavLink>
+
+          <NavLink
+            className={({ isActive }) =>
+              `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
+                isActive ? "underline" : ""
+              }`
+            }
+            to="time-out"
+          >
+            <Clock className="h-4 w-4" />
+            <span className="hidden sm:inline">Time Out</span>
+          </NavLink>
+
+          <NavLink
+            className={({ isActive }) =>
+              `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
+                isActive ? "underline" : ""
+              }`
+            }
+            to="late"
+          >
+            <AlertTriangle className="h-4 w-4" />
+            <span className="hidden sm:inline">Late</span>
+          </NavLink>
+
+          <NavLink
+            className={({ isActive }) =>
+              `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
+                isActive ? "underline" : ""
+              }`
+            }
+            to="undertime"
+          >
+            <Coffee className="h-4 w-4" />
+            <span className="hidden sm:inline">Undertime</span>
+          </NavLink>
+
+          <NavLink
+            className={({ isActive }) =>
+              `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
+                isActive ? "underline" : ""
+              }`
+            }
+            to="absentees"
+          >
+            <UserCheck className="h-4 w-4" />
+            <span className="hidden sm:inline">Absentees</span>
+          </NavLink>
+        </nav>
+      </section>
+
+      <main>
+        <Outlet />
+      </main>
+    </div>
+  );
+};
+
+export default TrackingLayout;

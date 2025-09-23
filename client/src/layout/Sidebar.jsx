@@ -246,59 +246,18 @@ const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       label="Dashboard"
       isCollapsed={isCollapsed}
     />
-
-    <CustomCollapse
-      icon={<Clock className="w-5 h-5" />}
+    <SidebarLink
+      to="/admin/tracking/time-in"
+      icon={Clock}
       label="Tracking"
       isCollapsed={isCollapsed}
-      open={activeDropdown === "tracking"}
-      onToggle={() =>
-        setActiveDropdown(activeDropdown === "tracking" ? null : "tracking")
-      }
-    >
-      {[
-        { path: "time-in", label: "Time In", Icon: Sun },
-        { path: "time-out", label: "Time Out", Icon: Moon },
-        { path: "late", label: "Late", Icon: AlertTriangle },
-        { path: "undertime", label: "Undertime", Icon: Clock },
-        { path: "absentees", label: "Absentees", Icon: Users },
-      ].map(({ path, label, Icon }) => (
-        <SidebarLink
-          key={path}
-          to={`/admin/tracking/${path}`}
-          icon={Icon}
-          label={label}
-          isCollapsed={isCollapsed}
-        />
-      ))}
-    </CustomCollapse>
-
-    <CustomCollapse
-      icon={<Activity className="w-5 h-5" />}
+    />
+    <SidebarLink
+      to="/admin/monitoring/status"
+      icon={Activity}
       label="Monitoring"
       isCollapsed={isCollapsed}
-      open={activeDropdown === "monitoring"}
-      onToggle={() =>
-        setActiveDropdown(activeDropdown === "monitoring" ? null : "monitoring")
-      }
-    >
-      {[
-        { path: "status", label: "Status", Icon: UserCheck },
-        { path: "on-break", label: "On Break", Icon: Coffee },
-        { path: "on-lunch", label: "On Lunch", Icon: Sun },
-        { path: "bio-break", label: "Bio Break", Icon: Moon },
-        { path: "meeting", label: "Meeting", Icon: Video },
-      ].map(({ path, label, Icon }) => (
-        <SidebarLink
-          key={path}
-          to={`/admin/monitoring/${path}`}
-          icon={Icon}
-          label={label}
-          isCollapsed={isCollapsed}
-        />
-      ))}
-    </CustomCollapse>
-
+    />
     <SidebarLink
       to="/admin/history"
       icon={FileText}

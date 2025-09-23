@@ -121,18 +121,6 @@ const AdminUndertime = () => {
 
   return (
     <div>
-      <section className="flex flex-col mb-4">
-        <div className="flex items-center gap-1">
-          <h2>Tracking</h2> <ChevronRight className="w-6 h-6" />
-          <h2>Undertime</h2>
-        </div>
-        <p className="text-light">
-          Review employees who logged out earlier than their scheduled shift
-          end. This helps track productivity impact, identify patterns, and
-          maintain proper attendance records.
-        </p>
-      </section>
-
       <section className="flex gap-4 mb-4">
         <div>
           <label className="block text-sm font-medium mb-1">Start Date</label>
