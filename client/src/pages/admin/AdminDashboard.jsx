@@ -153,7 +153,7 @@ const AdminDashboard = () => {
       {/* Enhanced Stats */}
       <StatCards stats={stats} />
 
-      <main className="grid grid-cols-1 grid-rows-[20rem_20rem_50rem_20rem_20rem_50rem_20rem] lg:grid-cols-3 lg:grid-rows-[25rem_23rem_23rem_23rem] gap-4">
+      <main className="grid grid-cols-1 grid-rows-[20rem_20rem_50rem_20rem_20rem_50rem_20rem] lg:grid-cols-3 lg:grid-rows-[25rem_23rem_23rem_23rem_23rem] gap-4">
         <section className="lg:col-start-1 lg:col-end-2 lg:row-start-1 lg:row-end-2">
           <WeeklyAttendanceChart />
         </section>
@@ -166,7 +166,7 @@ const AdminDashboard = () => {
           <ActivityMonitorList />
         </section>
 
-        <section className="lg:col-start-1 lg:col-end-3 lg:row-start-2 lg:row-end-3">
+        <section className="lg:col-start-1 lg:col-end-3 lg:row-start-2 lg:row-end-4">
           <WorkHoursChart />
         </section>
 
@@ -174,7 +174,7 @@ const AdminDashboard = () => {
           <WorkHoursAnalysisChart />
         </section> */}
 
-        <section className="lg:col-start-1 lg:col-end-3 lg:row-start-3 lg:row-end-5">
+        <section className="lg:col-start-1 lg:col-end-3 lg:row-start-4 lg:row-end-6">
           <EmployeeDirectoryList onClick={handleSelectedEmployee} />
         </section>
 
