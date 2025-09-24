@@ -420,7 +420,7 @@ const AdminOffences = () => {
                 )}
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
-                {isEditMode ? "Edit Offense" : "Create New Offense"}
+                {isEditMode ? "Edit Offense" : "Create Incident Report"}
               </h3>
             </div>
             {isEditMode && (
@@ -672,7 +672,7 @@ const AdminOffences = () => {
                 <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
-                Offense Records
+                Cases In Progress
               </h3>
             </div>
             <span className="bg-red-100 text-red-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
@@ -828,7 +828,7 @@ const AdminOffences = () => {
               <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
             </div>
             <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
-              Request History
+              Case History
             </h3>
           </div>
           <span className="bg-green-100 text-green-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
