@@ -179,53 +179,6 @@ const TeamLeaderSidebar = ({
   </div>
 );
 
-<<<<<<< HEAD
-// OM Sidebar
-const OMSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
-  <SidebarItemGroup className="space-y-1">
-=======
-// Operation Manager Sidebar
-const OMSidebar = ({ isCollapsed }) => (
-  <div className="space-y-1">
->>>>>>> 9e5b44851ef16f0f36093948b41c2312c04a5955
-    <SidebarLink
-      to="/operation-manager/dashboard"
-      icon={LayoutGrid}
-      label="Dashboard"
-      isCollapsed={isCollapsed}
-    />
-    <SidebarLink
-      to="/operation-manager/coaching"
-      icon={Video}
-      label="Coaching"
-      isCollapsed={isCollapsed}
-    />
-    <SidebarLink
-      to="/operation-manager/schedule"
-      icon={Calendar}
-      label="Schedule"
-      isCollapsed={isCollapsed}
-    />
-    <SidebarLink
-      to="/operation-manager/performance"
-      icon={BarChart}
-      label="Performance"
-      isCollapsed={isCollapsed}
-    />
-    <SidebarLink
-      to="/operation-manager/announcement"
-      icon={Megaphone}
-      label="Announcement"
-      isCollapsed={isCollapsed}
-<<<<<<< HEAD
-    /> 
-  </SidebarItemGroup>
-=======
-    /> */}
-  </div>
->>>>>>> 9e5b44851ef16f0f36093948b41c2312c04a5955
-);
-
 // Admin Sidebar
 const AdminSidebar = ({ isCollapsed }) => (
   <div className="space-y-1">
