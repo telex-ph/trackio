@@ -4,6 +4,18 @@ import { DateTime } from "luxon";
 class User {
   static #collection = "users";
 
+  static async getAll() {
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+
+    // Get all users scheduled today
+    const users = await collection
+      .find({}, { projection: { password: 0 } })
+      .toArray();
+
+    return users;
+  }
+
   /**
    * Log in a user by checking email and password.
    *
