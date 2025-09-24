@@ -282,7 +282,7 @@ const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
     <SidebarLink
       to="/admin/offences"
       icon={Calendar}
-      label="Employee Offences"
+      label="Employee Offenses"
       isCollapsed={isCollapsed}
     />
     <SidebarLink
