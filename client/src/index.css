@@ -88,7 +88,7 @@ h6 {
 }
 .border-light {
   border-width: 1px;
-  border-color: #e5e7eb;
+  border-color: rgb(209, 213, 219);
 }
 .container-light {
   background-color: rgb(249, 250, 251);
@@ -101,26 +101,15 @@ h6 {
 }
 
 @keyframes gradientMove {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 /* Logo bounce shadow animation */
 @keyframes bounceShadow {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-20px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
 }
 
 .animate-bounceShadow {
@@ -129,12 +118,8 @@ h6 {
 
 /* Fade in animation */
 @keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
 
 .animate-fadeIn {
