@@ -3,7 +3,6 @@ import { Clock, FileText } from "lucide-react";
 import { DateTime } from "luxon";
 import api from "../../utils/axios";
 
-// Baguhin ang mga path mula dito.
 import Notification from "../../components/notification/Notification";
 import ConfirmationModal from "../../components/confirmation-modal/ConfirmationModal";
 import RequestForm from "../../components/team-leader-request/RequestForm";
