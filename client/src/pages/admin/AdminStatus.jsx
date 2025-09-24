@@ -126,15 +126,6 @@ const AdminStatus = () => {
 
   return (
     <div>
-      <section className="flex flex-col mb-4">
-        <div className="flex items-center gap-1">
-          <h2>Monitoring</h2> <ChevronRight className="w-6 h-6" /> <h2>Status</h2>
-        </div>
-        <p className="text-light">
-          Monitor employees’ real-time statuses. Any updates made here will
-          instantly reflect in their profiles and activity records.
-        </p>
-      </section>
 
       <Table columns={columns} data={attendancesByStatus} />
 

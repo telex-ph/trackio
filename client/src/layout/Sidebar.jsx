@@ -1,9 +1,5 @@
 import { NavLink } from "react-router-dom";
-import {
-  Sidebar as Side,
-  SidebarItemGroup,
-  SidebarItems,
-} from "flowbite-react";
+import React from "react";
 import {
   LayoutGrid,
   BookOpenText,
@@ -40,22 +36,28 @@ const CustomCollapse = ({
   onToggle,
 }) => {
   return (
-    <div className="flex flex-col w-ful">
+    <div className="flex flex-col w-full">
       <button
         onClick={onToggle}
-        className="flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200 w-full"
+        className={`flex items-center ${
+          isCollapsed ? "justify-center px-2 py-3" : "justify-between px-3 py-2"
+        } rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200 w-full`}
       >
         <div className="flex items-center gap-2">
-          {icon}
+          {React.cloneElement(icon, {
+            className: `${isCollapsed ? "w-6 h-6" : "w-5 h-5"} flex-shrink-0`,
+          })}
           {!isCollapsed && <span className="font-medium">{label}</span>}
         </div>
 
         {/* Arrow always visible */}
-        <ChevronDown
-          className={`w-4 h-4 transition-transform duration-300 ${
-            open ? "rotate-180" : "rotate-0"
-          }`}
-        />
+        {!isCollapsed && (
+          <ChevronDown
+            className={`w-4 h-4 transition-transform duration-300 ${
+              open ? "rotate-180" : "rotate-0"
+            }`}
+          />
+        )}
       </button>
 
       <div
@@ -74,19 +76,21 @@ const SidebarLink = ({ to, icon: Icon, label, isCollapsed }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>
-      `flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
-        isActive ? "bg-[#571A1A] text-white" : "text-gray-700 hover:bg-gray-100"
+      `flex items-center ${
+        isCollapsed ? "justify-center px-2 py-2" : "gap-2 px-3 py-2"
+      } rounded-lg transition-colors duration-200 ${
+        isActive ? "bg-[#571A1A] text-white" : "text-black hover:bg-gray-100"
       }`
     }
   >
-    <Icon className="w-5 h-5" />
+    <Icon className={`${isCollapsed ? "w-5 h-5" : "w-5 h-5"} flex-shrink-0`} />
     {!isCollapsed && <span className="font-medium">{label}</span>}
   </NavLink>
 );
 
 // Agent Sidebar
 const AgentSidebar = ({ isCollapsed }) => (
-  <SidebarItemGroup className="space-y-1">
+  <div className="space-y-1">
     <SidebarLink
       to="/agent/dashboard"
       icon={LayoutGrid}
@@ -106,7 +110,7 @@ const AgentSidebar = ({ isCollapsed }) => (
       isCollapsed={isCollapsed}
     />
     {/* ➕ New Employee Request Link */}
-  </SidebarItemGroup>
+  </div>
 );
 
 // Team Leader Sidebar
@@ -115,7 +119,7 @@ const TeamLeaderSidebar = ({
   activeDropdown,
   setActiveDropdown,
 }) => (
-  <SidebarItemGroup className="space-y-1">
+  <div className="space-y-1">
     <SidebarLink
       to="/team-leader/dashboard"
       icon={LayoutGrid}
@@ -172,12 +176,18 @@ const TeamLeaderSidebar = ({
       label="Agent Request"
       isCollapsed={isCollapsed}
     />
-  </SidebarItemGroup>
+  </div>
 );
 
+<<<<<<< HEAD
 // OM Sidebar
 const OMSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
   <SidebarItemGroup className="space-y-1">
+=======
+// Operation Manager Sidebar
+const OMSidebar = ({ isCollapsed }) => (
+  <div className="space-y-1">
+>>>>>>> 9e5b44851ef16f0f36093948b41c2312c04a5955
     <SidebarLink
       to="/operation-manager/dashboard"
       icon={LayoutGrid}
@@ -207,72 +217,36 @@ const OMSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       icon={Megaphone}
       label="Announcement"
       isCollapsed={isCollapsed}
+<<<<<<< HEAD
     /> 
   </SidebarItemGroup>
+=======
+    /> */}
+  </div>
+>>>>>>> 9e5b44851ef16f0f36093948b41c2312c04a5955
 );
 
 // Admin Sidebar
-const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
-  <SidebarItemGroup className="space-y-1">
+const AdminSidebar = ({ isCollapsed }) => (
+  <div className="space-y-1">
     <SidebarLink
       to="/admin/dashboard"
       icon={LayoutGrid}
       label="Dashboard"
       isCollapsed={isCollapsed}
     />
-
-    <CustomCollapse
-      icon={<Clock className="w-5 h-5" />}
+    <SidebarLink
+      to="/admin/tracking/time-in"
+      icon={Clock}
       label="Tracking"
       isCollapsed={isCollapsed}
-      open={activeDropdown === "tracking"}
-      onToggle={() =>
-        setActiveDropdown(activeDropdown === "tracking" ? null : "tracking")
-      }
-    >
-      {[
-        { path: "time-in", label: "Time In", Icon: Sun },
-        { path: "time-out", label: "Time Out", Icon: Moon },
-        { path: "late", label: "Late", Icon: AlertTriangle },
-        { path: "undertime", label: "Undertime", Icon: Clock },
-        { path: "absentees", label: "Absentees", Icon: Users },
-      ].map(({ path, label, Icon }) => (
-        <SidebarLink
-          key={path}
-          to={`/admin/tracking/${path}`}
-          icon={Icon}
-          label={label}
-          isCollapsed={isCollapsed}
-        />
-      ))}
-    </CustomCollapse>
-
-    <CustomCollapse
-      icon={<Activity className="w-5 h-5" />}
+    />
+    <SidebarLink
+      to="/admin/monitoring/status"
+      icon={Activity}
       label="Monitoring"
       isCollapsed={isCollapsed}
-      open={activeDropdown === "monitoring"}
-      onToggle={() =>
-        setActiveDropdown(activeDropdown === "monitoring" ? null : "monitoring")
-      }
-    >
-      {[
-        { path: "status", label: "Status", Icon: UserCheck },
-        { path: "on-break", label: "On Break", Icon: Coffee },
-        { path: "on-lunch", label: "On Lunch", Icon: Sun },
-        { path: "bio-break", label: "Bio Break", Icon: Moon },
-        { path: "meeting", label: "Meeting", Icon: Video },
-      ].map(({ path, label, Icon }) => (
-        <SidebarLink
-          key={path}
-          to={`/admin/monitoring/${path}`}
-          icon={Icon}
-          label={label}
-          isCollapsed={isCollapsed}
-        />
-      ))}
-    </CustomCollapse>
-
+    />
     <SidebarLink
       to="/admin/history"
       icon={FileText}
@@ -297,7 +271,7 @@ const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       label="Announcement"
       isCollapsed={isCollapsed}
     />
-  </SidebarItemGroup>
+  </div>
 );
 
 // Main Sidebar
@@ -318,21 +292,9 @@ export const Sidebar = ({ isCollapsed }) => {
           />
         );
       case Role.OM:
-        return (
-          <OMSidebar
-            isCollapsed={isCollapsed}
-            activeDropdown={activeDropdown}
-            setActiveDropdown={setActiveDropdown}
-          />
-        );
+        return <OMSidebar isCollapsed={isCollapsed} />;
       case Role.ADMIN:
-        return (
-          <AdminSidebar
-            isCollapsed={isCollapsed}
-            activeDropdown={activeDropdown}
-            setActiveDropdown={setActiveDropdown}
-          />
-        );
+        return <AdminSidebar isCollapsed={isCollapsed} />;
       default:
         return null;
     }
@@ -344,9 +306,7 @@ export const Sidebar = ({ isCollapsed }) => {
         isCollapsed ? "w-16" : "w-64"
       }`}
     >
-      <Side collapsed={isCollapsed} className="[&>div]:dark:!bg-white">
-        <SidebarItems>{renderSidebar()}</SidebarItems>
-      </Side>
+      <nav className="flex-1 m-4">{renderSidebar()}</nav>
 
       {/* Shift Schedule only for Agent */}
       {user.role === Role.AGENT && !isCollapsed && (
