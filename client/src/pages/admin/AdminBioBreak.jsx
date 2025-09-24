@@ -1,13 +1,7 @@
-import UnderContruction from "../../assets/illustrations/UnderContruction";
+import React from "react";
 
 const AdminBioBreak = () => {
-  return (
-    <div>
-      <div className="mt-20">
-        <UnderContruction />
-      </div>
-    </div>
-  );
+  return <div>AdminBioBreak</div>;
 };
 
 export default AdminBioBreak;
