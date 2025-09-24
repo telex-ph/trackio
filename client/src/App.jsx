@@ -6,8 +6,11 @@ import { useEffect } from "react";
 function App() {
   const { isLoading, user } = useAuth();
   const setUser = useStore((state) => state.setUser);
+  //const user = useStore((state) => state.user);
 
   useEffect(() => {
+    console.log(user);
+    
     if (user) setUser(user);
   }, [user, setUser]);
 
