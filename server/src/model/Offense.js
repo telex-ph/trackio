@@ -26,6 +26,7 @@ class Offense {
 
     const offenseWithTimestamp = {
       ...offenseData,
+      isRead: false, // ✅ default when creating
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -34,25 +35,24 @@ class Offense {
     return { _id: result.insertedId, ...offenseWithTimestamp };
   }
 
-static async update(id, updatedData) {
-  const db = await connectDB();
-  const collection = db.collection(this.#collection);
+  static async update(id, updatedData) {
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
 
-  const dataWithTimestamp = {
-    ...updatedData,
-    updatedAt: new Date(),
-  };
+    const dataWithTimestamp = {
+      ...updatedData,
+      updatedAt: new Date(),
+    };
 
-  const result = await collection.findOneAndUpdate(
-    { _id: new ObjectId(id) },
-    { $set: dataWithTimestamp },
-    { returnDocument: "after" }
-  );
-  
-  console.log("MongoDB update result:", result); // Add this log
+    const result = await collection.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $set: dataWithTimestamp },
+      { returnDocument: "after" }
+    );
 
-  return result.value;
-}
+    console.log("MongoDB update result:", result);
+    return result.value;
+  }
 
   // Delete offense
   static async delete(id) {
