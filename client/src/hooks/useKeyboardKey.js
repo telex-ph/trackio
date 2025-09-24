@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-const useShiftKey = () => {
+const useKeyboardKey = () => {
   const [isShiftPressed, setIsShiftPressed] = useState(false);
 
   useEffect(() => {
@@ -21,7 +21,7 @@ const useShiftKey = () => {
     };
   }, []);
 
-  return isShiftPressed;
+  return { isShiftPressed };
 };
 
-export default useShiftKey;
+export default useKeyboardKey;

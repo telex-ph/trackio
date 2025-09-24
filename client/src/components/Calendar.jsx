@@ -8,7 +8,7 @@ import {
   Home,
 } from "lucide-react";
 import { DateTime } from "luxon";
-import useShiftKey from "../hooks/useShiftKey";
+import useKeyboardKey from "../hooks/useKeyboardKey";
 
 const Calendar = () => {
   // Explicitly use Philippine timezone
@@ -20,7 +20,7 @@ const Calendar = () => {
   const [selectedDates, setSelectedDates] = useState([
     DateTime.now().setZone(philippineZone),
   ]);
-  const isShiftPressed = useShiftKey();
+  const { isShiftPressed } = useKeyboardKey();
 
   const getDaysInMonth = (year, month) => {
     return DateTime.local(year, month, 1).daysInMonth;
