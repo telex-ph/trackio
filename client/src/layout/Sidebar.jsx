@@ -179,6 +179,23 @@ const TeamLeaderSidebar = ({
   </div>
 );
 
+const OMSidebar = ({ isCollapsed }) => (
+  <div className="space-y-1">
+    <SidebarLink
+      to="/operation-manager/dashboard"
+      icon={LayoutGrid}
+      label="Dashboard"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
+      to="/operation-manager/schedule"
+      icon={BookPlus}
+      label="Schedule"
+      isCollapsed={isCollapsed}
+    />
+  </div>
+);
+
 // Admin Sidebar
 const AdminSidebar = ({ isCollapsed }) => (
   <div className="space-y-1">
