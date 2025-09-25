@@ -5,7 +5,6 @@ import MonitoringLayout from "../layout/MonitoringLayout";
 
 // Agent Routes
 import AgentDashboard from "../pages/agent/AgentDashboard";
-import AgentAttendance from "../pages/agent/AgentAttendance";
 import AgentCoaching from "../pages/agent/AgentCoaching";
 import AgentAccountSettings from "../pages/agent/AgentAccountSettings";
 import AgentRequest from "../pages/agent/AgentRequest";
@@ -58,8 +57,7 @@ import ForgotPassword from "../pages/global/ForgotPassword";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import ProtectedRoutes from "./ProtectedRoutes";
 import Roles from "../constants/roles";
-import AdminAttendance from "../pages/admin/AdminAttendance";
-import TeamLeaderAttendance from "../pages/team-leader/TeamLeaderAttendance";
+import SharedAttendance from "../pages/shared/SharedAttendance";
 
 const router = createBrowserRouter([
   // Public Routes
@@ -81,7 +79,6 @@ const router = createBrowserRouter([
             children: [
               { index: true, element: <Navigate to="dashboard" replace /> },
               { path: "dashboard", element: <AdminDashboard /> },
-              { path: "attendance", element: <AdminAttendance /> },
               {
                 path: "tracking",
                 element: <TrackingLayout role={Roles.ADMIN} />,
@@ -134,6 +131,7 @@ const router = createBrowserRouter([
             children: [
               { index: true, element: <Navigate to="dashboard" replace /> },
               { path: "dashboard", element: <OMDashboard /> },
+              { path: "attendance", element: <SharedAttendance /> },
               { path: "schedule", element: <OMSchedule /> },
               { path: "schedule/:id", element: <OMViewSchedule /> },
             ],
@@ -146,7 +144,7 @@ const router = createBrowserRouter([
             children: [
               { index: true, element: <Navigate to="dashboard" replace /> },
               { path: "dashboard", element: <TeamLeaderDashboard /> },
-              { path: "attendance", element: <TeamLeaderAttendance /> },
+              { path: "attendance", element: <SharedAttendance /> },
               {
                 path: "tracking",
                 element: <TrackingLayout role={Roles.TEAM_LEADER} />,
@@ -190,7 +188,7 @@ const router = createBrowserRouter([
             children: [
               { index: true, element: <Navigate to="dashboard" replace /> },
               { path: "dashboard", element: <AgentDashboard /> },
-              { path: "attendance", element: <AgentAttendance /> },
+              { path: "attendance", element: <SharedAttendance /> },
               { path: "coaching", element: <AgentCoaching /> },
               { path: "request", element: <AgentRequest /> },
               { path: "account-settings", element: <AgentAccountSettings /> },

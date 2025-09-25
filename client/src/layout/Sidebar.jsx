@@ -189,6 +189,12 @@ const OMSidebar = ({ isCollapsed }) => (
       isCollapsed={isCollapsed}
     />
     <SidebarLink
+      to="/operation-manager/attendance"
+      icon={Bell}
+      label="Attendance"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
       to="/operation-manager/schedule"
       icon={BookPlus}
       label="Schedule"
@@ -204,12 +210,6 @@ const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       to="/admin/dashboard"
       icon={LayoutGrid}
       label="Dashboard"
-      isCollapsed={isCollapsed}
-    />
-    <SidebarLink
-      to="/admin/attendance"
-      icon={Bell}
-      label="Attendance"
       isCollapsed={isCollapsed}
     />
     <CustomCollapse
