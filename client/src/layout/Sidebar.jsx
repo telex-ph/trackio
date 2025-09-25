@@ -93,13 +93,13 @@ const AgentSidebar = ({ isCollapsed }) => (
     <SidebarLink
       to="/agent/attendance"
       icon={Bell}
-      label="Attendance/Logs"
+      label="Attendance"
       isCollapsed={isCollapsed}
     />
     <SidebarLink
       to="/agent/coaching"
       icon={NotebookTabs}
-      label="Meeting/Coaching"
+      label="Coaching"
       isCollapsed={isCollapsed}
     />
     <SidebarLink
