@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import "./cron.js";
 
 // Routes imports
+import userRoutes from "../src/routes/userRoutes.js";
 import authRoutes from "../src/routes/authRoutes.js";
 import accountRoutes from "../src/routes/accountRoutes.js";
 import attendanceRoutes from "../src/routes/attendanceRoutes.js";
@@ -35,6 +36,7 @@ app.use(
 );
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes);
 app.use("/api/accounts", accountRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/announcements", announcementRoutes);

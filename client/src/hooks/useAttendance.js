@@ -13,12 +13,10 @@ export const useAttendance = (userId, filter) => {
 
   const fetchUserAttendance = useCallback(async () => {
     if (!userId) return;
-
     try {
       setError(null);
       const response = await api.get(`/attendance/get-attendance/${userId}`);
-      const attendanceData = response.data;
-      setAttendance(attendanceData[0] || null);
+      setAttendance(response.data[0] || null);
     } catch (error) {
       console.error("Error fetching attendance:", error);
       setError("Failed to fetch attendance data");
@@ -28,17 +26,16 @@ export const useAttendance = (userId, filter) => {
     }
   }, [userId]);
 
-  // Get the attendances using status; on lunch
-  const fetchAttendancesByStatus = useCallback(async (filter) => {
+  const fetchAttendancesByStatus = useCallback(async () => {
     if (!filter) return;
 
     try {
       setError(null);
       const response = await api.get("/attendance/get-attendances", {
         params: {
-          startDate: filter?.startDate,
-          endDate: filter?.endDate,
-          filter: filter?.status,
+          startDate: filter.startDate,
+          endDate: filter.endDate,
+          filter: filter.status,
         },
       });
 
@@ -55,7 +52,7 @@ export const useAttendance = (userId, filter) => {
         const formattedSecondBreakStart = formatTime(item.secondBreakStart);
         const formattedSecondBreakEnd = formatTime(item.secondBreakEnd);
 
-        // Calculating if the user is late or not
+        // Punctuality
         let punctuality = "N/A";
         if (item.timeIn && item.shiftStart) {
           const timeIn = DateTime.fromISO(item.timeIn);
@@ -67,7 +64,7 @@ export const useAttendance = (userId, filter) => {
           punctuality = timeIn <= shiftStart ? "On Time" : "Late";
         }
 
-        // Calculating if the user's shift adherence
+        // Adherence
         let adherence = "N/A";
         if (item.timeOut && item.shiftEnd) {
           const timeOut = DateTime.fromISO(item.timeOut);
@@ -78,9 +75,8 @@ export const useAttendance = (userId, filter) => {
           });
           adherence = timeOut >= shiftEnd ? "On Time" : "Undertime";
         }
-        // const adherence = timeOut >= shiftEnd ? "On Time" : "Undertime";
 
-        // Calculate difference in minutes, for minutes of tardiness
+        // Tardiness calculation
         const fmt = "hh:mm a";
         const zone = "Asia/Manila";
         const tIn = DateTime.fromFormat(formattedTimeIn, fmt, { zone });
@@ -92,19 +88,14 @@ export const useAttendance = (userId, filter) => {
           date: formatDate(item.createdAt),
           name: `${item.user.firstName} ${item.user.lastName}`,
           email: item.user.email,
-
           shiftStart: formattedShiftStart,
           shiftEnd: formattedShiftEnd,
-
           firstBreakStart: formattedFirstBreakStart,
           firstBreakEnd: formattedFirstBreakEnd,
-
           secondBreakStart: formattedSecondBreakStart,
           secondBreakEnd: formattedSecondBreakEnd,
-
           timeIn: formattedTimeIn,
           timeOut: formattedTimeOut,
-
           tardiness,
           punctuality,
           adherence,
@@ -120,40 +111,39 @@ export const useAttendance = (userId, filter) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filter?.startDate, filter?.endDate, filter?.status]);
 
-  const fetchAbsentees = useCallback(async (filter) => {
+  const fetchAbsentees = useCallback(async () => {
+    if (!filter) return;
     try {
       setError(null);
       const response = await api.get("/absence/get-absentees", {
         params: {
-          startDate: filter?.startDate,
-          endDate: filter?.endDate,
-          filter: filter?.status,
+          startDate: filter.startDate,
+          endDate: filter.endDate,
+          filter: filter.status,
         },
       });
 
-      const formattedData = response.data.map((item) => {
-        return {
+      setAbsentees(
+        response.data.map((item) => ({
           id: item.user._id,
           date: formatDate(item.createdAt),
           name: `${item.user.firstName} ${item.user.lastName}`,
           email: item.user.email,
-        };
-      });
-
-      setAbsentees(formattedData);
+        }))
+      );
     } catch (error) {
       console.error("Error fetching absentees:", error);
-      setError("Failed to fetch absenteees");
+      setError("Failed to fetch absentees");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, []);
+  }, [filter?.startDate, filter?.endDate, filter?.status]);
 
   const addAttendance = useCallback(
     async (shiftStart, shiftEnd) => {
       if (!userId) return;
-
       try {
         setError(null);
         await api.post(`/attendance/add-attendance/${userId}`, {
@@ -174,19 +164,14 @@ export const useAttendance = (userId, filter) => {
   const updateAttendance = useCallback(
     async (field, status) => {
       if (!attendance?._id) return;
-
       try {
         setError(null);
         const now = DateTime.utc().toJSDate();
-        const data = {
+        await api.patch("/attendance/update-attendance", {
           id: attendance._id,
-          fields: {
-            [field]: now,
-          },
-          status: status,
-        };
-
-        await api.patch("/attendance/update-attendance", data);
+          fields: { [field]: now },
+          status,
+        });
         toast.success(`${field} recorded successfully!`);
         await fetchUserAttendance();
       } catch (error) {
@@ -203,16 +188,12 @@ export const useAttendance = (userId, filter) => {
   }, [fetchUserAttendance]);
 
   useEffect(() => {
-    if (filter) {
-      fetchAttendancesByStatus(filter);
-    }
-  }, [filter?.startDate, filter?.endDate, fetchAttendancesByStatus]);
+    fetchAttendancesByStatus();
+  }, [fetchAttendancesByStatus]);
 
   useEffect(() => {
-    if (filter) {
-      fetchAbsentees(filter);
-    }
-  }, [filter?.startDate, filter?.endDate, fetchAbsentees]);
+    fetchAbsentees();
+  }, [fetchAbsentees]);
 
   return {
     attendance,
