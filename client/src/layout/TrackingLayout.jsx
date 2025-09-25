@@ -41,7 +41,7 @@ const TrackingLayout = ({ role }) => {
                   isActive ? "underline" : ""
                 }`
               }
-              to="time-in"
+              to="list/time-in"
             >
               <AlarmClockCheck className="h-4 w-4" />
               <span className="hidden sm:inline">Time In</span>
@@ -53,7 +53,7 @@ const TrackingLayout = ({ role }) => {
                   isActive ? "underline" : ""
                 }`
               }
-              to="time-out"
+              to="list/time-out"
             >
               <Clock className="h-4 w-4" />
               <span className="hidden sm:inline">Time Out</span>
@@ -65,7 +65,7 @@ const TrackingLayout = ({ role }) => {
                   isActive ? "underline" : ""
                 }`
               }
-              to="late"
+              to="list/late"
             >
               <AlertTriangle className="h-4 w-4" />
               <span className="hidden sm:inline">Late</span>
@@ -77,7 +77,7 @@ const TrackingLayout = ({ role }) => {
                   isActive ? "underline" : ""
                 }`
               }
-              to="undertime"
+              to="list/undertime"
             >
               <Coffee className="h-4 w-4" />
               <span className="hidden sm:inline">Undertime</span>
@@ -89,7 +89,7 @@ const TrackingLayout = ({ role }) => {
                   isActive ? "underline" : ""
                 }`
               }
-              to="absentees"
+              to="list/absentees"
             >
               <UserCheck className="h-4 w-4" />
               <span className="hidden sm:inline">Absentees</span>
@@ -106,7 +106,7 @@ const TrackingLayout = ({ role }) => {
                   isActive ? "underline" : ""
                 }`
               }
-              to="basic-logs"
+              to="list/basic-logs"
             >
               <Logs className="h-4 w-4" />
               <span className="hidden sm:inline">Logs</span>
@@ -118,7 +118,7 @@ const TrackingLayout = ({ role }) => {
                   isActive ? "underline" : ""
                 }`
               }
-              to="late"
+              to="list/late"
             >
               <Clock className="h-4 w-4" />
               <span className="hidden sm:inline">Late</span>
@@ -130,7 +130,7 @@ const TrackingLayout = ({ role }) => {
                   isActive ? "underline" : ""
                 }`
               }
-              to="overtime"
+              to="list/overtime"
             >
               <ClockPlus className="h-4 w-4" />
               <span className="hidden sm:inline">Overtime</span>
@@ -142,7 +142,7 @@ const TrackingLayout = ({ role }) => {
                   isActive ? "underline" : ""
                 }`
               }
-              to="undertime"
+              to="list/undertime"
             >
               <AlarmClockMinus className="h-4 w-4" />
               <span className="hidden sm:inline">Undertime</span>

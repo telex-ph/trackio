@@ -2,25 +2,18 @@ import { NavLink } from "react-router-dom";
 import React from "react";
 import {
   LayoutGrid,
-  BookOpenText,
   Bell,
   NotebookTabs,
   Clock,
-  Coffee,
-  Users,
   ChevronDown,
   Calendar,
   BarChart,
   Megaphone,
-  FileText,
   Activity,
-  AlertTriangle,
-  UserCheck,
-  Sun,
-  Moon,
   Video,
-  AlarmClockCheck,
   BookPlus,
+  List,
+  GalleryVerticalEnd,
 } from "lucide-react";
 import { useStore } from "../store/useStore";
 import Role from "../constants/roles";
@@ -41,7 +34,7 @@ const CustomCollapse = ({
         onClick={onToggle}
         className={`flex items-center ${
           isCollapsed ? "justify-center px-2 py-3" : "justify-between px-3 py-2"
-        } rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200 w-full`}
+        } rounded-lg transition-colors duration-200 w-full`}
       >
         <div className="flex items-center gap-2">
           {React.cloneElement(icon, {
@@ -131,13 +124,29 @@ const TeamLeaderSidebar = ({
       label="Dashboard"
       isCollapsed={isCollapsed}
     />
-    <SidebarLink
-      to="/team-leader/tracking/basic-logs"
-      icon={FileText}
+
+    <CustomCollapse
+      icon={<Clock className="w-5 h-5" />}
       label="Tracking"
       isCollapsed={isCollapsed}
-    />
-
+      open={activeDropdown === "tracking"}
+      onToggle={() =>
+        setActiveDropdown(activeDropdown === "tracking" ? null : "tracking")
+      }
+    >
+      <SidebarLink
+        to={`/team-leader/tracking/list`}
+        icon={List}
+        label="List"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to={`/team-leader/tracking/history`}
+        icon={GalleryVerticalEnd}
+        label="History"
+        isCollapsed={isCollapsed}
+      />
+    </CustomCollapse>
     <SidebarLink
       to="/team-leader/coaching"
       icon={Video}
@@ -183,7 +192,7 @@ const OMSidebar = ({ isCollapsed }) => (
 );
 
 // Admin Sidebar
-const AdminSidebar = ({ isCollapsed }) => (
+const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
   <div className="space-y-1">
     <SidebarLink
       to="/admin/dashboard"
@@ -191,22 +200,33 @@ const AdminSidebar = ({ isCollapsed }) => (
       label="Dashboard"
       isCollapsed={isCollapsed}
     />
-    <SidebarLink
-      to="/admin/tracking/time-in"
-      icon={Clock}
+    <CustomCollapse
+      icon={<Clock className="w-5 h-5" />}
       label="Tracking"
       isCollapsed={isCollapsed}
-    />
+      open={activeDropdown === "tracking"}
+      onToggle={() =>
+        setActiveDropdown(activeDropdown === "tracking" ? null : "tracking")
+      }
+    >
+      <SidebarLink
+        to={`/admin/tracking/list`}
+        icon={List}
+        label="List"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to={`/admin/tracking/history`}
+        icon={GalleryVerticalEnd}
+        label="History"
+        isCollapsed={isCollapsed}
+      />
+    </CustomCollapse>
+
     <SidebarLink
       to="/admin/monitoring/status"
       icon={Activity}
       label="Monitoring"
-      isCollapsed={isCollapsed}
-    />
-    <SidebarLink
-      to="/admin/history"
-      icon={FileText}
-      label="History"
       isCollapsed={isCollapsed}
     />
     <SidebarLink
@@ -250,7 +270,13 @@ export const Sidebar = ({ isCollapsed }) => {
       case Role.OM:
         return <OMSidebar isCollapsed={isCollapsed} />;
       case Role.ADMIN:
-        return <AdminSidebar isCollapsed={isCollapsed} />;
+        return (
+          <AdminSidebar
+            isCollapsed={isCollapsed}
+            activeDropdown={activeDropdown}
+            setActiveDropdown={setActiveDropdown}
+          />
+        );
       default:
         return null;
     }
