@@ -46,7 +46,7 @@ class Attendance {
     switch (filter) {
       case "timeIn":
         // Get the attendance record of those who have not timed out yet / for time-in page
-        matchStage.timeOut = null;
+        matchStage.timeIn = { $exists: true, $ne: null };
         break;
       case "timeOut":
         // Get the attendance records of those who have already timed out / for time-out page
