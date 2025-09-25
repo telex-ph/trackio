@@ -132,9 +132,9 @@ const TeamLeaderSidebar = ({
       isCollapsed={isCollapsed}
     />
     <SidebarLink
-      to="/team-leader/attendance/basic-logs"
+      to="/team-leader/tracking/basic-logs"
       icon={FileText}
-      label="Attendance"
+      label="Tracking"
       isCollapsed={isCollapsed}
     />
 

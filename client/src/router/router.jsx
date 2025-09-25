@@ -2,7 +2,6 @@ import App from "../App";
 import AppLayout from "../layout/AppLayout";
 import TrackingLayout from "../layout/TrackingLayout";
 import MonitoringLayout from "../layout/MonitoringLayout";
-import AttendanceLayout from "../layout/AttendanceLayout";
 
 // Agent Routes
 import AgentDashboard from "../pages/agent/AgentDashboard";
@@ -82,7 +81,7 @@ const router = createBrowserRouter([
               { path: "dashboard", element: <AdminDashboard /> },
               {
                 path: "tracking",
-                element: <TrackingLayout />,
+                element: <TrackingLayout role={Roles.ADMIN} />,
                 children: [
                   { index: true, element: <Navigate to="time-in" replace /> },
                   { path: "time-in", element: <AdminTimeIn /> },
@@ -133,8 +132,8 @@ const router = createBrowserRouter([
               { index: true, element: <Navigate to="dashboard" replace /> },
               { path: "dashboard", element: <TeamLeaderDashboard /> },
               {
-                path: "attendance",
-                element: <AttendanceLayout />,
+                path: "tracking",
+                element: <TrackingLayout role={Roles.TEAM_LEADER} />,
                 children: [
                   {
                     index: true,
