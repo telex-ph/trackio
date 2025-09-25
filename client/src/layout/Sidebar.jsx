@@ -124,6 +124,12 @@ const TeamLeaderSidebar = ({
       label="Dashboard"
       isCollapsed={isCollapsed}
     />
+    <SidebarLink
+      to="/team-leader/attendance"
+      icon={Bell}
+      label="Attendance"
+      isCollapsed={isCollapsed}
+    />
 
     <CustomCollapse
       icon={<Clock className="w-5 h-5" />}
@@ -198,6 +204,12 @@ const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       to="/admin/dashboard"
       icon={LayoutGrid}
       label="Dashboard"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
+      to="/admin/attendance"
+      icon={Bell}
+      label="Attendance"
       isCollapsed={isCollapsed}
     />
     <CustomCollapse

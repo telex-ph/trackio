@@ -58,6 +58,8 @@ import ForgotPassword from "../pages/global/ForgotPassword";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import ProtectedRoutes from "./ProtectedRoutes";
 import Roles from "../constants/roles";
+import AdminAttendance from "../pages/admin/AdminAttendance";
+import TeamLeaderAttendance from "../pages/team-leader/TeamLeaderAttendance";
 
 const router = createBrowserRouter([
   // Public Routes
@@ -79,6 +81,7 @@ const router = createBrowserRouter([
             children: [
               { index: true, element: <Navigate to="dashboard" replace /> },
               { path: "dashboard", element: <AdminDashboard /> },
+              { path: "attendance", element: <AdminAttendance /> },
               {
                 path: "tracking",
                 element: <TrackingLayout role={Roles.ADMIN} />,
@@ -143,6 +146,7 @@ const router = createBrowserRouter([
             children: [
               { index: true, element: <Navigate to="dashboard" replace /> },
               { path: "dashboard", element: <TeamLeaderDashboard /> },
+              { path: "attendance", element: <TeamLeaderAttendance /> },
               {
                 path: "tracking",
                 element: <TrackingLayout role={Roles.TEAM_LEADER} />,

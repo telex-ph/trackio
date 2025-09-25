@@ -81,7 +81,7 @@ const TimeBox = ({ attendance, config, onTimeIn, onUpdate, user }) => {
   };
 
   return (
-    <div className="flex flex-col gap-2 container-light border-light rounded-md p-5">
+    <div className="flex flex-col gap-2 border-light rounded-md p-5">
       <span className="font-medium">{title}</span>
       <div className="flex gap-3">
         <Button
