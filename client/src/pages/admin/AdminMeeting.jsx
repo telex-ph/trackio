@@ -10,6 +10,7 @@ import {
   Eye,
   Edit,
 } from "lucide-react";
+import UnderContruction from "../../assets/illustrations/UnderContruction";
 
 const AdminMeeting = () => {
   // Upcoming sessions (static sample content kept as you provided)
@@ -418,368 +419,371 @@ const AdminMeeting = () => {
   };
 
   return (
-    <div className="p-8">
-      {/* Header */}
-      <div className="mb-12">
-        <div className="mb-10">
-          <h2 className="text-4xl font-bold text-gray-900 mb-2">
-            Meeting
-          </h2>
-          <p className="text-gray-600">All updates will be reflected on the admin profile.</p>
-        </div>
-      </div>
+    // <div className="p-8">
+    //   {/* Header */}
+    //   <div className="mb-12">
+    //     <div className="mb-10">
+    //       <h2 className="text-4xl font-bold text-gray-900 mb-2">
+    //         Meeting
+    //       </h2>
+    //       <p className="text-gray-600">All updates will be reflected on the admin profile.</p>
+    //     </div>
+    //   </div>
 
-      {/* Two-Column Layout (mirrors Announcement layout exactly) */}
-      <div className="grid grid-cols-2 gap-10 mb-16">
-        {/* Create/Edit Session (left) */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 ${isEditMode ? "bg-red-100" : "bg-indigo-100"} rounded-lg`}>
-                {isEditMode ? (
-                  <Edit className="w-6 h-6 text-red-600" />
-                ) : (
-                  <Plus className="w-6 h-6 text-red-600" />
-                )}
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800">
-                {isEditMode ? "Edit Session" : "Create New Meeting"}
-              </h3>
-            </div>
+    //   {/* Two-Column Layout (mirrors Announcement layout exactly) */}
+    //   <div className="grid grid-cols-2 gap-10 mb-16">
+    //     {/* Create/Edit Session (left) */}
+    //     <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
+    //       <div className="flex items-center justify-between mb-8">
+    //         <div className="flex items-center gap-3">
+    //           <div className={`p-2 ${isEditMode ? "bg-red-100" : "bg-indigo-100"} rounded-lg`}>
+    //             {isEditMode ? (
+    //               <Edit className="w-6 h-6 text-red-600" />
+    //             ) : (
+    //               <Plus className="w-6 h-6 text-red-600" />
+    //             )}
+    //           </div>
+    //           <h3 className="text-2xl font-bold text-gray-800">
+    //             {isEditMode ? "Edit Session" : "Create New Meeting"}
+    //           </h3>
+    //         </div>
 
-            {isEditMode && (
-              <button
-                onClick={cancelEdit}
-                className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            )}
-          </div>
+    //         {isEditMode && (
+    //           <button
+    //             onClick={cancelEdit}
+    //             className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+    //           >
+    //             <X className="w-5 h-5" />
+    //           </button>
+    //         )}
+    //       </div>
 
-          <div className="space-y-8">
-            {/* Session Type + Date + Time */}
-            <div className="grid grid-cols-3 gap-6">
-              <select
-                value={formData.type}
-                onChange={(e) => handleInputChange("type", e.target.value)}
-                className="p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 transition-all"
-              >
-                <option value="MEETING">MEETING</option>
-              </select>
+    //       <div className="space-y-8">
+    //         {/* Session Type + Date + Time */}
+    //         <div className="grid grid-cols-3 gap-6">
+    //           <select
+    //             value={formData.type}
+    //             onChange={(e) => handleInputChange("type", e.target.value)}
+    //             className="p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 transition-all"
+    //           >
+    //             <option value="MEETING">MEETING</option>
+    //           </select>
 
-              <div className="relative">
-                <Calendar className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-red-500 z-10" />
-                <input
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => handleInputChange("date", e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 transition-all"
-                />
-              </div>
+    //           <div className="relative">
+    //             <Calendar className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-red-500 z-10" />
+    //             <input
+    //               type="date"
+    //               value={formData.date}
+    //               onChange={(e) => handleInputChange("date", e.target.value)}
+    //               className="w-full pl-12 pr-4 py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 transition-all"
+    //             />
+    //           </div>
 
-              <div className="relative">
-                <Clock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-red-500 z-10" />
-                <input
-                  type="time"
-                  value={formData.time}
-                  onChange={(e) => handleInputChange("time", e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 transition-all"
-                />
-              </div>
-            </div>
+    //           <div className="relative">
+    //             <Clock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-red-500 z-10" />
+    //             <input
+    //               type="time"
+    //               value={formData.time}
+    //               onChange={(e) => handleInputChange("time", e.target.value)}
+    //               className="w-full pl-12 pr-4 py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 transition-all"
+    //             />
+    //           </div>
+    //         </div>
 
-            {/* Title + Posted By */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Title *</label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => handleInputChange("title", e.target.value)}
-                placeholder="Enter session title"
-                className="w-full p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 transition-all"
-              />
-            </div>
+    //         {/* Title + Posted By */}
+    //         <div className="space-y-2">
+    //           <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Title *</label>
+    //           <input
+    //             type="text"
+    //             value={formData.title}
+    //             onChange={(e) => handleInputChange("title", e.target.value)}
+    //             placeholder="Enter session title"
+    //             className="w-full p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 transition-all"
+    //           />
+    //         </div>
 
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Facilitator *</label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-red-500 z-10" />
-                  <input
-                    type="text"
-                    value={formData.postedBy}
-                    onChange={(e) => handleInputChange("postedBy", e.target.value)}
-                    placeholder="Facilitator name or department"
-                    className="w-full pl-12 pr-4 py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 transition-all"
-                  />
-                </div>
-              </div>
+    //         <div className="grid grid-cols-2 gap-6">
+    //           <div className="space-y-2">
+    //             <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Facilitator *</label>
+    //             <div className="relative">
+    //               <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-red-500 z-10" />
+    //               <input
+    //                 type="text"
+    //                 value={formData.postedBy}
+    //                 onChange={(e) => handleInputChange("postedBy", e.target.value)}
+    //                 placeholder="Facilitator name or department"
+    //                 className="w-full pl-12 pr-4 py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 transition-all"
+    //               />
+    //             </div>
+    //           </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Employee/s Involved</label>
-                <select
-                  value={formData.priority}
-                  onChange={(e) => handleInputChange("priority", e.target.value)}
-                  className="w-full p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 transition-all"
-                >
-                  <option value="Low">Agent 1</option>
-                  <option value="Medium">Agent 2</option>
-                  <option value="High">Agent 3</option>
-                </select>
-              </div>
-            </div>
+    //           <div className="space-y-2">
+    //             <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Employee/s Involved</label>
+    //             <select
+    //               value={formData.priority}
+    //               onChange={(e) => handleInputChange("priority", e.target.value)}
+    //               className="w-full p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 transition-all"
+    //             >
+    //               <option value="Low">Agent 1</option>
+    //               <option value="Medium">Agent 2</option>
+    //               <option value="High">Agent 3</option>
+    //             </select>
+    //           </div>
+    //         </div>
 
-            {/* Attachment (drag & drop) */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Attachment</label>
-              <div
-                className={`relative border-2 border-dashed rounded-2xl p-4 transition-all duration-300 ${
-                  isDragOver ? "border-red-400 bg-red-50" : selectedFile ? "border-green-400 bg-green-50" : "border-gray-300 bg-gray-50/30"
-                }`}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-              >
-                <input
-                  type="file"
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  onChange={(e) => handleFileUpload(e.target.files[0])}
-                />
-                <div className="text-center">
-                  {selectedFile ? (
-                    <div className="flex items-center justify-center gap-3">
-                      <FileText className="w-6 h-6 text-green-500" />
-                      <div>
-                        <p className="font-medium text-green-700 text-sm">{selectedFile.name}</p>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedFile(null);
-                          }}
-                          className="text-red-500 hover:text-red-700 text-xs"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-600 font-medium text-sm">
-                        Drop file or <span className="text-red-600">browse</span>
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">Max 10MB</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+    //         {/* Attachment (drag & drop) */}
+    //         <div className="space-y-2">
+    //           <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Attachment</label>
+    //           <div
+    //             className={`relative border-2 border-dashed rounded-2xl p-4 transition-all duration-300 ${
+    //               isDragOver ? "border-red-400 bg-red-50" : selectedFile ? "border-green-400 bg-green-50" : "border-gray-300 bg-gray-50/30"
+    //             }`}
+    //             onDrop={handleDrop}
+    //             onDragOver={handleDragOver}
+    //             onDragLeave={handleDragLeave}
+    //           >
+    //             <input
+    //               type="file"
+    //               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+    //               onChange={(e) => handleFileUpload(e.target.files[0])}
+    //             />
+    //             <div className="text-center">
+    //               {selectedFile ? (
+    //                 <div className="flex items-center justify-center gap-3">
+    //                   <FileText className="w-6 h-6 text-green-500" />
+    //                   <div>
+    //                     <p className="font-medium text-green-700 text-sm">{selectedFile.name}</p>
+    //                     <button
+    //                       onClick={(e) => {
+    //                         e.stopPropagation();
+    //                         setSelectedFile(null);
+    //                       }}
+    //                       className="text-red-500 hover:text-red-700 text-xs"
+    //                     >
+    //                       Remove
+    //                     </button>
+    //                   </div>
+    //                 </div>
+    //               ) : (
+    //                 <div>
+    //                   <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+    //                   <p className="text-gray-600 font-medium text-sm">
+    //                     Drop file or <span className="text-red-600">browse</span>
+    //                   </p>
+    //                   <p className="text-xs text-gray-400 mt-1">Max 10MB</p>
+    //                 </div>
+    //               )}
+    //             </div>
+    //           </div>
+    //         </div>
 
-            {/* Agenda */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Agenda *</label>
-              <textarea
-                value={formData.agenda}
-                onChange={(e) => handleInputChange("agenda", e.target.value)}
-                placeholder="Describe the session agenda..."
-                className="w-full p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-32 focus:border-red-500 transition-all resize-none"
-              />
-            </div>
+    //         {/* Agenda */}
+    //         <div className="space-y-2">
+    //           <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Agenda *</label>
+    //           <textarea
+    //             value={formData.agenda}
+    //             onChange={(e) => handleInputChange("agenda", e.target.value)}
+    //             placeholder="Describe the session agenda..."
+    //             className="w-full p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-32 focus:border-red-500 transition-all resize-none"
+    //           />
+    //         </div>
 
-            {/* Submit */}
-            <button
-              onClick={handleSubmit}
-              className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all font-semibold text-lg shadow-xl hover:shadow-2xl"
-            >
-              {isEditMode ? "Update Session" : "Create Session"}
-            </button>
-          </div>
-        </div>
+    //         {/* Submit */}
+    //         <button
+    //           onClick={handleSubmit}
+    //           className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all font-semibold text-lg shadow-xl hover:shadow-2xl"
+    //         >
+    //           {isEditMode ? "Update Session" : "Create Session"}
+    //         </button>
+    //       </div>
+    //     </div>
 
-        {/* Upcoming Sessions (right) */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20" ref={sessionsContainerRef}>
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <FileText className="w-6 h-6 text-blue-600" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-800">Upcoming Meetings</h3>
-            <span className="ml-auto bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">{sessions.length} Upcoming</span>
-          </div>
+    //     {/* Upcoming Sessions (right) */}
+    //     <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20" ref={sessionsContainerRef}>
+    //       <div className="flex items-center gap-3 mb-8">
+    //         <div className="p-2 bg-blue-100 rounded-lg">
+    //           <FileText className="w-6 h-6 text-blue-600" />
+    //         </div>
+    //         <h3 className="text-2xl font-bold text-gray-800">Upcoming Meetings</h3>
+    //         <span className="ml-auto bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">{sessions.length} Upcoming</span>
+    //       </div>
 
-          <div className="space-y-4 overflow-y-auto h-[655px] pr-2">
-            {sessions.map((s) => (
-              <div
-                key={s.id}
-                className={`group p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border ${
-                  editingId === s.id ? "border-red-300 ring-2 ring-red-100" : "border-gray-100"
-                } ${s.type === "COACHING" ? "border-red-200" : "border-green-200"}`}
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-start gap-4">
-                    <div className="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
-                      <FileText className="w-5 h-5 text-red-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-lg font-bold text-gray-800 mb-2 group-hover:text-red-600 transition-colors">{s.type} • {s.title}</h4>
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="text-xs text-gray-500">2 hours ago</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+    //       <div className="space-y-4 overflow-y-auto h-[655px] pr-2">
+    //         {sessions.map((s) => (
+    //           <div
+    //             key={s.id}
+    //             className={`group p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border ${
+    //               editingId === s.id ? "border-red-300 ring-2 ring-red-100" : "border-gray-100"
+    //             } ${s.type === "COACHING" ? "border-red-200" : "border-green-200"}`}
+    //           >
+    //             <div className="flex justify-between items-start mb-4">
+    //               <div className="flex items-start gap-4">
+    //                 <div className="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
+    //                   <FileText className="w-5 h-5 text-red-600" />
+    //                 </div>
+    //                 <div className="flex-1">
+    //                   <h4 className="text-lg font-bold text-gray-800 mb-2 group-hover:text-red-600 transition-colors">{s.type} • {s.title}</h4>
+    //                   <div className="flex items-center gap-2 mb-3">
+    //                     <span className="text-xs text-gray-500">2 hours ago</span>
+    //                   </div>
+    //                 </div>
+    //               </div>
+    //             </div>
 
-                <div className="space-y-3 mb-4">
-                  <p className="text-sm text-gray-600 flex items-center gap-2">
-                    <User className="w-4 h-4" />
-                    Facilitator: <span className="font-medium">{s.postedBy}</span>
-                  </p>
+    //             <div className="space-y-3 mb-4">
+    //               <p className="text-sm text-gray-600 flex items-center gap-2">
+    //                 <User className="w-4 h-4" />
+    //                 Facilitator: <span className="font-medium">{s.postedBy}</span>
+    //               </p>
 
-                  <div className="flex gap-6 text-sm text-gray-700">
-                    <span className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-red-500" />
-                      {formatDisplayDate(s.date)}
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-red-500" />
-                      {formatDisplayTime(s.time)}
-                    </span>
-                  </div>
+    //               <div className="flex gap-6 text-sm text-gray-700">
+    //                 <span className="flex items-center gap-2">
+    //                   <Calendar className="w-4 h-4 text-red-500" />
+    //                   {formatDisplayDate(s.date)}
+    //                 </span>
+    //                 <span className="flex items-center gap-2">
+    //                   <Clock className="w-4 h-4 text-red-500" />
+    //                   {formatDisplayTime(s.time)}
+    //                 </span>
+    //               </div>
 
-                  <div className="bg-gray-50 rounded-xl p-4 border-l-4 border-red-500">
-                    <p className="text-sm text-gray-700">
-                      <span className="font-semibold text-gray-800">Agenda:</span> {s.agenda || "—"}
-                    </p>
-                  </div>
-                </div>
+    //               <div className="bg-gray-50 rounded-xl p-4 border-l-4 border-red-500">
+    //                 <p className="text-sm text-gray-700">
+    //                   <span className="font-semibold text-gray-800">Agenda:</span> {s.agenda || "—"}
+    //                 </p>
+    //               </div>
+    //             </div>
 
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => handleCancelSession(s.id)}
-                    className="flex-1 bg-white border-2 border-red-500 text-red-600 p-3 rounded-xl hover:bg-red-50 transition-all font-medium shadow-md hover:shadow-lg"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => handleEdit(s)}
-                    className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg"
-                  >
-                    Edit
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+    //             <div className="flex gap-3">
+    //               <button
+    //                 onClick={() => handleCancelSession(s.id)}
+    //                 className="flex-1 bg-white border-2 border-red-500 text-red-600 p-3 rounded-xl hover:bg-red-50 transition-all font-medium shadow-md hover:shadow-lg"
+    //               >
+    //                 Cancel
+    //               </button>
+    //               <button
+    //                 onClick={() => handleEdit(s)}
+    //                 className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg"
+    //               >
+    //                 Edit
+    //               </button>
+    //             </div>
+    //           </div>
+    //         ))}
+    //       </div>
+    //     </div>
+    //   </div>
 
-      {/* Session History (full width card matching Announcement style) */}
-      <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
-        <h3 className="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-3">
-          <div className="p-2 bg-gray-100 rounded-lg">
-            <Clock className="w-6 h-6 text-gray-600" />
-          </div>
-          Meetings History
-        </h3>
+    //   {/* Session History (full width card matching Announcement style) */}
+    //   <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
+    //     <h3 className="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-3">
+    //       <div className="p-2 bg-gray-100 rounded-lg">
+    //         <Clock className="w-6 h-6 text-gray-600" />
+    //       </div>
+    //       Meetings History
+    //     </h3>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-md text-left text-gray-700 border-separate border-spacing-y-3">
-            <thead className="bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 font-bold rounded-2xl">
-              <tr>
-                {["DATE", "FACILITATOR", "TYPE", "TIME", "AGENDA", "STATUS", "REMARKS", "ATTACHMENT", "ACTION"].map((col) => (
-                  <th key={col} className="px-6 py-4 first:rounded-l-2xl last:rounded-r-2xl">{col}</th>
-                ))}
-              </tr>
-            </thead>
+    //     <div className="overflow-x-auto">
+    //       <table className="w-full text-md text-left text-gray-700 border-separate border-spacing-y-3">
+    //         <thead className="bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 font-bold rounded-2xl">
+    //           <tr>
+    //             {["DATE", "FACILITATOR", "TYPE", "TIME", "AGENDA", "STATUS", "REMARKS", "ATTACHMENT", "ACTION"].map((col) => (
+    //               <th key={col} className="px-6 py-4 first:rounded-l-2xl last:rounded-r-2xl">{col}</th>
+    //             ))}
+    //           </tr>
+    //         </thead>
 
-            <tbody>
-              {currentItems.map((row, i) => (
-                <tr key={i} className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                  <td className="px-6 py-4 rounded-l-2xl font-medium">{row.date}</td>
-                  <td className="px-6 py-4">{row.facilitator}</td>
-                  <td className="px-6 py-4">{row.type}</td>
-                  <td className="px-6 py-4">{row.time}</td>
-                  <td className="px-6 py-4 max-w-xs truncate">{row.agenda}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-4 py-2 rounded-xl text-sm font-semibold ${row.status === "Completed" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
-                      {row.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 max-w-xs truncate">{row.remarks}</td>
-                  <td className="px-6 py-4">
-                    {row.attachment ? <a href="#" className="text-red-600 hover:underline">{row.attachment}</a> : "-"}
-                  </td>
-                  <td className="px-6 py-4 rounded-r-2xl">
-                    <button className="flex items-center gap-2 text-red-600 hover:text-red-800 font-medium" onClick={() => openModal(row)}>
-                      <Eye className="w-4 h-4" /> View
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    //         <tbody>
+    //           {currentItems.map((row, i) => (
+    //             <tr key={i} className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+    //               <td className="px-6 py-4 rounded-l-2xl font-medium">{row.date}</td>
+    //               <td className="px-6 py-4">{row.facilitator}</td>
+    //               <td className="px-6 py-4">{row.type}</td>
+    //               <td className="px-6 py-4">{row.time}</td>
+    //               <td className="px-6 py-4 max-w-xs truncate">{row.agenda}</td>
+    //               <td className="px-6 py-4">
+    //                 <span className={`px-4 py-2 rounded-xl text-sm font-semibold ${row.status === "Completed" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
+    //                   {row.status}
+    //                 </span>
+    //               </td>
+    //               <td className="px-6 py-4 max-w-xs truncate">{row.remarks}</td>
+    //               <td className="px-6 py-4">
+    //                 {row.attachment ? <a href="#" className="text-red-600 hover:underline">{row.attachment}</a> : "-"}
+    //               </td>
+    //               <td className="px-6 py-4 rounded-r-2xl">
+    //                 <button className="flex items-center gap-2 text-red-600 hover:text-red-800 font-medium" onClick={() => openModal(row)}>
+    //                   <Eye className="w-4 h-4" /> View
+    //                 </button>
+    //               </td>
+    //             </tr>
+    //           ))}
+    //         </tbody>
+    //       </table>
 
-          {/* Pagination (same as Announcement) */}
-          <div className="flex justify-center mt-8">
-            <div className="flex gap-2">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
-                <button
-                  key={number}
-                  onClick={() => paginate(number)}
-                  className={`px-5 py-3 rounded-xl font-medium transition-all duration-300 ${currentPage === number ? "bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg" : "bg-gray-200 text-gray-700 hover:bg-gray-300 border-2 border-red-200"}`}
-                >
-                  {number}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+    //       {/* Pagination (same as Announcement) */}
+    //       <div className="flex justify-center mt-8">
+    //         <div className="flex gap-2">
+    //           {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
+    //             <button
+    //               key={number}
+    //               onClick={() => paginate(number)}
+    //               className={`px-5 py-3 rounded-xl font-medium transition-all duration-300 ${currentPage === number ? "bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg" : "bg-gray-200 text-gray-700 hover:bg-gray-300 border-2 border-red-200"}`}
+    //             >
+    //               {number}
+    //             </button>
+    //           ))}
+    //         </div>
+    //       </div>
+    //     </div>
+    //   </div>
 
-      {/* Modal (mirrors Announcement modal but shows coaching details & allows remarks + file upload) */}
-      {selectedHistory && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={closeModal}>
-          <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-3xl w-full relative" onClick={(e) => e.stopPropagation()}>
-            <button className="absolute top-4 right-4 text-gray-500 hover:text-gray-800" onClick={closeModal}>
-              <X className="w-6 h-6" />
-            </button>
+    //   {/* Modal (mirrors Announcement modal but shows coaching details & allows remarks + file upload) */}
+    //   {selectedHistory && (
+    //     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={closeModal}>
+    //       <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-3xl w-full relative" onClick={(e) => e.stopPropagation()}>
+    //         <button className="absolute top-4 right-4 text-gray-500 hover:text-gray-800" onClick={closeModal}>
+    //           <X className="w-6 h-6" />
+    //         </button>
 
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">Session Details</h3>
+    //         <h3 className="text-2xl font-bold text-gray-900 mb-6">Session Details</h3>
 
-            <div className="space-y-4">
-              <p><strong>Date:</strong> {selectedHistory.date}</p>
-              <p><strong>Facilitator:</strong> {selectedHistory.facilitator}</p>
-              <p><strong>Type:</strong> {selectedHistory.type}</p>
-              <p><strong>Time:</strong> {selectedHistory.time}</p>
-              <p><strong>Agenda:</strong> {selectedHistory.agenda}</p>
-              <p>
-                <strong>Status:</strong>{" "}
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${selectedHistory.status === "Completed" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
-                  {selectedHistory.status}
-                </span>
-              </p>
-              <p><strong>Remarks:</strong> {selectedHistory.remarks}</p>
+    //         <div className="space-y-4">
+    //           <p><strong>Date:</strong> {selectedHistory.date}</p>
+    //           <p><strong>Facilitator:</strong> {selectedHistory.facilitator}</p>
+    //           <p><strong>Type:</strong> {selectedHistory.type}</p>
+    //           <p><strong>Time:</strong> {selectedHistory.time}</p>
+    //           <p><strong>Agenda:</strong> {selectedHistory.agenda}</p>
+    //           <p>
+    //             <strong>Status:</strong>{" "}
+    //             <span className={`px-3 py-1 rounded-full text-sm font-medium ${selectedHistory.status === "Completed" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
+    //               {selectedHistory.status}
+    //             </span>
+    //           </p>
+    //           <p><strong>Remarks:</strong> {selectedHistory.remarks}</p>
 
-              {selectedHistory.attachment && (
-                <p>
-                  <strong>Attachment:</strong>{" "}
-                  <a href="#" className="text-red-600 hover:underline">{selectedHistory.attachment}</a>
-                </p>
-              )}
+    //           {selectedHistory.attachment && (
+    //             <p>
+    //               <strong>Attachment:</strong>{" "}
+    //               <a href="#" className="text-red-600 hover:underline">{selectedHistory.attachment}</a>
+    //             </p>
+    //           )}
 
-              {/* Add remarks + file upload */}
-              <textarea value={remarkInput} onChange={(e) => setRemarkInput(e.target.value)} placeholder="Add remarks..." className="w-full p-3 border rounded-lg h-24 focus:ring-2 focus:ring-red-500" />
+    //           {/* Add remarks + file upload */}
+    //           <textarea value={remarkInput} onChange={(e) => setRemarkInput(e.target.value)} placeholder="Add remarks..." className="w-full p-3 border rounded-lg h-24 focus:ring-2 focus:ring-red-500" />
 
-              <input type="file" onChange={(e) => handleModalFile(e.target.files[0])} className="w-full p-2 border rounded-lg" />
-            </div>
+    //           <input type="file" onChange={(e) => handleModalFile(e.target.files[0])} className="w-full p-2 border rounded-lg" />
+    //         </div>
 
-            <div className="flex gap-3 mt-6">
-              <button className="flex-1 bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transition font-medium shadow-md" onClick={handleUpdateHistory}>Save</button>
-              <button className="flex-1 bg-gray-300 text-gray-800 p-3 rounded-lg hover:bg-gray-400 transition font-medium shadow-md" onClick={closeModal}>Close</button>
-            </div>
-          </div>
-        </div>
-      )}
+    //         <div className="flex gap-3 mt-6">
+    //           <button className="flex-1 bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transition font-medium shadow-md" onClick={handleUpdateHistory}>Save</button>
+    //           <button className="flex-1 bg-gray-300 text-gray-800 p-3 rounded-lg hover:bg-gray-400 transition font-medium shadow-md" onClick={closeModal}>Close</button>
+    //         </div>
+    //       </div>
+    //     </div>
+    //   )}
+    // </div>
+    <div className="h-full w-full mt-20">
+      <UnderContruction />
     </div>
   );
 };
