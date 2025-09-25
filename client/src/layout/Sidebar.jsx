@@ -45,7 +45,7 @@ const CustomCollapse = ({
       >
         <div className="flex items-center gap-2">
           {React.cloneElement(icon, {
-            className: `${isCollapsed ? "w-6 h-6" : "w-5 h-5"} flex-shrink-0`,
+            className: `${isCollapsed ? "w-4 h-4" : "w-4 h-4"} flex-shrink-0`,
           })}
           {!isCollapsed && <span className="font-medium">{label}</span>}
         </div>
@@ -83,7 +83,7 @@ const SidebarLink = ({ to, icon: Icon, label, isCollapsed }) => (
       }`
     }
   >
-    <Icon className={`${isCollapsed ? "w-5 h-5" : "w-5 h-5"} flex-shrink-0`} />
+    <Icon className={`${isCollapsed ? "w-4 h-4" : "w-4 h-4"} flex-shrink-0`} />
     {!isCollapsed && <span className="font-medium">{label}</span>}
   </NavLink>
 );
@@ -131,31 +131,12 @@ const TeamLeaderSidebar = ({
       label="Dashboard"
       isCollapsed={isCollapsed}
     />
-
-    <CustomCollapse
-      icon={<BookOpenText className="w-5 h-5" />}
+    <SidebarLink
+      to="/team-leader/attendance/basic-logs"
+      icon={FileText}
       label="Attendance"
       isCollapsed={isCollapsed}
-      open={activeDropdown === "attendance"}
-      onToggle={() =>
-        setActiveDropdown(activeDropdown === "attendance" ? null : "attendance")
-      }
-    >
-      {[
-        { path: "basic-logs", label: "Basic Logs", Icon: FileText },
-        { path: "late", label: "Late", Icon: AlertTriangle },
-        { path: "overtime", label: "Overtime", Icon: AlarmClockCheck },
-        { path: "undertime", label: "Undertime", Icon: Clock },
-      ].map(({ path, label, Icon }) => (
-        <SidebarLink
-          key={path}
-          to={`/team-leader/attendance/${path}`}
-          icon={Icon}
-          label={label}
-          isCollapsed={isCollapsed}
-        />
-      ))}
-    </CustomCollapse>
+    />
 
     <SidebarLink
       to="/team-leader/coaching"
