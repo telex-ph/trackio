@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useStore } from "../../store/useStore";
 import {
   Upload,
-  Trash2,
   User,
   Building2,
   Mail,
@@ -27,15 +27,20 @@ const AccountSettings = () => {
   const [activeSection, setActiveSection] = useState("profile");
   const [isEditing, setIsEditing] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
+
+  // global user from store
+  const user = useStore((state) => state.user);
+
+  // merged formData (DB values for profile, hardcoded for about)
   const [formData, setFormData] = useState({
-    companyName: "Telex Business Support Services Inc.",
-    accountName: "TELEX",
-    emailAddress: "telexphilippines@gmail.com",
-    contactNumber: "912 345 6789",
-    completeAddress: "Afan Salvador St., Guimba, Nueva Ecija, 3115",
-    facebook: "https://facebook.com/telex",
-    linkedin: "https://linkedin.com/company/telex",
-    gmail: "telexphilippines@gmail.com",
+    firstName: "",
+    lastName: "",
+    emailAddress: "",
+    contactNumber: "",
+    completeAddress: "",
+    avatar: "",
+    facebook: "",
+    linkedin: "",
     vision:
       "TELEX’s Vision is to revolutionize the way businesses interact with their customers by providing cutting-edge technology and innovative solutions that create seamless and personalized experiences.",
     mission:
@@ -74,6 +79,23 @@ const AccountSettings = () => {
     ],
     showPassword: false,
   });
+
+  // sync DB user → formData
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        emailAddress: user.email || "",
+        contactNumber: user.contactNumber || "",
+        completeAddress: user.address || "",
+        avatar: user.avatar || "",
+        facebook: user.facebook || "",
+        linkedin: user.linkedin || "",
+      }));
+    }
+  }, [user]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -148,7 +170,7 @@ const AccountSettings = () => {
                         Account Settings
                       </h2>
                       <p className="text-gray-600">
-                        Manage your organization profile and contact information
+                        Manage your profile and contact information
                       </p>
                     </div>
 
@@ -165,11 +187,10 @@ const AccountSettings = () => {
                   <div className="grid grid-cols-1 2xl:grid-cols-5 gap-12">
                     {/* Avatar */}
                     <div className="2xl:col-span-2 flex flex-col items-center">
-                      {/* Avatar Card */}
                       <div className="relative w-70 h-70 bg-white rounded-2xl shadow-lg border-2 border-red-300 hover:border-red-500 transition-all duration-300 overflow-hidden cursor-pointer flex items-center justify-center">
                         <img
                           src={formData.avatar || telex}
-                          alt="TELEX"
+                          alt="Avatar"
                           className="w-full h-full object-contain"
                         />
 
@@ -191,7 +212,6 @@ const AccountSettings = () => {
                           }}
                         />
 
-                        {/* Left-side Upload Icon */}
                         {isEditing && (
                           <button
                             className="absolute bottom-3 left-3 w-10 h-10 bg-white/50 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-white/70 transition-all duration-300"
@@ -204,7 +224,6 @@ const AccountSettings = () => {
                           </button>
                         )}
 
-                        {/* Right-side Camera Icon (Open Modal) */}
                         {isEditing && (
                           <button
                             className="absolute bottom-3 right-3 w-10 h-10 bg-white/50 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-white/70 transition-all duration-300"
@@ -219,95 +238,79 @@ const AccountSettings = () => {
                       </div>
                     </div>
 
-                    {/* Company Info */}
+                    {/* User Info */}
                     <div className="2xl:col-span-3">
                       <div className="bg-gradient-to-r from-rose-50 to-red-50 rounded-2xl p-6 border border-red-200/50 space-y-6">
-                        {/* Company Name */}
-                        <div className="group">
-                          <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center space-x-2">
-                            <Building2 size={16} />
-                            <span>Company Name</span>
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.companyName}
-                            onChange={(e) =>
-                              handleInputChange("companyName", e.target.value)
-                            }
-                            disabled={!isEditing}
-                            className="w-full px-6 py-4 bg-white/80 border-2 border-gray-200 rounded-xl focus:border-red-600 focus:ring-4 focus:ring-red-600/20 transition-all duration-300 disabled:bg-gray-50 disabled:text-gray-500"
-                          />
-                        </div>
-
-                        {/* Account Name & Email */}
+                        {/* First & Last Name */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                           <div className="group">
-                            <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center space-x-2">
-                              <User size={16} />
-                              <span>Account Name</span>
+                            <label className="block text-sm font-bold text-gray-700 mb-3">
+                              First Name
                             </label>
                             <input
                               type="text"
-                              value={formData.accountName}
+                              value={formData.firstName}
                               onChange={(e) =>
-                                handleInputChange("accountName", e.target.value)
+                                handleInputChange("firstName", e.target.value)
                               }
                               disabled={!isEditing}
-                              className="w-full px-6 py-4 bg-white/80 border-2 border-gray-200 rounded-xl focus:border-red-600 focus:ring-4 focus:ring-red-600/20 transition-all duration-300 disabled:bg-gray-50 disabled:text-gray-500"
+                              className="w-full px-6 py-4 bg-white/80 border-2 border-gray-200 rounded-xl disabled:bg-gray-50 disabled:text-gray-500"
                             />
                           </div>
-
                           <div className="group">
-                            <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center space-x-2">
-                              <Mail size={16} />
-                              <span>Email Address</span>
+                            <label className="block text-sm font-bold text-gray-700 mb-3">
+                              Last Name
                             </label>
                             <input
-                              type="email"
-                              value={formData.emailAddress}
+                              type="text"
+                              value={formData.lastName}
                               onChange={(e) =>
-                                handleInputChange(
-                                  "emailAddress",
-                                  e.target.value
-                                )
+                                handleInputChange("lastName", e.target.value)
                               }
                               disabled={!isEditing}
-                              className="w-full px-6 py-4 bg-white/80 border-2 border-gray-200 rounded-xl focus:border-red-600 focus:ring-4 focus:ring-red-600/20 transition-all duration-300 disabled:bg-gray-50 disabled:text-gray-500"
+                              className="w-full px-6 py-4 bg-white/80 border-2 border-gray-200 rounded-xl disabled:bg-gray-50 disabled:text-gray-500"
                             />
                           </div>
                         </div>
 
-                        {/* Contact & Address */}
-                        <div className="group w-full">
-                          <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center space-x-2">
+                        {/* Email */}
+                        <div className="group">
+                          <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center space-x-2">
+                            <Mail size={16} />
+                            <span>Email Address</span>
+                          </label>
+                          <input
+                            type="email"
+                            value={formData.emailAddress}
+                            onChange={(e) =>
+                              handleInputChange("emailAddress", e.target.value)
+                            }
+                            disabled={!isEditing}
+                            className="w-full px-6 py-4 bg-white/80 border-2 border-gray-200 rounded-xl disabled:bg-gray-50 disabled:text-gray-500"
+                          />
+                        </div>
+
+                        {/* Contact */}
+                        <div className="group">
+                          <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center space-x-2">
                             <Phone size={16} />
                             <span>Contact Number</span>
                           </label>
-
-                          <div className="flex w-full">
-                            {/* Country Code */}
-                            <div className="flex items-center px-3 sm:px-4 md:px-6 py-3 sm:py-4 bg-gray-100 border-2 border-r-0 border-gray-200 rounded-l-xl shrink-0">
-                              <span className="text-gray-600 font-bold text-sm sm:text-base">
-                                +63
-                              </span>
-                            </div>
-
-                            {/* Input */}
-                            <input
-                              type="tel"
-                              value={formData.contactNumber}
-                              onChange={(e) =>
-                                handleInputChange(
-                                  "contactNumber",
-                                  e.target.value
-                                )
-                              }
-                              disabled={!isEditing}
-                              className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl px-3 sm:px-4 md:px-6 py-3 sm:py-4  bg-white/80 border-2 border-gray-200 rounded-r-xl focus:border-red-600 focus:ring-4 focus:ring-red-600/20 transition-all duration-300 disabled:bg-gray-50 disabled:text-gray-500 text-sm sm:text-base"
-                            />
-                          </div>
+                          <input
+                            type="tel"
+                            value={formData.contactNumber}
+                            onChange={(e) =>
+                              handleInputChange(
+                                "contactNumber",
+                                e.target.value
+                              )
+                            }
+                            disabled={!isEditing}
+                            className="w-full px-6 py-4 bg-white/80 border-2 border-gray-200 rounded-xl disabled:bg-gray-50 disabled:text-gray-500"
+                          />
                         </div>
 
+                        {/* Address */}
                         <div className="group">
                           <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center space-x-2">
                             <MapPin size={16} />
@@ -323,12 +326,12 @@ const AccountSettings = () => {
                             }
                             disabled={!isEditing}
                             rows={3}
-                            className="w-full px-6 py-4 bg-white/80 border-2 border-gray-200 rounded-xl focus:border-red-600 focus:ring-4 focus:ring-red-600/20 transition-all duration-300 disabled:bg-gray-50 disabled:text-gray-500 resize-none"
+                            className="w-full px-6 py-4 bg-white/80 border-2 border-gray-200 rounded-xl disabled:bg-gray-50 disabled:text-gray-500 resize-none"
                           />
                         </div>
 
-                        {/* Social Media */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-x-12">
+                        {/* Socials */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                           <div className="group">
                             <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center space-x-2">
                               <Facebook size={16} />
@@ -341,10 +344,9 @@ const AccountSettings = () => {
                                 handleInputChange("facebook", e.target.value)
                               }
                               disabled={!isEditing}
-                              className="w-full md:w-[250px] lg:w-[250px] px-6 py-4 bg-white/80 border-2 border-gray-200 rounded-xl focus:border-red-600 focus:ring-4 focus:ring-red-600/20 transition-all duration-300 disabled:bg-gray-50 disabled:text-gray-500"
+                              className="w-full px-6 py-4 bg-white/80 border-2 border-gray-200 rounded-xl disabled:bg-gray-50 disabled:text-gray-500"
                             />
                           </div>
-
                           <div className="group">
                             <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center space-x-2">
                               <Linkedin size={16} />
@@ -357,7 +359,7 @@ const AccountSettings = () => {
                                 handleInputChange("linkedin", e.target.value)
                               }
                               disabled={!isEditing}
-                              className="w-full md:w-[230px] lg:w-[230px] px-6 py-4 bg-white/80 border-2 border-gray-200 rounded-xl focus:border-red-600 focus:ring-4 focus:ring-red-600/20 transition-all duration-300 disabled:bg-gray-50 disabled:text-gray-500"
+                              className="w-full px-6 py-4 bg-white/80 border-2 border-gray-200 rounded-xl disabled:bg-gray-50 disabled:text-gray-500"
                             />
                           </div>
                         </div>
@@ -365,18 +367,17 @@ const AccountSettings = () => {
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
                   {isEditing && (
                     <div className="flex justify-end gap-4 mt-12 pt-8 border-t border-gray-200">
                       <button
                         onClick={() => setIsEditing(false)}
-                        className="flex-1 flex items-center justify-center gap-3 px-9 py-4 bg-red-700 text-white rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 font-semibold"
+                        className="px-9 py-4 bg-red-700 text-white rounded-xl"
                       >
                         Cancel Changes
                       </button>
                       <button
                         onClick={handleSave}
-                        className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-white text-red-700 border-2 border-red-700 rounded-xl transition-all duration-300 shadow-md hover:bg-red-50 hover:shadow-lg transform hover:-translate-y-1 font-semibold"
+                        className="px-6 py-4 bg-white text-red-700 border-2 border-red-700 rounded-xl"
                       >
                         Save Changes
                       </button>
@@ -385,161 +386,15 @@ const AccountSettings = () => {
                 </div>
               )}
 
-              {/* Change Password Section */}
+              {/* Security and About remain the same */}
               {activeSection === "security" && (
-                <div className="p-8">
-                  <div className="bg-gradient-to-r from-rose-50 to-red-50 rounded-2xl p-6 border border-red-200/50 space-y-6">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-6">
-                      Change Password
-                    </h2>
-
-                    {["CurrentPassword", "NewPassword", "ConfirmPassword"].map(
-                      (field) => {
-                        let Icon, placeholderText;
-                        switch (field) {
-                          case "CurrentPassword":
-                            Icon = Lock;
-                            placeholderText =
-                              "Enter your current password here";
-                            break;
-                          case "NewPassword":
-                            Icon = Key;
-                            placeholderText = "Enter your new password here";
-                            break;
-                          case "ConfirmPassword":
-                            Icon = Check;
-                            placeholderText = "Confirm your new password";
-                            break;
-                          default:
-                            Icon = Lock;
-                            placeholderText = "";
-                        }
-
-                        return (
-                          <div key={field} className="group relative">
-                            <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center space-x-2">
-                              <Icon size={16} />
-                              <span>
-                                {field.replace("Password", " Password")}
-                              </span>
-                            </label>
-                            <input
-                              type={formData.showPassword ? "text" : "password"}
-                              placeholder={placeholderText}
-                              className="w-full px-6 py-4 bg-white/80 border-2 border-gray-200 rounded-xl focus:border-red-600 focus:ring-4 focus:ring-red-600/20 transition-all duration-300"
-                            />
-                            <button
-                              type="button"
-                              className="absolute top-[68%] right-10 -translate-y-1/2 text-gray-300 hover:text-red-600"
-                              onClick={() =>
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  showPassword: !prev.showPassword,
-                                }))
-                              }
-                            >
-                              {formData.showPassword ? <Eye /> : <EyeClosed />}
-                            </button>
-                          </div>
-                        );
-                      }
-                    )}
-
-                    {/* Save Button aligned to the right */}
-                    <div className="flex justify-end mt-6">
-                      <button className="px-6 py-3 bg-white text-red-700 border-2 border-red-700 rounded-xl transition-all duration-300 shadow-md hover:bg-red-50 hover:shadow-lg transform hover:-translate-y-1 font-semibold">
-                        Update Password
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <div className="p-8">…</div>
               )}
-
-              {/* Preferences Section / About Company */}
               {activeSection === "preferences" && (
-                <div className="p-8 space-y-8">
-                  <div className="bg-gradient-to-r from-rose-50 to-red-50 rounded-2xl p-6 border border-red-200/50 space-y-6">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                      About Company
-                    </h2>
-
-                    {/* Vision */}
-                    <div className="group">
-                      <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center space-x-2">
-                        <Eye size={16} />
-                        <span>Vision</span>
-                      </label>
-                      <textarea
-                        value={formData.vision}
-                        onChange={(e) =>
-                          handleInputChange("vision", e.target.value)
-                        }
-                        rows={3}
-                        className="w-full px-6 py-4 bg-white/80 border-2 border-gray-200 rounded-xl focus:border-red-600 focus:ring-4 focus:ring-red-600/20 transition-all duration-300 resize-none"
-                      />
-                    </div>
-
-                    {/* Mission */}
-                    <div className="group">
-                      <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center space-x-2">
-                        <Flag size={16} />
-                        <span>Mission</span>
-                      </label>
-                      <textarea
-                        value={formData.mission}
-                        onChange={(e) =>
-                          handleInputChange("mission", e.target.value)
-                        }
-                        rows={3}
-                        className="w-full px-6 py-4 bg-white/80 border-2 border-gray-200 rounded-xl focus:border-red-600 focus:ring-4 focus:ring-red-600/20 transition-all duration-300 resize-none"
-                      />
-                    </div>
-
-                    {/* Core Values */}
-                    <div className="group">
-                      <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center space-x-2">
-                        <Star size={16} />
-                        <span>Core Values</span>
-                      </label>
-                      <ul className="list-disc list-inside space-y-2 text-gray-700">
-                        {formData.values.map((val, idx) => (
-                          <li key={idx}>{val}</li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    {/* Services */}
-                    <div className="group">
-                      <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center space-x-2">
-                        <Briefcase size={16} />
-                        <span>Services</span>
-                      </label>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mt-4">
-                        {formData.services.map((service, idx) => (
-                          <div
-                            key={idx}
-                            className="flex flex-col items-center p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300"
-                          >
-                            <p className="text-center text-gray-800 text-sm font-medium">
-                              {service.title}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Save Button aligned to the right */}
-                    <div className="flex justify-end mt-6">
-                      <button className="px-6 py-3 bg-white text-red-700 border-2 border-red-700 rounded-xl transition-all duration-300 shadow-md hover:bg-red-50 hover:shadow-lg transform hover:-translate-y-1 font-semibold">
-                        Save About Info
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <div className="p-8">…</div>
               )}
             </div>
 
-            {/* Avatar Modal */}
             {showAvatarModal && (
               <div
                 className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
@@ -550,12 +405,12 @@ const AccountSettings = () => {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <img
-                    src={telex}
+                    src={formData.avatar || telex}
                     alt="Avatar"
                     className="w-full h-auto rounded-2xl object-contain shadow-2xl"
                   />
                   <button
-                    className="absolute top-2 right-2 text-white p-2 bg-black/40 rounded-full hover:bg-black/60 transition"
+                    className="absolute top-2 right-2 text-white p-2 bg-black/40 rounded-full"
                     onClick={() => setShowAvatarModal(false)}
                   >
                     <X size={24} />

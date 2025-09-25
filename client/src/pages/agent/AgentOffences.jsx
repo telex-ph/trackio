@@ -2,17 +2,15 @@ import React, { useState, useEffect } from "react";
 import {
   Calendar,
   Clock,
-  Upload,
   X,
-  Plus,
   User,
   FileText,
   ChevronDown,
-  Edit,
   CheckCircle,
   XCircle,
   Bell,
   Search,
+  Eye,
 } from "lucide-react";
 import { DateTime } from "luxon";
 import api from "../../utils/axios";
@@ -98,10 +96,8 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, message }) => {
 };
 
 // =================== Main Component ===================
-const AdminOffences = () => {
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
+const AgentOffences = () => {
+  const [isViewMode, setIsViewMode] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [offenses, setOffenses] = useState([]);
@@ -125,7 +121,11 @@ const AdminOffences = () => {
     status: "",
     actionTaken: "",
     remarks: "",
+    evidence: [],
+    isRead: false,
   });
+
+  const currentAgent = "Current Agent"; // Replace with actual agent name from auth or context
 
   const showNotification = (message, type) => {
     setNotification({ message, type, isVisible: true });
@@ -148,150 +148,6 @@ const AdminOffences = () => {
     fetchOffenses();
   }, []);
 
-  const offenseTypesByCategory = {
-    Attendance: [
-      "Tardiness / Lates",
-      "Undertime",
-      "Absent without Official Leave (AWOL)",
-      "Excessive Sick Leave / SL Abuse",
-      "No Call, No Show",
-      "Leaving workstation without permission",
-    ],
-    Performance: [
-      "Low Quality Scores (QA Fails)",
-      "Missed Deadlines / Targets",
-      "Excessive AHT",
-      "Not Meeting KPIs / Metrics",
-      "Failure to follow processes / workflows",
-    ],
-    Behavioral: [
-      "Rudeness / Unprofessional behavior",
-      "Disrespect towards peers or superiors",
-      "Workplace misconduct",
-      "Sleeping while on duty",
-      "Excessive personal activities during work hours",
-      "Horseplay / disruption",
-    ],
-    Compliance: [
-      "Data Privacy Violation",
-      "Breach of Company Policy / Security Policy",
-      "Misuse of Company Equipment",
-      "Tampering with logs / falsification of records",
-      "Accessing unauthorized tools / websites",
-      "Timekeeping fraud",
-    ],
-    "Account/Employment": [
-      "Transfer to another account",
-      "Final Written Warning / Termination record",
-      "Disciplinary actions history",
-    ],
-  };
-
-  const handleInputChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  // =================== File Upload ===================
-  const handleFileUpload = (file) => {
-    if (file && file.size <= 10 * 1024 * 1024) {
-      setSelectedFile(file);
-    } else {
-      showNotification("File size must be less than 10MB", "error");
-    }
-  };
-
-  const fileToBase64 = (file) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleFileUpload(file);
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragOver(false);
-  };
-
-  const handleSubmit = async () => {
-    if (
-      !formData.agentName ||
-      !formData.offenseCategory ||
-      !formData.offenseType ||
-      !formData.offenseSeverity ||
-      !formData.dateOfOffense ||
-      !formData.status ||
-      !formData.actionTaken
-    ) {
-      showNotification("Please fill in all required fields", "error");
-      return;
-    }
-
-    try {
-      const payload = {
-        agentName: formData.agentName,
-        offenseCategory: formData.offenseCategory,
-        offenseType: formData.offenseType,
-        offenseSeverity: formData.offenseSeverity,
-        dateOfOffense: formData.dateOfOffense,
-        status: formData.status,
-        actionTaken: formData.actionTaken,
-        remarks: formData.remarks || "",
-      };
-
-      if (selectedFile) {
-        const base64File = await fileToBase64(selectedFile);
-        payload.evidence = [
-          {
-            fileName: selectedFile.name,
-            size: selectedFile.size,
-            type: selectedFile.type,
-            data: base64File,
-          },
-        ];
-      }
-
-      if (isEditMode) {
-        console.log("ID being sent to API:", editingId);
-        await api.put(`/offenses/${editingId}`, payload);
-        showNotification("Offense updated successfully!", "success");
-      } else {
-        await api.post("/offenses", payload);
-        showNotification("Offense submitted successfully!", "success");
-      }
-
-      resetForm();
-
-      try {
-        await fetchOffenses();
-      } catch (fetchError) {
-        console.error("Failed to re-fetch offenses after update:", fetchError);
-        showNotification(
-          "Updated successfully, but failed to refresh list.",
-          "info"
-        );
-      }
-    } catch (error) {
-      console.error("Error submitting offense:", error);
-      if (error.response) {
-        console.error("Server response:", error.response.data);
-        console.error("Status code:", error.response.status);
-      }
-      showNotification("Failed to submit offense. Please try again.", "error");
-    }
-  };
-
   // =================== Reset Form ===================
   const resetForm = () => {
     setFormData({
@@ -303,15 +159,16 @@ const AdminOffences = () => {
       status: "",
       actionTaken: "",
       remarks: "",
+      evidence: [],
+      isRead: false,
     });
-    setSelectedFile(null);
-    setIsEditMode(false);
+    setIsViewMode(false);
     setEditingId(null);
   };
 
-  // =================== Edit & Delete ===================
-  const handleEdit = (off) => {
-    setIsEditMode(true);
+  // =================== View ===================
+  const handleView = (off) => {
+    setIsViewMode(true);
     setEditingId(off._id);
     setFormData({
       agentName: off.agentName,
@@ -322,8 +179,22 @@ const AdminOffences = () => {
       status: off.status,
       actionTaken: off.actionTaken,
       remarks: off.remarks || "",
+      evidence: off.evidence || [],
+      isRead: off.isRead || false,
     });
-    setSelectedFile(null);
+  };
+
+  const handleMarkAsRead = async () => {
+    try {
+      const payload = { isRead: true };
+      await api.put(`/offenses/${editingId}`, payload);
+      showNotification("Marked as read successfully!", "success");
+      resetForm();
+      fetchOffenses();
+    } catch (error) {
+      console.error("Error marking as read:", error);
+      showNotification("Failed to mark as read. Please try again.", "error");
+    }
   };
 
   const handleDeleteClick = (id) => {
@@ -353,9 +224,10 @@ const AdminOffences = () => {
       ? DateTime.fromISO(dateStr).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)
       : "";
 
-  // Filter offenses based on search query and exclude resolved statuses
+  // Filter offenses based on search query and exclude resolved statuses, only for current agent
   const filteredOffenses = offenses.filter(
     (off) =>
+      off.agentName === currentAgent &&
       !["Action Taken", "Escalated", "Closed"].includes(off.status) &&
       [
         off.agentName,
@@ -373,9 +245,8 @@ const AdminOffences = () => {
 
   const resolvedOffenses = offenses.filter(
     (off) =>
-      off.status === "Action Taken" ||
-      off.status === "Escalated" ||
-      off.status === "Closed"
+      off.agentName === currentAgent &&
+      ["Action Taken", "Escalated", "Closed"].includes(off.status)
   );
 
   return (
@@ -400,32 +271,24 @@ const AdminOffences = () => {
           <h2>Offense Management</h2>
         </div>
         <p className="text-gray-600">
-          Record and manage disciplinary offenses for agents.
+          View your disciplinary offenses.
         </p>
       </section>
 
       {/* Two-Column Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
-        {/* Create/Edit Offense */}
+        {/* View Offense */}
         <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div
-                className={`p-2 ${
-                  isEditMode ? "bg-red-100" : "bg-indigo-100"
-                } rounded-lg`}
-              >
-                {isEditMode ? (
-                  <Edit className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
-                ) : (
-                  <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
-                )}
+              <div className="p-2 bg-indigo-100 rounded-lg">
+                <Eye className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
-                {isEditMode ? "Edit Offense" : "Create Incident Report"}
+                Offense Details
               </h3>
             </div>
-            {isEditMode && (
+            {isViewMode && (
               <button
                 onClick={resetForm}
                 className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
@@ -435,236 +298,140 @@ const AdminOffences = () => {
             )}
           </div>
 
-          <div className="space-y-6">
-            {/* Agent Name */}
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Agent Name *
-              </label>
-              <input
-                type="text"
-                value={formData.agentName}
-                onChange={(e) => handleInputChange("agentName", e.target.value)}
-                placeholder="Enter agent name"
-                className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
-              />
-            </div>
-
-            {/* Offense Category & Type - Single Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              {/* Category */}
+          {isViewMode ? (
+            <div className="space-y-6">
+              {/* Agent Name */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Offense Category *
+                  Agent Name
                 </label>
-                <select
-                  value={formData.offenseCategory}
-                  onChange={(e) =>
-                    handleInputChange("offenseCategory", e.target.value)
-                  }
-                  className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-                >
-                  <option value="">Select category</option>
-                  <option value="Attendance">Attendance</option>
-                  <option value="Performance">Performance</option>
-                  <option value="Behavioral">Behavioral</option>
-                  <option value="Compliance">Compliance</option>
-                  <option value="Account/Employment">Account/Employment</option>
-                </select>
+                <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
+                  {formData.agentName}
+                </p>
               </div>
 
-              {/* Type */}
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Offense Type *
-                </label>
-                <select
-                  value={formData.offenseType}
-                  onChange={(e) =>
-                    handleInputChange("offenseType", e.target.value)
-                  }
-                  className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-                >
-                  <option value="">Select offense type</option>
-                  {formData.offenseCategory &&
-                    offenseTypesByCategory[formData.offenseCategory]?.map(
-                      (type, index) => (
-                        <option key={index} value={type}>
-                          {type}
-                        </option>
-                      )
-                    )}
-                </select>
-              </div>
-            </div>
+              {/* Offense Category & Type - Single Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                {/* Category */}
+                <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                    Offense Category
+                  </label>
+                  <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
+                    {formData.offenseCategory || "N/A"}
+                  </p>
+                </div>
 
-            {/* Severity & Date */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Offense Severity *
-                </label>
-                <select
-                  value={formData.offenseSeverity}
-                  onChange={(e) =>
-                    handleInputChange("offenseSeverity", e.target.value)
-                  }
-                  className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-                >
-                  <option value="">Select severity</option>
-                  <option value="Minor">Minor</option>
-                  <option value="Moderate">Moderate</option>
-                  <option value="Major">Major</option>
-                  <option value="Critical">Critical</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Date of Offense *
-                </label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-red-500 z-10" />
-                  <input
-                    type="date"
-                    value={formData.dateOfOffense}
-                    onChange={(e) =>
-                      handleInputChange("dateOfOffense", e.target.value)
-                    }
-                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-                  />
+                {/* Type */}
+                <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                    Offense Type
+                  </label>
+                  <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
+                    {formData.offenseType || "N/A"}
+                  </p>
                 </div>
               </div>
-            </div>
 
-            {/* Status */}
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Status *
-              </label>
-              <select
-                value={formData.status}
-                onChange={(e) => handleInputChange("status", e.target.value)}
-                className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-              >
-                <option value="">Select status</option>
-                <option value="Pending Review">Pending Review</option>
-                <option value="Under Investigation">Under Investigation</option>
-                <option value="For Counseling">For Counseling</option>
-                <option value="Action Taken">Action Taken</option>
-                <option value="Escalated">Escalated</option>
-                <option value="Closed">Closed</option>
-              </select>
-            </div>
+              {/* Severity & Date */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                    Offense Severity
+                  </label>
+                  <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
+                    {formData.offenseSeverity || "N/A"}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                    Date of Offense
+                  </label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-red-500 z-10" />
+                    <p className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
+                      {formatDisplayDate(formData.dateOfOffense) || "N/A"}
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-            {/* Action Taken */}
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Action Taken *
-              </label>
-              <select
-                value={formData.actionTaken}
-                onChange={(e) =>
-                  handleInputChange("actionTaken", e.target.value)
-                }
-                className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-              >
-                <option value="">Select action</option>
-                <option value="Coaching / Counseling">
-                  Coaching / Counseling
-                </option>
-                <option value="Verbal Warning">Verbal Warning</option>
-                <option value="Written Warning">Written Warning</option>
-                <option value="Final Written Warning">
-                  Final Written Warning
-                </option>
-                <option value="Performance Improvement Plan (PIP)">
-                  Performance Improvement Plan (PIP)
-                </option>
-                <option value="Suspension">Suspension</option>
-                <option value="Demotion / Reassignment">
-                  Demotion / Reassignment
-                </option>
-                <option value="Termination">Termination</option>
-                <option value="None">None</option>
-              </select>
-            </div>
+              {/* Status */}
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  Status
+                </label>
+                <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
+                  {formData.status || "N/A"}
+                </p>
+              </div>
 
-            {/* Remarks */}
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Remarks
-              </label>
-              <textarea
-                value={formData.remarks}
-                onChange={(e) => handleInputChange("remarks", e.target.value)}
-                placeholder="Additional notes..."
-                className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 resize-none text-sm sm:text-base"
-              ></textarea>
-            </div>
+              {/* Action Taken */}
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  Action Taken
+                </label>
+                <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
+                  {formData.actionTaken || "N/A"}
+                </p>
+              </div>
 
-            {/* Upload Evidence */}
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Upload Evidence
-              </label>
-              <div
-                className={`relative border-2 border-dashed rounded-2xl p-4 transition-all duration-300 ${
-                  isDragOver
-                    ? "border-red-400 bg-red-50"
-                    : selectedFile
-                    ? "border-green-400 bg-green-50"
-                    : "border-gray-300 bg-gray-50/30"
-                }`}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-              >
-                <input
-                  type="file"
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  onChange={(e) => handleFileUpload(e.target.files[0])}
-                />
-                <div className="text-center">
-                  {selectedFile ? (
-                    <div className="flex items-center justify-center gap-2 sm:gap-3">
-                      <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" />
-                      <div>
-                        <p className="font-medium text-green-700 text-xs sm:text-sm">
-                          {selectedFile.name}
-                        </p>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedFile(null);
-                          }}
-                          className="text-red-500 hover:text-red-700 text-xs"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-600 font-medium text-xs sm:text-sm">
-                        Drop file or{" "}
-                        <span className="text-red-600">browse</span>
+              {/* Remarks */}
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  Remarks
+                </label>
+                <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 text-gray-800 text-sm sm:text-base overflow-y-auto">
+                  {formData.remarks || "No remarks"}
+                </p>
+              </div>
+
+              {/* Evidence */}
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  Evidence
+                </label>
+                {formData.evidence.length > 0 ? (
+                  <div className="space-y-2">
+                    {formData.evidence.map((ev, idx) => (
+                      <p
+                        key={idx}
+                        className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base underline cursor-pointer"
+                      >
+                        {ev.fileName}
                       </p>
-                      <p className="text-xs text-gray-400 mt-1">Max 10MB</p>
-                    </div>
-                  )}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
+                    No evidence
+                  </p>
+                )}
+              </div>
+
+              {/* Buttons */}
+              <div className="flex gap-4">
+                <button
+                  onClick={resetForm}
+                  className="flex-1 bg-gray-200 text-gray-800 p-3 sm:p-4 rounded-2xl hover:bg-gray-300 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                >
+                  Close
+                </button>
+                {!formData.isRead && (
+                  <button
+                    onClick={handleMarkAsRead}
+                    className="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                  >
+                    Mark as Read
+                  </button>
+                )}
               </div>
             </div>
-
-            {/* Submit Button */}
-            <button
-              onClick={handleSubmit}
-              className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all duration-300 font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
-            >
-              {isEditMode ? "Update Offense" : "Submit Offense"}
-            </button>
-          </div>
+          ) : (
+            <div className="flex items-center justify-center py-10 text-gray-500 italic">
+              Select an offense from the list to view details.
+            </div>
+          )}
         </div>
         {/* Offense Records */}
         <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
@@ -690,7 +457,7 @@ const AdminOffences = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by agent, offense type, category..."
+                placeholder="Search by offense type, category..."
                 className="w-full pl-10 pr-4 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
               />
             </div>
@@ -728,6 +495,7 @@ const AdminOffences = () => {
                           >
                             {off.status}
                           </span>
+                          {off.isRead && <CheckCircle className="w-4 h-4 text-green-500" />}
                         </div>
                       </div>
                     </div>
@@ -796,16 +564,10 @@ const AdminOffences = () => {
                   {/* Buttons */}
                   <div className="flex gap-3">
                     <button
-                      onClick={() => handleDeleteClick(off._id)}
-                      className="flex-1 bg-white border-2 border-red-500 text-red-600 p-2 sm:p-3 rounded-xl hover:bg-red-50 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
-                    >
-                      Delete
-                    </button>
-                    <button
-                      onClick={() => handleEdit(off)}
+                      onClick={() => handleView(off)}
                       className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
                     >
-                      Edit
+                      View
                     </button>
                   </div>
                 </div>
@@ -904,4 +666,4 @@ const AdminOffences = () => {
   );
 };
 
-export default AdminOffences;
+export default AgentOffences;

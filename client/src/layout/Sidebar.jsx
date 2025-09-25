@@ -109,7 +109,12 @@ const AgentSidebar = ({ isCollapsed }) => (
       label="Meeting/Coaching"
       isCollapsed={isCollapsed}
     />
-    {/* ➕ New Employee Request Link */}
+    <SidebarLink
+      to="/agent/offences"
+      icon={Calendar}
+      label="Incident Reports"
+      isCollapsed={isCollapsed}
+    />
   </div>
 );
 
