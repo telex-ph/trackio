@@ -5,7 +5,7 @@ import api from "../../utils/axios";
 
 
 import Notification from "../../components/notification/Notification.jsx";
-import ConfirmationModal from "../../components/confirmation-modal/ConfirmationModal.jsx";
+import ConfirmationModal from "../../components/modals/ConfirmationModal.jsx";
 import AdminRequestDetails from "../../components/admin-request/RequestDetails.jsx";
 import AdminActiveRequests from "../../components/admin-request/ActiveRequests.jsx";
 import AdminRequestHistory from "../../components/admin-request/RequestHistory.jsx";

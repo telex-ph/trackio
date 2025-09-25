@@ -4,7 +4,7 @@ import { DateTime } from "luxon";
 import api from "../../utils/axios";
 
 import Notification from "../../components/notification/Notification";
-import ConfirmationModal from "../../components/confirmation-modal/ConfirmationModal";
+import ConfirmationModal from "../../components/modals/ConfirmationModal.jsx";
 import RequestForm from "../../components/team-leader-request/RequestForm";
 import RequestList from "../../components/team-leader-request/RequestList";
 import RequestHistory from "../../components/team-leader-request/RequestHistory";
