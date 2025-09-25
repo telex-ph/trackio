@@ -83,12 +83,25 @@ const router = createBrowserRouter([
                 path: "tracking",
                 element: <TrackingLayout role={Roles.ADMIN} />,
                 children: [
-                  { index: true, element: <Navigate to="time-in" replace /> },
-                  { path: "time-in", element: <AdminTimeIn /> },
-                  { path: "time-out", element: <AdminTimeOut /> },
-                  { path: "late", element: <AdminLate /> },
-                  { path: "undertime", element: <AdminUndertime /> },
-                  { path: "absentees", element: <AdminAbsentees /> },
+                  {
+                    index: true,
+                    element: <Navigate to="list/basic-logs" replace />,
+                  },
+                  {
+                    path: "list",
+                    children: [
+                      {
+                        index: true,
+                        element: <Navigate to="time-in" replace />,
+                      },
+                      { path: "time-in", element: <AdminTimeIn /> },
+                      { path: "time-out", element: <AdminTimeOut /> },
+                      { path: "late", element: <AdminLate /> },
+                      { path: "undertime", element: <AdminUndertime /> },
+                      { path: "absentees", element: <AdminAbsentees /> },
+                    ],
+                  },
+                  { path: "history", element: <AdminHistory /> },
                 ],
               },
               {
@@ -103,7 +116,6 @@ const router = createBrowserRouter([
                 ],
               },
 
-              { path: "history", element: <AdminHistory /> },
               { path: "schedule", element: <AdminSchedule /> },
               { path: "announcement", element: <AdminAnnouncement /> },
               { path: "account-settings", element: <AdminAccountSettings /> },
@@ -137,12 +149,22 @@ const router = createBrowserRouter([
                 children: [
                   {
                     index: true,
-                    element: <Navigate to="basic-logs" replace />,
+                    element: <Navigate to="list/basic-logs" replace />,
                   },
-                  { path: "basic-logs", element: <TeamLeaderBasicLogs /> },
-                  { path: "late", element: <TeamLeaderLate /> },
-                  { path: "overtime", element: <TeamLeaderOvertime /> },
-                  { path: "undertime", element: <TeamLeaderUndertime /> },
+                  {
+                    path: "list",
+                    children: [
+                      {
+                        index: true,
+                        element: <Navigate to="basic-logs" replace />,
+                      },
+                      { path: "basic-logs", element: <TeamLeaderBasicLogs /> },
+                      { path: "late", element: <TeamLeaderLate /> },
+                      { path: "overtime", element: <TeamLeaderOvertime /> },
+                      { path: "undertime", element: <TeamLeaderUndertime /> },
+                    ],
+                  },
+                  { path: "history", element: <TeamLeaderBasicLogs /> },
                 ],
               },
               { path: "schedule", element: <TeamLeaderSchedule /> },
