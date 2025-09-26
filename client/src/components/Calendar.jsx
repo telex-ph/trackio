@@ -6,11 +6,13 @@ import {
   ChevronRight,
   Calendar as CalendarIcon,
   Home,
+  Plus,
+  X,
 } from "lucide-react";
 import { DateTime } from "luxon";
 import useKeyboardKey from "../hooks/useKeyboardKey";
 
-const Calendar = () => {
+const Calendar = ({ addBtnOnClick, schedules }) => {
   // Explicitly use Philippine timezone
   const philippineZone = "Asia/Manila";
 
@@ -21,6 +23,39 @@ const Calendar = () => {
     DateTime.now().setZone(philippineZone),
   ]);
   const { isShiftPressed } = useKeyboardKey();
+
+  const [menuPosition, setMenuPosition] = useState(null);
+
+  const handleRightClick = (e) => {
+    e.preventDefault();
+    setMenuPosition({ x: e.clientX, y: e.clientY });
+  };
+  const handleCloseMenu = () => setMenuPosition(null);
+
+  const handleAddClick = () => {
+    addBtnOnClick(selectedDates);
+    // setIsOpenModal(true);
+    handleCloseMenu();
+  };
+
+  const handleDateClick = (date) => {
+    if (isShiftPressed) {
+      // Select multiple dates
+      setSelectedDates((prev) => {
+        const exists = prev.some((d) => isSameDay(d, date));
+        return exists
+          ? prev.filter((d) => !isSameDay(d, date))
+          : [...prev, date];
+      });
+
+      if (!calendarData.find((d) => isSameDay(d.date, date))?.isCurrentMonth) {
+        setCurrentDate(date.startOf("month"));
+      }
+    } else {
+      // Only select one at a time
+      setSelectedDates([date]);
+    }
+  };
 
   const getDaysInMonth = (year, month) => {
     return DateTime.local(year, month, 1).daysInMonth;
@@ -71,7 +106,6 @@ const Calendar = () => {
       });
     }
 
-    // Current month days
     for (let day = 1; day <= daysInMonth; day++) {
       days.push({
         day,
@@ -81,8 +115,7 @@ const Calendar = () => {
       });
     }
 
-    // Next month's leading days
-    const remainingCells = 42 - days.length; // 6 rows × 7 days
+    const remainingCells = 42 - days.length;
     const nextMonth = currentDate.plus({ months: 1 });
 
     for (let day = 1; day <= remainingCells; day++) {
@@ -124,7 +157,6 @@ const Calendar = () => {
     setCurrentDate(currentDate.set({ month: monthIndex + 1 }).startOf("month"));
   };
 
-  // Helper functions for date comparison using Luxon
   const isSameDay = (date1, date2) => {
     return date1.hasSame(date2, "day");
   };
@@ -137,27 +169,8 @@ const Calendar = () => {
     return selectedDates.some((selectedDate) => isSameDay(date, selectedDate));
   };
 
-  const handleDateClick = (date) => {
-    if (isShiftPressed) {
-      // Select multiple dates
-      setSelectedDates((prev) => {
-        const exists = prev.some((d) => isSameDay(d, date));
-        return exists
-          ? prev.filter((d) => !isSameDay(d, date))
-          : [...prev, date];
-      });
-
-      if (!calendarData.find((d) => isSameDay(d.date, date))?.isCurrentMonth) {
-        setCurrentDate(date.startOf("month"));
-      }
-    } else {
-      // Only select one at a time
-      setSelectedDates([date]);
-    }
-  };
-
   return (
-    <div className="w-full mx-auto rounded-md">
+    <div className="w-full mx-auto rounded-md" onClick={handleCloseMenu}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
         <div className="flex items-center gap-2">
@@ -263,7 +276,7 @@ const Calendar = () => {
       </div>
 
       {/* Calendar Grid */}
-      <div className="rounded-md">
+      <div className="rounded-md " onContextMenu={handleRightClick}>
         {/* Day Headers */}
         <div className="grid grid-cols-7 gap-1 md:gap-3 mb-3">
           {dayNames.map((day) => (
@@ -303,11 +316,38 @@ const Calendar = () => {
                 `}
               >
                 {day}
+                {schedules.some((obj) => obj.day === day) && (
+                  <div>Merong schedule!</div>
+                )}
               </button>
             );
           })}
         </div>
       </div>
+
+      {menuPosition && (
+        <ul
+          className="absolute bg-white border-light shadow-lg rounded-md p-2"
+          style={{
+            top: menuPosition.y,
+            left: menuPosition.x,
+          }}
+        >
+          <li
+            className="px-4 py-2 hover:bg-gray-200 rounded-md cursor-pointer flex items-center gap-2"
+            onClick={handleAddClick}
+          >
+            <Plus className="w-4 h-4" /> <span>Add</span>
+          </li>
+          <li
+            className="px-4 py-2 hover:bg-gray-200 rounded-md cursor-pointer flex items-center gap-2"
+            onChange={handleCloseMenu}
+          >
+            <X className="w-4 h-4" />
+            <span>Close</span>
+          </li>
+        </ul>
+      )}
     </div>
   );
 };
