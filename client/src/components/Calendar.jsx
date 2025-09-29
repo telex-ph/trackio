@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import { DateTime } from "luxon";
 import useKeyboardKey from "../hooks/useKeyboardKey";
-import { dateFormatter, formatDate } from "../utils/formatDateTime";
+import { formatDate } from "../utils/formatDateTime";
+import CalendarDay from "./calendar/CalendarDay";
 
 const Calendar = ({ addBtnOnClick, schedules }) => {
   // Explicitly use Philippine timezone
@@ -172,48 +173,6 @@ const Calendar = ({ addBtnOnClick, schedules }) => {
     return selectedDates.some((selectedDate) => isSameDay(date, selectedDate));
   };
 
-  const renderSchedules = (date, day, index) => {
-    const schedule = schedules.find((schedule) => schedule.date === date);
-
-    if (!schedule) {
-      return (
-        <section className="flex flex-col justify-start text-xs italic h-full">
-          <span className="text-start">{day}</span>
-          <span>No schedule</span>
-        </section>
-      );
-    }
-
-    return (
-      <section key={index} className="flex flex-col gap-2">
-        <div className="flex justify-between">
-          <span className="text-start">{day}</span>
-          <span className="font-bold">{schedule.type}</span>
-        </div>
-
-        {/* Shift time */}
-        <div className="flex items-center gap-1 text-sm">
-          <BriefcaseBusiness className="w-4 h-4" />
-          <span>
-            {dateFormatter(schedule.shiftStart, "hh:mm a")} :{" "}
-            {dateFormatter(schedule.shiftEnd, "hh:mm a")}
-          </span>
-        </div>
-
-        {/* Meal time */}
-        {schedule.mealStart && schedule.mealEnd && (
-          <div className="flex items-center gap-1 text-sm">
-            <Hamburger className="w-4 h-4" />
-            <span>
-              {dateFormatter(schedule.mealStart, "hh:mm a")} :{" "}
-              {dateFormatter(schedule.mealEnd, "hh:mm a")}
-            </span>
-          </div>
-        )}
-      </section>
-    );
-  };
-
   return (
     <div className="w-full mx-auto rounded-md" onClick={handleCloseMenu}>
       {/* Header */}
@@ -363,8 +322,12 @@ const Calendar = ({ addBtnOnClick, schedules }) => {
     min-h-8 sm:min-h-28 flex flex-col items-stretch
   `}
               >
-                {/* <div className="text-start">{day}</div> */}
-                {renderSchedules(formattedDate, day, index)}
+                <CalendarDay
+                  schedules={schedules}
+                  date={formattedDate}
+                  day={day}
+                  index={index}
+                />
               </button>
             );
           })}
