@@ -1,7 +1,8 @@
 import { DateTime } from "luxon";
-import Schedule from "../model/Schedule.js";
-import User from "../model/User.js";
 import { ObjectId } from "mongodb";
+import Schedule from "../model/Schedule.js";
+import SCHEDULE from "../../constants/schedule.js";
+import User from "../model/User.js";
 
 export const addSchedules = async (req, res) => {
   const { schedules, id, type } = req.body;
@@ -33,17 +34,28 @@ export const addSchedules = async (req, res) => {
         .toJSDate();
     };
 
-    return {
-      userId: new ObjectId(id),
-      date: baseDate.toJSDate(),
-      shiftStart: mergeDateAndTime(schedule.shiftStart),
-      shiftEnd: mergeDateAndTime(schedule.shiftEnd),
-      mealStart: mergeDateAndTime(schedule.mealStart),
-      mealEnd: mergeDateAndTime(schedule.mealEnd),
-      type,
-      notes: schedule.notes,
-      createdAt: new Date(),
-    };
+    switch (type) {
+      case SCHEDULE.WORK_DAY:
+        return {
+          userId: new ObjectId(id),
+          date: baseDate.toJSDate(),
+          shiftStart: mergeDateAndTime(schedule.shiftStart),
+          shiftEnd: mergeDateAndTime(schedule.shiftEnd),
+          mealStart: mergeDateAndTime(schedule.mealStart),
+          mealEnd: mergeDateAndTime(schedule.mealEnd),
+          type,
+          notes: schedule.notes,
+          createdAt: new Date(),
+        };
+      default:
+        return {
+          userId: new ObjectId(id),
+          date: baseDate.toJSDate(),
+          type,
+          notes: schedule.notes,
+          createdAt: new Date(),
+        };
+    }
   });
 
   try {

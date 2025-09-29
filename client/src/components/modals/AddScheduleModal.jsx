@@ -6,12 +6,13 @@ import {
 import { useState } from "react";
 import toast from "react-hot-toast";
 import api from "../../utils/axios";
+import SCHEDULE from "../../constants/schedule";
 
 const AddScheduleModal = ({ dates, onClose }) => {
   const { id } = useParams();
 
   // 🔹 States
-  const [type, setType] = useState("workday");
+  const [type, setType] = useState(SCHEDULE.WORK_DAY);
   const [shiftStart, setShiftStart] = useState("");
   const [shiftEnd, setShiftEnd] = useState("");
   const [mealStart, setMealStart] = useState("");
@@ -26,7 +27,7 @@ const AddScheduleModal = ({ dates, onClose }) => {
     const formattedMealStart = toDateTimeFromTimeString(mealStart);
     const formattedMealEnd = toDateTimeFromTimeString(mealEnd);
 
-    if (type === "workday") {
+    if (type === SCHEDULE.WORK_DAY) {
       console.log(`${typeof shiftEnd} : ${typeof shiftStart}`);
       if (formattedShiftEnd <= formattedShiftStart) {
         toast.error("End time must be after start time.");
@@ -111,14 +112,14 @@ const AddScheduleModal = ({ dates, onClose }) => {
             onChange={(e) => setType(e.target.value)}
             required
           >
-            <option value="workday">Workday</option>
-            <option value="restday">Rest Day</option>
-            <option value="holiday">Holiday</option>
+            <option value={SCHEDULE.WORK_DAY}>Workday</option>
+            <option value={SCHEDULE.REST_DAY}>Rest Day</option>
+            <option value={SCHEDULE.HOLIDAY}>Holiday</option>
           </select>
         </section>
 
         {/* Shift Hours */}
-        {type === "workday" && (
+        {type === SCHEDULE.WORK_DAY && (
           <section>
             <label
               htmlFor="shiftHour"
@@ -147,7 +148,7 @@ const AddScheduleModal = ({ dates, onClose }) => {
         )}
 
         {/* Meal Break */}
-        {type === "workday" && (
+        {type === SCHEDULE.WORK_DAY && (
           <section>
             <label
               htmlFor="mealBreak"
