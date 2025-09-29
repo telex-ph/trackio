@@ -1,3 +1,4 @@
+import { ObjectId } from "mongodb";
 import connectDB from "../config/db.js";
 
 class Schedules {
@@ -18,10 +19,13 @@ class Schedules {
     };
   }
 
-  static async getAll() {
+  static async getAll(id) {
     const db = await connectDB();
-    const collection = await db.collection(this.#collection);
-    return await collection.find({}).toArray();
+    const collection = db.collection(this.#collection);
+
+    const query = id ? { userId: new ObjectId(id) } : {};
+
+    return await collection.find(query).toArray();
   }
 }
 
