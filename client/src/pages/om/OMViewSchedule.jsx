@@ -5,7 +5,7 @@ import { Plus, X } from "lucide-react";
 import AddScheduleModal from "../../components/modals/AddScheduleModal";
 import { useEffect } from "react";
 import api from "../../utils/axios";
-import { dateFormatter } from "../../utils/formatDateTime";
+import { dateFormatter, formatDate } from "../../utils/formatDateTime";
 
 const OMViewSchedule = () => {
   const { id } = useParams();
@@ -25,12 +25,16 @@ const OMViewSchedule = () => {
   useEffect(() => {
     const fetchSchedules = async () => {
       try {
-        const response = await api.get("/schedule/get-schedules");
+        const response = await api.get(`/schedule/get-schedules/${id}`);
+
         const formattedSchedules = response.data.map((schedule) => {
           return {
-            day: parseInt(dateFormatter(schedule?.date, "d")),
-            shiftStart: schedule.shiftStart,
-            shiftEnd: schedule.shiftEnd,
+            date: formatDate(schedule?.date),
+            shiftStart: schedule?.shiftStart,
+            shiftEnd: schedule?.shiftEnd,
+            mealStart: schedule?.mealStart,
+            mealEnd: schedule?.mealEnd,
+            type: schedule?.type,
           };
         });
 
