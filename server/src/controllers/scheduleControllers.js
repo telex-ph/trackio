@@ -59,8 +59,12 @@ export const addSchedules = async (req, res) => {
 };
 
 export const getSchedules = async (req, res) => {
+  const id = req.params.id;
+
   try {
-    const result = await Schedule.getAll();
+    const result = await Schedule.getAll(id);
+    console.log(result);
+
     res.status(200).json(result);
   } catch (error) {
     console.error("Error fetching all user's schedules:", error);
