@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   ChevronLeft,
   ChevronsLeft,
@@ -8,9 +8,12 @@ import {
   Home,
   Plus,
   X,
+  BriefcaseBusiness,
+  Hamburger,
 } from "lucide-react";
 import { DateTime } from "luxon";
 import useKeyboardKey from "../hooks/useKeyboardKey";
+import { dateFormatter, formatDate } from "../utils/formatDateTime";
 
 const Calendar = ({ addBtnOnClick, schedules }) => {
   // Explicitly use Philippine timezone
@@ -169,6 +172,48 @@ const Calendar = ({ addBtnOnClick, schedules }) => {
     return selectedDates.some((selectedDate) => isSameDay(date, selectedDate));
   };
 
+  const renderSchedules = (date, day, index) => {
+    const schedule = schedules.find((schedule) => schedule.date === date);
+
+    if (!schedule) {
+      return (
+        <section className="flex flex-col justify-start text-xs italic h-full">
+          <span className="text-start">{day}</span>
+          <span>No schedule</span>
+        </section>
+      );
+    }
+
+    return (
+      <section key={index} className="flex flex-col gap-2">
+        <div className="flex justify-between">
+          <span className="text-start">{day}</span>
+          <span className="font-bold">{schedule.type}</span>
+        </div>
+
+        {/* Shift time */}
+        <div className="flex items-center gap-1 text-sm">
+          <BriefcaseBusiness className="w-4 h-4" />
+          <span>
+            {dateFormatter(schedule.shiftStart, "hh:mm a")} :{" "}
+            {dateFormatter(schedule.shiftEnd, "hh:mm a")}
+          </span>
+        </div>
+
+        {/* Meal time */}
+        {schedule.mealStart && schedule.mealEnd && (
+          <div className="flex items-center gap-1 text-sm">
+            <Hamburger className="w-4 h-4" />
+            <span>
+              {dateFormatter(schedule.mealStart, "hh:mm a")} :{" "}
+              {dateFormatter(schedule.mealEnd, "hh:mm a")}
+            </span>
+          </div>
+        )}
+      </section>
+    );
+  };
+
   return (
     <div className="w-full mx-auto rounded-md" onClick={handleCloseMenu}>
       {/* Header */}
@@ -263,7 +308,7 @@ const Calendar = ({ addBtnOnClick, schedules }) => {
           </p>
         </div>
 
-        <div className="">
+        <div>
           <p>
             Current time:
             {DateTime.now().setZone(philippineZone).toFormat("HH:mm:ss")}
@@ -291,7 +336,7 @@ const Calendar = ({ addBtnOnClick, schedules }) => {
         </div>
 
         {/* Calendar Days */}
-        <div className="grid grid-cols-7 gap-1 md:gap-3">
+        <div className="grid grid-cols-7 gap-1 md:gap-3 ">
           {calendarData.map((dayData, index) => {
             const { day, date, isCurrentMonth } = dayData;
             const todayClass = isToday(date)
@@ -304,21 +349,22 @@ const Calendar = ({ addBtnOnClick, schedules }) => {
               ? "text-gray-900"
               : "text-gray-400";
 
+            // eg: 2025-09-11
+            const formattedDate = formatDate(date);
+
             return (
               <button
                 key={index}
                 onClick={() => handleDateClick(date)}
                 className={`
-                  p-2 md:p-5 text-center text-sm rounded-md cursor-pointer border-light
-                  ${todayClass} ${selectedClass} ${currentMonthClass}
-                  ${selectedClass ? "" : "hover:bg-gray-100"}
-                  min-h-8 sm:min-h-12 flex items-center justify-center
-                `}
+    p-2 md:p-3 text-sm rounded-md cursor-pointer border-light
+    ${todayClass} ${selectedClass} ${currentMonthClass}
+    ${selectedClass ? "" : "hover:bg-gray-100"}
+    min-h-8 sm:min-h-28 flex flex-col items-stretch
+  `}
               >
-                {day}
-                {schedules.some((obj) => obj.day === day) && (
-                  <div>Merong schedule!</div>
-                )}
+                {/* <div className="text-start">{day}</div> */}
+                {renderSchedules(formattedDate, day, index)}
               </button>
             );
           })}
