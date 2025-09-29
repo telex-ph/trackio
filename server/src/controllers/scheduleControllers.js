@@ -16,12 +16,8 @@ export const addSchedules = async (req, res) => {
   }
 
   const formattedSchedules = schedules.map((schedule) => {
-    // Only get the date part
-    const baseDate = DateTime.fromISO(schedule.date, { zone: "utc" }).startOf(
-      "day"
-    );
+    const baseDate = DateTime.fromISO(schedule.date).startOf("day");
 
-    // Helper to add date part + time
     const mergeDateAndTime = (timeISO) => {
       const time = DateTime.fromISO(timeISO, { zone: "utc" });
       return baseDate
