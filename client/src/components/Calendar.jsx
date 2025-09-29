@@ -154,7 +154,7 @@ const Calendar = ({ addBtnOnClick, schedules }) => {
   const goToToday = () => {
     const today = DateTime.now().setZone(philippineZone);
     setCurrentDate(today.startOf("month"));
-    setSelectedDates(today);
+    setSelectedDates([today]);
   };
 
   const selectMonth = (monthIndex) => {
