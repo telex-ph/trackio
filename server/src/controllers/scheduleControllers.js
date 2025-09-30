@@ -55,7 +55,7 @@ export const addSchedules = async (req, res) => {
   });
 
   try {
-    const schedules = Schedule.addAll(formattedSchedules);
+    const schedules = await Schedule.addAll(formattedSchedules);
     return res.status(200).json(schedules);
   } catch (error) {
     console.error("Error adsd schedules: ", error);
