@@ -8,24 +8,32 @@ import {
 } from "lucide-react";
 import { dateFormatter } from "../../utils/formatDateTime";
 
-const CalendarDay = ({ schedules, date, day, index }) => {
-  const schedule = schedules.find((schedule) => schedule.date === date);
+const CalendarDay = ({
+  date,
+  schedules,
+  handleRightClick,
+  handleDateClick,
+}) => {
+  // eg: 2021-03-12
+  const formattedDate = dateFormatter(date, "yyyy-MM-dd");
+  // eg: 12
+  const formmatedDay = dateFormatter(date, "d");
+  const schedule = schedules.find(
+    (schedule) => schedule.date === formattedDate
+  );
 
-  if (!schedule) {
-    return (
-      <section className="flex flex-col justify-start text-xs italic h-full">
-        <span className="text-start">{day}</span>
-        <span>No schedule</span>
-      </section>
-    );
-  }
-
-  switch (schedule.type) {
+  switch (schedule?.type) {
     case SCHEDULE.WORK_DAY:
       return (
-        <section key={index} className="flex flex-col gap-2">
+        <section
+          className="flex flex-col gap-2"
+          onContextMenu={handleRightClick}
+          onClick={() => {
+            handleDateClick(date);
+          }}
+        >
           <div className="flex justify-between">
-            <span className="text-start">{day}</span>
+            <span className="text-start">{formmatedDay}</span>
             <span className="font-bold">{schedule.type}</span>
           </div>
 
@@ -52,8 +60,18 @@ const CalendarDay = ({ schedules, date, day, index }) => {
       );
     case SCHEDULE.REST_DAY:
       return (
-        <section className="relative flex flex-col h-full justify-between items-end">
-          <span className="font-bold">{schedule.type}</span>
+        <section
+          className="relative flex flex-col h-full justify-between items-end"
+          onContextMenu={handleRightClick}
+          onClick={() => {
+            handleDateClick(date);
+          }}
+        >
+          <div className="w-full flex justify-between">
+            <span className="text-start">{formmatedDay}</span>
+            <span className="font-bold">{schedule.type}</span>
+          </div>
+
           <div className="h-full w-full absolute inset-0 flex justify-center items-center">
             <BedDouble className="h-8 w-8" />
           </div>
@@ -61,15 +79,35 @@ const CalendarDay = ({ schedules, date, day, index }) => {
       );
     case SCHEDULE.HOLIDAY:
       return (
-        <section className="relative flex flex-col h-full justify-between items-end">
-          <span className="font-bold">{schedule.type}</span>
+        <section
+          className="relative flex flex-col h-full justify-between items-end"
+          onContextMenu={handleRightClick}
+          onClick={() => {
+            handleDateClick(date);
+          }}
+        >
+          <div className="w-full flex justify-between">
+            <span className="text-start">{formmatedDay}</span>
+            <span className="font-bold">{schedule.type}</span>
+          </div>
           <div className="h-full w-full absolute inset-0 flex justify-center items-center">
             <TentTree className="h-8 w-8" />
           </div>
         </section>
       );
     default:
-      break;
+      return (
+        <section
+          className="flex flex-col justify-start text-xs italic h-full"
+          onContextMenu={handleRightClick}
+          onClick={() => {
+            handleDateClick(date);
+          }}
+        >
+          <span className="text-start">{formmatedDay}</span>
+          <span>No schedule</span>
+        </section>
+      );
   }
 
   return <section>CalendarDay</section>;

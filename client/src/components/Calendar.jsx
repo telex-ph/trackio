@@ -37,7 +37,6 @@ const Calendar = ({ fetchSchedules, addBtnOnClick, schedules, loading }) => {
 
   const handleAddClick = () => {
     addBtnOnClick(selectedDates);
-    // setIsOpenModal(true);
     handleCloseMenu();
   };
 
@@ -284,7 +283,7 @@ const Calendar = ({ fetchSchedules, addBtnOnClick, schedules, loading }) => {
       </div>
 
       {/* Calendar Grid */}
-      <div className="rounded-md" onContextMenu={handleRightClick}>
+      <div className="rounded-md">
         {/* Day Headers */}
         <div className="grid grid-cols-7 gap-1 md:gap-3 mb-3">
           {dayNames.map((day) => (
@@ -304,7 +303,7 @@ const Calendar = ({ fetchSchedules, addBtnOnClick, schedules, loading }) => {
         ) : (
           <div className="grid grid-cols-7 gap-1 md:gap-3">
             {calendarData.map((dayData, index) => {
-              const { day, date, isCurrentMonth } = dayData;
+              const { date, isCurrentMonth } = dayData;
               const todayClass = isToday(date)
                 ? "bg-blue-100 text-blue-800 font-bold"
                 : "";
@@ -316,12 +315,11 @@ const Calendar = ({ fetchSchedules, addBtnOnClick, schedules, loading }) => {
                 : "text-gray-400";
 
               // eg: 2025-09-11
-              const formattedDate = formatDate(date);
+              // const shiftDate = formatDate(date);
 
               return (
                 <button
                   key={index}
-                  onClick={() => handleDateClick(date)}
                   className={`
     p-2 md:p-3 text-sm rounded-md cursor-pointer border-light
     ${todayClass} ${selectedClass} ${currentMonthClass}
@@ -330,10 +328,10 @@ const Calendar = ({ fetchSchedules, addBtnOnClick, schedules, loading }) => {
   `}
                 >
                   <CalendarDay
+                    date={date}
                     schedules={schedules}
-                    date={formattedDate}
-                    day={day}
-                    index={index}
+                    handleRightClick={handleRightClick}
+                    handleDateClick={handleDateClick}
                   />
                 </button>
               );
@@ -343,27 +341,27 @@ const Calendar = ({ fetchSchedules, addBtnOnClick, schedules, loading }) => {
       </div>
 
       {menuPosition && (
-        <ul
+        <section
           className="absolute bg-white border-light shadow-lg rounded-md p-2"
           style={{
             top: menuPosition.y,
             left: menuPosition.x,
           }}
         >
-          <li
-            className="px-4 py-2 hover:bg-gray-200 rounded-md cursor-pointer flex items-center gap-2"
+          <div
+            className="p-2 hover:bg-gray-200 rounded-md cursor-pointer flex justify-start items-center gap-2"
             onClick={handleAddClick}
           >
             <Plus className="w-4 h-4" /> <span>Add</span>
-          </li>
-          <li
-            className="px-4 py-2 hover:bg-gray-200 rounded-md cursor-pointer flex items-center gap-2"
-            onChange={handleCloseMenu}
+          </div>
+          <div
+            className="p-2 hover:bg-gray-200 rounded-md cursor-pointer flex justify-start items-center gap-2"
+            onClick={handleCloseMenu}
           >
             <X className="w-4 h-4" />
             <span>Close</span>
-          </li>
-        </ul>
+          </div>
+        </section>
       )}
     </div>
   );
