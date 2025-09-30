@@ -19,7 +19,7 @@ export const addSchedules = async (req, res) => {
     const baseDate = DateTime.fromISO(schedule.date).startOf("day");
 
     const mergeDateAndTime = (timeISO) => {
-      const time = DateTime.fromISO(timeISO, { zone: "utc" });
+      const time = DateTime.fromISO(timeISO);
       return baseDate
         .set({
           hour: time.hour,
@@ -71,7 +71,6 @@ export const getSchedules = async (req, res) => {
 
   try {
     const result = await Schedule.getAll(id);
-    console.log(result);
 
     res.status(200).json(result);
   } catch (error) {
