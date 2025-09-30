@@ -8,15 +8,14 @@ import {
   Home,
   Plus,
   X,
-  BriefcaseBusiness,
-  Hamburger,
 } from "lucide-react";
 import { DateTime } from "luxon";
 import useKeyboardKey from "../hooks/useKeyboardKey";
 import { formatDate } from "../utils/formatDateTime";
 import CalendarDay from "./calendar/CalendarDay";
+import Spinner from "../assets/loaders/Spinner";
 
-const Calendar = ({ addBtnOnClick, schedules }) => {
+const Calendar = ({ fetchSchedules, addBtnOnClick, schedules, loading }) => {
   // Explicitly use Philippine timezone
   const philippineZone = "Asia/Manila";
 
@@ -135,26 +134,31 @@ const Calendar = ({ addBtnOnClick, schedules }) => {
   }, [currentDate]);
 
   // Navigation functions using Luxon
-  const goToPreviousMonth = () => {
+  const goToPreviousMonth = async () => {
     setCurrentDate(currentDate.minus({ months: 1 }).startOf("month"));
+    fetchSchedules();
   };
 
-  const goToNextMonth = () => {
+  const goToNextMonth = async () => {
     setCurrentDate(currentDate.plus({ months: 1 }).startOf("month"));
+    fetchSchedules();
   };
 
-  const goToPreviousYear = () => {
+  const goToPreviousYear = async () => {
     setCurrentDate(currentDate.minus({ years: 1 }).startOf("month"));
+    fetchSchedules();
   };
 
-  const goToNextYear = () => {
+  const goToNextYear = async () => {
     setCurrentDate(currentDate.plus({ years: 1 }).startOf("month"));
+    fetchSchedules();
   };
 
-  const goToToday = () => {
+  const goToToday = async () => {
     const today = DateTime.now().setZone(philippineZone);
     setCurrentDate(today.startOf("month"));
     setSelectedDates([today]);
+    fetchSchedules();
   };
 
   const selectMonth = (monthIndex) => {
@@ -280,7 +284,7 @@ const Calendar = ({ addBtnOnClick, schedules }) => {
       </div>
 
       {/* Calendar Grid */}
-      <div className="rounded-md " onContextMenu={handleRightClick}>
+      <div className="rounded-md" onContextMenu={handleRightClick}>
         {/* Day Headers */}
         <div className="grid grid-cols-7 gap-1 md:gap-3 mb-3">
           {dayNames.map((day) => (
@@ -295,43 +299,47 @@ const Calendar = ({ addBtnOnClick, schedules }) => {
         </div>
 
         {/* Calendar Days */}
-        <div className="grid grid-cols-7 gap-1 md:gap-3 ">
-          {calendarData.map((dayData, index) => {
-            const { day, date, isCurrentMonth } = dayData;
-            const todayClass = isToday(date)
-              ? "bg-blue-100 text-blue-800 font-bold"
-              : "";
-            const selectedClass = isSelected(date)
-              ? "bg-blue-600 text-white"
-              : "";
-            const currentMonthClass = isCurrentMonth
-              ? "text-gray-900"
-              : "text-gray-400";
+        {loading ? (
+          <Spinner size={30} />
+        ) : (
+          <div className="grid grid-cols-7 gap-1 md:gap-3">
+            {calendarData.map((dayData, index) => {
+              const { day, date, isCurrentMonth } = dayData;
+              const todayClass = isToday(date)
+                ? "bg-blue-100 text-blue-800 font-bold"
+                : "";
+              const selectedClass = isSelected(date)
+                ? "bg-blue-600 text-white"
+                : "";
+              const currentMonthClass = isCurrentMonth
+                ? "text-gray-900"
+                : "text-gray-400";
 
-            // eg: 2025-09-11
-            const formattedDate = formatDate(date);
+              // eg: 2025-09-11
+              const formattedDate = formatDate(date);
 
-            return (
-              <button
-                key={index}
-                onClick={() => handleDateClick(date)}
-                className={`
+              return (
+                <button
+                  key={index}
+                  onClick={() => handleDateClick(date)}
+                  className={`
     p-2 md:p-3 text-sm rounded-md cursor-pointer border-light
     ${todayClass} ${selectedClass} ${currentMonthClass}
     ${selectedClass ? "" : "hover:bg-gray-100"}
     min-h-8 sm:min-h-28 flex flex-col items-stretch
   `}
-              >
-                <CalendarDay
-                  schedules={schedules}
-                  date={formattedDate}
-                  day={day}
-                  index={index}
-                />
-              </button>
-            );
-          })}
-        </div>
+                >
+                  <CalendarDay
+                    schedules={schedules}
+                    date={formattedDate}
+                    day={day}
+                    index={index}
+                  />
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {menuPosition && (

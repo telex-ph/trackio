@@ -7,11 +7,11 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import api from "../../utils/axios";
 import SCHEDULE from "../../constants/schedule";
+import Spinner from "../../assets/loaders/Spinner";
 
 const AddScheduleModal = ({ dates, onClose }) => {
   const { id } = useParams();
-
-  // 🔹 States
+  const [loading, setLoading] = useState(false);
   const [type, setType] = useState(SCHEDULE.WORK_DAY);
   const [shiftStart, setShiftStart] = useState("");
   const [shiftEnd, setShiftEnd] = useState("");
@@ -63,10 +63,18 @@ const AddScheduleModal = ({ dates, onClose }) => {
     }));
 
     try {
-      await api.post("/schedule/add-schedules", { schedules, id, type });
-      toast.success("Schedules saved");
+      setLoading(true);
+      await api.post("/schedule/add-schedules", {
+        schedules,
+        id,
+        type,
+      });
+      toast.success("Schedules have been saved successfully.");
+      onClose();
     } catch (error) {
-      console.log(error);
+      toast.error("Something went wrong. Please notify the Tech Team");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -189,22 +197,26 @@ const AddScheduleModal = ({ dates, onClose }) => {
         </section>
 
         {/* Buttons */}
-        <section className="flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-6 py-2 rounded-md border-light cursor-pointer"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-7 py-2 rounded-md bg-blue-700 text-white cursor-pointer"
-            disabled={!dates?.length}
-          >
-            Save
-          </button>
-        </section>
+        {loading ? (
+          <Spinner size={30} />
+        ) : (
+          <section className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2 rounded-md border-light cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-7 py-2 rounded-md bg-blue-700 text-white cursor-pointer"
+              disabled={!dates?.length}
+            >
+              Save
+            </button>
+          </section>
+        )}
       </form>
     </div>
   );
