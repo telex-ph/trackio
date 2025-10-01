@@ -10,7 +10,7 @@ import SCHEDULE from "../../constants/schedule";
 import Spinner from "../../assets/loaders/Spinner";
 import { useStore } from "../../store/useStore";
 
-const AddScheduleModal = ({ onClose, fetchSchedules }) => {
+const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
   const { id } = useParams();
   const selectedDates = useStore((state) => state.selectedDates);
   const [loading, setLoading] = useState(false);
@@ -66,7 +66,7 @@ const AddScheduleModal = ({ onClose, fetchSchedules }) => {
 
     try {
       setLoading(true);
-      await api.post("/schedule/add-schedules", {
+      await api.post("/schedule/upsert-schedules", {
         schedules,
         id,
         type,
@@ -88,7 +88,11 @@ const AddScheduleModal = ({ onClose, fetchSchedules }) => {
         className="flex flex-col gap-3 bg-white rounded-md p-6 max-w-2xl w-full"
       >
         <section>
-          <h2 className="text-xl font-bold">Add Schedule</h2>
+          {operation === "upsert" ? (
+            <h2 className="text-xl font-bold">Upsert Schedule/s</h2>
+          ) : (
+            <h2 className="text-xl font-bold">Delete Schedule</h2>
+          )}
         </section>
 
         {/* Selected Dates */}
@@ -225,4 +229,4 @@ const AddScheduleModal = ({ onClose, fetchSchedules }) => {
   );
 };
 
-export default AddScheduleModal;
+export default ScheduleModal;

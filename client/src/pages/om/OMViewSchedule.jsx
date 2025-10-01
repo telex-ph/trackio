@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Calendar from "../../components/Calendar";
-import AddScheduleModal from "../../components/modals/AddScheduleModal";
+import ScheduleModal from "../../components/modals/ScheduleModal";
 import api from "../../utils/axios";
 import { useStore } from "../../store/useStore";
 
@@ -12,7 +12,7 @@ const OMViewSchedule = () => {
   const [loading, setLoading] = useState(true);
   const [isOpenModal, setIsOpenModal] = useState(false);
 
-  const handleAddClick = () => {
+  const handleUpsertClick = () => {
     setIsOpenModal(true);
   };
 
@@ -41,15 +41,16 @@ const OMViewSchedule = () => {
       <section>
         <Calendar
           fetchSchedules={fetchSchedules}
-          handleAddClick={handleAddClick}
+          handleUpsertClick={handleUpsertClick}
           loading={loading}
         />
       </section>
 
       {isOpenModal && (
-        <AddScheduleModal
+        <ScheduleModal
           onClose={handleModalClose}
           fetchSchedules={fetchSchedules}
+          operation={"upsert"}
         />
       )}
     </div>

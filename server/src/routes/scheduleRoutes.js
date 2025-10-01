@@ -6,7 +6,7 @@ import {
 import { verifyJWT } from "../middlewares/verifyJWT.js";
 const router = express.Router();
 
-router.post("/add-schedules", verifyJWT, addSchedules);
+router.post("/upsert-schedules", verifyJWT, addSchedules);
 
 router.get("/get-schedules/:id", verifyJWT, getSchedules);
 

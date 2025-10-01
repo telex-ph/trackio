@@ -15,7 +15,7 @@ import CalendarDay from "./calendar/CalendarDay";
 import Spinner from "../assets/loaders/Spinner";
 import { useStore } from "../store/useStore";
 
-const Calendar = ({ fetchSchedules, handleAddClick, loading }) => {
+const Calendar = ({ fetchSchedules, handleUpsertClick, loading }) => {
   // Explicitly use Philippine timezone
   const philippineZone = "Asia/Manila";
   const selectedDates = useStore((state) => state.selectedDates);
@@ -33,8 +33,8 @@ const Calendar = ({ fetchSchedules, handleAddClick, loading }) => {
   };
   const handleCloseMenu = () => setMenuPosition(null);
 
-  const handleAddButtonClick = () => {
-    handleAddClick();
+  const handleUpsertButtonClick = () => {
+    handleUpsertClick();
     handleCloseMenu();
   };
 
@@ -347,9 +347,9 @@ const Calendar = ({ fetchSchedules, handleAddClick, loading }) => {
         >
           <div
             className="p-2 hover:bg-gray-200 rounded-md cursor-pointer flex justify-start items-center gap-2"
-            onClick={handleAddButtonClick}
+            onClick={handleUpsertButtonClick}
           >
-            <Plus className="w-4 h-4" /> <span>Add</span>
+            <Plus className="w-4 h-4" /> <span>Upsert</span>
           </div>
           <div
             className="p-2 hover:bg-gray-200 rounded-md cursor-pointer flex justify-start items-center gap-2"

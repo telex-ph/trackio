@@ -12,10 +12,21 @@ class Schedules {
     const db = await connectDB();
     const collection = await db.collection(this.#collection);
 
-    const result = await collection.insertMany(schedules);
+    console.log(schedules);
+
+    const bulkOps = schedules.map((schedule) => ({
+      updateOne: {
+        filter: { date: schedule.date },
+        update: { $set: schedule },
+        upsert: true,
+      },
+    }));
+
+    const result = await collection.bulkWrite(bulkOps);
     return {
-      insertedCount: result.insertedCount,
-      insertedIds: result.insertedIds,
+      insertedCount: result.upsertedCount,
+      matchedCount: result.matchedCount,
+      modifiedCount: result.modifiedCount,
     };
   }
 
