@@ -56,9 +56,12 @@ const CalendarDay = ({ date, handleRightClick, handleDateClick }) => {
             </div>
           )}
 
-          <div className="flex items-center justify-left gap-1 w-full">
+          <div className="flex items-center gap-1 w-full">
             <StickyNote className="w-4 h-4" />
-            <span className="text-xs! w-min truncate">
+            <span
+              title={schedule.notes}
+              className="text-xs! w-min truncate flex-1"
+            >
               {schedule.notes || "---"}
             </span>
           </div>
@@ -82,9 +85,12 @@ const CalendarDay = ({ date, handleRightClick, handleDateClick }) => {
             <BedDouble className="h-8 w-8" />
           </div>
 
-          <div className="flex items-center justify-left gap-1 w-full">
+          <div className="flex items-center gap-1 w-full">
             <StickyNote className="w-4 h-4" />
-            <span className="text-xs! w-min truncate">
+            <span
+              title={schedule.notes}
+              className="text-xs! w-min truncate flex-1"
+            >
               {schedule.notes || "---"}
             </span>
           </div>
@@ -108,9 +114,12 @@ const CalendarDay = ({ date, handleRightClick, handleDateClick }) => {
             <TentTree className="h-8 w-8" />
           </div>
 
-          <div className="flex items-center justify-left gap-1 w-full">
+          <div className="flex items-center gap-1 w-full">
             <StickyNote className="w-4 h-4" />
-            <span className="text-xs! w-min truncate">
+            <span
+              title={schedule.notes}
+              className="text-xs! w-min truncate flex-1"
+            >
               {schedule.notes || "---"}
             </span>
           </div>
