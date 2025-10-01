@@ -40,5 +40,10 @@ export const toDateTimeFromTimeString = (timeStr) => {
 // console.log(dateFormatter(date, "cccc, LLL dd, yyyy • hh:mm a"));
 // → Monday, Sep 29, 2025 • 04:30 PM
 export const dateFormatter = (date, format) => {
+  if (!format) {
+    console.error("Format is required");
+    return "---";
+  }
+
   return DateTime.fromISO(date).setZone(zone).toFormat(format);
 };
