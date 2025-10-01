@@ -8,9 +8,11 @@ import toast from "react-hot-toast";
 import api from "../../utils/axios";
 import SCHEDULE from "../../constants/schedule";
 import Spinner from "../../assets/loaders/Spinner";
+import { useStore } from "../../store/useStore";
 
-const AddScheduleModal = ({ dates, onClose }) => {
+const AddScheduleModal = ({ onClose, fetchSchedules }) => {
   const { id } = useParams();
+  const selectedDates = useStore((state) => state.selectedDates);
   const [loading, setLoading] = useState(false);
   const [type, setType] = useState(SCHEDULE.WORK_DAY);
   const [shiftStart, setShiftStart] = useState("");
@@ -48,12 +50,12 @@ const AddScheduleModal = ({ dates, onClose }) => {
       }
     }
 
-    if (!dates?.length) {
+    if (!selectedDates?.length) {
       toast.error("No dates selected.");
       return;
     }
 
-    const schedules = dates.map((date) => ({
+    const schedules = selectedDates.map((date) => ({
       date,
       shiftStart: formattedShiftStart,
       shiftEnd: formattedShiftEnd,
@@ -70,6 +72,7 @@ const AddScheduleModal = ({ dates, onClose }) => {
         type,
       });
       toast.success("Schedules have been saved successfully.");
+      fetchSchedules();
       onClose();
     } catch (error) {
       toast.error("Something went wrong. Please notify the Tech Team");
@@ -91,9 +94,9 @@ const AddScheduleModal = ({ dates, onClose }) => {
         {/* Selected Dates */}
         <section>
           <p className="font-medium mb-1">Date/s</p>
-          {dates?.length > 0 ? (
+          {selectedDates?.length > 0 ? (
             <div className="grid grid-cols-3 px-6">
-              {dates.map((date, index) => (
+              {selectedDates.map((date, index) => (
                 <li key={index} className="text-sm text-light mb-4">
                   {formatDate(date)}
                 </li>
@@ -211,7 +214,7 @@ const AddScheduleModal = ({ dates, onClose }) => {
             <button
               type="submit"
               className="px-7 py-2 rounded-md bg-blue-700 text-white cursor-pointer"
-              disabled={!dates?.length}
+              disabled={!selectedDates?.length}
             >
               Save
             </button>

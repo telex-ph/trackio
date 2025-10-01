@@ -1,45 +1,30 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Calendar from "../../components/Calendar";
 import AddScheduleModal from "../../components/modals/AddScheduleModal";
-import { useEffect } from "react";
 import api from "../../utils/axios";
-import { formatDate } from "../../utils/formatDateTime";
+import { useStore } from "../../store/useStore";
 
 const OMViewSchedule = () => {
   const { id } = useParams();
-  const [schedules, setSchedules] = useState(null);
-  const [selectedDates, setSelectedDates] = useState(null);
+  const setShiftSchedule = useStore((state) => state.setShiftSchedule);
+
   const [loading, setLoading] = useState(true);
   const [isOpenModal, setIsOpenModal] = useState(false);
 
-  const handleAddClick = (selectedDates) => {
-    setSelectedDates(selectedDates);
+  const handleAddClick = () => {
     setIsOpenModal(true);
   };
 
   const handleModalClose = () => {
     setIsOpenModal(false);
-    fetchSchedules();
   };
 
   const fetchSchedules = async () => {
     try {
       setLoading(true);
       const response = await api.get(`/schedule/get-schedules/${id}`);
-
-      const formattedSchedules = response.data.map((schedule) => {
-        return {
-          date: formatDate(schedule?.date),
-          shiftStart: schedule?.shiftStart,
-          shiftEnd: schedule?.shiftEnd,
-          mealStart: schedule?.mealStart,
-          mealEnd: schedule?.mealEnd,
-          type: schedule?.type,
-        };
-      });
-
-      setSchedules(formattedSchedules);
+      setShiftSchedule(response.data);
     } catch (error) {
       console.error(error);
     } finally {
@@ -56,15 +41,13 @@ const OMViewSchedule = () => {
       <section>
         <Calendar
           fetchSchedules={fetchSchedules}
-          addBtnOnClick={handleAddClick}
-          schedules={schedules || []}
+          handleAddClick={handleAddClick}
           loading={loading}
         />
       </section>
 
       {isOpenModal && (
         <AddScheduleModal
-          dates={selectedDates}
           onClose={handleModalClose}
           fetchSchedules={fetchSchedules}
         />

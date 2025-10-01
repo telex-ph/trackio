@@ -1,4 +1,3 @@
-import React from "react";
 import SCHEDULE from "../../constants/schedule";
 import {
   BriefcaseBusiness,
@@ -7,19 +6,18 @@ import {
   TentTree,
 } from "lucide-react";
 import { dateFormatter } from "../../utils/formatDateTime";
+import { useStore } from "../../store/useStore";
 
-const CalendarDay = ({
-  date,
-  schedules,
-  handleRightClick,
-  handleDateClick,
-}) => {
+const CalendarDay = ({ date, handleRightClick, handleDateClick }) => {
   // eg: 2021-03-12
   const formattedDate = dateFormatter(date, "yyyy-MM-dd");
   // eg: 12
   const formmatedDay = dateFormatter(date, "d");
-  const schedule = schedules.find(
-    (schedule) => schedule.date === formattedDate
+  // Shift Schedule
+
+  const shiftSchedule = useStore((state) => state.shiftSchedule);
+  const schedule = shiftSchedule.find(
+    (schedule) => dateFormatter(schedule.date, "yyyy-MM-dd") === formattedDate
   );
 
   switch (schedule?.type) {
@@ -109,8 +107,6 @@ const CalendarDay = ({
         </section>
       );
   }
-
-  return <section>CalendarDay</section>;
 };
 
 export default CalendarDay;

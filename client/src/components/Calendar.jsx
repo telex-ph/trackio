@@ -11,20 +11,18 @@ import {
 } from "lucide-react";
 import { DateTime } from "luxon";
 import useKeyboardKey from "../hooks/useKeyboardKey";
-import { formatDate } from "../utils/formatDateTime";
 import CalendarDay from "./calendar/CalendarDay";
 import Spinner from "../assets/loaders/Spinner";
+import { useStore } from "../store/useStore";
 
-const Calendar = ({ fetchSchedules, addBtnOnClick, schedules, loading }) => {
+const Calendar = ({ fetchSchedules, handleAddClick, loading }) => {
   // Explicitly use Philippine timezone
   const philippineZone = "Asia/Manila";
+  const selectedDates = useStore((state) => state.selectedDates);
+  const setSelectedDates = useStore((state) => state.setSelectedDates);
+  const currentDate = useStore((state) => state.currentDate);
+  const setCurrentDate = useStore((state) => state.setCurrentDate);
 
-  const [currentDate, setCurrentDate] = useState(
-    DateTime.now().setZone(philippineZone)
-  );
-  const [selectedDates, setSelectedDates] = useState([
-    DateTime.now().setZone(philippineZone),
-  ]);
   const { isShiftPressed } = useKeyboardKey();
 
   const [menuPosition, setMenuPosition] = useState(null);
@@ -35,20 +33,20 @@ const Calendar = ({ fetchSchedules, addBtnOnClick, schedules, loading }) => {
   };
   const handleCloseMenu = () => setMenuPosition(null);
 
-  const handleAddClick = () => {
-    addBtnOnClick(selectedDates);
+  const handleAddButtonClick = () => {
+    handleAddClick();
     handleCloseMenu();
   };
 
   const handleDateClick = (date) => {
     if (isShiftPressed) {
-      // Select multiple dates
-      setSelectedDates((prev) => {
-        const exists = prev.some((d) => isSameDay(d, date));
-        return exists
-          ? prev.filter((d) => !isSameDay(d, date))
-          : [...prev, date];
-      });
+      const exists = selectedDates.some((d) => isSameDay(d, date));
+
+      setSelectedDates(
+        exists
+          ? selectedDates.filter((d) => !isSameDay(d, date))
+          : [...selectedDates, date]
+      );
 
       if (!calendarData.find((d) => isSameDay(d.date, date))?.isCurrentMonth) {
         setCurrentDate(date.startOf("month"));
@@ -329,7 +327,6 @@ const Calendar = ({ fetchSchedules, addBtnOnClick, schedules, loading }) => {
                 >
                   <CalendarDay
                     date={date}
-                    schedules={schedules}
                     handleRightClick={handleRightClick}
                     handleDateClick={handleDateClick}
                   />
@@ -350,7 +347,7 @@ const Calendar = ({ fetchSchedules, addBtnOnClick, schedules, loading }) => {
         >
           <div
             className="p-2 hover:bg-gray-200 rounded-md cursor-pointer flex justify-start items-center gap-2"
-            onClick={handleAddClick}
+            onClick={handleAddButtonClick}
           >
             <Plus className="w-4 h-4" /> <span>Add</span>
           </div>
