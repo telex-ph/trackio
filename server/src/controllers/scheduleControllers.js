@@ -41,7 +41,7 @@ export const addSchedules = async (req, res) => {
           mealEnd: mergeDateAndTime(schedule.mealEnd),
           type,
           notes: schedule.notes,
-          createdAt: new Date(),
+          createdAt: DateTime.utc().toJSDate(),
         };
       default:
         return {
@@ -49,13 +49,33 @@ export const addSchedules = async (req, res) => {
           date: baseDate.toJSDate(),
           type,
           notes: schedule.notes,
-          createdAt: new Date(),
+          createdAt: DateTime.utc().toJSDate(),
         };
     }
   });
 
   try {
     const schedules = await Schedule.addAll(formattedSchedules);
+    return res.status(200).json(schedules);
+  } catch (error) {
+    console.error("Error adsd schedules: ", error);
+    res.status(500).json({
+      message: "Failed to add list of schedules",
+      error: error.message,
+    });
+  }
+};
+
+export const deleteSchedules = async (req, res) => {
+  const shiftSchedules = req.body.shiftSchedules;
+
+  // Since the date stored in db is in utc
+  const shiftSchedulesInUTC = shiftSchedules.map((schedule) => {
+    return DateTime.fromISO(schedule).toJSDate();
+  });
+
+  try {
+    const schedules = await Schedule.deleteAll(shiftSchedulesInUTC);
     return res.status(200).json(schedules);
   } catch (error) {
     console.error("Error adsd schedules: ", error);

@@ -7,7 +7,7 @@ export const shiftSchedule = (set) => ({
   setShiftSchedule: (data) => set({ shiftSchedule: data }),
 
   // Selected dates for adding shift schedule
-  selectedDates: [DateTime.now().setZone(philippineZone)],
+  selectedDates: [],
   setSelectedDates: (data) => set({ selectedDates: data }),
 
   currentDate: DateTime.now().setZone(philippineZone),

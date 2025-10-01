@@ -9,6 +9,7 @@ import api from "../../utils/axios";
 import SCHEDULE from "../../constants/schedule";
 import Spinner from "../../assets/loaders/Spinner";
 import { useStore } from "../../store/useStore";
+import WarningDeletion from "../../assets/illustrations/WarningDeletion";
 
 const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
   const { id } = useParams();
@@ -21,16 +22,13 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
   const [mealEnd, setMealEnd] = useState("");
   const [notes, setNotes] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleUpsert = async () => {
     const formattedShiftStart = toDateTimeFromTimeString(shiftStart);
     const formattedShiftEnd = toDateTimeFromTimeString(shiftEnd);
     const formattedMealStart = toDateTimeFromTimeString(mealStart);
     const formattedMealEnd = toDateTimeFromTimeString(mealEnd);
 
     if (type === SCHEDULE.WORK_DAY) {
-      console.log(`${typeof shiftEnd} : ${typeof shiftStart}`);
       if (formattedShiftEnd <= formattedShiftStart) {
         toast.error("End time must be after start time.");
         return;
@@ -75,29 +73,54 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
       fetchSchedules();
       onClose();
     } catch (error) {
+      console.error(error);
       toast.error("Something went wrong. Please notify the Tech Team");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      const response = await api.delete("/schedule/delete-schedules", {
+        data: { shiftSchedules: selectedDates },
+      });
+
+      const deletedCount = response.data.deletedCount;
+      toast.success(
+        `${deletedCount} shift schedule${
+          deletedCount !== 1 ? "s" : ""
+        } deleted successfully`
+      );
+      fetchSchedules();
+      onClose();
+    } catch (error) {
+      console.error(error);
+      toast.error("Something went wrong. Please notify the Tech Team");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    operation === "upsert" ? handleUpsert() : handleDelete();
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-scroll flex items-center justify-center bg-black/30">
-      <form
-        onSubmit={handleSubmit}
-        className="flex flex-col gap-3 bg-white rounded-md p-6 max-w-2xl w-full"
-      >
-        <section>
-          {operation === "upsert" ? (
-            <h2 className="text-xl font-bold">Upsert Schedule/s</h2>
-          ) : (
-            <h2 className="text-xl font-bold">Delete Schedule</h2>
-          )}
-        </section>
-
+      <section className="flex flex-col gap-3 bg-white rounded-md p-6 max-w-2xl w-full">
         {/* Selected Dates */}
-        <section>
-          <p className="font-medium mb-1">Date/s</p>
+        <div>
+          {operation === "upsert" ? (
+            <h2 className="text-xl font-bold">Upsert Schedule(s)</h2>
+          ) : (
+            <h2 className="text-xl font-bold">Delete Schedule(s)</h2>
+          )}
+        </div>
+
+        <div>
+          <p className="font-medium mb-1">Date(s)</p>
           {selectedDates?.length > 0 ? (
             <div className="grid grid-cols-3 px-6">
               {selectedDates.map((date, index) => (
@@ -109,122 +132,146 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
           ) : (
             <p className="text-red-500 text-sm">No dates selected</p>
           )}
-        </section>
+        </div>
 
-        {/* Attendance Type */}
-        <section>
-          <label
-            htmlFor="attendanceType"
-            className="block text-sm font-medium mb-1"
-          >
-            Attendance Type
-          </label>
-          <select
-            id="attendanceType"
-            name="attendanceType"
-            className="block w-full rounded-lg border-light p-2 text-sm"
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            required
-          >
-            <option value={SCHEDULE.WORK_DAY}>Workday</option>
-            <option value={SCHEDULE.REST_DAY}>Rest Day</option>
-            <option value={SCHEDULE.HOLIDAY}>Holiday</option>
-          </select>
-        </section>
-
-        {/* Shift Hours */}
-        {type === SCHEDULE.WORK_DAY && (
-          <section>
-            <label
-              htmlFor="shiftHour"
-              className="block text-sm font-medium mb-1"
-            >
-              Working Hours
-            </label>
-            <div className="flex gap-3 items-center">
-              <input
-                type="time"
-                value={shiftStart}
-                onChange={(e) => setShiftStart(e.target.value)}
-                required
-                className="flex-1 border-light rounded-md p-2"
-              />
-              <span>To</span>
-              <input
-                type="time"
-                value={shiftEnd}
-                onChange={(e) => setShiftEnd(e.target.value)}
-                required
-                className="flex-1 border-light rounded-md p-2"
-              />
+        <form onSubmit={handleSubmit}>
+          {operation === "delete" ? (
+            <div className="">
+              <WarningDeletion />
             </div>
-          </section>
-        )}
+          ) : (
+            <main>
+              {/* Attendance Type */}
+              <div>
+                <label
+                  htmlFor="attendanceType"
+                  className="block text-sm font-medium mb-1"
+                >
+                  Attendance Type
+                </label>
+                <select
+                  id="attendanceType"
+                  name="attendanceType"
+                  className="block w-full rounded-lg border-light p-2 text-sm"
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                  required
+                >
+                  <option value={SCHEDULE.WORK_DAY}>Workday</option>
+                  <option value={SCHEDULE.REST_DAY}>Rest Day</option>
+                  <option value={SCHEDULE.HOLIDAY}>Holiday</option>
+                </select>
+              </div>
 
-        {/* Meal Break */}
-        {type === SCHEDULE.WORK_DAY && (
-          <section>
-            <label
-              htmlFor="mealBreak"
-              className="block text-sm font-medium mb-1"
-            >
-              Meal Break (optional)
-            </label>
-            <div className="flex gap-3 items-center">
-              <input
-                type="time"
-                value={mealStart}
-                onChange={(e) => setMealStart(e.target.value)}
-                className="flex-1 border-light rounded-md p-2"
-              />
-              <span>To</span>
-              <input
-                type="time"
-                value={mealEnd}
-                onChange={(e) => setMealEnd(e.target.value)}
-                className="flex-1 border-light rounded-md p-2"
-              />
+              {/* Shift Hours */}
+              {type === SCHEDULE.WORK_DAY && (
+                <div>
+                  <label
+                    htmlFor="shiftHour"
+                    className="block text-sm font-medium mb-1"
+                  >
+                    Working Hours
+                  </label>
+                  <div className="flex gap-3 items-center">
+                    <input
+                      type="time"
+                      value={shiftStart}
+                      onChange={(e) => setShiftStart(e.target.value)}
+                      required
+                      className="flex-1 border-light rounded-md p-2"
+                    />
+                    <span>To</span>
+                    <input
+                      type="time"
+                      value={shiftEnd}
+                      onChange={(e) => setShiftEnd(e.target.value)}
+                      required
+                      className="flex-1 border-light rounded-md p-2"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Meal Break */}
+              {type === SCHEDULE.WORK_DAY && (
+                <div>
+                  <label
+                    htmlFor="mealBreak"
+                    className="block text-sm font-medium mb-1"
+                  >
+                    Meal Break (optional)
+                  </label>
+                  <div className="flex gap-3 items-center">
+                    <input
+                      type="time"
+                      value={mealStart}
+                      onChange={(e) => setMealStart(e.target.value)}
+                      className="flex-1 border-light rounded-md p-2"
+                    />
+                    <span>To</span>
+                    <input
+                      type="time"
+                      value={mealEnd}
+                      onChange={(e) => setMealEnd(e.target.value)}
+                      className="flex-1 border-light rounded-md p-2"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Notes */}
+              <div>
+                <label
+                  htmlFor="notes"
+                  className="block text-sm font-medium mb-1"
+                >
+                  Notes
+                </label>
+                <textarea
+                  name="notes"
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="border-light rounded-md w-full p-2"
+                ></textarea>
+              </div>
+            </main>
+          )}
+
+          {/* Buttons */}
+          {loading ? (
+            <Spinner size={30} />
+          ) : (
+            <div className="flex justify-end gap-3 mt-1">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-6 py-2 rounded-md border-light cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              {operation === "upsert" ? (
+                <button
+                  type="submit"
+                  className="px-7 py-2 rounded-md bg-blue-700 text-white cursor-pointer"
+                  disabled={!selectedDates?.length}
+                >
+                  Upsert
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  className="px-7 py-2 rounded-md bg-red-600 text-white cursor-pointer"
+                  disabled={!selectedDates?.length}
+                >
+                  Delete
+                </button>
+              )}
             </div>
-          </section>
-        )}
-
-        {/* Notes */}
-        <section>
-          <label htmlFor="notes" className="block text-sm font-medium mb-1">
-            Notes
-          </label>
-          <textarea
-            name="notes"
-            id="notes"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            className="border-light rounded-md w-full p-2"
-          ></textarea>
-        </section>
-
-        {/* Buttons */}
-        {loading ? (
-          <Spinner size={30} />
-        ) : (
-          <section className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-2 rounded-md border-light cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-7 py-2 rounded-md bg-blue-700 text-white cursor-pointer"
-              disabled={!selectedDates?.length}
-            >
-              Save
-            </button>
-          </section>
-        )}
-      </form>
+          )}
+        </form>
+      </section>
     </div>
   );
 };

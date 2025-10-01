@@ -9,10 +9,12 @@ const OMViewSchedule = () => {
   const { id } = useParams();
   const setShiftSchedule = useStore((state) => state.setShiftSchedule);
 
+  const [operation, setOperation] = useState("upsert");
   const [loading, setLoading] = useState(true);
   const [isOpenModal, setIsOpenModal] = useState(false);
 
-  const handleUpsertClick = () => {
+  const handleBtnsClick = (operation) => {
+    setOperation(operation);
     setIsOpenModal(true);
   };
 
@@ -41,7 +43,7 @@ const OMViewSchedule = () => {
       <section>
         <Calendar
           fetchSchedules={fetchSchedules}
-          handleUpsertClick={handleUpsertClick}
+          handleBtnsClick={handleBtnsClick}
           loading={loading}
         />
       </section>
@@ -50,7 +52,7 @@ const OMViewSchedule = () => {
         <ScheduleModal
           onClose={handleModalClose}
           fetchSchedules={fetchSchedules}
-          operation={"upsert"}
+          operation={operation}
         />
       )}
     </div>

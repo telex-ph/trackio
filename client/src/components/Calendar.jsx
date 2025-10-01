@@ -8,6 +8,7 @@ import {
   Home,
   Plus,
   X,
+  Trash,
 } from "lucide-react";
 import { DateTime } from "luxon";
 import useKeyboardKey from "../hooks/useKeyboardKey";
@@ -15,7 +16,7 @@ import CalendarDay from "./calendar/CalendarDay";
 import Spinner from "../assets/loaders/Spinner";
 import { useStore } from "../store/useStore";
 
-const Calendar = ({ fetchSchedules, handleUpsertClick, loading }) => {
+const Calendar = ({ fetchSchedules, handleBtnsClick, loading }) => {
   // Explicitly use Philippine timezone
   const philippineZone = "Asia/Manila";
   const selectedDates = useStore((state) => state.selectedDates);
@@ -33,11 +34,6 @@ const Calendar = ({ fetchSchedules, handleUpsertClick, loading }) => {
   };
   const handleCloseMenu = () => setMenuPosition(null);
 
-  const handleUpsertButtonClick = () => {
-    handleUpsertClick();
-    handleCloseMenu();
-  };
-
   const handleDateClick = (date) => {
     if (isShiftPressed) {
       const exists = selectedDates.some((d) => isSameDay(d, date));
@@ -52,8 +48,13 @@ const Calendar = ({ fetchSchedules, handleUpsertClick, loading }) => {
         setCurrentDate(date.startOf("month"));
       }
     } else {
-      // Only select one at a time
       setSelectedDates([date]);
+    }
+  };
+
+  const handleBtnClick = (operation) => {
+    if (handleBtnsClick) {
+      handleBtnsClick(operation);
     }
   };
 
@@ -339,7 +340,7 @@ const Calendar = ({ fetchSchedules, handleUpsertClick, loading }) => {
 
       {menuPosition && (
         <section
-          className="absolute bg-white border-light shadow-lg rounded-md p-2"
+          className="absolute bg-white border-light shadow-lg rounded-md p-2 w-36"
           style={{
             top: menuPosition.y,
             left: menuPosition.x,
@@ -347,16 +348,24 @@ const Calendar = ({ fetchSchedules, handleUpsertClick, loading }) => {
         >
           <div
             className="p-2 hover:bg-gray-200 rounded-md cursor-pointer flex justify-start items-center gap-2"
-            onClick={handleUpsertButtonClick}
+            onClick={() => handleBtnClick("upsert")}
           >
-            <Plus className="w-4 h-4" /> <span>Upsert</span>
+            <Plus className="w-4 h-4" />
+            <span className="flex-1 text-center">Upsert</span>
+          </div>
+          <div
+            className="p-2 hover:bg-gray-200 rounded-md cursor-pointer flex justify-start items-center gap-2"
+            onClick={() => handleBtnClick("delete")}
+          >
+            <Trash className="w-4 h-4" />{" "}
+            <span className="flex-1 text-center">Delete</span>
           </div>
           <div
             className="p-2 hover:bg-gray-200 rounded-md cursor-pointer flex justify-start items-center gap-2"
             onClick={handleCloseMenu}
           >
             <X className="w-4 h-4" />
-            <span>Close</span>
+            <span className="flex-1 text-center">Close</span>
           </div>
         </section>
       )}

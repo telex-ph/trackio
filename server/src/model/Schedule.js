@@ -30,6 +30,25 @@ class Schedules {
     };
   }
 
+  static async deleteAll(schedules) {
+    if (!Array.isArray(schedules) || schedules.length === 0) {
+      throw new Error("Schedules must be a non-empty array");
+    }
+
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+
+    const bulkOps = schedules.map((schedule) => ({
+      deleteOne: {
+        filter: { date: schedule },
+      },
+    }));
+
+    const result = await collection.bulkWrite(bulkOps);
+
+    return { deletedCount: result.deletedCount };
+  }
+
   static async getAll(id) {
     const db = await connectDB();
     const collection = db.collection(this.#collection);

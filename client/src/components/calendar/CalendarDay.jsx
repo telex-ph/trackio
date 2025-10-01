@@ -4,6 +4,7 @@ import {
   Hamburger,
   BedDouble,
   TentTree,
+  StickyNote,
 } from "lucide-react";
 import { dateFormatter } from "../../utils/formatDateTime";
 import { useStore } from "../../store/useStore";
@@ -32,7 +33,7 @@ const CalendarDay = ({ date, handleRightClick, handleDateClick }) => {
         >
           <div className="flex justify-between">
             <span className="text-start">{formmatedDay}</span>
-            <span className="font-bold">{schedule.type}</span>
+            <span className="font-bold">{schedule.type || "---"}</span>
           </div>
 
           {/* Shift time */}
@@ -54,6 +55,13 @@ const CalendarDay = ({ date, handleRightClick, handleDateClick }) => {
               </span>
             </div>
           )}
+
+          <div className="flex items-center justify-left gap-1 w-full">
+            <StickyNote className="w-4 h-4" />
+            <span className="text-xs! w-min truncate">
+              {schedule.notes || "---"}
+            </span>
+          </div>
         </section>
       );
     case SCHEDULE.REST_DAY:
@@ -67,11 +75,18 @@ const CalendarDay = ({ date, handleRightClick, handleDateClick }) => {
         >
           <div className="w-full flex justify-between">
             <span className="text-start">{formmatedDay}</span>
-            <span className="font-bold">{schedule.type}</span>
+            <span className="font-bold">{schedule.type || "---"}</span>
           </div>
 
           <div className="h-full w-full absolute inset-0 flex justify-center items-center">
             <BedDouble className="h-8 w-8" />
+          </div>
+
+          <div className="flex items-center justify-left gap-1 w-full">
+            <StickyNote className="w-4 h-4" />
+            <span className="text-xs! w-min truncate">
+              {schedule.notes || "---"}
+            </span>
           </div>
         </section>
       );
@@ -86,10 +101,18 @@ const CalendarDay = ({ date, handleRightClick, handleDateClick }) => {
         >
           <div className="w-full flex justify-between">
             <span className="text-start">{formmatedDay}</span>
-            <span className="font-bold">{schedule.type}</span>
+            <span className="font-bold">{schedule.type || "---"}</span>
           </div>
+
           <div className="h-full w-full absolute inset-0 flex justify-center items-center">
             <TentTree className="h-8 w-8" />
+          </div>
+
+          <div className="flex items-center justify-left gap-1 w-full">
+            <StickyNote className="w-4 h-4" />
+            <span className="text-xs! w-min truncate">
+              {schedule.notes || "---"}
+            </span>
           </div>
         </section>
       );
