@@ -49,6 +49,12 @@ const OMViewSchedule = () => {
 
   return (
     <div>
+      {shiftSchedule.map((sch) => {
+        const formatted = DateTime.fromISO(sch.date)
+          .setZone("Asia/Manila")
+          .toFormat("yyyy-MM-dd");
+        return <div key={sch._id}>{formatted}</div>;
+      })}
       <section>
         <Calendar
           fetchSchedules={fetchSchedules}
