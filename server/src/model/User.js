@@ -1,6 +1,7 @@
 import connectDB from "../config/db.js";
 import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
+import Schedule from "../model/Schedule.js";
 
 class User {
   static #collection = "users";
@@ -41,9 +42,8 @@ class User {
    */
   static async login(_email, password) {
     const db = await connectDB();
-    const user = await db
-      .collection(this.#collection)
-      .findOne({ email: _email });
+    const collection = db.collection(this.#collection);
+    const user = await collection.findOne({ email: _email });
 
     if (!user) {
       throw new Error("User not found");
