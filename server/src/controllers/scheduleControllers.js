@@ -88,9 +88,23 @@ export const deleteSchedules = async (req, res) => {
 
 export const getSchedules = async (req, res) => {
   const id = req.params.id;
+  const currentMonth = parseInt(req.query.currentMonth);
+  const currentYear = parseInt(req.query.currentYear);
 
   try {
-    const result = await Schedule.getAll(id);
+    // Get the urrent month
+    const now = DateTime.fromObject({
+      year: currentYear,
+      month: currentMonth,
+      day: 1,
+    });
+    //  Prev month
+    const prevMonth = now.minus({ months: 1 }).startOf("month").toJSDate();
+    //  Next month
+    const nextMonth = now.plus({ months: 1 }).endOf("month").toJSDate();
+    // Get start of current month and end of current month
+
+    const result = await Schedule.getAll(id, prevMonth, nextMonth);
 
     res.status(200).json(result);
   } catch (error) {

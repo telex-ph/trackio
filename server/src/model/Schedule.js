@@ -49,11 +49,30 @@ class Schedules {
     return { deletedCount: result.deletedCount };
   }
 
-  static async getAll(id) {
+  static async getAll(id, startDate = null, endDate = null) {
     const db = await connectDB();
     const collection = db.collection(this.#collection);
 
-    const query = id ? { userId: new ObjectId(id) } : {};
+    const query = {};
+
+    if (id) {
+      query.userId = new ObjectId(id);
+    }
+
+    if (startDate && endDate) {
+      query.date = {
+        $gte: startDate,
+        $lte: endDate,
+      };
+    } else if (startDate) {
+      query.date = {
+        $gte: startDate,
+      };
+    } else if (endDate) {
+      query.date = {
+        $lte: endDate,
+      };
+    }
 
     return await collection.find(query).toArray();
   }

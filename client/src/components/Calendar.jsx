@@ -16,7 +16,7 @@ import CalendarDay from "./calendar/CalendarDay";
 import Spinner from "../assets/loaders/Spinner";
 import { useStore } from "../store/useStore";
 
-const Calendar = ({ fetchSchedules, handleBtnsClick, loading }) => {
+const Calendar = ({ handleBtnsClick, loading }) => {
   // Explicitly use Philippine timezone
   const philippineZone = "Asia/Manila";
   const selectedDates = useStore((state) => state.selectedDates);
@@ -134,29 +134,24 @@ const Calendar = ({ fetchSchedules, handleBtnsClick, loading }) => {
   // Navigation functions using Luxon
   const goToPreviousMonth = async () => {
     setCurrentDate(currentDate.minus({ months: 1 }).startOf("month"));
-    fetchSchedules();
   };
 
   const goToNextMonth = async () => {
     setCurrentDate(currentDate.plus({ months: 1 }).startOf("month"));
-    fetchSchedules();
   };
 
   const goToPreviousYear = async () => {
     setCurrentDate(currentDate.minus({ years: 1 }).startOf("month"));
-    fetchSchedules();
   };
 
   const goToNextYear = async () => {
     setCurrentDate(currentDate.plus({ years: 1 }).startOf("month"));
-    fetchSchedules();
   };
 
   const goToToday = async () => {
     const today = DateTime.now().setZone(philippineZone);
     setCurrentDate(today.startOf("month"));
     setSelectedDates([today]);
-    fetchSchedules();
   };
 
   const selectMonth = (monthIndex) => {
