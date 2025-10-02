@@ -3,13 +3,16 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   AlarmClockCheck,
   Clock,
+  AlarmClockMinus,
   AlertTriangle,
   Coffee,
   UserCheck,
   ChevronRight,
+  Logs,
+  ClockPlus,
 } from "lucide-react";
 
-const TrackingLayout = () => {
+const TrackingLayout = ({ role }) => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(null);
 
@@ -27,6 +30,131 @@ const TrackingLayout = () => {
     setActiveTab(tab);
   }, [location]);
 
+  const generateLinks = () => {
+    switch (role) {
+      case "admin":
+        return (
+          <nav className="flex gap-2 justify-end flex-1">
+            <NavLink
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
+                  isActive ? "underline" : ""
+                }`
+              }
+              to="list/time-in"
+            >
+              <AlarmClockCheck className="h-4 w-4" />
+              <span className="hidden sm:inline">Time In</span>
+            </NavLink>
+
+            <NavLink
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
+                  isActive ? "underline" : ""
+                }`
+              }
+              to="list/time-out"
+            >
+              <Clock className="h-4 w-4" />
+              <span className="hidden sm:inline">Time Out</span>
+            </NavLink>
+
+            <NavLink
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
+                  isActive ? "underline" : ""
+                }`
+              }
+              to="list/late"
+            >
+              <AlertTriangle className="h-4 w-4" />
+              <span className="hidden sm:inline">Late</span>
+            </NavLink>
+
+            <NavLink
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
+                  isActive ? "underline" : ""
+                }`
+              }
+              to="list/undertime"
+            >
+              <Coffee className="h-4 w-4" />
+              <span className="hidden sm:inline">Undertime</span>
+            </NavLink>
+
+            <NavLink
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
+                  isActive ? "underline" : ""
+                }`
+              }
+              to="list/absentees"
+            >
+              <UserCheck className="h-4 w-4" />
+              <span className="hidden sm:inline">Absentees</span>
+            </NavLink>
+          </nav>
+        );
+
+      case "team-leader":
+        return (
+          <nav className="flex gap-2 justify-end flex-1">
+            <NavLink
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
+                  isActive ? "underline" : ""
+                }`
+              }
+              to="list/basic-logs"
+            >
+              <Logs className="h-4 w-4" />
+              <span className="hidden sm:inline">Logs</span>
+            </NavLink>
+
+            <NavLink
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
+                  isActive ? "underline" : ""
+                }`
+              }
+              to="list/late"
+            >
+              <Clock className="h-4 w-4" />
+              <span className="hidden sm:inline">Late</span>
+            </NavLink>
+
+            <NavLink
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
+                  isActive ? "underline" : ""
+                }`
+              }
+              to="list/overtime"
+            >
+              <ClockPlus className="h-4 w-4" />
+              <span className="hidden sm:inline">Overtime</span>
+            </NavLink>
+
+            <NavLink
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
+                  isActive ? "underline" : ""
+                }`
+              }
+              to="list/undertime"
+            >
+              <AlarmClockMinus className="h-4 w-4" />
+              <span className="hidden sm:inline">Undertime</span>
+            </NavLink>
+          </nav>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
     <div>
       {/* Page Header */}
@@ -41,7 +169,7 @@ const TrackingLayout = () => {
           </p>
         </div>
 
-        <nav className="flex gap-2 justify-end flex-1">
+        {/* <nav className="flex gap-2 justify-end flex-1">
           <NavLink
             className={({ isActive }) =>
               `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
@@ -101,7 +229,8 @@ const TrackingLayout = () => {
             <UserCheck className="h-4 w-4" />
             <span className="hidden sm:inline">Absentees</span>
           </NavLink>
-        </nav>
+        </nav> */}
+        <main>{generateLinks()}</main>
       </section>
 
       <main>

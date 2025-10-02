@@ -1,8 +1,21 @@
 import connectDB from "../config/db.js";
 import { DateTime } from "luxon";
+import { ObjectId } from "mongodb";
+import Schedule from "../model/Schedule.js";
 
 class User {
   static #collection = "users";
+
+  static async getById(id) {
+    if (!id) {
+      throw new Error("ID is required");
+    }
+
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+    const user = await collection.findOne({ _id: new ObjectId(id) });
+    return user;
+  }
 
   static async getAll() {
     const db = await connectDB();
@@ -29,9 +42,8 @@ class User {
    */
   static async login(_email, password) {
     const db = await connectDB();
-    const user = await db
-      .collection(this.#collection)
-      .findOne({ email: _email });
+    const collection = db.collection(this.#collection);
+    const user = await collection.findOne({ email: _email });
 
     if (!user) {
       throw new Error("User not found");

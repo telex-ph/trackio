@@ -31,7 +31,7 @@ const WorkingTime = ({ timeIn }) => {
   }, [timeIn]);
 
   return (
-    <section className="flex flex-col md:flex-row md:items-center flex-1 p-5 container-light border-light rounded-md">
+    <section className="flex flex-col md:flex-row md:items-center flex-1 p-5 border-light rounded-md">
       <div className="flex-1">
         <h1>WORKING HOURS</h1>
       </div>

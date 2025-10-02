@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   ChevronLeft,
   ChevronsLeft,
@@ -6,21 +6,57 @@ import {
   ChevronRight,
   Calendar as CalendarIcon,
   Home,
+  Plus,
+  X,
+  Trash,
 } from "lucide-react";
 import { DateTime } from "luxon";
 import useKeyboardKey from "../hooks/useKeyboardKey";
+import CalendarDay from "./calendar/CalendarDay";
+import Spinner from "../assets/loaders/Spinner";
+import { useStore } from "../store/useStore";
 
-const Calendar = () => {
+const Calendar = ({ handleBtnsClick, loading }) => {
   // Explicitly use Philippine timezone
   const philippineZone = "Asia/Manila";
+  const selectedDates = useStore((state) => state.selectedDates);
+  const setSelectedDates = useStore((state) => state.setSelectedDates);
+  const currentDate = useStore((state) => state.currentDate);
+  const setCurrentDate = useStore((state) => state.setCurrentDate);
 
-  const [currentDate, setCurrentDate] = useState(
-    DateTime.now().setZone(philippineZone)
-  );
-  const [selectedDates, setSelectedDates] = useState([
-    DateTime.now().setZone(philippineZone),
-  ]);
   const { isShiftPressed } = useKeyboardKey();
+
+  const [menuPosition, setMenuPosition] = useState(null);
+
+  const handleRightClick = (e) => {
+    e.preventDefault();
+    setMenuPosition({ x: e.clientX, y: e.clientY });
+  };
+  const handleCloseMenu = () => setMenuPosition(null);
+
+  const handleDateClick = (date) => {
+    if (isShiftPressed) {
+      const exists = selectedDates.some((d) => isSameDay(d, date));
+
+      setSelectedDates(
+        exists
+          ? selectedDates.filter((d) => !isSameDay(d, date))
+          : [...selectedDates, date]
+      );
+
+      if (!calendarData.find((d) => isSameDay(d.date, date))?.isCurrentMonth) {
+        setCurrentDate(date.startOf("month"));
+      }
+    } else {
+      setSelectedDates([date]);
+    }
+  };
+
+  const handleBtnClick = (operation) => {
+    if (handleBtnsClick) {
+      handleBtnsClick(operation);
+    }
+  };
 
   const getDaysInMonth = (year, month) => {
     return DateTime.local(year, month, 1).daysInMonth;
@@ -71,7 +107,6 @@ const Calendar = () => {
       });
     }
 
-    // Current month days
     for (let day = 1; day <= daysInMonth; day++) {
       days.push({
         day,
@@ -81,8 +116,7 @@ const Calendar = () => {
       });
     }
 
-    // Next month's leading days
-    const remainingCells = 42 - days.length; // 6 rows × 7 days
+    const remainingCells = 42 - days.length;
     const nextMonth = currentDate.plus({ months: 1 });
 
     for (let day = 1; day <= remainingCells; day++) {
@@ -98,33 +132,32 @@ const Calendar = () => {
   }, [currentDate]);
 
   // Navigation functions using Luxon
-  const goToPreviousMonth = () => {
+  const goToPreviousMonth = async () => {
     setCurrentDate(currentDate.minus({ months: 1 }).startOf("month"));
   };
 
-  const goToNextMonth = () => {
+  const goToNextMonth = async () => {
     setCurrentDate(currentDate.plus({ months: 1 }).startOf("month"));
   };
 
-  const goToPreviousYear = () => {
+  const goToPreviousYear = async () => {
     setCurrentDate(currentDate.minus({ years: 1 }).startOf("month"));
   };
 
-  const goToNextYear = () => {
+  const goToNextYear = async () => {
     setCurrentDate(currentDate.plus({ years: 1 }).startOf("month"));
   };
 
-  const goToToday = () => {
+  const goToToday = async () => {
     const today = DateTime.now().setZone(philippineZone);
     setCurrentDate(today.startOf("month"));
-    setSelectedDates(today);
+    setSelectedDates([today]);
   };
 
   const selectMonth = (monthIndex) => {
     setCurrentDate(currentDate.set({ month: monthIndex + 1 }).startOf("month"));
   };
 
-  // Helper functions for date comparison using Luxon
   const isSameDay = (date1, date2) => {
     return date1.hasSame(date2, "day");
   };
@@ -137,27 +170,8 @@ const Calendar = () => {
     return selectedDates.some((selectedDate) => isSameDay(date, selectedDate));
   };
 
-  const handleDateClick = (date) => {
-    if (isShiftPressed) {
-      // Select multiple dates
-      setSelectedDates((prev) => {
-        const exists = prev.some((d) => isSameDay(d, date));
-        return exists
-          ? prev.filter((d) => !isSameDay(d, date))
-          : [...prev, date];
-      });
-
-      if (!calendarData.find((d) => isSameDay(d.date, date))?.isCurrentMonth) {
-        setCurrentDate(date.startOf("month"));
-      }
-    } else {
-      // Only select one at a time
-      setSelectedDates([date]);
-    }
-  };
-
   return (
-    <div className="w-full mx-auto rounded-md">
+    <div className="w-full mx-auto rounded-md" onClick={handleCloseMenu}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
         <div className="flex items-center gap-2">
@@ -250,7 +264,7 @@ const Calendar = () => {
           </p>
         </div>
 
-        <div className="">
+        <div>
           <p>
             Current time:
             {DateTime.now().setZone(philippineZone).toFormat("HH:mm:ss")}
@@ -278,36 +292,78 @@ const Calendar = () => {
         </div>
 
         {/* Calendar Days */}
-        <div className="grid grid-cols-7 gap-1 md:gap-3">
-          {calendarData.map((dayData, index) => {
-            const { day, date, isCurrentMonth } = dayData;
-            const todayClass = isToday(date)
-              ? "bg-blue-100 text-blue-800 font-bold"
-              : "";
-            const selectedClass = isSelected(date)
-              ? "bg-blue-600 text-white"
-              : "";
-            const currentMonthClass = isCurrentMonth
-              ? "text-gray-900"
-              : "text-gray-400";
+        {loading ? (
+          <Spinner size={30} />
+        ) : (
+          <div className="grid grid-cols-7 gap-1 md:gap-3">
+            {calendarData.map((dayData, index) => {
+              const { date, isCurrentMonth } = dayData;
+              const todayClass = isToday(date)
+                ? "bg-blue-100 text-blue-800 font-bold"
+                : "";
+              const selectedClass = isSelected(date)
+                ? "bg-blue-600 text-white"
+                : "";
+              const currentMonthClass = isCurrentMonth
+                ? "text-gray-900"
+                : "text-gray-400";
 
-            return (
-              <button
-                key={index}
-                onClick={() => handleDateClick(date)}
-                className={`
-                  p-2 md:p-5 text-center text-sm rounded-md cursor-pointer border-light
-                  ${todayClass} ${selectedClass} ${currentMonthClass}
-                  ${selectedClass ? "" : "hover:bg-gray-100"}
-                  min-h-8 sm:min-h-12 flex items-center justify-center
-                `}
-              >
-                {day}
-              </button>
-            );
-          })}
-        </div>
+              // eg: 2025-09-11
+              // const shiftDate = formatDate(date);
+
+              return (
+                <button
+                  key={index}
+                  className={`
+    p-2 md:p-3 text-sm rounded-md cursor-pointer border-light
+    ${todayClass} ${selectedClass} ${currentMonthClass}
+    ${selectedClass ? "" : "hover:bg-gray-100"}
+    min-h-8 sm:min-h-28 flex flex-col items-stretch
+  `}
+                >
+                  <CalendarDay
+                    date={date}
+                    handleRightClick={handleRightClick}
+                    handleDateClick={handleDateClick}
+                  />
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
+
+      {menuPosition && (
+        <section
+          className="absolute bg-white border-light shadow-lg rounded-md p-2 w-36"
+          style={{
+            top: menuPosition.y,
+            left: menuPosition.x,
+          }}
+        >
+          <div
+            className="p-2 hover:bg-gray-200 rounded-md cursor-pointer flex justify-start items-center gap-2"
+            onClick={() => handleBtnClick("upsert")}
+          >
+            <Plus className="w-4 h-4" />
+            <span className="flex-1 text-center">Upsert</span>
+          </div>
+          <div
+            className="p-2 hover:bg-gray-200 rounded-md cursor-pointer flex justify-start items-center gap-2"
+            onClick={() => handleBtnClick("delete")}
+          >
+            <Trash className="w-4 h-4" />{" "}
+            <span className="flex-1 text-center">Delete</span>
+          </div>
+          <div
+            className="p-2 hover:bg-gray-200 rounded-md cursor-pointer flex justify-start items-center gap-2"
+            onClick={handleCloseMenu}
+          >
+            <X className="w-4 h-4" />
+            <span className="flex-1 text-center">Close</span>
+          </div>
+        </section>
+      )}
     </div>
   );
 };

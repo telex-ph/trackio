@@ -84,6 +84,7 @@ export const useAttendance = (userId, filter) => {
         const tardiness = tIn.diff(sStart, "minutes").minutes;
 
         return {
+          doc_id: item._id,
           id: item.user._id,
           date: formatDate(item.createdAt),
           name: `${item.user.firstName} ${item.user.lastName}`,
@@ -141,25 +142,22 @@ export const useAttendance = (userId, filter) => {
     }
   }, [filter?.startDate, filter?.endDate, filter?.status]);
 
-  const addAttendance = useCallback(
-    async (shiftStart, shiftEnd) => {
-      if (!userId) return;
-      try {
-        setError(null);
-        await api.post(`/attendance/add-attendance/${userId}`, {
-          shiftStart,
-          shiftEnd,
-        });
-        toast.success("Successfully clocked in!");
-        await fetchUserAttendance();
-      } catch (error) {
-        console.error("Error adding attendance:", error);
-        setError("Failed to clock in");
-        toast.error("Failed to clock in. Please try again.");
-      }
-    },
-    [userId, fetchUserAttendance]
-  );
+  const addAttendance = useCallback(async () => {
+    if (!userId) return;
+    try {
+      setError(null);
+      await api.post(`/attendance/add-attendance/${userId}`);
+      toast.success("Successfully clocked in!");
+      await fetchUserAttendance();
+    } catch (error) {
+      console.error("Error adding attendance:", error);
+      setError("Failed to clock in");
+      const message =
+        error.response?.data?.message ||
+        "Unexpected error occurred. Please try again.";
+      toast.error(`Failed to clock in. ${message}`);
+    }
+  }, [userId, fetchUserAttendance]);
 
   const updateAttendance = useCallback(
     async (field, status) => {
