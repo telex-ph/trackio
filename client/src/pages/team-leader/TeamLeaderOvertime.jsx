@@ -120,15 +120,6 @@ const TeamLeaderOvertime = () => {
 
   return (
     <div>
-      <section className="flex flex-col mb-2">
-        <div className="flex items-center gap-1">
-          <h2>Overtime Logs</h2>
-        </div>
-        <p className="text-light">
-          Records of employees with undertime and overtime.
-        </p>
-      </section>
-
       {/* Date Picker Section */}
       <section className="flex gap-4 mb-4">
         <div>

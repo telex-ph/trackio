@@ -1,21 +1,35 @@
-import connectDB from "../config/db.js";
 import Attendance from "../model/Attendance.js";
 import { DateTime } from "luxon";
+import Schedules from "../model/Schedule.js";
 
 export const addAttendance = async (req, res) => {
   const id = req.params.id;
-  const shiftStartStr = req.body.shiftStart;
-  const shiftEndStr = req.body.shiftEnd;
-
-  const shiftStart = DateTime.fromISO(shiftStartStr, {
-    zone: "utc",
-  }).toJSDate();
-  const shiftEnd = DateTime.fromISO(shiftEndStr, {
-    zone: "utc",
-  }).toJSDate();
+  const TARDINESS_TOLERANCE_HOURS = 2;
+  const EARLY_GRACE_HOURS = 4;
 
   try {
-    const result = await Attendance.timeIn(id, shiftStart, shiftEnd);
+    const timeIn = DateTime.now().toUTC();
+    const minShiftStart = timeIn.minus({ hours: TARDINESS_TOLERANCE_HOURS });
+    const maxShiftStart = timeIn.plus({ hours: EARLY_GRACE_HOURS });
+
+    const matchingSchedule = await Schedules.get(
+      id,
+      minShiftStart.toJSDate(), // UTC ISO String
+      maxShiftStart.toJSDate() // UTC ISO String
+    );
+
+    if (!matchingSchedule) {
+      return res.status(404).json({
+        success: false,
+        message: "No matching schedule found for this time-in.",
+      });
+    }
+
+    const result = await Attendance.timeIn(
+      id,
+      matchingSchedule.shiftStart,
+      matchingSchedule.shiftEnd
+    );
     res.status(200).json(result);
   } catch (error) {
     console.error("Error adding user's attendance:", error);

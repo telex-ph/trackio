@@ -1,12 +1,14 @@
 import App from "../App";
 import AppLayout from "../layout/AppLayout";
+import TrackingLayout from "../layout/TrackingLayout";
+import MonitoringLayout from "../layout/MonitoringLayout";
 
 // Agent Routes
 import AgentDashboard from "../pages/agent/AgentDashboard";
-import AgentAttendance from "../pages/agent/AgentAttendance";
 import AgentCoaching from "../pages/agent/AgentCoaching";
 import AgentAccountSettings from "../pages/agent/AgentAccountSettings";
 import AgentRequest from "../pages/agent/AgentRequest";
+import AgentOffences from "../pages/agent/AgentOffences";
 
 // Team Leader Routes
 import TeamLeaderDashboard from "../pages/team-leader/TeamLeaderDashboard";
@@ -23,6 +25,8 @@ import TeamLeaderAccountSettings from "../pages/team-leader/TeamLeaderAccountSet
 
 // Operation Manager Routes
 import OMDashboard from "../pages/om/OMDashboard";
+import OMSchedule from "../pages/om/OMSchedule";
+import OMViewSchedule from "../pages/om/OMViewSchedule";
 
 // Admin Routes
 import AdminDashboard from "../pages/admin/AdminDashboard";
@@ -41,6 +45,7 @@ import AdminSchedule from "../pages/admin/AdminSchedule";
 import AdminAnnouncement from "../pages/admin/AdminAnnouncement";
 import AdminAccountSettings from "../pages/admin/AdminAccountSettings";
 import AdminAgentRequest from "../pages/admin/AdminAgentRequest";
+import AdminOffences from "../pages/admin/AdminOffences";
 
 // Global Routes
 import NotFound from "../pages/global/NotFound";
@@ -52,6 +57,7 @@ import ForgotPassword from "../pages/global/ForgotPassword";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import ProtectedRoutes from "./ProtectedRoutes";
 import Roles from "../constants/roles";
+import SharedAttendance from "../pages/shared/SharedAttendance";
 
 const router = createBrowserRouter([
   // Public Routes
@@ -75,17 +81,32 @@ const router = createBrowserRouter([
               { path: "dashboard", element: <AdminDashboard /> },
               {
                 path: "tracking",
+                element: <TrackingLayout role={Roles.ADMIN} />,
                 children: [
-                  { index: true, element: <Navigate to="time-in" replace /> },
-                  { path: "time-in", element: <AdminTimeIn /> },
-                  { path: "time-out", element: <AdminTimeOut /> },
-                  { path: "late", element: <AdminLate /> },
-                  { path: "undertime", element: <AdminUndertime /> },
-                  { path: "absentees", element: <AdminAbsentees /> },
+                  {
+                    index: true,
+                    element: <Navigate to="list/basic-logs" replace />,
+                  },
+                  {
+                    path: "list",
+                    children: [
+                      {
+                        index: true,
+                        element: <Navigate to="time-in" replace />,
+                      },
+                      { path: "time-in", element: <AdminTimeIn /> },
+                      { path: "time-out", element: <AdminTimeOut /> },
+                      { path: "late", element: <AdminLate /> },
+                      { path: "undertime", element: <AdminUndertime /> },
+                      { path: "absentees", element: <AdminAbsentees /> },
+                    ],
+                  },
+                  { path: "history", element: <AdminHistory /> },
                 ],
               },
               {
                 path: "monitoring",
+                element: <MonitoringLayout />,
                 children: [
                   { path: "status", element: <AdminStatus /> },
                   { path: "on-break", element: <AdminOnBreak /> },
@@ -95,20 +116,24 @@ const router = createBrowserRouter([
                 ],
               },
 
-              { path: "history", element: <AdminHistory /> },
               { path: "schedule", element: <AdminSchedule /> },
               { path: "announcement", element: <AdminAnnouncement /> },
               { path: "account-settings", element: <AdminAccountSettings /> },
               { path: "agentrequest", element: <AdminAgentRequest /> },
+              { path: "offences", element: <AdminOffences /> },
             ],
           },
 
+          // Operation Manager Routes
           {
             element: <ProtectedRoutes role={Roles.OM} />,
             path: "operation-manager",
             children: [
               { index: true, element: <Navigate to="dashboard" replace /> },
               { path: "dashboard", element: <OMDashboard /> },
+              { path: "attendance", element: <SharedAttendance /> },
+              { path: "schedule", element: <OMSchedule /> },
+              { path: "schedule/:id", element: <OMViewSchedule /> },
             ],
           },
 
@@ -119,17 +144,29 @@ const router = createBrowserRouter([
             children: [
               { index: true, element: <Navigate to="dashboard" replace /> },
               { path: "dashboard", element: <TeamLeaderDashboard /> },
+              { path: "attendance", element: <SharedAttendance /> },
               {
-                path: "attendance",
+                path: "tracking",
+                element: <TrackingLayout role={Roles.TEAM_LEADER} />,
                 children: [
                   {
                     index: true,
-                    element: <Navigate to="basic-logs" replace />,
+                    element: <Navigate to="list/basic-logs" replace />,
                   },
-                  { path: "basic-logs", element: <TeamLeaderBasicLogs /> },
-                  { path: "late", element: <TeamLeaderLate /> },
-                  { path: "overtime", element: <TeamLeaderOvertime /> },
-                  { path: "undertime", element: <TeamLeaderUndertime /> },
+                  {
+                    path: "list",
+                    children: [
+                      {
+                        index: true,
+                        element: <Navigate to="basic-logs" replace />,
+                      },
+                      { path: "basic-logs", element: <TeamLeaderBasicLogs /> },
+                      { path: "late", element: <TeamLeaderLate /> },
+                      { path: "overtime", element: <TeamLeaderOvertime /> },
+                      { path: "undertime", element: <TeamLeaderUndertime /> },
+                    ],
+                  },
+                  { path: "history", element: <TeamLeaderBasicLogs /> },
                 ],
               },
               { path: "schedule", element: <TeamLeaderSchedule /> },
@@ -151,10 +188,11 @@ const router = createBrowserRouter([
             children: [
               { index: true, element: <Navigate to="dashboard" replace /> },
               { path: "dashboard", element: <AgentDashboard /> },
-              { path: "attendance", element: <AgentAttendance /> },
+              { path: "attendance", element: <SharedAttendance /> },
               { path: "coaching", element: <AgentCoaching /> },
               { path: "request", element: <AgentRequest /> },
               { path: "account-settings", element: <AgentAccountSettings /> },
+              { path: "offences", element: <AgentOffences /> },
             ],
           },
         ],

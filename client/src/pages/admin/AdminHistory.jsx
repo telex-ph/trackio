@@ -145,18 +145,6 @@ const AdminHistory = () => {
 
   return (
     <div>
-      <section className="flex flex-col mb-4">
-        <div className="flex items-center gap-1">
-          <h2>Admin</h2> <ChevronRight className="w-6 h-6" /> <h2>History</h2>
-        </div>
-        <p className="text-light">
-          Access the complete record of employees’ attendance and activities,
-          including time-in, time-out, late arrivals, undertime, and break logs.
-          Use this page to review past data, generate reports, and ensure
-          accurate record-keeping.
-        </p>
-      </section>
-
       <section className="flex gap-4 mb-4">
         <div>
           <label className="block text-sm font-medium mb-1">Start Date</label>

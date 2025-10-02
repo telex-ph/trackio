@@ -1,102 +1,14 @@
 import React, { useState, useEffect } from "react";
-import {
-  Calendar,
-  Clock,
-  Upload,
-  X,
-  Plus,
-  User,
-  FileText,
-  ChevronDown,
-  Edit,
-  CheckCircle,
-  XCircle,
-  Bell,
-} from "lucide-react";
+import { Clock, FileText } from "lucide-react";
 import { DateTime } from "luxon";
-import api from "../../utils/axios"; // baseURL should point to /api
+import api from "../../utils/axios";
 
-// =================== Notification ===================
-const Notification = ({ message, type, onClose }) => {
-  const [isVisible, setIsVisible] = useState(true);
+import Notification from "../../components/notification/Notification";
+import ConfirmationModal from "../../components/modals/ConfirmationModal.jsx";
+import RequestForm from "../../components/team-leader-request/RequestForm";
+import RequestList from "../../components/team-leader-request/RequestList";
+import RequestHistory from "../../components/team-leader-request/RequestHistory";
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(false);
-      onClose();
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
-
-  if (!isVisible) return null;
-
-  const typeStyles = {
-    success: {
-      bg: "bg-green-500",
-      icon: <CheckCircle className="w-5 h-5 text-white" />,
-    },
-    error: {
-      bg: "bg-red-500",
-      icon: <XCircle className="w-5 h-5 text-white" />,
-    },
-    info: {
-      bg: "bg-blue-500",
-      icon: <Bell className="w-5 h-5 text-white" />,
-    },
-  };
-
-  const { bg, icon } = typeStyles[type] || typeStyles.info;
-
-  return (
-    <div
-      className={`fixed top-20 right-4 sm:top-20 sm:right-8 z-50 flex items-center gap-2 sm:gap-4 p-3 sm:p-4 rounded-xl shadow-lg text-white transition-all duration-300 ease-in-out transform ${bg}`}
-    >
-      {icon}
-      <p className="text-sm sm:text-base font-medium">{message}</p>
-      <button onClick={() => setIsVisible(false)} className="ml-auto">
-        <X className="w-4 h-4 text-white" />
-      </button>
-    </div>
-  );
-};
-
-// =================== Confirmation Modal ===================
-const ConfirmationModal = ({ isOpen, onClose, onConfirm, message }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
-      <div className="relative bg-white rounded-3xl p-6 sm:p-8 max-w-xs sm:max-w-sm w-full shadow-2xl border border-gray-200">
-        <div className="flex justify-center mb-4">
-          <Bell className="w-12 h-12 text-blue-500" />
-        </div>
-        <h3 className="text-xl font-bold text-gray-800 text-center mb-2">
-          Confirm Action
-        </h3>
-        <p className="text-center text-gray-600 mb-6 text-sm sm:text-base">
-          {message}
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <button
-            onClick={onClose}
-            className="flex-1 bg-gray-200 text-gray-800 p-3 rounded-xl font-medium hover:bg-gray-300 transition-colors text-sm sm:text-base"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className="flex-1 bg-red-600 text-white p-3 rounded-xl font-medium hover:bg-red-700 transition-colors text-sm sm:text-base"
-          >
-            Confirm
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// =================== Main Component ===================
 const TeamLeaderAgentRequest = () => {
   const [requests, setRequests] = useState([]);
   const [requestHistory, setRequestHistory] = useState([]);
@@ -131,7 +43,6 @@ const TeamLeaderAgentRequest = () => {
     setNotification({ message, type, isVisible: true });
   };
 
-  // =================== Fetch Requests ===================
   const fetchRequests = async () => {
     setIsLoading(true);
     setError(null);
@@ -183,7 +94,6 @@ const TeamLeaderAgentRequest = () => {
     fetchRequests();
   }, []);
 
-  // =================== Duration Calculation ===================
   useEffect(() => {
     if (formData.startTime && formData.endTime && formData.dateInput) {
       calculateDuration();
@@ -229,7 +139,6 @@ const TeamLeaderAgentRequest = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // =================== File Upload ===================
   const handleFileUpload = (file) => {
     if (file && file.size <= 10 * 1024 * 1024) {
       setSelectedFile(file);
@@ -262,7 +171,6 @@ const TeamLeaderAgentRequest = () => {
     setIsDragOver(false);
   };
 
-  // =================== Submit ===================
   const handleSubmit = async () => {
     if (
       !formData.agentName ||
@@ -367,7 +275,6 @@ const TeamLeaderAgentRequest = () => {
     setEditingId(null);
   };
 
-  // =================== Edit & Cancel ===================
   const handleEdit = (request) => {
     setIsEditMode(true);
     setEditingId(request._id);
@@ -405,7 +312,6 @@ const TeamLeaderAgentRequest = () => {
     }
   };
 
-  // =================== Formatting ===================
   const formatDisplayDate = (dateStr) =>
     dateStr
       ? DateTime.fromISO(dateStr).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)
@@ -442,457 +348,36 @@ const TeamLeaderAgentRequest = () => {
         </p>
       </section>
 
-      {/* Two-Column Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
-        {/* Create/Edit Request */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div
-                className={`p-2 ${
-                  isEditMode ? "bg-red-100" : "bg-indigo-100"
-                } rounded-lg`}
-              >
-                {isEditMode ? (
-                  <Edit className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
-                ) : (
-                  <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
-                )}
-              </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
-                {isEditMode ? "Edit Request" : "Create New Request"}
-              </h3>
-            </div>
-            {isEditMode && (
-              <button
-                onClick={resetForm}
-                className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-              >
-                <X className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
-            )}
-          </div>
-
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Agent Name *
-              </label>
-              <input
-                type="text"
-                value={formData.agentName}
-                onChange={(e) => handleInputChange("agentName", e.target.value)}
-                placeholder="Enter your name"
-                className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Supervisor/Team Leader *
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-red-500" />
-                <input
-                  type="text"
-                  value={formData.supervisor}
-                  onChange={(e) =>
-                    handleInputChange("supervisor", e.target.value)
-                  }
-                  placeholder="Enter supervisor's name"
-                  className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Request Type *
-                </label>
-                <select
-                  value={formData.requestType}
-                  onChange={(e) =>
-                    handleInputChange("requestType", e.target.value)
-                  }
-                  className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-                >
-                  <option value="Overtime">Overtime</option>
-                  <option value="Undertime">Undertime</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Date *
-                </label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-red-500 z-10" />
-                  <input
-                    type="date"
-                    value={formData.dateInput}
-                    onChange={(e) =>
-                      handleInputChange("dateInput", e.target.value)
-                    }
-                    // Binagong Bahagi
-                    min={new Date().toISOString().split("T")[0]}
-                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Start Time *
-                </label>
-                <div className="relative">
-                  <Clock className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-red-500 z-10" />
-                  <input
-                    type="time"
-                    value={formData.startTime}
-                    onChange={(e) =>
-                      handleInputChange("startTime", e.target.value)
-                    }
-                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  End Time *
-                </label>
-                <div className="relative">
-                  <Clock className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-red-500 z-10" />
-                  <input
-                    type="time"
-                    value={formData.endTime}
-                    onChange={(e) =>
-                      handleInputChange("endTime", e.target.value)
-                    }
-                    className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Duration Display */}
-            {formData.duration && (
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Duration (Auto-calculated)
-                </label>
-                <div className="p-3 sm:p-4 bg-blue-50 border-2 border-blue-200 rounded-2xl">
-                  <p className="text-blue-700 font-semibold text-sm sm:text-base">
-                    {formData.duration}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Reason *
-              </label>
-              <textarea
-                value={formData.reason}
-                onChange={(e) => handleInputChange("reason", e.target.value)}
-                placeholder="Explain the reason for your request..."
-                className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 resize-none text-sm sm:text-base"
-              ></textarea>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Choose File
-              </label>
-              <div
-                className={`relative border-2 border-dashed rounded-2xl p-4 transition-all duration-300 ${
-                  isDragOver
-                    ? "border-red-400 bg-red-50"
-                    : selectedFile
-                    ? "border-green-400 bg-green-50"
-                    : "border-gray-300 bg-gray-50/30"
-                }`}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-              >
-                <input
-                  type="file"
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  onChange={(e) => handleFileUpload(e.target.files[0])}
-                />
-                <div className="text-center">
-                  {selectedFile ? (
-                    <div className="flex items-center justify-center gap-2 sm:gap-3">
-                      <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" />
-                      <div>
-                        <p className="font-medium text-green-700 text-xs sm:text-sm">
-                          {selectedFile.name}
-                        </p>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedFile(null);
-                          }}
-                          className="text-red-500 hover:text-red-700 text-xs"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-600 font-medium text-xs sm:text-sm">
-                        Drop file or{" "}
-                        <span className="text-red-600">browse</span>
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">Max 10MB</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={handleSubmit}
-              className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all duration-300 font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
-            >
-              {isEditMode ? "Update Request" : "Submit Request"}
-            </button>
-          </div>
-        </div>
-
-        <div class="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
-          <div class="flex items-center justify-between mb-6">
-            <div class="flex items-center gap-3">
-              <div class="p-2 bg-blue-100 rounded-lg">
-                <FileText class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-              </div>
-              <h3 class="text-xl sm:text-2xl font-bold text-gray-800">
-                Active Requests
-              </h3>
-            </div>
-            <span class="bg-blue-100 text-blue-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
-              {requests.length} Active
-            </span>
-          </div>
-
-          {requests.length > 0 ? (
-            <div class="space-y-4 overflow-y-auto max-h-200 pr-2">
-              {requests.map((req) => (
-                <div
-                  key={req._id}
-                  class="group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border border-gray-100"
-                >
-                  <div class="flex flex-col sm:flex-row justify-between items-start mb-4">
-                    <div class="flex items-start gap-3 sm:gap-4">
-                      <div class="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
-                        <Clock class="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
-                      </div>
-                      <div class="flex-1">
-                        <h4 class="text-base sm:text-lg font-bold text-gray-800 mb-2 group-hover:text-indigo-600 transition-colors">
-                          {req.requestType} Request
-                        </h4>
-                        <div class="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
-                          <span class="text-xs text-gray-500">
-                            Filed: {formatDisplayDate(req.date)}
-                          </span>
-                          <span class="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
-                            {req.status}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="space-y-3 mb-4">
-                    <p class="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                      <User class="w-3 h-3 sm:w-4 sm:h-4" />
-                      Agent: <span class="font-medium">{req.agentName}</span>
-                    </p>
-                    <p class="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                      <ChevronDown class="w-3 h-3 sm:w-4 sm:h-4" />
-                      Supervisor:{" "}
-                      <span class="font-medium">{req.supervisor}</span>
-                    </p>
-
-                    <div class="bg-blue-50 rounded-xl p-3 sm:p-4 border-l-4 border-blue-500">
-                      <div class="grid grid-cols-2 gap-4 mb-2">
-                        <div>
-                          <p class="text-xs text-blue-600 font-semibold">
-                            Start Time
-                          </p>
-                          <p class="text-sm text-blue-800">
-                            {formatDisplayTime(req.startTime)}
-                          </p>
-                        </div>
-                        <div>
-                          <p class="text-xs text-blue-600 font-semibold">
-                            End Time
-                          </p>
-                          <p class="text-sm text-blue-800">
-                            {formatDisplayTime(req.endTime)}
-                          </p>
-                        </div>
-                      </div>
-                      <div>
-                        <p class="text-xs text-blue-600 font-semibold">
-                          Duration
-                        </p>
-                        <p class="text-sm text-blue-800 font-medium">
-                          {req.duration}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div class="bg-gray-50 rounded-xl p-3 sm:p-4 border-l-4 border-red-500">
-                      <p class="text-xs sm:text-sm text-gray-700">
-                        <span class="font-semibold text-gray-800">Reason:</span>{" "}
-                        {req.reason}
-                      </p>
-                    </div>
-
-                    {req.attachment && (
-                      <div class="bg-purple-50 rounded-xl p-3 sm:p-4 border-l-4 border-purple-500">
-                        <p class="text-xs sm:text-sm text-gray-700 flex items-center gap-2">
-                          <FileText class="w-4 h-4 text-purple-600" />
-                          <span class="font-semibold text-gray-800">
-                            Attachment:
-                          </span>
-                          <span class="text-purple-700">
-                            {req.attachment.name}
-                          </span>
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div class="flex gap-3">
-                    <button
-                      onClick={() => handleCancelClick(req._id)}
-                      class="flex-1 bg-white border-2 border-red-500 text-red-600 p-2 sm:p-3 rounded-xl hover:bg-red-50 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => handleEdit(req)}
-                      class="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
-                    >
-                      Edit
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div class="flex items-center justify-center py-10 text-gray-500 italic">
-              {isLoading ? "Loading requests..." : "No active requests found."}
-            </div>
-          )}
-        </div>
+        <RequestForm
+          formData={formData}
+          isEditMode={isEditMode}
+          selectedFile={selectedFile}
+          isDragOver={isDragOver}
+          handleInputChange={handleInputChange}
+          handleFileUpload={handleFileUpload}
+          handleDrop={handleDrop}
+          handleDragOver={handleDragOver}
+          handleDragLeave={handleDragLeave}
+          handleSubmit={handleSubmit}
+          resetForm={resetForm}
+        />
+        <RequestList
+          requests={requests}
+          isLoading={isLoading}
+          handleCancelClick={handleCancelClick}
+          handleEdit={handleEdit}
+          formatDisplayDate={formatDisplayDate}
+          formatDisplayTime={formatDisplayTime}
+        />
       </div>
 
-      {/* Request History Table */}
-      <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
-        <h3 className="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-3">
-          <div className="p-2 bg-gray-100 rounded-lg">
-            <Clock className="w-6 h-6 text-gray-600" />
-          </div>
-          Request History
-        </h3>
-        {requestHistory && requestHistory.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left p-4 font-semibold text-gray-700">
-                    Date
-                  </th>
-                  <th className="text-left p-4 font-semibold text-gray-700">
-                    Agent
-                  </th>
-                  <th className="text-left p-4 font-semibold text-gray-700">
-                    Type
-                  </th>
-                  <th className="text-left p-4 font-semibold text-gray-700">
-                    Start Time
-                  </th>
-                  <th className="text-left p-4 font-semibold text-gray-700">
-                    End Time
-                  </th>
-                  <th className="text-left p-4 font-semibold text-gray-700">
-                    Duration
-                  </th>
-                  <th className="text-left p-4 font-semibold text-gray-700">
-                    Status
-                  </th>
-                  <th className="text-left p-4 font-semibold text-gray-700">
-                    Supervisor
-                  </th>
-                  {/* BAGONG LUGAR para sa Remarks */}
-                  <th className="text-left p-4 font-semibold text-gray-700">
-                    Remarks
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {requestHistory.map((req) => (
-                  <tr
-                    key={req._id}
-                    className="border-b border-gray-100 hover:bg-gray-50"
-                  >
-                    <td className="p-4 text-sm text-gray-600">
-                      {formatDisplayDate(req.date)}
-                    </td>
-                    <td className="p-4 text-sm text-gray-800 font-medium">
-                      {req.agentName}
-                    </td>
-                    <td className="p-4 text-sm text-gray-600">
-                      {req.requestType}
-                    </td>
-                    <td className="p-4 text-sm text-gray-600">
-                      {formatDisplayTime(req.startTime)}
-                    </td>
-                    <td className="p-4 text-sm text-gray-600">
-                      {formatDisplayTime(req.endTime)}
-                    </td>
-                    <td className="p-4 text-sm text-gray-600 font-medium">
-                      {req.duration}
-                    </td>
-                    <td className="p-4">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          req.status === "Approved"
-                            ? "bg-green-100 text-green-700"
-                            : req.status === "Rejected"
-                            ? "bg-red-100 text-red-600"
-                            : "bg-yellow-100 text-yellow-600"
-                        }`}
-                      >
-                        {req.status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-sm text-gray-600">
-                      {req.supervisor}
-                    </td>
-                    {/* BAGONG LUGAR para sa Remarks */}
-                    <td className="p-4 text-sm text-gray-600">
-                      {req.remarks || "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="flex items-center justify-center py-10 text-gray-500 italic">
-            {isLoading ? "Loading history..." : "No request history found."}
-          </div>
-        )}
-      </div>
+      <RequestHistory
+        requestHistory={requestHistory}
+        isLoading={isLoading}
+        formatDisplayDate={formatDisplayDate}
+        formatDisplayTime={formatDisplayTime}
+      />
     </div>
   );
 };

@@ -5,7 +5,7 @@ import { useStore } from "../../store/useStore";
 import { useAttendance } from "../../hooks/useAttendance";
 import { TIME_BOX_CONFIG } from "../../constants/attendance";
 
-const AgentAttendance = () => {
+const SharedAttendance = () => {
   const user = useStore((state) => state.user);
   const { attendance, loading, error, addAttendance, updateAttendance } =
     useAttendance(user?._id);
@@ -51,4 +51,4 @@ const AgentAttendance = () => {
   );
 };
 
-export default AgentAttendance;
+export default SharedAttendance;
