@@ -50,21 +50,8 @@ const TimeBox = ({ attendance, config, onTimeIn, onUpdate, user }) => {
     }
 
     if (isSpecial) {
-      const todayUtc = DateTime.utc();
-      // We do this kasi yung shiftStart stored in the user is time only
-      const shiftStart = DateTime.fromISO(user.shiftStart, { zone: "utc" }).set(
-        {
-          year: todayUtc.year,
-          month: todayUtc.month,
-          day: todayUtc.day,
-        }
-      );
-      const shiftEnd = DateTime.fromISO(user.shiftEnd, { zone: "utc" }).set({
-        year: todayUtc.year,
-        month: todayUtc.month,
-        day: todayUtc.day,
-      });
-      onTimeIn(shiftStart, shiftEnd);
+      // Time-in is calculated by the server/backend
+      onTimeIn();
     } else {
       onUpdate(fieldOne, fieldOneStatus);
     }
