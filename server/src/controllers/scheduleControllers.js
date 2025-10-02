@@ -78,9 +78,9 @@ export const deleteSchedules = async (req, res) => {
     const schedules = await Schedule.deleteAll(shiftSchedulesInUTC);
     return res.status(200).json(schedules);
   } catch (error) {
-    console.error("Error adsd schedules: ", error);
+    console.error("Error deleting schedules: ", error);
     res.status(500).json({
-      message: "Failed to add list of schedules",
+      message: "Failed to delete list of schedules",
       error: error.message,
     });
   }
@@ -104,13 +104,30 @@ export const getSchedules = async (req, res) => {
     const nextMonth = now.plus({ months: 1 }).endOf("month").toJSDate();
     // Get start of current month and end of current month
 
-    const result = await Schedule.getAllById(id, prevMonth, nextMonth);
+    const result = await Schedule.getAll(id, prevMonth, nextMonth);
 
     res.status(200).json(result);
   } catch (error) {
     console.error("Error fetching all user's schedules:", error);
     res.status(500).json({
       message: "Failed to user schedules",
+      error: error.message,
+    });
+  }
+};
+
+export const getSchedule = async (req, res) => {
+  const id = req.params.id;
+  // YYYY-MM-DD
+  const date = req.params.date;
+
+  try {
+    const result = await Schedule.get(id, date);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error fetching user schedule: ", error);
+    res.status(500).json({
+      message: "Failed to fetch user schedule: ",
       error: error.message,
     });
   }
