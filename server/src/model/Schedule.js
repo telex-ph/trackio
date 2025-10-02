@@ -47,7 +47,7 @@ class Schedules {
     return { deletedCount: result.deletedCount };
   }
 
-  static async getAllById(id, startDate = null, endDate = null) {
+  static async getAll(id = null, startDate = null, endDate = null) {
     const db = await connectDB();
     const collection = db.collection(this.#collection);
 
@@ -73,6 +73,28 @@ class Schedules {
     }
 
     return await collection.find(query).toArray();
+  }
+
+  static async get(id, min, max) {
+    if (!id) {
+      throw new Error("ID is required");
+    }
+    if (!min || !max) {
+      throw new Error("Search boundaries (min and max) are required");
+    }
+
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+
+    const matchingSchedule = await collection.findOne({
+      userId: new ObjectId(id),
+      shiftStart: {
+        $gte: min,
+        $lte: max,
+      },
+    });
+
+    return matchingSchedule;
   }
 }
 

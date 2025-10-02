@@ -84,6 +84,7 @@ export const useAttendance = (userId, filter) => {
         const tardiness = tIn.diff(sStart, "minutes").minutes;
 
         return {
+          doc_id: item._id,
           id: item.user._id,
           date: formatDate(item.createdAt),
           name: `${item.user.firstName} ${item.user.lastName}`,
@@ -151,7 +152,10 @@ export const useAttendance = (userId, filter) => {
     } catch (error) {
       console.error("Error adding attendance:", error);
       setError("Failed to clock in");
-      toast.error("Failed to clock in. Please try again.");
+      const message =
+        error.response?.data?.message ||
+        "Unexpected error occurred. Please try again.";
+      toast.error(`Failed to clock in. ${message}`);
     }
   }, [userId, fetchUserAttendance]);
 
