@@ -12,8 +12,6 @@ class Schedules {
     const db = await connectDB();
     const collection = await db.collection(this.#collection);
 
-    console.log(schedules);
-
     const bulkOps = schedules.map((schedule) => ({
       updateOne: {
         filter: { date: schedule.date },
@@ -49,7 +47,7 @@ class Schedules {
     return { deletedCount: result.deletedCount };
   }
 
-  static async getAll(id, startDate = null, endDate = null) {
+  static async getAllById(id, startDate = null, endDate = null) {
     const db = await connectDB();
     const collection = db.collection(this.#collection);
 

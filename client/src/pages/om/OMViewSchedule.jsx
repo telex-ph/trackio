@@ -9,7 +9,6 @@ import { DateTime } from "luxon";
 const OMViewSchedule = () => {
   const { id } = useParams();
   const setShiftSchedule = useStore((state) => state.setShiftSchedule);
-  const shiftSchedule = useStore((state) => state.shiftSchedule);
   const currentDate = useStore((state) => state.currentDate);
 
   const [operation, setOperation] = useState("upsert");

@@ -104,7 +104,7 @@ export const getSchedules = async (req, res) => {
     const nextMonth = now.plus({ months: 1 }).endOf("month").toJSDate();
     // Get start of current month and end of current month
 
-    const result = await Schedule.getAll(id, prevMonth, nextMonth);
+    const result = await Schedule.getAllById(id, prevMonth, nextMonth);
 
     res.status(200).json(result);
   } catch (error) {
