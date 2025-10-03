@@ -37,6 +37,9 @@ const Topbar = ({ toggleSidebar }) => {
       case Roles.ADMIN:
         navigator("/admin/account-settings");
         break;
+      case Roles.OM:
+        navigator("/operation-manager/account-settings");
+        break;
       case Roles.TEAM_LEADER:
         navigator("/team-leader/account-settings");
         break;
