@@ -16,7 +16,7 @@ import CalendarDay from "./calendar/CalendarDay";
 import Spinner from "../assets/loaders/Spinner";
 import { useStore } from "../store/useStore";
 
-const Calendar = ({ handleBtnsClick, loading }) => {
+const Calendar = ({ handleBtnsClick, loading, viewOnly = false }) => {
   // Explicitly use Philippine timezone
   const philippineZone = "Asia/Manila";
   const selectedDates = useStore((state) => state.selectedDates);
@@ -333,7 +333,7 @@ const Calendar = ({ handleBtnsClick, loading }) => {
         )}
       </div>
 
-      {menuPosition && (
+      {menuPosition && !viewOnly && (
         <section
           className="absolute bg-white border-light shadow-lg rounded-md p-2 w-36"
           style={{
