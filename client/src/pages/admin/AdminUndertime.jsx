@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Table from "../../components/Table";
 import { Edit, Trash2 } from "lucide-react";
 import { DateTime } from "luxon";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, FileDown } from "lucide-react";
 import { useAttendance } from "../../hooks/useAttendance";
 import { Datepicker } from "flowbite-react";
+import exportCSV from "../../utils/exportCSV";
 
 const AdminUndertime = () => {
   const zone = "Asia/Manila";
@@ -119,28 +120,45 @@ const AdminUndertime = () => {
     },
   ];
 
+  const tableRef = useRef();
+  const handleDownloadClick = () => {
+    exportCSV(tableRef, "undertime-list");
+  };
+
   return (
     <div>
-      <section className="flex gap-4 mb-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Start Date</label>
-          <Datepicker
-            value={DateTime.fromISO(dateRange.startDate)
-              .setZone(zone)
-              .toJSDate()}
-            onChange={(date) => handleDatePicker(date, "startDate")}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">End Date</label>
-          <Datepicker
-            value={DateTime.fromISO(dateRange.endDate).setZone(zone).toJSDate()}
-            onChange={(date) => handleDatePicker(date, "endDate")}
-          />
-        </div>
+      <section className="flex items-center justify-between">
+        <section className="flex gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Start Date</label>
+            <Datepicker
+              value={DateTime.fromISO(dateRange.startDate)
+                .setZone(zone)
+                .toJSDate()}
+              onChange={(date) => handleDatePicker(date, "startDate")}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">End Date</label>
+            <Datepicker
+              value={DateTime.fromISO(dateRange.endDate)
+                .setZone(zone)
+                .toJSDate()}
+              onChange={(date) => handleDatePicker(date, "endDate")}
+            />
+          </div>
+        </section>
+        <section>
+          <button
+            className="px-4 py-3 flex items-center gap-2 rounded-md cursor-pointer bg-blue-700 text-white"
+            onClick={handleDownloadClick}
+          >
+            <FileDown className="w-4 h-4" />
+            <span>Export</span>
+          </button>
+        </section>
       </section>
-
-      <Table data={attendancesByStatus} columns={columns} />
+      <Table data={attendancesByStatus} columns={columns} tableRef={tableRef} />
     </div>
   );
 };

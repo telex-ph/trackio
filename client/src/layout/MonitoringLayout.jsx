@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import {
   ChevronRight,
   UserCheck,
@@ -8,8 +8,20 @@ import {
   Moon,
   Video,
 } from "lucide-react";
+import { useStore } from "../store/useStore";
+
+const MONITORING_PAGES = {
+  STATUS: "status",
+  ONBREAK: "on-break",
+  ONLUNCH: "on-lunch",
+  BIOBREAK: "biobreak",
+  MEETING: "meeting",
+};
 
 const MonitoringLayout = () => {
+  const monitorPage = useStore((state) => state.monitorPage);
+  const setMonitorPage = useStore((state) => state.setMonitorPage);
+
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(null);
 
@@ -29,7 +41,7 @@ const MonitoringLayout = () => {
 
   return (
     <div>
-      {/* Page Header */}
+      {/* monitorPage Header */}
       <section className="flex flex-col gap-2 items-start lg:flex-row lg:items-center lg:justify-between mb-2">
         <div className="basis-2/5">
           <div className="flex items-center gap-1">
@@ -42,65 +54,55 @@ const MonitoringLayout = () => {
         </div>
 
         <nav className="flex gap-2 justify-end flex-1">
-          <NavLink
-            className={({ isActive }) =>
-              `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
-                isActive ? "underline" : ""
-              }`
-            }
-            to="status"
+          <div
+            className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
+              monitorPage === MONITORING_PAGES.STATUS && "underline"
+            }`}
+            onClick={() => setMonitorPage(MONITORING_PAGES.STATUS)}
           >
             <UserCheck className="h-4 w-4" />
             <span className="hidden sm:inline">Status</span>
-          </NavLink>
+          </div>
 
-          <NavLink
-            className={({ isActive }) =>
-              `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
-                isActive ? "underline" : ""
-              }`
-            }
-            to="on-break"
+          <div
+            className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
+              monitorPage === MONITORING_PAGES.ONBREAK && "underline"
+            }`}
+            onClick={() => setMonitorPage(MONITORING_PAGES.ONBREAK)}
           >
             <Coffee className="h-4 w-4" />
             <span className="hidden sm:inline">On Break</span>
-          </NavLink>
+          </div>
 
-          <NavLink
-            className={({ isActive }) =>
-              `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
-                isActive ? "underline" : ""
-              }`
-            }
-            to="on-lunch"
+          <div
+            className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
+              monitorPage === MONITORING_PAGES.ONLUNCH && "underline"
+            }`}
+            onClick={() => setMonitorPage(MONITORING_PAGES.ONLUNCH)}
           >
             <Sun className="h-4 w-4" />
             <span className="hidden sm:inline">On Lunch</span>
-          </NavLink>
+          </div>
 
-          <NavLink
-            className={({ isActive }) =>
-              `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
-                isActive ? "underline" : ""
-              }`
-            }
-            to="bio-break"
+          <div
+            className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
+              monitorPage === MONITORING_PAGES.BIOBREAK && "underline"
+            }`}
+            onClick={() => setMonitorPage(MONITORING_PAGES.BIOBREAK)}
           >
             <Moon className="h-4 w-4" />
             <span className="hidden sm:inline">Bio Break</span>
-          </NavLink>
+          </div>
 
-          <NavLink
-            className={({ isActive }) =>
-              `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
-                isActive ? "underline" : ""
-              }`
-            }
-            to="meeting"
+          <div
+            className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
+              monitorPage === MONITORING_PAGES.MEETING && "underline"
+            }`}
+            onClick={() => setMonitorPage(MONITORING_PAGES.MEETING)}
           >
             <Video className="h-4 w-4" />
             <span className="hidden sm:inline">Meeting</span>
-          </NavLink>
+          </div>
         </nav>
       </section>
 

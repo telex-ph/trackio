@@ -58,6 +58,8 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import ProtectedRoutes from "./ProtectedRoutes";
 import Roles from "../constants/roles";
 import SharedAttendance from "../pages/shared/SharedAttendance";
+import SharedTrackingLists from "../pages/shared/SharedTrackingLists";
+import SharedTrackingHistory from "../pages/shared/SharedTrackingHistory";
 
 const router = createBrowserRouter([
   // Public Routes
@@ -83,25 +85,26 @@ const router = createBrowserRouter([
                 path: "tracking",
                 element: <TrackingLayout role={Roles.ADMIN} />,
                 children: [
-                  {
-                    index: true,
-                    element: <Navigate to="list/basic-logs" replace />,
-                  },
-                  {
-                    path: "list",
-                    children: [
-                      {
-                        index: true,
-                        element: <Navigate to="time-in" replace />,
-                      },
-                      { path: "time-in", element: <AdminTimeIn /> },
-                      { path: "time-out", element: <AdminTimeOut /> },
-                      { path: "late", element: <AdminLate /> },
-                      { path: "undertime", element: <AdminUndertime /> },
-                      { path: "absentees", element: <AdminAbsentees /> },
-                    ],
-                  },
-                  { path: "history", element: <AdminHistory /> },
+                  // {
+                  //   index: true,
+                  //   element: <Navigate to="list/basic-logs" replace />,
+                  // },
+                  // {
+                  //   path: "list",
+                  //   children: [
+                  //     {
+                  //       index: true,
+                  //       element: <Navigate to="time-in" replace />,
+                  //     },
+                  //     { path: "time-in", element: <AdminTimeIn /> },
+                  //     { path: "time-out", element: <AdminTimeOut /> },
+                  //     { path: "late", element: <AdminLate /> },
+                  //     { path: "undertime", element: <AdminUndertime /> },
+                  //     { path: "absentees", element: <AdminAbsentees /> },
+                  //   ],
+                  // },
+                  { path: "list", element: <SharedTrackingLists /> },
+                  { path: "history", element: <SharedTrackingHistory /> },
                 ],
               },
               {

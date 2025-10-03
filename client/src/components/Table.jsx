@@ -8,7 +8,7 @@ import "@ag-grid-community/styles/ag-theme-quartz.css";
 
 ModuleRegistry.registerModules([ClientSideRowModelModule]);
 
-const Table = ({ data, columns }) => {
+const Table = ({ data, columns, tableRef }) => {
   const gridRef = useRef();
 
   const defaultColDef = useMemo(
@@ -33,7 +33,7 @@ const Table = ({ data, columns }) => {
         }}
       >
         <AgGridReact
-          ref={gridRef}
+          ref={tableRef ? tableRef : gridRef}
           rowData={rowData}
           columnDefs={columns}
           defaultColDef={defaultColDef}
