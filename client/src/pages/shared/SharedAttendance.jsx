@@ -4,11 +4,17 @@ import TimeBox from "../../components/TimeBox";
 import { useStore } from "../../store/useStore";
 import { useAttendance } from "../../hooks/useAttendance";
 import { TIME_BOX_CONFIG } from "../../constants/attendance";
+import Calendar from "../../components/Calendar";
+import { useSchedule } from "../../hooks/useSchedule";
 
 const SharedAttendance = () => {
   const user = useStore((state) => state.user);
   const { attendance, loading, error, addAttendance, updateAttendance } =
     useAttendance(user?._id);
+
+  const { loading: scheduleLoading } = useSchedule({
+    id: user?._id,
+  });
 
   if (loading) {
     return (
@@ -46,6 +52,10 @@ const SharedAttendance = () => {
             user={user}
           />
         ))}
+      </section>
+
+      <section>
+        <Calendar viewOnly={true} loading={scheduleLoading} />
       </section>
     </div>
   );
