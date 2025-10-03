@@ -133,6 +133,7 @@ const router = createBrowserRouter([
               { path: "dashboard", element: <OMDashboard /> },
               { path: "attendance", element: <SharedAttendance /> },
               { path: "schedule", element: <OMSchedule /> },
+              { path: "schedule/:id", element: <OMViewSchedule /> },
               {
                 path: "tracking",
                 element: <TrackingLayout role={Roles.OM} />,
