@@ -133,7 +133,43 @@ const router = createBrowserRouter([
               { path: "dashboard", element: <OMDashboard /> },
               { path: "attendance", element: <SharedAttendance /> },
               { path: "schedule", element: <OMSchedule /> },
-              { path: "schedule/:id", element: <OMViewSchedule /> },
+              {
+                path: "tracking",
+                element: <TrackingLayout role={Roles.OM} />,
+                children: [
+                  {
+                    index: true,
+                    element: <Navigate to="list/basic-logs" replace />,
+                  },
+                  {
+                    path: "list",
+                    children: [
+                      {
+                        index: true,
+                        element: <Navigate to="time-in" replace />,
+                      },
+                      { path: "time-in", element: <AdminTimeIn /> },
+                      { path: "time-out", element: <AdminTimeOut /> },
+                      { path: "late", element: <AdminLate /> },
+                      { path: "undertime", element: <AdminUndertime /> },
+                      { path: "absentees", element: <AdminAbsentees /> },
+                    ],
+                  },
+                  { path: "history", element: <AdminHistory /> },
+                ],
+              },
+              {
+                path: "monitoring",
+                element: <MonitoringLayout />,
+                children: [
+                  { path: "status", element: <AdminStatus /> },
+                  { path: "on-break", element: <AdminOnBreak /> },
+                  { path: "on-lunch", element: <AdminOnLunch /> },
+                  { path: "bio-break", element: <AdminBioBreak /> },
+                  { path: "meeting", element: <AdminMeeting /> },
+                ],
+              },
+              { path: "account-settings", element: <AdminAccountSettings /> },
             ],
           },
 

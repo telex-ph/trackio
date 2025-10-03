@@ -11,6 +11,7 @@ import {
   Logs,
   ClockPlus,
 } from "lucide-react";
+import Roles from "../constants/roles";
 
 const TrackingLayout = ({ role }) => {
   const location = useLocation();
@@ -32,7 +33,71 @@ const TrackingLayout = ({ role }) => {
 
   const generateLinks = () => {
     switch (role) {
-      case "admin":
+      case Roles.ADMIN:
+        return (
+          <nav className="flex gap-2 justify-end flex-1">
+            <NavLink
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
+                  isActive ? "underline" : ""
+                }`
+              }
+              to="list/time-in"
+            >
+              <AlarmClockCheck className="h-4 w-4" />
+              <span className="hidden sm:inline">Time In</span>
+            </NavLink>
+
+            <NavLink
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
+                  isActive ? "underline" : ""
+                }`
+              }
+              to="list/time-out"
+            >
+              <Clock className="h-4 w-4" />
+              <span className="hidden sm:inline">Time Out</span>
+            </NavLink>
+
+            <NavLink
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
+                  isActive ? "underline" : ""
+                }`
+              }
+              to="list/late"
+            >
+              <AlertTriangle className="h-4 w-4" />
+              <span className="hidden sm:inline">Late</span>
+            </NavLink>
+
+            <NavLink
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
+                  isActive ? "underline" : ""
+                }`
+              }
+              to="list/undertime"
+            >
+              <Coffee className="h-4 w-4" />
+              <span className="hidden sm:inline">Undertime</span>
+            </NavLink>
+
+            <NavLink
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-md flex items-center text-black gap-2 bg-white border-light ${
+                  isActive ? "underline" : ""
+                }`
+              }
+              to="list/absentees"
+            >
+              <UserCheck className="h-4 w-4" />
+              <span className="hidden sm:inline">Absentees</span>
+            </NavLink>
+          </nav>
+        );
+      case Roles.OM:
         return (
           <nav className="flex gap-2 justify-end flex-1">
             <NavLink
@@ -97,7 +162,7 @@ const TrackingLayout = ({ role }) => {
           </nav>
         );
 
-      case "team-leader":
+      case Roles.TEAM_LEADER:
         return (
           <nav className="flex gap-2 justify-end flex-1">
             <NavLink
