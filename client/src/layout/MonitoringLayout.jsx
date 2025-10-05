@@ -9,14 +9,8 @@ import {
   Video,
 } from "lucide-react";
 import { useStore } from "../store/useStore";
-
-const MONITORING_PAGES = {
-  STATUS: "status",
-  ONBREAK: "on-break",
-  ONLUNCH: "on-lunch",
-  BIOBREAK: "biobreak",
-  MEETING: "meeting",
-};
+import SharedMonitoring from "../pages/shared/SharedMonitoring";
+import MONITORING_PAGES from "../constants/monitoringSubPages";
 
 const MonitoringLayout = () => {
   const monitorPage = useStore((state) => state.monitorPage);
@@ -46,7 +40,7 @@ const MonitoringLayout = () => {
         <div className="basis-2/5">
           <div className="flex items-center gap-1">
             <h2>Monitoring</h2> <ChevronRight className="w-6 h-6" />
-            <h2>{activeTab || ""}</h2>
+            <h2>{monitorPage || ""}</h2>
           </div>
           <p className="text-light">
             Monitor employee within the selected date range.
@@ -107,7 +101,7 @@ const MonitoringLayout = () => {
       </section>
 
       <main>
-        <Outlet />
+        <SharedMonitoring />
       </main>
     </div>
   );

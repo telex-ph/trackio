@@ -264,7 +264,7 @@ const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
     </CustomCollapse>
 
     <SidebarLink
-      to="/admin/monitoring/status"
+      to="/admin/monitoring"
       icon={Activity}
       label="Monitoring"
       isCollapsed={isCollapsed}

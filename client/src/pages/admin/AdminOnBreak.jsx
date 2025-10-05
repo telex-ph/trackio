@@ -24,8 +24,6 @@ const AdminOnBreak = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
 
-  if (loading) return <p>Loading...</p>;
-
   // Columns
   const columns = [
     { headerName: "ID", field: "id", sortable: true, filter: true, flex: 1 },

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   AlarmClockCheck,
   Clock,
@@ -9,18 +8,11 @@ import {
 } from "lucide-react";
 import { Outlet } from "react-router-dom";
 import { useStore } from "../store/useStore";
-
-const TRACKING_PAGES = {
-  TIMEIN: "time-in",
-  TIMEOUT: "time-out",
-  LATE: "late",
-  UNDERTIME: "undertime",
-  ABSENTEES: "absentees",
-};
+import TRACKING_PAGES from "../constants/trackingSubPages";
 
 const TrackingLayout = () => {
-  const page = useStore((state) => state.page);
-  const setPage = useStore((state) => state.setPage);
+  const trackPage = useStore((state) => state.trackPage);
+  const setTrackPage = useStore((state) => state.setTrackPage);
 
   return (
     <div>
@@ -29,7 +21,7 @@ const TrackingLayout = () => {
         <div className="basis-2/5">
           <div className="flex items-center gap-1">
             <h2>Tracking</h2> <ChevronRight className="w-6 h-6" />
-            <h2>{page || ""}</h2>
+            <h2>{trackPage || ""}</h2>
           </div>
           <p className="text-light">
             View employee attendance for the selected date range.
@@ -39,9 +31,9 @@ const TrackingLayout = () => {
           <nav className="flex gap-2 justify-end flex-1">
             <div
               className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
-                page === TRACKING_PAGES.TIMEIN && "underline"
+                trackPage === TRACKING_PAGES.TIMEIN && "underline"
               }`}
-              onClick={() => setPage(TRACKING_PAGES.TIMEIN)}
+              onClick={() => setTrackPage(TRACKING_PAGES.TIMEIN)}
             >
               <AlarmClockCheck className="h-4 w-4" />
               <span className="hidden sm:inline">Time In</span>
@@ -49,9 +41,9 @@ const TrackingLayout = () => {
 
             <div
               className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
-                page === TRACKING_PAGES.TIMEOUT && "underline"
+                trackPage === TRACKING_PAGES.TIMEOUT && "underline"
               }`}
-              onClick={() => setPage(TRACKING_PAGES.TIMEOUT)}
+              onClick={() => setTrackPage(TRACKING_PAGES.TIMEOUT)}
             >
               <Clock className="h-4 w-4" />
               <span className="hidden sm:inline">Time Out</span>
@@ -59,9 +51,9 @@ const TrackingLayout = () => {
 
             <div
               className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
-                page === TRACKING_PAGES.LATE && "underline"
+                trackPage === TRACKING_PAGES.LATE && "underline"
               }`}
-              onClick={() => setPage(TRACKING_PAGES.LATE)}
+              onClick={() => setTrackPage(TRACKING_PAGES.LATE)}
             >
               <AlertTriangle className="h-4 w-4" />
               <span className="hidden sm:inline">Late</span>
@@ -69,9 +61,9 @@ const TrackingLayout = () => {
 
             <div
               className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
-                page === TRACKING_PAGES.UNDERTIME && "underline"
+                trackPage === TRACKING_PAGES.UNDERTIME && "underline"
               }`}
-              onClick={() => setPage(TRACKING_PAGES.UNDERTIME)}
+              onClick={() => setTrackPage(TRACKING_PAGES.UNDERTIME)}
             >
               <Coffee className="h-4 w-4" />
               <span className="hidden sm:inline">Undertime</span>
@@ -79,9 +71,9 @@ const TrackingLayout = () => {
 
             <div
               className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
-                page === TRACKING_PAGES.ABSENTEES && "underline"
+                trackPage === TRACKING_PAGES.ABSENTEES && "underline"
               }`}
-              onClick={() => setPage(TRACKING_PAGES.ABSENTEES)}
+              onClick={() => setTrackPage(TRACKING_PAGES.ABSENTEES)}
             >
               <UserCheck className="h-4 w-4" />
               <span className="hidden sm:inline">Absentees</span>

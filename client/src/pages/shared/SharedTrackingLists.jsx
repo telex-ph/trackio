@@ -4,14 +4,7 @@ import AdminTimeOut from "../admin/AdminTimeOut";
 import AdminLate from "../admin/AdminLate";
 import AdminUndertime from "../admin/AdminUndertime";
 import AdminAbsentees from "../admin/AdminAbsentees";
-
-const TRACKING_PAGES = {
-  TIMEIN: "time-in",
-  TIMEOUT: "time-out",
-  LATE: "late",
-  UNDERTIME: "undertime",
-  ABSENTEES: "absentees",
-};
+import TRACKING_PAGES from "../../constants/trackingSubPages";
 
 const SharedTrackingLists = () => {
   const page = useStore((state) => state.page);

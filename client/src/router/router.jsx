@@ -110,13 +110,13 @@ const router = createBrowserRouter([
               {
                 path: "monitoring",
                 element: <MonitoringLayout />,
-                children: [
-                  { path: "status", element: <AdminStatus /> },
-                  { path: "on-break", element: <AdminOnBreak /> },
-                  { path: "on-lunch", element: <AdminOnLunch /> },
-                  { path: "bio-break", element: <AdminBioBreak /> },
-                  { path: "meeting", element: <AdminMeeting /> },
-                ],
+                // children: [
+                //   { path: "status", element: <AdminStatus /> },
+                //   { path: "on-break", element: <AdminOnBreak /> },
+                //   { path: "on-lunch", element: <AdminOnLunch /> },
+                //   { path: "bio-break", element: <AdminBioBreak /> },
+                //   { path: "meeting", element: <AdminMeeting /> },
+                // ],
               },
 
               { path: "schedule", element: <AdminSchedule /> },
