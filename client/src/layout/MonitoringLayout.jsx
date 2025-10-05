@@ -1,5 +1,3 @@
-import { useState, useEffect } from "react";
-import { Outlet, useLocation } from "react-router-dom";
 import {
   ChevronRight,
   UserCheck,
@@ -11,27 +9,11 @@ import {
 import { useStore } from "../store/useStore";
 import SharedMonitoring from "../pages/shared/SharedMonitoring";
 import MONITORING_PAGES from "../constants/monitoringSubPages";
+import formatPathName from "../utils/formatPathName";
 
 const MonitoringLayout = () => {
   const monitorPage = useStore((state) => state.monitorPage);
   const setMonitorPage = useStore((state) => state.setMonitorPage);
-
-  const location = useLocation();
-  const [activeTab, setActiveTab] = useState(null);
-
-  useEffect(() => {
-    const segments = location.pathname.split("/").filter(Boolean);
-    const monitoringIndex = segments.indexOf("monitoring");
-    let tab = monitoringIndex !== -1 ? segments[monitoringIndex + 1] : null;
-
-    if (tab) {
-      tab = tab
-        .replace(/-/g, " ")
-        .replace(/\b\w/g, (char) => char.toUpperCase());
-    }
-
-    setActiveTab(tab);
-  }, [location]);
 
   return (
     <div>
@@ -40,7 +22,7 @@ const MonitoringLayout = () => {
         <div className="basis-2/5">
           <div className="flex items-center gap-1">
             <h2>Monitoring</h2> <ChevronRight className="w-6 h-6" />
-            <h2>{monitorPage || ""}</h2>
+            <h2>{formatPathName(monitorPage) || ""}</h2>
           </div>
           <p className="text-light">
             Monitor employee within the selected date range.

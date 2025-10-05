@@ -1,27 +1,27 @@
-import { useStore } from "../../store/useStore";
-import AdminTimeIn from "../admin/AdminTimeIn";
-import AdminTimeOut from "../admin/AdminTimeOut";
-import AdminLate from "../admin/AdminLate";
-import AdminUndertime from "../admin/AdminUndertime";
-import AdminAbsentees from "../admin/AdminAbsentees";
 import TRACKING_PAGES from "../../constants/trackingSubPages";
+import SharedTimeIn from "./SharedTimeIn";
+import SharedTimeOut from "./SharedTimeOut";
+import SharedLate from "./SharedLate";
+import SharedUndertime from "./SharedUndertime";
+import SharedAbsentees from "./SharedAbsentees";
+import { useStore } from "../../store/useStore";
 
 const SharedTrackingLists = () => {
-  const page = useStore((state) => state.page);
+  const trackPage = useStore((state) => state.trackPage);
 
-  switch (page) {
+  switch (trackPage) {
     case TRACKING_PAGES.TIMEIN:
-      return <AdminTimeIn />;
+      return <SharedTimeIn />;
     case TRACKING_PAGES.TIMEOUT:
-      return <AdminTimeOut />;
+      return <SharedTimeOut />;
     case TRACKING_PAGES.LATE:
-      return <AdminLate />;
+      return <SharedLate />;
     case TRACKING_PAGES.UNDERTIME:
-      return <AdminUndertime />;
+      return <SharedUndertime />;
     case TRACKING_PAGES.ABSENTEES:
-      return <AdminAbsentees />;
+      return <SharedAbsentees />;
     default:
-      return <AdminTimeIn />;
+      return <SharedTimeIn />;
   }
 };
 
