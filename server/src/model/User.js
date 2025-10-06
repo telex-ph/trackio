@@ -43,13 +43,13 @@ class User {
     const db = await connectDB();
     const collection = db.collection(this.#collection);
 
-    const query = {};
+    let query = {};
 
     switch (role) {
       case Roles.TEAM_LEADER:
         query.teamLeaderId = new ObjectId(id);
         break;
-      case Roles.OPERATIONS_MANAGER:
+      case Roles.OM:
         query = {};
         break;
       default:
