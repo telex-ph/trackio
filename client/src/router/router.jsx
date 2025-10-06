@@ -98,7 +98,16 @@ const router = createBrowserRouter([
                 path: "monitoring",
                 element: <MonitoringLayout />,
               },
-              { path: "schedule", element: <AdminSchedule /> },
+              {
+                path: "schedule",
+                element: <SharedSchedule role={Roles.ADMIN} />,
+              },
+              {
+                path: "schedule/:id",
+                element: (
+                  <SharedViewSchedule role={Roles.ADMIN} readOnly={true} />
+                ),
+              },
               { path: "announcement", element: <AdminAnnouncement /> },
               { path: "account-settings", element: <AdminAccountSettings /> },
               { path: "agentrequest", element: <AdminAgentRequest /> },
