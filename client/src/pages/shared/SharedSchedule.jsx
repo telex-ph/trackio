@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 
 const SharedSchedule = ({ role }) => {
   const navigate = useNavigate();
-  const { loading, error, users } = useUser();
+  const { loading, error, userByRoleScope } = useUser();
 
   const [filterGroup, setFilterGroup] = useState("All");
   const [filterCategory, setFilterCategory] = useState("All");
@@ -122,7 +122,7 @@ const SharedSchedule = ({ role }) => {
       </div>
 
       {/* Table */}
-      <Table data={users} columns={columns} />
+      <Table data={userByRoleScope} columns={columns} />
 
       {/* Modal */}
       <TableModal

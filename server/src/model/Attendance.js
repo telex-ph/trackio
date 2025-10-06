@@ -1,6 +1,7 @@
 import connectDB from "../config/db.js";
 import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
+import Roles from "../../../client/src/constants/roles.js";
 
 class Attendance {
   static #collection = "attendances";
@@ -26,6 +27,8 @@ class Attendance {
     startDate = null,
     endDate = null,
     filter = "all",
+    role,
+    userId,
   } = {}) {
     const db = await connectDB();
     const collection = await db.collection(this.#collection);
@@ -82,7 +85,7 @@ class Attendance {
       .aggregate([
         { $sort: { createdAt: -1 } },
 
-        // Filter
+        // Pre-filter (attendance fields)
         ...(Object.keys(matchStage).length > 0 ? [{ $match: matchStage }] : []),
 
         // Lookup User
@@ -95,6 +98,11 @@ class Attendance {
           },
         },
         { $unwind: "$user" },
+
+        // Apply TL filter AFTER user is joined
+        ...(role === Roles.TEAM_LEADER
+          ? [{ $match: { "user.teamLeaderId": new ObjectId(userId) } }]
+          : []),
         {
           $lookup: {
             from: "groups",
@@ -119,6 +127,7 @@ class Attendance {
         },
       ])
       .toArray();
+
     return attendances;
   }
 

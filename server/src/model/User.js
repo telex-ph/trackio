@@ -2,6 +2,7 @@ import connectDB from "../config/db.js";
 import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 import Schedule from "../model/Schedule.js";
+import Roles from "../../../client/src/constants/roles.js";
 
 class User {
   static #collection = "users";
@@ -26,6 +27,36 @@ class User {
       .find({}, { projection: { password: 0 } })
       .toArray();
 
+    return users;
+  }
+
+  static async getUsersByRoleScope(id, role) {
+    if (!id) {
+      throw new Error("ID is required");
+    }
+    if (!role) {
+      throw new Error("Role is required");
+    }
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+
+    const query = {};
+
+    switch (role) {
+      case Roles.TEAM_LEADER:
+        query.teamLeaderId = new ObjectId(id);
+        break;
+      case Roles.OPERATIONS_MANAGER:
+        query = {};
+        break;
+      default:
+        query._id = new ObjectId(id);
+        break;
+    }
+
+    const users = await collection
+      .find(query, { projection: { password: 0 } })
+      .toArray();
     return users;
   }
 
