@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 
 const SharedSchedule = ({ role }) => {
   const navigate = useNavigate();
-  const { loading, error, users } = useUser();
+  const { loading, error, userByRoleScope } = useUser();
 
   const [filterGroup, setFilterGroup] = useState("All");
   const [filterCategory, setFilterCategory] = useState("All");
@@ -89,7 +89,9 @@ const SharedSchedule = ({ role }) => {
         <div className="flex items-center justify-between">
           <div>
             <h2>Schedule</h2>
-            <p className="text-light">Employee schedules across departments.</p>
+            <p className="text-light">
+              Centralized schedule management for employees.
+            </p>
           </div>
         </div>
       </section>
@@ -122,7 +124,7 @@ const SharedSchedule = ({ role }) => {
       </div>
 
       {/* Table */}
-      <Table data={users} columns={columns} />
+      <Table data={userByRoleScope} columns={columns} />
 
       {/* Modal */}
       <TableModal

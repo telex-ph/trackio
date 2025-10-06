@@ -248,33 +248,35 @@ const Calendar = ({ handleBtnsClick, loading, readOnly = false }) => {
       </div>
 
       {/* For testing */}
-      <div className="flex justify-between items-center text-sm text-gray-600 mb-4">
-        <div className="">
-          {isShiftPressed
-            ? "Shift key is on hold"
-            : "Shift key is not being pressed"}
-          <p>
-            Selected:{" "}
-            {selectedDates.length > 0
-              ? selectedDates
-                  .sort((a, b) => a - b)
-                  .map((d) => d.toFormat("MMM d"))
-                  .join(", ")
-              : "None"}
-          </p>
-        </div>
+      {!readOnly && (
+        <div className="flex justify-between items-center text-sm text-gray-600 mb-4">
+          <div className="">
+            {isShiftPressed
+              ? "Shift key is on hold"
+              : "Shift key is not being pressed"}
+            <p>
+              Selected:{" "}
+              {selectedDates.length > 0
+                ? selectedDates
+                    .sort((a, b) => a - b)
+                    .map((d) => d.toFormat("MMM d"))
+                    .join(", ")
+                : "None"}
+            </p>
+          </div>
 
-        <div>
-          <p>
-            Current time:
-            {DateTime.now().setZone(philippineZone).toFormat("HH:mm:ss")}
-          </p>
-          <p>
-            Timezone: {DateTime.now().setZone(philippineZone).zoneName}{" "}
-            (Philippine Time)
-          </p>
+          <div>
+            <p>
+              Current time:
+              {DateTime.now().setZone(philippineZone).toFormat("HH:mm:ss")}
+            </p>
+            <p>
+              Timezone: {DateTime.now().setZone(philippineZone).zoneName}{" "}
+              (Philippine Time)
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Calendar Grid */}
       <div className="rounded-md">

@@ -12,9 +12,9 @@ export const calculateDuration = (start, end) => {
   const interval = Interval.fromDateTimes(startDT, endDT);
   const duration = interval.toDuration(["hours", "minutes", "seconds"]);
 
-  return `${Math.floor(duration.hours)}h ${Math.floor(
-    duration.minutes
-  )}m ${Math.floor(duration.seconds)}s`;
+  return `${Math.floor(duration.hours || 0)}h ${Math.floor(
+    duration.minutes || 0
+  )}m ${Math.floor(duration.seconds || 0)}s`;
 };
 
 export const getButtonState = (

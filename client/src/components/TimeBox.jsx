@@ -1,12 +1,11 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { Button } from "flowbite-react";
 import { Square } from "lucide-react";
 import { formatTime } from "../utils/formatDateTime";
 import toast from "react-hot-toast";
 import { calculateDuration, getButtonState } from "../utils/attendanceHelpers";
-import { DateTime } from "luxon";
 
-const TimeBox = ({ attendance, config, onTimeIn, onUpdate, user }) => {
+const TimeBox = ({ attendance, config, onTimeIn, onUpdate }) => {
   const {
     title,
     isTwoBtn,
@@ -22,6 +21,19 @@ const TimeBox = ({ attendance, config, onTimeIn, onUpdate, user }) => {
   const startTime = attendance?.[fieldOne];
   const endTime = fieldTwo ? attendance?.[fieldTwo] : null;
 
+  // state for ticking clock
+  const [now, setNow] = useState(Date.now());
+
+  // start ticking only if started and not ended
+  useEffect(() => {
+    if (startTime && !endTime) {
+      const interval = setInterval(() => {
+        setNow(Date.now());
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [startTime, endTime]);
+
   const { isDisabled: isStartDisabled, errorMessage: startErrorMessage } =
     useMemo(
       () => getButtonState(attendance, fieldOne, isSpecial),
@@ -36,21 +48,37 @@ const TimeBox = ({ attendance, config, onTimeIn, onUpdate, user }) => {
     [attendance, fieldTwo, fieldOne]
   );
 
-  const duration = useMemo(
-    () => calculateDuration(startTime, endTime),
-    [startTime, endTime]
-  );
+  const duration = useMemo(() => {
+    if (!startTime) return "Start";
+
+    if (fieldOne === "timeOut") {
+      if (attendance?.timeIn && attendance?.timeOut) {
+        return calculateDuration(attendance.timeIn, attendance.timeOut);
+      }
+      return "Not recorded";
+    }
+
+    if (fieldOne === "timeIn" && attendance?.timeOut) {
+      return calculateDuration(startTime, attendance.timeOut);
+    }
+
+    return calculateDuration(startTime, endTime || now);
+  }, [
+    startTime,
+    endTime,
+    now,
+    fieldOne,
+    attendance?.timeOut,
+    attendance?.timeIn,
+  ]);
 
   const handleStartClick = () => {
     if (isStartDisabled) {
-      if (startErrorMessage) {
-        toast.error(startErrorMessage);
-      }
+      if (startErrorMessage) toast.error(startErrorMessage);
       return;
     }
 
     if (isSpecial) {
-      // Time-in is calculated by the server/backend
       onTimeIn();
     } else {
       onUpdate(fieldOne, fieldOneStatus);
@@ -59,9 +87,7 @@ const TimeBox = ({ attendance, config, onTimeIn, onUpdate, user }) => {
 
   const handleEndClick = () => {
     if (isEndDisabled) {
-      if (endErrorMessage) {
-        toast.error(endErrorMessage);
-      }
+      if (endErrorMessage) toast.error(endErrorMessage);
       return;
     }
     onUpdate(fieldTwo, fieldTwoStatus);
@@ -94,9 +120,21 @@ const TimeBox = ({ attendance, config, onTimeIn, onUpdate, user }) => {
           </Button>
         )}
       </div>
-      <span className="text-light text-sm">
-        Time Recorded: {startTime ? formatTime(startTime) : "Not recorded"}
-      </span>
+      <div className="flex items-center justify-between text-sm">
+        <span>
+          Started: {startTime ? formatTime(startTime) : "Not recorded"}
+        </span>
+        {fieldTwo && (
+          <span>
+            Ended:{" "}
+            {endTime
+              ? formatTime(endTime)
+              : startTime
+              ? "In Progress…"
+              : "Not recorded"}
+          </span>
+        )}
+      </div>
     </div>
   );
 };
