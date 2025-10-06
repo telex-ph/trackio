@@ -21,6 +21,7 @@ const OMSchedule = () => {
   const columns = [
     { headerName: "ID", field: "id", flex: 1 },
     { headerName: "Name", field: "name", flex: 2 },
+    { headerName: "Group", field: "group", flex: 2 },
     { headerName: "Department", field: "department", flex: 2 },
     {
       headerName: "Action",
@@ -51,8 +52,6 @@ const OMSchedule = () => {
           </div>
         </div>
       </section>
-
-     
 
       {/* Filters */}
       <div className="flex gap-4 mb-4">

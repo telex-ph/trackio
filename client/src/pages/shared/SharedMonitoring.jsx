@@ -1,9 +1,9 @@
+import SharedStatus from "./SharedStatus";
+import SharedOnBreak from "./SharedOnBreak";
+import SharedOnLunch from "./SharedOnLunch";
+import SharedBioBreak from "./SharedBioBreak";
+import SharedMeeting from "./SharedMeeting";
 import { useStore } from "../../store/useStore";
-import AdminStatus from "../admin/AdminStatus";
-import AdminOnBreak from "../admin/AdminOnBreak";
-import AdminOnLunch from "../admin/AdminOnLunch";
-import AdminBioBreak from "../admin/AdminBioBreak";
-import AdminMeeting from "../admin/AdminMeeting";
 
 const MONITORING_PAGES = {
   STATUS: "status",
@@ -18,17 +18,17 @@ const SharedMonitoring = () => {
 
   switch (monitorPage) {
     case MONITORING_PAGES.STATUS:
-      return <AdminStatus />;
+      return <SharedStatus />;
     case MONITORING_PAGES.ONBREAK:
-      return <AdminOnBreak />;
+      return <SharedOnBreak />;
     case MONITORING_PAGES.ONLUNCH:
-      return <AdminOnLunch />;
+      return <SharedOnLunch />;
     case MONITORING_PAGES.BIOBREAK:
-      return <AdminBioBreak />;
+      return <SharedBioBreak />;
     case MONITORING_PAGES.MEETING:
-      return <AdminMeeting />;
+      return <SharedMeeting />;
     default:
-      return <AdminStatus />;
+      return <SharedStatus />;
   }
 };
 

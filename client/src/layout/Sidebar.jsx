@@ -131,6 +131,13 @@ const TeamLeaderSidebar = ({
       isCollapsed={isCollapsed}
     />
 
+    <SidebarLink
+      to="/team-leader/schedule"
+      icon={Calendar}
+      label="Schedule"
+      isCollapsed={isCollapsed}
+    />
+
     <CustomCollapse
       icon={<Clock className="w-5 h-5" />}
       label="Tracking"
@@ -159,12 +166,7 @@ const TeamLeaderSidebar = ({
       label="Coaching"
       isCollapsed={isCollapsed}
     />
-    <SidebarLink
-      to="/team-leader/schedule"
-      icon={Calendar}
-      label="Schedule"
-      isCollapsed={isCollapsed}
-    />
+
     <SidebarLink
       to="/team-leader/performance"
       icon={BarChart}
@@ -223,7 +225,7 @@ const OMSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       />
     </CustomCollapse>
     <SidebarLink
-      to="/operation-manager/monitoring/status"
+      to="/operation-manager/monitoring"
       icon={Activity}
       label="Monitoring"
       isCollapsed={isCollapsed}

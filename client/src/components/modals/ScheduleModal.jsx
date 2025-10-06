@@ -70,7 +70,9 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
         type,
       });
       toast.success("Schedules have been saved successfully.");
-      fetchSchedules();
+      if (fetchSchedules) {
+        fetchSchedules();
+      }
       onClose();
     } catch (error) {
       console.error(error);
@@ -92,7 +94,9 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
           deletedCount !== 1 ? "s" : ""
         } deleted successfully`
       );
-      fetchSchedules();
+      if (fetchSchedules) {
+        fetchSchedules();
+      }
       onClose();
     } catch (error) {
       console.error(error);

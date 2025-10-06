@@ -11,7 +11,7 @@ import { useStore } from "../store/useStore";
 import TRACKING_PAGES from "../constants/trackingSubPages";
 import formatPathName from "../utils/formatPathName";
 
-const TrackingLayout = () => {
+const TrackingLayout = ({ role }) => {
   const { pathname } = useLocation();
   const page = pathname.split("/").pop();
 
