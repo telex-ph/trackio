@@ -13,6 +13,20 @@ export const getUsers = async (req, res) => {
   }
 };
 
+export const getUser = async (req, res) => {
+  const id = req.params.id;
+  try {
+    const users = await User.getById(id);
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("Error fetching user: ", error);
+    res.status(500).json({
+      message: "Failed to fetch the user",
+      error: error.message,
+    });
+  }
+};
+
 export const getUsersByRoleScope = async (req, res) => {
   const id = req.params.id;
   const role = req.params.role;

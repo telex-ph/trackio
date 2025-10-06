@@ -89,7 +89,9 @@ const SharedSchedule = ({ role }) => {
         <div className="flex items-center justify-between">
           <div>
             <h2>Schedule</h2>
-            <p className="text-light">Employee schedules across departments.</p>
+            <p className="text-light">
+              Centralized schedule management for employees.
+            </p>
           </div>
         </div>
       </section>

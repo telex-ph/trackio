@@ -14,7 +14,10 @@ class User {
 
     const db = await connectDB();
     const collection = db.collection(this.#collection);
-    const user = await collection.findOne({ _id: new ObjectId(id) });
+    const user = await collection.findOne(
+      { _id: new ObjectId(id) },
+      { projection: { password: 0 } }
+    );
     return user;
   }
 
