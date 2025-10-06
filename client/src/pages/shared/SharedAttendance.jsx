@@ -4,24 +4,22 @@ import TimeBox from "../../components/TimeBox";
 import { useStore } from "../../store/useStore";
 import { useAttendance } from "../../hooks/useAttendance";
 import { TIME_BOX_CONFIG } from "../../constants/attendance";
+import Calendar from "../../components/Calendar";
+import { useSchedule } from "../../hooks/useSchedule";
 
 const SharedAttendance = () => {
   const user = useStore((state) => state.user);
-  const { attendance, loading, error, addAttendance, updateAttendance } =
+  const { attendance, loading, addAttendance, updateAttendance } =
     useAttendance(user?._id);
+
+  const { loading: scheduleLoading } = useSchedule({
+    id: user?._id,
+  });
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-lg">Loading attendance data...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-red-500">Error: {error}</div>
       </div>
     );
   }
@@ -46,6 +44,10 @@ const SharedAttendance = () => {
             user={user}
           />
         ))}
+      </section>
+
+      <section>
+        <Calendar loading={scheduleLoading} readOnly={true} />
       </section>
     </div>
   );

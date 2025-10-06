@@ -3,6 +3,7 @@ import { DateTime } from "luxon";
 import toast from "react-hot-toast";
 import api from "../utils/axios";
 import { formatTime, formatDate } from "../utils/formatDateTime";
+import { useStore } from "../store/useStore";
 
 export const useAttendance = (userId, filter) => {
   const [attendance, setAttendance] = useState(null);
@@ -10,6 +11,7 @@ export const useAttendance = (userId, filter) => {
   const [attendancesByStatus, setAttendancesByStatus] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const user = useStore((state) => state.user);
 
   const fetchUserAttendance = useCallback(async () => {
     if (!userId) return;
@@ -33,6 +35,8 @@ export const useAttendance = (userId, filter) => {
       setError(null);
       const response = await api.get("/attendance/get-attendances", {
         params: {
+          userId: user._id,
+          role: user.role,
           startDate: filter.startDate,
           endDate: filter.endDate,
           filter: filter.status,

@@ -14,7 +14,7 @@ import exportCSV from "../../utils/exportCSV";
 
 ModuleRegistry.registerModules([ClientSideRowModelModule, CsvExportModule]);
 
-const AdminTimeIn = () => {
+const SharedTimeIn = () => {
   const zone = "Asia/Manila";
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -183,10 +183,8 @@ const AdminTimeIn = () => {
           </button>
         </section>
       </section>
-
       {/* Table */}
       <Table columns={columns} data={attendancesByStatus} tableRef={tableRef} />
-
       {/* Modal */}
       <TableModal
         isOpen={isModalOpen}
@@ -285,4 +283,4 @@ const AdminTimeIn = () => {
   );
 };
 
-export default AdminTimeIn;
+export default SharedTimeIn;

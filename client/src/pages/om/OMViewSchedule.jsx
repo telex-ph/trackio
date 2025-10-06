@@ -4,15 +4,12 @@ import Calendar from "../../components/Calendar";
 import ScheduleModal from "../../components/modals/ScheduleModal";
 import api from "../../utils/axios";
 import { useStore } from "../../store/useStore";
-import { DateTime } from "luxon";
+import { useSchedule } from "../../hooks/useSchedule";
 
 const OMViewSchedule = () => {
   const { id } = useParams();
-  const setShiftSchedule = useStore((state) => state.setShiftSchedule);
-  const currentDate = useStore((state) => state.currentDate);
-
+  const { fetchSchedules, loading: scheduleLoading } = useSchedule({ id });
   const [operation, setOperation] = useState("upsert");
-  const [loading, setLoading] = useState(true);
   const [isOpenModal, setIsOpenModal] = useState(false);
 
   const handleBtnsClick = (operation) => {
@@ -24,36 +21,10 @@ const OMViewSchedule = () => {
     setIsOpenModal(false);
   };
 
-  const fetchSchedules = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get(`/schedule/get-schedules/${id}`, {
-        params: {
-          currentMonth: currentDate.month,
-          currentYear: currentDate.year,
-        },
-      });
-
-      setShiftSchedule(response.data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchSchedules();
-  }, [id, currentDate.month, currentDate.year]);
-
   return (
     <div>
       <section>
-        <Calendar
-          fetchSchedules={fetchSchedules}
-          handleBtnsClick={handleBtnsClick}
-          loading={loading}
-        />
+        <Calendar handleBtnsClick={handleBtnsClick} loading={scheduleLoading} />
       </section>
 
       {isOpenModal && (

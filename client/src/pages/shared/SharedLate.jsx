@@ -1,13 +1,13 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Table from "../../components/Table";
-import { Edit, Trash2 } from "lucide-react";
+import { FileDown } from "lucide-react";
 import { DateTime } from "luxon";
-import { ChevronRight, FileDown } from "lucide-react";
-import { useAttendance } from "../../hooks/useAttendance";
 import { Datepicker } from "flowbite-react";
+import { useAttendance } from "../../hooks/useAttendance";
+import { useRef } from "react";
 import exportCSV from "../../utils/exportCSV";
 
-const AdminUndertime = () => {
+const SharedLate = () => {
   const zone = "Asia/Manila";
 
   // Initialize with today in PH time
@@ -19,7 +19,7 @@ const AdminUndertime = () => {
   const filter = {
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
-    status: "undertime",
+    status: "late",
   };
 
   const { attendancesByStatus, loading } = useAttendance(null, filter);
@@ -39,24 +39,16 @@ const AdminUndertime = () => {
     }));
   };
 
-  // Helper to calculate undertime in minutes
-  const calculateUndertime = (scheduled, actual) => {
-    if (!actual) return null;
-    const parseTime = (time) => {
-      const [hourMin, period] = time.split(" ");
-      let [hour, min] = hourMin.split(":");
-      hour = parseInt(hour, 10);
-      min = min ? parseInt(min, 10) : 0;
-      if (period.toUpperCase() === "PM" && hour !== 12) hour += 12;
-      if (period.toUpperCase() === "AM" && hour === 12) hour = 0;
-      return hour * 60 + min;
-    };
-    const diff = parseTime(scheduled) - parseTime(actual);
-    return diff > 0 ? diff : 0; // only positive undertime
-  };
-
+  // Columns
   const columns = [
     { headerName: "ID", field: "id", sortable: true, filter: true, flex: 1 },
+    {
+      headerName: "Date",
+      field: "date",
+      sortable: true,
+      filter: true,
+      flex: 2,
+    },
     {
       headerName: "Name",
       field: "name",
@@ -79,50 +71,59 @@ const AdminUndertime = () => {
       flex: 1,
     },
     {
-      headerName: "Shirt Start",
-      field: "shiftEnd",
+      headerName: "Shift Start",
+      field: "shiftStart",
       sortable: true,
       filter: false,
       flex: 1,
     },
     {
-      headerName: "Time Out",
-      field: "timeOut",
+      headerName: "Time In",
+      field: "timeIn",
       sortable: true,
       filter: false,
       flex: 1,
     },
     {
-      headerName: "Undertime Duration",
-      field: "undertime",
+      headerName: "Tardiness",
+      field: "tardiness",
+      sortable: true,
+      filter: false,
       flex: 1,
+      cellRenderer: (row) => {
+        const value = row.data.tardiness;
+        return `${value} minutes`;
+      },
     },
     {
       headerName: "Action",
       field: "action",
       flex: 1,
-      renderCell: (row) => (
-        <div className="flex gap-2">
-          <button
-            className="p-1 rounded hover:bg-yellow-200"
-            onClick={() => alert(`Edit ${row.name}`)}
-          >
-            <Edit className="w-5 h-5 text-blue-500" />
-          </button>
-          <button
-            className="p-1 rounded hover:bg-red-200"
-            onClick={() => alert(`Delete ${row.name}`)}
-          >
-            <Trash2 className="w-5 h-5 text-red-500" />
-          </button>
-        </div>
-      ),
+      sortable: false,
+      filter: false,
+      // TODO: remove and improve this
+      // cellRenderer: (row) => (
+      //   <div className="flex gap-2">
+      //     <button
+      //       className="p-1 rounded hover:bg-yellow-200"
+      //       onClick={() => alert(`Edit ${row.name}`)}
+      //     >
+      //       <Edit className="w-5 h-5 text-blue-500" />
+      //     </button>
+      //     <button
+      //       className="p-1 rounded hover:bg-red-200"
+      //       onClick={() => alert(`Delete ${row.name}`)}
+      //     >
+      //       <Trash2 className="w-5 h-5 text-red-500" />
+      //     </button>
+      //   </div>
+      // ),
     },
   ];
 
   const tableRef = useRef();
   const handleDownloadClick = () => {
-    exportCSV(tableRef, "undertime-list");
+    exportCSV(tableRef, "late-list");
   };
 
   return (
@@ -158,9 +159,10 @@ const AdminUndertime = () => {
           </button>
         </section>
       </section>
+
       <Table data={attendancesByStatus} columns={columns} tableRef={tableRef} />
     </div>
   );
 };
 
-export default AdminUndertime;
+export default SharedLate;

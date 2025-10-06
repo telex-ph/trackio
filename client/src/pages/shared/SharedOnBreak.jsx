@@ -1,11 +1,9 @@
 import React, { useState } from "react";
-import Table from "../../components/Table"; // your reusable Table component
+import Table from "../../components/Table";
 import { DateTime } from "luxon";
-import { Datepicker } from "flowbite-react";
 import { useAttendance } from "../../hooks/useAttendance";
-import { ChevronRight } from "lucide-react";
 
-const AdminOnBreak = () => {
+const SharedOnBreak = () => {
   const fmt = "hh:mm a";
   const zone = "Asia/Manila";
 
@@ -84,4 +82,4 @@ const AdminOnBreak = () => {
   );
 };
 
-export default AdminOnBreak;
+export default SharedOnBreak;
