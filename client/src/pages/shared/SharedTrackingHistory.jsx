@@ -10,7 +10,7 @@ import { DateTime } from "luxon";
 import { useAttendance } from "../../hooks/useAttendance";
 import exportCSV from "../../utils/exportCSV";
 
-const AdminHistory = () => {
+const SharedTrackingHistory = () => {
   const zone = "Asia/Manila";
 
   // Initialize with today in PH time
@@ -287,4 +287,4 @@ const AdminHistory = () => {
   );
 };
 
-export default AdminHistory;
+export default SharedTrackingHistory;

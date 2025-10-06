@@ -1,14 +1,13 @@
-import React, { useState } from "react";
-import Table from "../../components/Table"; // your reusable Table component
+import { useState } from "react";
+import Table from "../../components/Table";
+import { ChevronRight, Clock, FileText } from "lucide-react";
 import { DateTime } from "luxon";
 import { Datepicker } from "flowbite-react";
 import { useAttendance } from "../../hooks/useAttendance";
-import { ChevronRight } from "lucide-react";
 
-const AdminOnBreak = () => {
-  const fmt = "hh:mm a";
+const SharedOnLunch = () => {
   const zone = "Asia/Manila";
-
+  // Initialize with today in PH time
   const [dateRange, setDateRange] = useState({
     startDate: DateTime.now().setZone(zone).startOf("day").toUTC().toISO(),
     endDate: DateTime.now().setZone(zone).endOf("day").toUTC().toISO(),
@@ -17,12 +16,24 @@ const AdminOnBreak = () => {
   const filter = {
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
-    status: "onBreak",
+    status: "onLunch",
   };
 
   const { attendancesByStatus, loading } = useAttendance(null, filter);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null);
+
+  // handle date picker changes
+  const handleDatePicker = (date, field) => {
+    if (!date) return;
+    const isoDate =
+      field === "startDate"
+        ? DateTime.fromJSDate(date).setZone(zone).startOf("day").toUTC().toISO()
+        : DateTime.fromJSDate(date).setZone(zone).endOf("day").toUTC().toISO();
+
+    setDateRange((prev) => ({
+      ...prev,
+      [field]: isoDate,
+    }));
+  };
 
   // Columns
   const columns = [
@@ -32,45 +43,46 @@ const AdminOnBreak = () => {
       field: "name",
       sortable: true,
       filter: true,
-      flex: 1,
+      flex: 2,
     },
     {
-      headerName: "Email",
+      headerName: "Email Address",
       field: "email",
       sortable: true,
       filter: true,
-      flex: 1,
+      flex: 2,
     },
     {
       headerName: "Account",
-      field: "accounts",
+      field: "account",
       sortable: true,
       filter: true,
       flex: 1,
     },
     {
-      headerName: "Morning Break",
+      headerName: "Lunch Start",
+      field: "lunchStart",
+      sortable: true,
       filter: false,
       flex: 1,
-      cellRenderer: (params) => {
-        const breakStart = params.data.firstBreakStart;
-        const breakEnd = params.data.firstBreakEnd;
-        return `${breakStart} - ${breakEnd}`;
-      },
     },
     {
-      headerName: "Afternoon Break",
+      headerName: "Lunch End",
+      field: "lunchEnd",
+      sortable: true,
       filter: false,
       flex: 1,
-      cellRenderer: (params) => {
-        const breakStart = params.data.secondBreakStart;
-        const breakEnd = params.data.secondBreakEnd;
-        return `${breakStart} - ${breakEnd}`;
-      },
     },
     {
-      headerName: "Extended Break Duration",
-      field: "extendedBreak",
+      headerName: "Status",
+      field: "status",
+      sortable: true,
+      filter: true,
+      flex: 1,
+    },
+    {
+      headerName: "Extended Lunch Duration",
+      field: "extendedLunch",
       sortable: true,
       filter: false,
       flex: 1,
@@ -84,4 +96,4 @@ const AdminOnBreak = () => {
   );
 };
 
-export default AdminOnBreak;
+export default SharedOnLunch;

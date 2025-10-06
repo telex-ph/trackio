@@ -16,7 +16,7 @@ import TableEmployeeDetails from "../../components/TableEmployeeDetails";
 import { useAttendance } from "../../hooks/useAttendance";
 import exportCSV from "../../utils/exportCSV";
 
-const AdminAbsentees = () => {
+const SharedAbsentees = () => {
   const zone = "Asia/Manila";
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -347,4 +347,4 @@ const AdminAbsentees = () => {
   );
 };
 
-export default AdminAbsentees;
+export default SharedAbsentees;

@@ -1,15 +1,14 @@
-import { useRef, useState } from "react";
+import React, { useState } from "react";
 import Table from "../../components/Table";
-import { DateTime } from "luxon";
-import { Datepicker } from "flowbite-react";
-import { Clock, FileDown, FileText, CheckCircle } from "lucide-react";
 import TableAction from "../../components/TableAction";
 import TableModal from "../../components/TableModal";
 import TableEmployeeDetails from "../../components/TableEmployeeDetails";
+import { ChevronRight, Clock, FileText } from "lucide-react";
+import { DateTime } from "luxon";
+import { Datepicker } from "flowbite-react";
 import { useAttendance } from "../../hooks/useAttendance";
-import exportCSV from "../../utils/exportCSV";
 
-const AdminTimeOut = () => {
+const SharedStatus = () => {
   const zone = "Asia/Manila";
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,7 +23,6 @@ const AdminTimeOut = () => {
   const filter = {
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
-    status: "timeOut",
   };
 
   const { attendancesByStatus, loading } = useAttendance(null, filter);
@@ -43,6 +41,8 @@ const AdminTimeOut = () => {
     }));
   };
 
+  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
+
   const actionClicked = (rowData) => {
     setSelectedRow(rowData);
     setIsModalOpen(true);
@@ -59,36 +59,25 @@ const AdminTimeOut = () => {
     );
   };
 
+  const openCalendarModal = () => {
+    setIsCalendarModalOpen(true);
+  };
+
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
-      case "overtime":
+      case "working":
         return "bg-green-100 text-green-800 border border-green-300";
-      case "undertime":
-        return "bg-yellow-100 text-yellow-800 border border-yellow-300";
-      case "on time":
+      case "on break":
+        return "bg-yellow-100 text-yellow-800 border border-yellow-400";
+      case "shift ended":
         return "bg-gray-100 text-gray-800 border border-gray-300";
-      case "not logged out":
-        return "bg-red-100 text-red-800 border border-red-300";
       default:
         return "bg-gray-50 text-gray-600 border border-gray-200";
     }
   };
 
   const columns = [
-    {
-      headerName: "ID",
-      field: "id",
-      sortable: true,
-      filter: true,
-      flex: 1,
-    },
-    {
-      headerName: "Date",
-      field: "date",
-      sortable: true,
-      filter: true,
-      flex: 2,
-    },
+    { headerName: "ID", field: "id", sortable: true, filter: true, flex: 1 },
     {
       headerName: "Name",
       field: "name",
@@ -97,7 +86,7 @@ const AdminTimeOut = () => {
       flex: 2,
     },
     {
-      headerName: "Email",
+      headerName: "Email Address",
       field: "email",
       sortable: true,
       filter: true,
@@ -108,25 +97,18 @@ const AdminTimeOut = () => {
       field: "accounts",
       sortable: true,
       filter: true,
-      flex: 2,
+      flex: 1,
     },
     {
-      headerName: "Shift End",
-      field: "shiftEnd",
+      headerName: "Work Duration",
+      field: "workDuration",
       sortable: true,
       filter: false,
       flex: 1,
     },
     {
-      headerName: "Time Out",
-      field: "timeOut",
-      sortable: true,
-      filter: false,
-      flex: 1,
-    },
-    {
-      headerName: "Shift Adherence",
-      field: "adherence",
+      headerName: "Status",
+      field: "status",
       sortable: true,
       filter: true,
       flex: 1,
@@ -142,96 +124,49 @@ const AdminTimeOut = () => {
     },
   ];
 
-  const tableRef = useRef();
-  const handleDownloadClick = () => {
-    exportCSV(tableRef, "time-out-list");
-  };
-
   return (
     <div>
-      {/* Date Picker */}
-      <section className="flex items-center justify-between">
-        <section className="flex gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Start Date</label>
-            <Datepicker
-              value={DateTime.fromISO(dateRange.startDate)
-                .setZone(zone)
-                .toJSDate()}
-              onChange={(date) => handleDatePicker(date, "startDate")}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">End Date</label>
-            <Datepicker
-              value={DateTime.fromISO(dateRange.endDate)
-                .setZone(zone)
-                .toJSDate()}
-              onChange={(date) => handleDatePicker(date, "endDate")}
-            />
-          </div>
-        </section>
-        <section>
-          <button
-            className="px-4 py-3 flex items-center gap-2 rounded-md cursor-pointer bg-blue-700 text-white"
-            onClick={handleDownloadClick}
-          >
-            <FileDown className="w-4 h-4" />
-            <span>Export</span>
-          </button>
-        </section>
-      </section>
+      <Table columns={columns} data={attendancesByStatus} />
 
-      <Table columns={columns} data={attendancesByStatus} tableRef={tableRef}/>
-
-      {/* Modal */}
+      {/* Employee Details Modal */}
       <TableModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Employee Time Out Details"
+        title="Employee Details"
         editable={true}
         onSave={handleUpdate}
+        recordedAt={selectedRow?.attendance?.[0]?.date}
       >
         {(isEditing) =>
           selectedRow && (
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-              {/* Employee Details */}
               <div className="xl:col-span-1 space-y-6">
                 <TableEmployeeDetails employee={selectedRow} />
               </div>
 
-              {/* Time Out & Notes */}
               <div className="xl:col-span-2 space-y-6">
                 <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                   <div className="flex items-center gap-3 mb-6">
                     <Clock className="w-5 h-5 text-gray-700" />
                     <h3 className="text-xl font-bold text-gray-900">
-                      Time Out & Status
+                      Work Details
                     </h3>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    {/* Time Out */}
                     <div className="bg-white rounded-xl p-6 border-2 border-gray-900 shadow-sm">
-                      <div className="flex items-center gap-3 mb-3">
-                        <Clock className="w-6 h-6 text-gray-700" />
-                        <p className="text-sm font-bold text-gray-500 uppercase">
-                          Time Out
-                        </p>
-                      </div>
+                      <p className="text-sm font-bold text-gray-500 uppercase mb-2">
+                        Work Duration
+                      </p>
                       <p className="text-4xl font-bold text-gray-900 font-mono">
-                        {selectedRow.timeOut}
+                        {selectedRow.workDuration}
                       </p>
                     </div>
 
-                    {/* Status */}
                     <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                      <div className="flex items-center gap-3 mb-3">
-                        <CheckCircle className="w-6 h-6 text-gray-700" />
-                        <p className="text-sm font-bold text-gray-500 uppercase">
-                          Status
-                        </p>
-                      </div>
+                      <p className="text-sm font-bold text-gray-500 uppercase mb-2">
+                        Status
+                      </p>
                       <span
                         className={`px-4 py-2 rounded-lg text-lg font-bold ${getStatusColor(
                           selectedRow.status
@@ -242,32 +177,28 @@ const AdminTimeOut = () => {
                     </div>
                   </div>
 
-                  {/* Daily Notes (editable) */}
                   <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
                     <div className="flex items-center gap-3 mb-4">
                       <FileText className="w-5 h-5 text-gray-600" />
-                      <h4 className="text-lg font-bold text-gray-900">
-                        Daily Notes
-                      </h4>
+                      <h4 className="text-lg font-bold text-gray-900">Notes</h4>
                     </div>
-                    {isEditing ? (
-                      <textarea
-                        className="w-full bg-white border border-blue-500 rounded-lg p-3 text-gray-800 font-medium resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        rows={4}
-                        value={selectedRow.notes}
-                        onChange={(e) =>
-                          setSelectedRow((prev) => ({
-                            ...prev,
-                            notes: e.target.value,
-                          }))
-                        }
-                        placeholder="Enter daily notes here..."
-                      />
-                    ) : (
-                      <p className="text-gray-800">
-                        {selectedRow.notes || "No notes provided."}
-                      </p>
-                    )}
+                    <textarea
+                      className={`w-full border rounded-lg p-3 font-medium resize-none focus:outline-none focus:ring-2 ${
+                        isEditing
+                          ? "border-blue-500 bg-white"
+                          : "border-gray-300 bg-gray-50"
+                      }`}
+                      rows={4}
+                      value={selectedRow.notes}
+                      onChange={(e) =>
+                        setSelectedRow((prev) => ({
+                          ...prev,
+                          notes: e.target.value,
+                        }))
+                      }
+                      disabled={!isEditing}
+                      placeholder="Enter notes here..."
+                    />
                   </div>
                 </div>
               </div>
@@ -279,4 +210,4 @@ const AdminTimeOut = () => {
   );
 };
 
-export default AdminTimeOut;
+export default SharedStatus;

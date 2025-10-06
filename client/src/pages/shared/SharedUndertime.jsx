@@ -7,7 +7,7 @@ import { useAttendance } from "../../hooks/useAttendance";
 import { Datepicker } from "flowbite-react";
 import exportCSV from "../../utils/exportCSV";
 
-const AdminUndertime = () => {
+const SharedUndertime = () => {
   const zone = "Asia/Manila";
 
   // Initialize with today in PH time
@@ -163,4 +163,4 @@ const AdminUndertime = () => {
   );
 };
 
-export default AdminUndertime;
+export default SharedUndertime;

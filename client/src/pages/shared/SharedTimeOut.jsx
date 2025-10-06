@@ -7,19 +7,15 @@ import TableAction from "../../components/TableAction";
 import TableModal from "../../components/TableModal";
 import TableEmployeeDetails from "../../components/TableEmployeeDetails";
 import { useAttendance } from "../../hooks/useAttendance";
-import { ModuleRegistry } from "@ag-grid-community/core";
-import { ClientSideRowModelModule } from "@ag-grid-community/client-side-row-model";
-import { CsvExportModule } from "@ag-grid-community/csv-export";
 import exportCSV from "../../utils/exportCSV";
 
-ModuleRegistry.registerModules([ClientSideRowModelModule, CsvExportModule]);
-
-const AdminTimeIn = () => {
+const SharedTimeOut = () => {
   const zone = "Asia/Manila";
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
 
+  // Initialize with today in PH time
   const [dateRange, setDateRange] = useState({
     startDate: DateTime.now().setZone(zone).startOf("day").toUTC().toISO(),
     endDate: DateTime.now().setZone(zone).endOf("day").toUTC().toISO(),
@@ -28,11 +24,12 @@ const AdminTimeIn = () => {
   const filter = {
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
-    status: "timeIn",
+    status: "timeOut",
   };
 
   const { attendancesByStatus, loading } = useAttendance(null, filter);
 
+  // handle date picker changes
   const handleDatePicker = (date, field) => {
     if (!date) return;
     const isoDate =
@@ -46,6 +43,11 @@ const AdminTimeIn = () => {
     }));
   };
 
+  const actionClicked = (rowData) => {
+    setSelectedRow(rowData);
+    setIsModalOpen(true);
+  };
+
   const handleUpdate = () => {
     if (!selectedRow) return;
     setData((prev) =>
@@ -57,25 +59,21 @@ const AdminTimeIn = () => {
     );
   };
 
-  const actionClicked = (rowData) => {
-    setSelectedRow(rowData);
-    setIsModalOpen(true);
-  };
-
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
-      case "working":
+      case "overtime":
         return "bg-green-100 text-green-800 border border-green-300";
-      case "on break":
-        return "bg-yellow-100 text-yellow-800 border border-yellow-400";
-      case "shift ended":
+      case "undertime":
+        return "bg-yellow-100 text-yellow-800 border border-yellow-300";
+      case "on time":
         return "bg-gray-100 text-gray-800 border border-gray-300";
+      case "not logged out":
+        return "bg-red-100 text-red-800 border border-red-300";
       default:
         return "bg-gray-50 text-gray-600 border border-gray-200";
     }
   };
 
-  // Columns
   const columns = [
     {
       headerName: "ID",
@@ -113,22 +111,22 @@ const AdminTimeIn = () => {
       flex: 2,
     },
     {
-      headerName: "Shift Start",
-      field: "shiftStart",
+      headerName: "Shift End",
+      field: "shiftEnd",
       sortable: true,
       filter: false,
       flex: 1,
     },
     {
-      headerName: "Time In",
-      field: "timeIn",
+      headerName: "Time Out",
+      field: "timeOut",
       sortable: true,
       filter: false,
       flex: 1,
     },
     {
-      headerName: "Punctuality",
-      field: "punctuality",
+      headerName: "Shift Adherence",
+      field: "adherence",
       sortable: true,
       filter: true,
       flex: 1,
@@ -146,14 +144,14 @@ const AdminTimeIn = () => {
 
   const tableRef = useRef();
   const handleDownloadClick = () => {
-    exportCSV(tableRef, "time-in-list");
+    exportCSV(tableRef, "time-out-list");
   };
 
   return (
     <div>
       {/* Date Picker */}
       <section className="flex items-center justify-between">
-        <section className="flex gap-4 mb-4 items-center">
+        <section className="flex gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium mb-1">Start Date</label>
             <Datepicker
@@ -184,66 +182,63 @@ const AdminTimeIn = () => {
         </section>
       </section>
 
-      {/* Table */}
       <Table columns={columns} data={attendancesByStatus} tableRef={tableRef} />
 
       {/* Modal */}
       <TableModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Employee Details"
+        title="Employee Time Out Details"
         editable={true}
         onSave={handleUpdate}
       >
         {(isEditing) =>
           selectedRow && (
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-              {/* Employee Details (read-only) */}
+              {/* Employee Details */}
               <div className="xl:col-span-1 space-y-6">
                 <TableEmployeeDetails employee={selectedRow} />
               </div>
 
-              {/* Time & Notes */}
+              {/* Time Out & Notes */}
               <div className="xl:col-span-2 space-y-6">
                 <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                   <div className="flex items-center gap-3 mb-6">
                     <Clock className="w-5 h-5 text-gray-700" />
                     <h3 className="text-xl font-bold text-gray-900">
-                      Time & Status Details
+                      Time Out & Status
                     </h3>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    {/* Time In */}
+                    {/* Time Out */}
                     <div className="bg-white rounded-xl p-6 border-2 border-gray-900 shadow-sm">
                       <div className="flex items-center gap-3 mb-3">
                         <Clock className="w-6 h-6 text-gray-700" />
                         <p className="text-sm font-bold text-gray-500 uppercase">
-                          Time In
+                          Time Out
                         </p>
                       </div>
                       <p className="text-4xl font-bold text-gray-900 font-mono">
-                        {selectedRow.timeIn}
+                        {selectedRow.timeOut}
                       </p>
                     </div>
 
-                    {/* Attendance Status */}
+                    {/* Status */}
                     <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
                       <div className="flex items-center gap-3 mb-3">
                         <CheckCircle className="w-6 h-6 text-gray-700" />
                         <p className="text-sm font-bold text-gray-500 uppercase">
-                          Attendance Status
+                          Status
                         </p>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`px-4 py-2 rounded-lg text-lg font-bold ${getStatusColor(
-                            selectedRow.status
-                          )}`}
-                        >
-                          {selectedRow.status}
-                        </span>
-                      </div>
+                      <span
+                        className={`px-4 py-2 rounded-lg text-lg font-bold ${getStatusColor(
+                          selectedRow.status
+                        )}`}
+                      >
+                        {selectedRow.status}
+                      </span>
                     </div>
                   </div>
 
@@ -255,7 +250,6 @@ const AdminTimeIn = () => {
                         Daily Notes
                       </h4>
                     </div>
-
                     {isEditing ? (
                       <textarea
                         className="w-full bg-white border border-blue-500 rounded-lg p-3 text-gray-800 font-medium resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -285,4 +279,4 @@ const AdminTimeIn = () => {
   );
 };
 
-export default AdminTimeIn;
+export default SharedTimeOut;

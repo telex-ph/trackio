@@ -31,5 +31,5 @@ export const useSchedule = ({ id }) => {
     fetchSchedules();
   }, [id, currentDate.month, currentDate.year]);
 
-  return { schedule, loading };
+  return { schedule, loading, fetchSchedules };
 };

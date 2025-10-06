@@ -47,7 +47,7 @@ const SharedAttendance = () => {
       </section>
 
       <section>
-        <Calendar viewOnly={true} loading={scheduleLoading} />
+        <Calendar loading={scheduleLoading} readOnly={true} />
       </section>
     </div>
   );
