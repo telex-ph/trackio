@@ -115,7 +115,7 @@ const SharedSchedule = ({ role }) => {
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
         >
-          <option value="All">All Categories</option>
+          <option value="All">All Department</option>
           <option value="Agent">Agent</option>
           <option value="HR Officer">HR Officer</option>
           <option value="IT Support">IT Support</option>
