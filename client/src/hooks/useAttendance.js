@@ -81,6 +81,19 @@ export const useAttendance = (userId, filter) => {
           });
           adherence = timeOut >= shiftEnd ? "On Time" : "Undertime";
         }
+        // Undertime Duration (in minutes only)
+        let undertime = null;
+        if (item.timeOut && item.shiftEnd) {
+          const timeOut = DateTime.fromISO(item.timeOut);
+          const shiftEnd = DateTime.fromISO(item.shiftEnd).set({
+            year: timeOut.year,
+            month: timeOut.month,
+            day: timeOut.day,
+          });
+
+          const diff = shiftEnd.diff(timeOut, "minutes").minutes;
+          undertime = diff > 0 ? Math.round(diff) : 0;
+        }
 
         // Tardiness calculation
         const fmt = "hh:mm a";
@@ -114,6 +127,7 @@ export const useAttendance = (userId, filter) => {
           tardiness,
           punctuality,
           adherence,
+          undertime,
           accounts,
           status: item.status,
         };
