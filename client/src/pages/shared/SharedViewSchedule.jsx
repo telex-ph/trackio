@@ -30,8 +30,6 @@ const SharedViewSchedule = ({ role, readOnly }) => {
         setUserLoading(true);
         const response = await api.get(`/user/get-user/${id}`);
         const user = response.data;
-        console.log(user);
-
         setUser(user);
       } catch (error) {
         console.error(error);
