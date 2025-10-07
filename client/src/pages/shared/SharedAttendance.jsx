@@ -28,7 +28,10 @@ const SharedAttendance = () => {
     <div className="space-y-5">
       {/* Make this section stack vertically on small screens */}
       <section className="flex flex-col gap-4 sm:flex-row sm:gap-5">
-        <WorkingTime timeIn={attendance?.timeIn} />
+        <WorkingTime
+          timeIn={attendance?.timeIn}
+          timeOut={attendance?.timeOut}
+        />
         <ServerTime />
       </section>
 

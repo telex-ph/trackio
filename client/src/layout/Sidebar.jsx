@@ -242,6 +242,12 @@ const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       label="Dashboard"
       isCollapsed={isCollapsed}
     />
+    <SidebarLink
+      to="/admin/schedule"
+      icon={BookPlus}
+      label="Schedule"
+      isCollapsed={isCollapsed}
+    />
     <CustomCollapse
       icon={<Clock className="w-5 h-5" />}
       label="Tracking"

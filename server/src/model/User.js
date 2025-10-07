@@ -52,6 +52,9 @@ class User {
       case Roles.OM:
         query = {};
         break;
+      case Roles.ADMIN:
+        query = {};
+        break;
       default:
         query._id = new ObjectId(id);
         break;
