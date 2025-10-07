@@ -128,12 +128,6 @@ const SharedTrackingHistory = () => {
       },
     },
     {
-      headerName: "Work Duration",
-      field: "workDuration",
-      filter: false,
-      flex: 1,
-    },
-    {
       headerName: "Action",
       field: "action",
       flex: 1,

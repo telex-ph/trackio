@@ -46,7 +46,7 @@ const SharedOnLunch = () => {
       flex: 2,
     },
     {
-      headerName: "Email Address",
+      headerName: "Email",
       field: "email",
       sortable: true,
       filter: true,
@@ -54,7 +54,7 @@ const SharedOnLunch = () => {
     },
     {
       headerName: "Account",
-      field: "account",
+      field: "accounts",
       sortable: true,
       filter: true,
       flex: 1,
@@ -73,20 +73,20 @@ const SharedOnLunch = () => {
       filter: false,
       flex: 1,
     },
-    {
-      headerName: "Status",
-      field: "status",
-      sortable: true,
-      filter: true,
-      flex: 1,
-    },
-    {
-      headerName: "Extended Lunch Duration",
-      field: "extendedLunch",
-      sortable: true,
-      filter: false,
-      flex: 1,
-    },
+    // {
+    //   headerName: "Status",
+    //   field: "status",
+    //   sortable: true,
+    //   filter: true,
+    //   flex: 1,
+    // },
+    // {
+    //   headerName: "Extended Lunch Duration",
+    //   field: "extendedLunch",
+    //   sortable: true,
+    //   filter: false,
+    //   flex: 1,
+    // },
   ];
 
   return (

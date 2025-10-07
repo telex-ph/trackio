@@ -1,4 +1,4 @@
-import STATUS from "./status";
+import { STATUS } from "./status";
 
 export const ATTENDANCE_FIELDS = Object.freeze({
   TIME_IN: "timeIn",

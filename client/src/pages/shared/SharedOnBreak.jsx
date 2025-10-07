@@ -51,6 +51,8 @@ const SharedOnBreak = () => {
       filter: false,
       flex: 1,
       cellRenderer: (params) => {
+        console.log(params.data);
+
         const breakStart = params.data.firstBreakStart;
         const breakEnd = params.data.firstBreakEnd;
         return `${breakStart} - ${breakEnd}`;
@@ -66,13 +68,44 @@ const SharedOnBreak = () => {
         return `${breakStart} - ${breakEnd}`;
       },
     },
-    {
-      headerName: "Extended Break Duration",
-      field: "extendedBreak",
-      sortable: true,
-      filter: false,
-      flex: 1,
-    },
+    // {
+    //   headerName: "Extended Break Duration",
+    //   field: "extendedBreak",
+    //   sortable: true,
+    //   filter: false,
+    //   flex: 1,
+    //   cellRenderer: (params) => {
+    //     const record = params.data;
+
+    //     const parseBreak = (start, end) => {
+    //       if (!start || !end || start === "---" || end === "---") return 0;
+    //       const startTime = DateTime.fromFormat(start, "hh:mm a");
+    //       const endTime = DateTime.fromFormat(end, "hh:mm a");
+    //       const diff = endTime.diff(startTime, "minutes").minutes;
+    //       return diff > 0 ? diff : 0;
+    //     };
+
+    //     const firstBreak = parseBreak(
+    //       record.firstBreakStart,
+    //       record.firstBreakEnd
+    //     );
+    //     const secondBreak = parseBreak(
+    //       record.secondBreakStart,
+    //       record.secondBreakEnd
+    //     );
+
+    //     const calculateExtended = (duration) =>
+    //       duration > 30 ? duration - 30 : 0;
+
+    //     const extendedTotal =
+    //       calculateExtended(firstBreak) + calculateExtended(secondBreak);
+
+    //     const color =
+    //       extendedTotal > 0 ? "text-red-600 font-semibold" : "text-gray-700";
+
+    //     return <span className={color}>{extendedTotal} mins</span>;
+    //   },
+    // },
   ];
 
   return (
