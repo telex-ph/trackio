@@ -10,14 +10,15 @@ const TimeBox = memo(({ value, label }) => (
   </span>
 ));
 
-const WorkingTime = ({ timeIn }) => {
+const WorkingTime = ({ timeIn, timeOut }) => {
   const [time, setTime] = useState({});
 
   const target = DateTime.fromISO(timeIn).setZone("Asia/Manila");
+  const end = timeOut ? DateTime.fromISO(timeOut).setZone("Asia/Manila") : null;
 
   useEffect(() => {
     const update = () => {
-      const now = DateTime.now().setZone("Asia/Manila");
+      const now = end || DateTime.now().setZone("Asia/Manila");
       const difference = now
         .diff(target, ["days", "hours", "minutes", "seconds"])
         .toObject();
@@ -25,10 +26,16 @@ const WorkingTime = ({ timeIn }) => {
     };
 
     update();
-    const interval = setInterval(update, 1000);
 
-    return () => clearInterval(interval);
-  }, [timeIn]);
+    let interval;
+    if (!end) {
+      interval = setInterval(update, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [timeIn, timeOut]);
 
   return (
     <section className="flex flex-col md:flex-row md:items-center flex-1 p-5 border-light rounded-md">
@@ -38,7 +45,7 @@ const WorkingTime = ({ timeIn }) => {
       <div className="grid grid-cols-3 gap-2">
         <TimeBox value={time.hours} label="Hours" />
         <TimeBox value={time.minutes} label="Minutes" />
-        <TimeBox value={Math.floor(time.seconds)} label="Seconds" />
+        <TimeBox value={Math.floor(time.seconds || 0)} label="Seconds" />
       </div>
     </section>
   );

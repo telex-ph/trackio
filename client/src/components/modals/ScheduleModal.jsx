@@ -3,7 +3,7 @@ import {
   formatDate,
   toDateTimeFromTimeString,
 } from "../../utils/formatDateTime";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import api from "../../utils/axios";
 import SCHEDULE from "../../constants/schedule";
@@ -14,6 +14,7 @@ import WarningDeletion from "../../assets/illustrations/WarningDeletion";
 const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
   const { id } = useParams();
   const selectedDates = useStore((state) => state.selectedDates);
+
   const [loading, setLoading] = useState(false);
   const [type, setType] = useState(SCHEDULE.WORK_DAY);
   const [shiftStart, setShiftStart] = useState("");
@@ -21,21 +22,43 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
   const [mealStart, setMealStart] = useState("");
   const [mealEnd, setMealEnd] = useState("");
   const [notes, setNotes] = useState("");
+  const [isNightShift, setIsNightShift] = useState(false);
+
+  useEffect(() => {
+    if (!shiftStart || !shiftEnd) return;
+
+    const start = toDateTimeFromTimeString(shiftStart);
+    const end = toDateTimeFromTimeString(shiftEnd);
+
+    if (end <= start) {
+      setIsNightShift(true);
+    } else {
+      setIsNightShift(false);
+    }
+  }, [shiftStart, shiftEnd]);
 
   const handleUpsert = async () => {
     const formattedShiftStart = toDateTimeFromTimeString(shiftStart);
-    const formattedShiftEnd = toDateTimeFromTimeString(shiftEnd);
-    const formattedMealStart = toDateTimeFromTimeString(mealStart);
-    const formattedMealEnd = toDateTimeFromTimeString(mealEnd);
+    let formattedShiftEnd = toDateTimeFromTimeString(shiftEnd);
+    let formattedMealStart = toDateTimeFromTimeString(mealStart);
+    let formattedMealEnd = toDateTimeFromTimeString(mealEnd);
 
-    if (type === SCHEDULE.WORK_DAY) {
-      if (formattedShiftEnd <= formattedShiftStart) {
-        toast.error("End time must be after start time.");
-        return;
+    // Adjust times for night shift
+    if (isNightShift) {
+      formattedShiftEnd = formattedShiftEnd.plus({ days: 1 });
+
+      if (formattedMealStart < formattedShiftStart) {
+        formattedMealStart = formattedMealStart.plus({ days: 1 });
       }
+      if (formattedMealEnd < formattedShiftStart) {
+        formattedMealEnd = formattedMealEnd.plus({ days: 1 });
+      }
+    }
 
+    // ---- VALIDATION ----
+    if (type === SCHEDULE.WORK_DAY) {
       if (formattedMealEnd <= formattedMealStart) {
-        toast.error("End time must be after start time.");
+        toast.error("Meal end time must be after meal start time.");
         return;
       }
 
@@ -43,7 +66,7 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
         formattedMealStart < formattedShiftStart ||
         formattedMealEnd > formattedShiftEnd
       ) {
-        toast.error("Meal time must within the shift hour.");
+        toast.error("Meal time must be within the shift hours.");
         return;
       }
     }
@@ -76,7 +99,7 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
       onClose();
     } catch (error) {
       console.error(error);
-      toast.error("Something went wrong. Please notify the Tech Team");
+      toast.error("Something went wrong. Please notify the Tech Team.");
     } finally {
       setLoading(false);
     }
@@ -114,10 +137,15 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
   return (
     <div className="fixed inset-0 z-50 overflow-scroll flex items-center justify-center bg-black/30">
       <section className="flex flex-col gap-3 bg-white rounded-md p-6 max-w-2xl w-full">
-        {/* Selected Dates */}
-        <div>
+        {/* Header */}
+        <div className="flex items-center justify-between">
           {operation === "upsert" ? (
-            <h2 className="text-xl font-bold">Upsert Schedule(s)</h2>
+            <>
+              <h2 className="text-xl font-bold">Upsert Schedule(s)</h2>
+              <div className="text-xl font-bold">
+                {isNightShift && type === SCHEDULE.WORK_DAY && "🌙 Night Shift"}
+              </div>
+            </>
           ) : (
             <h2 className="text-xl font-bold">Delete Schedule(s)</h2>
           )}
@@ -146,26 +174,18 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
           ) : (
             <main>
               {/* Attendance Type */}
-              <div>
-                <label
-                  htmlFor="attendanceType"
-                  className="block text-sm font-medium mb-1"
-                >
-                  Attendance Type
-                </label>
-                <select
-                  id="attendanceType"
-                  name="attendanceType"
-                  className="block w-full rounded-lg border-light p-2 text-sm"
-                  value={type}
-                  onChange={(e) => setType(e.target.value)}
-                  required
-                >
-                  <option value={SCHEDULE.WORK_DAY}>Workday</option>
-                  <option value={SCHEDULE.REST_DAY}>Rest Day</option>
-                  <option value={SCHEDULE.HOLIDAY}>Holiday</option>
-                </select>
-              </div>
+              <select
+                id="attendanceType"
+                name="attendanceType"
+                className="block w-full rounded-lg border-light p-2 text-sm"
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+                required
+              >
+                <option value={SCHEDULE.WORK_DAY}>Workday</option>
+                <option value={SCHEDULE.REST_DAY}>Rest Day</option>
+                <option value={SCHEDULE.HOLIDAY}>Holiday</option>
+              </select>
 
               {/* Shift Hours */}
               {type === SCHEDULE.WORK_DAY && (
@@ -203,7 +223,7 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
                     htmlFor="mealBreak"
                     className="block text-sm font-medium mb-1"
                   >
-                    Meal Break (optional)
+                    Meal Break
                   </label>
                   <div className="flex gap-3 items-center">
                     <input
@@ -211,6 +231,7 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
                       value={mealStart}
                       onChange={(e) => setMealStart(e.target.value)}
                       className="flex-1 border-light rounded-md p-2"
+                      required
                     />
                     <span>To</span>
                     <input
@@ -218,6 +239,7 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
                       value={mealEnd}
                       onChange={(e) => setMealEnd(e.target.value)}
                       className="flex-1 border-light rounded-md p-2"
+                      required
                     />
                   </div>
                 </div>
