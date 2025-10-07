@@ -55,6 +55,8 @@ export const useAttendance = (userId, filter) => {
         const formattedFirstBreakEnd = formatTime(item.firstBreakEnd);
         const formattedSecondBreakStart = formatTime(item.secondBreakStart);
         const formattedSecondBreakEnd = formatTime(item.secondBreakEnd);
+        const formattedLunchStart = formatTime(item.lunchStart);
+        const formattedLunchEnd = formatTime(item.lunchEnd);
 
         // Punctuality
         let punctuality = "N/A";
@@ -93,14 +95,22 @@ export const useAttendance = (userId, filter) => {
           date: formatDate(item.createdAt),
           name: `${item.user.firstName} ${item.user.lastName}`,
           email: item.user.email,
+
           shiftStart: formattedShiftStart,
           shiftEnd: formattedShiftEnd,
+
           firstBreakStart: formattedFirstBreakStart,
           firstBreakEnd: formattedFirstBreakEnd,
+
           secondBreakStart: formattedSecondBreakStart,
           secondBreakEnd: formattedSecondBreakEnd,
+
+          lunchStart: formattedLunchStart,
+          lunchEnd: formattedLunchEnd,
+
           timeIn: formattedTimeIn,
           timeOut: formattedTimeOut,
+
           tardiness,
           punctuality,
           adherence,
@@ -108,6 +118,8 @@ export const useAttendance = (userId, filter) => {
           status: item.status,
         };
       });
+
+      console.log(formattedData);
 
       setAttendancesByStatus(formattedData);
     } catch (error) {
