@@ -34,12 +34,9 @@ class User {
   }
 
   static async getUsersByRoleScope(id, role) {
-    if (!id) {
-      throw new Error("ID is required");
-    }
-    if (!role) {
-      throw new Error("Role is required");
-    }
+    if (!id) throw new Error("ID is required");
+    if (!role) throw new Error("Role is required");
+
     const db = await connectDB();
     const collection = db.collection(this.#collection);
 
@@ -50,8 +47,6 @@ class User {
         query.teamLeaderId = new ObjectId(id);
         break;
       case Roles.OM:
-        query = {};
-        break;
       case Roles.ADMIN:
         query = {};
         break;
@@ -60,9 +55,78 @@ class User {
         break;
     }
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const users = await collection
-      .find(query, { projection: { password: 0 } })
+      .aggregate([
+        { $match: query },
+
+        // Lookup the user's group
+        {
+          $lookup: {
+            from: "groups",
+            localField: "groupId",
+            foreignField: "_id",
+            as: "group",
+          },
+        },
+        { $unwind: { path: "$group", preserveNullAndEmptyArrays: true } },
+
+        // Lookup all accounts associated with that group
+        {
+          $lookup: {
+            from: "accounts",
+            localField: "group.accountIds",
+            foreignField: "_id",
+            as: "accounts",
+          },
+        },
+
+        // Lookup schedules assigned to this user (only from today and future)
+        {
+          $lookup: {
+            from: "schedules",
+            let: { userId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$userId", "$$userId"] },
+                  date: { $gte: today },
+                },
+              },
+            ],
+            as: "futureSchedules",
+          },
+        },
+
+        // Add computed fields
+        {
+          $addFields: {
+            groupName: { $ifNull: ["$group.name", "None"] },
+            accountNames: {
+              $cond: [
+                { $gt: [{ $size: "$accounts" }, 0] },
+                { $map: { input: "$accounts", as: "acc", in: "$$acc.name" } },
+                [],
+              ],
+            },
+            upcomingScheduleCount: { $size: "$futureSchedules" },
+          },
+        },
+
+        // Remove unnecessary data
+        {
+          $project: {
+            password: 0,
+            group: 0,
+            accounts: 0,
+            futureSchedules: 0,
+          },
+        },
+      ])
       .toArray();
+
     return users;
   }
 
