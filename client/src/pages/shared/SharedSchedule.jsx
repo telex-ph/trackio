@@ -3,34 +3,31 @@ import Table from "../../components/Table";
 import TableModal from "../../components/TableModal";
 import TableEmployeeDetails from "../../components/TableEmployeeDetails";
 import { FileText, CalendarDays, Eye } from "lucide-react";
-import Calendar from "../../components/Calendar";
 import useUser from "../../hooks/useUser";
 import { useNavigate } from "react-router-dom";
+import Spinner from "../../assets/loaders/Spinner";
 
 const SharedSchedule = ({ role }) => {
   const navigate = useNavigate();
-  const { loading, error, userByRoleScope } = useUser();
+  const { userByRoleScope, loading } = useUser();
 
   const [filterGroup, setFilterGroup] = useState("All");
   const [filterCategory, setFilterCategory] = useState("All");
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
-
-  const handleUpdate = () => {
-    if (!selectedRow) return;
-    setData((prev) =>
-      prev.map((item) =>
-        item.id === selectedRow.id
-          ? { ...item, notes: selectedRow.notes }
-          : item
-      )
-    );
-  };
 
   const handleDetailsClicked = (row) => {
     setSelectedRow(row);
     setIsModalOpen(true);
+  };
+
+  const handleViewClick = (id) => {
+    navigate(`${id}`);
+  };
+
+  const handleUpdate = () => {
+    if (!selectedRow) return;
+    // update logic here
   };
 
   const calculateShiftDuration = (timeIn, timeOut) => {
@@ -47,14 +44,64 @@ const SharedSchedule = ({ role }) => {
     return hours * 60 + minutes;
   };
 
-  const handleViewClick = (id) => {
-    navigate(`${id}`);
-  };
+  // Separate users by department presence
+  const backoffice = userByRoleScope?.filter((u) => u.department);
+  const frontoffice = userByRoleScope?.filter((u) => !u.department);
 
-  const columns = [
+  // Columns for Frontoffice (without department)
+  const frontofficeColumns = [
     { headerName: "ID", field: "id", flex: 1 },
     { headerName: "Name", field: "name", flex: 2 },
-    { headerName: "Group", field: "group", flex: 2 },
+    { headerName: "Accounts", field: "accounts", flex: 2 },
+    { headerName: "Group", field: "groupName", flex: 2 },
+    {
+      headerName: "Upcoming Schedules",
+      field: "upcomingScheduleCount",
+      flex: 1,
+      cellRenderer: (params) => {
+        const count = params.data.upcomingScheduleCount;
+        return `${count} schedule(s)`;
+      },
+    },
+    {
+      headerName: "Action",
+      field: "action",
+      flex: 1,
+      cellRenderer: (params) => {
+        const id = params.data.id;
+        return (
+          <section className="flex h-full items-center justify-center gap-5">
+            <div
+              className="flex justify-center items-center h-full cursor-pointer"
+              onClick={() => handleViewClick(id)}
+            >
+              <CalendarDays className="w-5 h-5" />
+            </div>
+            <div
+              className="flex justify-center items-center h-full cursor-pointer"
+              onClick={() => handleDetailsClicked(params.data)}
+            >
+              <Eye className="w-5 h-5" />
+            </div>
+          </section>
+        );
+      },
+    },
+  ];
+
+  // Columns for Backoffice (with department)
+  const backofficeColumns = [
+    { headerName: "ID", field: "id", flex: 1 },
+    { headerName: "Name", field: "name", flex: 2 },
+    {
+      headerName: "Upcoming Schedules",
+      field: "upcomingScheduleCount",
+      flex: 1,
+      cellRenderer: (params) => {
+        const count = params.data.upcomingScheduleCount;
+        return `${count} schedule(s)`;
+      },
+    },
     { headerName: "Department", field: "department", flex: 2 },
     {
       headerName: "Action",
@@ -104,10 +151,6 @@ const SharedSchedule = ({ role }) => {
           onChange={(e) => setFilterGroup(e.target.value)}
         >
           <option value="All">All Groups</option>
-          <option value="Team Alpha">Team Alpha</option>
-          <option value="HR Dept">HR Dept</option>
-          <option value="IT Dept">IT Dept</option>
-          <option value="Operations">Operations</option>
         </select>
 
         <select
@@ -115,16 +158,33 @@ const SharedSchedule = ({ role }) => {
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
         >
-          <option value="All">All Department</option>
-          <option value="Agent">Agent</option>
-          <option value="HR Officer">HR Officer</option>
-          <option value="IT Support">IT Support</option>
-          <option value="Manager">Manager</option>
+          <option value="All">All Departments</option>
         </select>
       </div>
 
-      {/* Table */}
-      <Table data={userByRoleScope} columns={columns} />
+      {loading ? (
+        <div>
+          <Spinner />
+        </div>
+      ) : (
+        <>
+          {/* Frontoffice Table */}
+          {frontoffice?.length > 0 && (
+            <div>
+              <h3 className="text-lg font-bold my-2">Frontoffice</h3>
+              <Table data={frontoffice} columns={frontofficeColumns} />
+            </div>
+          )}
+
+          {/* Backoffice Table */}
+          {backoffice?.length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-lg font-bold my-2">Backoffice</h3>
+              <Table data={backoffice} columns={backofficeColumns} />
+            </div>
+          )}
+        </>
+      )}
 
       {/* Modal */}
       <TableModal
@@ -159,10 +219,10 @@ const SharedSchedule = ({ role }) => {
                     </div>
                     <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                       <h4 className="text-sm font-medium text-gray-500 mb-1">
-                        Department / Group
+                        Group
                       </h4>
                       <p className="text-lg font-semibold text-gray-900">
-                        {selectedRow.group}
+                        {selectedRow.groupName}
                       </p>
                     </div>
                     <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">

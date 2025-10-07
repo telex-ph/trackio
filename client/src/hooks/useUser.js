@@ -47,18 +47,26 @@ const useUser = () => {
         `/user/get-by-role/${user._id}/${user.role}`
       );
 
-      const formattedData = response.data.map((item) => ({
-        id: item._id,
-        date: formatDate(item.createdAt),
-        name: `${item.firstName} ${item.lastName}`,
-        email: item.email,
-      }));
+      const formattedData = response.data.map((item) => {
+        const accounts = item.accountNames.join(", ");
+
+        return {
+          id: item._id,
+          date: formatDate(item.createdAt),
+          name: `${item.firstName} ${item.lastName}`,
+          email: item.email,
+          accounts,
+          ...item,
+        };
+      });
 
       setUsersByRoleScope(formattedData);
     } catch (error) {
       console.error("Error fetching users by role scope: ", error);
       setError(error.response?.data ?? error.message);
       toast.error("Failed to load users by role scrope");
+    } finally {
+      setLoading(false);
     }
   }, [user?._id, user?.role]);
 
