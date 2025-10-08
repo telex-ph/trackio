@@ -343,14 +343,6 @@ export const Sidebar = ({ isCollapsed }) => {
       }`}
     >
       <nav className="flex-1 m-4">{renderSidebar()}</nav>
-
-      {/* Shift Schedule only for Agent */}
-      {user.role === Role.AGENT && !isCollapsed && (
-        <section className="bg-white border border-gray-200 m-2 p-3 text-center rounded-lg">
-          <p className="font-semibold text-gray-800">Shift Schedule:</p>
-          <p className="text-gray-600 text-sm">9:00 AM - 6:00 PM</p>
-        </section>
-      )}
     </aside>
   );
 };
