@@ -24,7 +24,7 @@ export const forgotPassword = async (req, res) => {
   try {
     const result = await sendPasswordReset(
       email,
-      "https://localhost:5173/forgot-password"
+      "https://www.telextrackio.com/reset-password"
     );
 
     res.status(200).json({ id: result.id, redirect: true });
