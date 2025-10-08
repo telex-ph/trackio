@@ -15,17 +15,13 @@ const ForgotPassword = () => {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Right side animation state
   const [showVideo, setShowVideo] = useState(false);
 
-  // Toggle logo -> video -> logo
+  // Rotate between logo and video
   useEffect(() => {
     let logoTimer;
     if (!showVideo) {
-      // Show logo for 6s then switch to video
-      logoTimer = setTimeout(() => {
-        setShowVideo(true);
-      }, 6000);
+      logoTimer = setTimeout(() => setShowVideo(true), 6000);
     }
     return () => clearTimeout(logoTimer);
   }, [showVideo]);
@@ -37,17 +33,25 @@ const ForgotPassword = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!email.trim()) {
+      setError({ hasError: true, message: "Please enter your email address." });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      await api.post("/auth/forgot-password", { email });
+      const response = await api.post("/auth/forgot-password", { email });
+      console.log(response.data);
       setSuccess(true);
+      setEmail("");
     } catch (err) {
       setError({
-        message: err.response?.data
-          ? "Oops! Something went wrong. Please try again."
-          : err.message,
         hasError: true,
+        message:
+          err.response?.data?.message ||
+          "Oops! Something went wrong. Please try again.",
       });
     } finally {
       setLoading(false);
@@ -60,9 +64,10 @@ const ForgotPassword = () => {
       <div className="flex-1 flex flex-col justify-center p-8 lg:p-24 gap-10">
         <div className="flex flex-col gap-2">
           <img src={telexLogo} alt="Telex PH" className="size-20 z-10" />
-          <h1 className="font-bold">Forgot Password</h1>
-          <p className="text-light">
-            Enter your email and we will send you instructions to reset your password.
+          <h1 className="font-bold text-2xl text-[#470905]">Forgot Password</h1>
+          <p className="text-gray-600">
+            Enter your email and we’ll send you instructions to reset your
+            password.
           </p>
         </div>
 
@@ -75,13 +80,22 @@ const ForgotPassword = () => {
 
           {success && (
             <Alert color="success" icon={HiInformationCircle}>
-              <span>Check your email for password reset instructions!</span>
+              <span>
+                Check your email at Outlook for password reset instructions!
+              </span>
             </Alert>
           )}
 
+          <Alert color="red" icon={HiInformationCircle}>
+            <span className="text-sm mt-1">
+              For security reasons, you can only reset your password up to{" "}
+              <strong>3 times</strong>.
+            </span>
+          </Alert>
+
           <div>
             <div className="mb-2 block">
-              <Label htmlFor="email" className="text-light">
+              <Label htmlFor="email" className="text-gray-700">
                 Email
               </Label>
             </div>
@@ -98,7 +112,8 @@ const ForgotPassword = () => {
 
           <Button
             type="submit"
-            className="bg-[#470905] hover:bg-[#470905]"
+            style={{ backgroundColor: "#470905" }}
+            className="hover:opacity-90 transition-opacity"
             disabled={loading}
           >
             {loading ? "Sending..." : "Send Reset Link"}
@@ -106,14 +121,14 @@ const ForgotPassword = () => {
         </form>
 
         <p
-          className="underline text-sm cursor-pointer text-light mt-4"
+          className="underline text-sm cursor-pointer text-gray-500 mt-4 hover:text-[#470905] transition-colors"
           onClick={() => navigate("/login")}
         >
           Back to Login
         </p>
       </div>
 
-      {/* Right Side (with animation like Login) */}
+      {/* Right Side */}
       <div className="flex-1 hidden lg:flex justify-center items-center flex-col bg-[#470905] relative rounded-l-lg p-24 overflow-hidden border border-[#582e2b]/40">
         <img
           src={ellipse}
@@ -123,7 +138,7 @@ const ForgotPassword = () => {
 
         {/* Logo + Title */}
         <div
-          className={`absolute inset-0 flex flex-col items-center justify-center gap-6 transition-all duration-1500 ease-in-out ${
+          className={`absolute inset-0 flex flex-col items-center justify-center gap-6 transition-all duration-[1500ms] ease-in-out ${
             showVideo ? "opacity-0" : "opacity-100"
           }`}
         >
@@ -137,16 +152,16 @@ const ForgotPassword = () => {
           </p>
         </div>
 
-        {/* Video (play once, then back to logo) */}
+        {/* Video */}
         {showVideo && (
           <video
             src={telexvid}
             autoPlay
             muted
-            className={`absolute inset-0 w-full h-full object-cover rounded-l-lg transition-all duration-1500 ease-in-out ${
+            className={`absolute inset-0 w-full h-full object-cover rounded-l-lg transition-all duration-[1500ms] ease-in-out ${
               showVideo ? "opacity-100" : "opacity-0"
             }`}
-            onEnded={() => setShowVideo(false)} // balik sa logo
+            onEnded={() => setTimeout(() => setShowVideo(false), 500)} // smooth fade back
           />
         )}
       </div>

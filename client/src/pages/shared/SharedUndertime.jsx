@@ -96,12 +96,16 @@ const SharedUndertime = () => {
       headerName: "Undertime Duration",
       field: "undertime",
       flex: 1,
+      cellRenderer: (row) => {
+        const value = row.data.undertime;
+        return `${value} minutes`;
+      },
     },
     {
       headerName: "Action",
       field: "action",
       flex: 1,
-      renderCell: (row) => (
+      cellRenderer: (row) => (
         <div className="flex gap-2">
           <button
             className="p-1 rounded hover:bg-yellow-200"

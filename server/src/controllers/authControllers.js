@@ -1,5 +1,8 @@
 import * as jose from "jose";
 import User from "../model/User.js";
+import Auth from "../model/Auth.js";
+import bcrypt from "bcrypt";
+import { sendPasswordReset } from "../utils/sendPasswordReset.js";
 
 const privatePEM = process.env.PRIVATE_KEY;
 const publicPEM = process.env.PUBLIC_KEY;
@@ -13,6 +16,70 @@ export const login = async (req, res) => {
   } catch (error) {
     console.error("Login error:", error.message);
     res.status(400).json({ error: error.message });
+  }
+};
+
+export const forgotPassword = async (req, res) => {
+  const email = req.body.email;
+  try {
+    const result = await sendPasswordReset(
+      email,
+      "https://localhost:5173/forgot-password"
+    );
+
+    res.status(200).json({ id: result.id, redirect: true });
+  } catch (error) {
+    console.error("Password reset error:", error?.message);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred resetting user password.",
+    });
+  }
+};
+
+export const changePassword = async (req, res) => {
+  const { id, password, newPassword } = req.body;
+
+  try {
+    if (!id || !password || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required.",
+      });
+    }
+
+    const isValid = await Auth.compare(id, password);
+
+    if (!isValid) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "The current password you entered is incorrect. Please try again.",
+      });
+    }
+
+    const SALT_ROUNDS = 10;
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    const result = await Auth.change(id, hashedPassword);
+
+    if (result.modifiedCount === 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Password not updated. It may be the same as your old password.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Password updated successfully.",
+    });
+  } catch (error) {
+    console.error("Change password error:", error?.message);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while changing your password.",
+    });
   }
 };
 

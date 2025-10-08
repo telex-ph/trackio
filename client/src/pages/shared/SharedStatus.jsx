@@ -7,6 +7,7 @@ import { ChevronRight, Clock, FileText } from "lucide-react";
 import { DateTime } from "luxon";
 import { Datepicker } from "flowbite-react";
 import { useAttendance } from "../../hooks/useAttendance";
+import { STATUS_COLORS } from "../../constants/status";
 
 const SharedStatus = () => {
   const zone = "Asia/Manila";
@@ -100,28 +101,34 @@ const SharedStatus = () => {
       flex: 1,
     },
     {
-      headerName: "Work Duration",
-      field: "workDuration",
-      sortable: true,
-      filter: false,
-      flex: 1,
-    },
-    {
       headerName: "Status",
       field: "status",
       sortable: true,
       filter: true,
       flex: 1,
+      cellRenderer: (params) => {
+        const status = params.data.status;
+        const color = STATUS_COLORS[status].textColor;
+        return (
+          <section className="w-full flex items-center justify-center gap-3">
+            <div
+              className="w-3 h-3 rounded-full"
+              style={{ backgroundColor: color }}
+            ></div>
+            <span style={{ color: color }}>{status}</span>
+          </section>
+        );
+      },
     },
-    {
-      headerName: "Action",
-      field: "action",
-      flex: 1,
-      cellRenderer: (params) => (
-        <TableAction action={() => actionClicked(params.data)} />
-      ),
-      filter: false,
-    },
+    // {
+    //   headerName: "Action",
+    //   field: "action",
+    //   flex: 1,
+    //   cellRenderer: (params) => (
+    //     <TableAction action={() => actionClicked(params.data)} />
+    //   ),
+    //   filter: false,
+    // },
   ];
 
   return (

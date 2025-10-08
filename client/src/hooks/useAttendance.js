@@ -55,6 +55,8 @@ export const useAttendance = (userId, filter) => {
         const formattedFirstBreakEnd = formatTime(item.firstBreakEnd);
         const formattedSecondBreakStart = formatTime(item.secondBreakStart);
         const formattedSecondBreakEnd = formatTime(item.secondBreakEnd);
+        const formattedLunchStart = formatTime(item.lunchStart);
+        const formattedLunchEnd = formatTime(item.lunchEnd);
 
         // Punctuality
         let punctuality = "N/A";
@@ -79,6 +81,19 @@ export const useAttendance = (userId, filter) => {
           });
           adherence = timeOut >= shiftEnd ? "On Time" : "Undertime";
         }
+        // Undertime Duration (in minutes only)
+        let undertime = null;
+        if (item.timeOut && item.shiftEnd) {
+          const timeOut = DateTime.fromISO(item.timeOut);
+          const shiftEnd = DateTime.fromISO(item.shiftEnd).set({
+            year: timeOut.year,
+            month: timeOut.month,
+            day: timeOut.day,
+          });
+
+          const diff = shiftEnd.diff(timeOut, "minutes").minutes;
+          undertime = diff > 0 ? Math.round(diff) : 0;
+        }
 
         // Tardiness calculation
         const fmt = "hh:mm a";
@@ -93,21 +108,32 @@ export const useAttendance = (userId, filter) => {
           date: formatDate(item.createdAt),
           name: `${item.user.firstName} ${item.user.lastName}`,
           email: item.user.email,
+
           shiftStart: formattedShiftStart,
           shiftEnd: formattedShiftEnd,
+
           firstBreakStart: formattedFirstBreakStart,
           firstBreakEnd: formattedFirstBreakEnd,
+
           secondBreakStart: formattedSecondBreakStart,
           secondBreakEnd: formattedSecondBreakEnd,
+
+          lunchStart: formattedLunchStart,
+          lunchEnd: formattedLunchEnd,
+
           timeIn: formattedTimeIn,
           timeOut: formattedTimeOut,
+
           tardiness,
           punctuality,
           adherence,
+          undertime,
           accounts,
           status: item.status,
         };
       });
+
+      console.log(formattedData);
 
       setAttendancesByStatus(formattedData);
     } catch (error) {
