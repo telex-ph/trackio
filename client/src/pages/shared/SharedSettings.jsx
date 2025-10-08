@@ -24,6 +24,7 @@ import telex from "../../assets/logos/telex.svg";
 import api from "../../utils/axios";
 import toast from "react-hot-toast";
 import { useStore } from "../../store/useStore";
+import validatePassword from "../../utils/validatePassword";
 
 const SharedSettings = () => {
   const user = useStore((state) => state.user);
@@ -135,17 +136,11 @@ const SharedSettings = () => {
         return;
       }
 
-      // Optional stronger validation
-      // const hasUpper = /[A-Z]/.test(newPassword);
-      // const hasNumber = /[0-9]/.test(newPassword);
-      // const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(newPassword);
-
-      // if (!hasUpper || !hasNumber || !hasSpecial) {
-      //   toast.error(
-      //     "Password must include an uppercase letter, number, and special character."
-      //   );
-      //   return;
-      // }
+      const isStrongPassword = validatePassword(newPassword);
+      if (!isStrongPassword.valid) {
+        toast.error(isStrongPassword.message);
+        return;
+      }
 
       setIsSubmitting(true);
 

@@ -21,6 +21,17 @@ class User {
     return user;
   }
 
+  static async getByEmail(email) {
+    if (!email) {
+      throw new Error("Email is required");
+    }
+
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+    const user = await collection.findOne({ email: email });
+    return user;
+  }
+
   static async getAll() {
     const db = await connectDB();
     const collection = db.collection(this.#collection);

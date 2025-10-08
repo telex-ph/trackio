@@ -8,6 +8,7 @@ import {
   getAuthUser,
   getStatus,
   login,
+  verifyForgotPassword,
 } from "../controllers/authControllers.js";
 import { verifyJWT } from "../middlewares/verifyJWT.js";
 // import { handleExpiredToken } from "../middlewares/handleExpiredToken.js";
@@ -19,8 +20,10 @@ router.post("/log-in", login);
 // Change user credentials
 router.post("/change-password", changePassword);
 
-// REst user credentials
 router.post("/forgot-password", forgotPassword);
+
+// Verify the payload
+router.post("/verify-forgot-password", verifyForgotPassword);
 
 // Creation of access token and refresh token
 router.post("/create-token", createToken);

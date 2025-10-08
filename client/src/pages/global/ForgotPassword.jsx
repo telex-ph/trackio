@@ -5,7 +5,7 @@ import { HiInformationCircle } from "react-icons/hi";
 
 import telexLogo from "../../assets/logos/telex.png";
 import ellipse from "../../assets/shapes/ellipse.svg";
-import telexvid from "../../assets/video/telexvid.mp4"; // same video as login
+import telexvid from "../../assets/video/telexvid.mp4";
 import api from "../../utils/axios";
 
 const ForgotPassword = () => {
@@ -43,7 +43,6 @@ const ForgotPassword = () => {
 
     try {
       const response = await api.post("/auth/forgot-password", { email });
-      console.log(response.data);
       setSuccess(true);
       setEmail("");
     } catch (err) {
