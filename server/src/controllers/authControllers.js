@@ -2,6 +2,7 @@ import * as jose from "jose";
 import User from "../model/User.js";
 import Auth from "../model/Auth.js";
 import bcrypt from "bcrypt";
+import { sendPasswordReset } from "../utils/sendPasswordReset.js";
 
 const privatePEM = process.env.PRIVATE_KEY;
 const publicPEM = process.env.PUBLIC_KEY;
@@ -15,6 +16,24 @@ export const login = async (req, res) => {
   } catch (error) {
     console.error("Login error:", error.message);
     res.status(400).json({ error: error.message });
+  }
+};
+
+export const forgotPassword = async (req, res) => {
+  const email = req.body.email;
+  try {
+    const result = await sendPasswordReset(
+      email,
+      "https://localhost:5173/forgot-password"
+    );
+
+    res.status(200).json({ id: result.id, redirect: true });
+  } catch (error) {
+    console.error("Password reset error:", error?.message);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred resetting user password.",
+    });
   }
 };
 

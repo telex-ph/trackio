@@ -65,12 +65,14 @@ import AdminBioBreak from "../pages/admin/AdminBioBreak";
 import AdminMeeting from "../pages/admin/AdminMeeting";
 import AdminHistory from "../pages/admin/AdminHistory";
 import SharedSettings from "../pages/shared/SharedSettings";
+import ResetPassword from "../pages/global/ResetPassword";
 // TODO: After unit test remove this routes including the files ---
 
 const router = createBrowserRouter([
   // Public Routes
   { path: "login", element: <Login /> },
   { path: "forgot-password", element: <ForgotPassword /> },
+  { path: "reset-password", element: <ResetPassword /> },
 
   // Protected App Routes
   {

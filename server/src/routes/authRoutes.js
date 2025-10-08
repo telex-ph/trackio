@@ -4,6 +4,7 @@ import {
   createNewToken,
   createToken,
   deleteToken,
+  forgotPassword,
   getAuthUser,
   getStatus,
   login,
@@ -17,6 +18,9 @@ router.post("/log-in", login);
 
 // Change user credentials
 router.post("/change-password", changePassword);
+
+// REst user credentials
+router.post("/forgot-password", forgotPassword);
 
 // Creation of access token and refresh token
 router.post("/create-token", createToken);
