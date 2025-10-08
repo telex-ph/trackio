@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  changePassword,
   createNewToken,
   createToken,
   deleteToken,
@@ -13,6 +14,9 @@ const router = Router();
 
 // Logging in to the system
 router.post("/log-in", login);
+
+// Change user credentials
+router.post("/change-password", changePassword);
 
 // Creation of access token and refresh token
 router.post("/create-token", createToken);

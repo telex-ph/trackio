@@ -64,6 +64,7 @@ import AdminUndertime from "../pages/admin/AdminUndertime";
 import AdminBioBreak from "../pages/admin/AdminBioBreak";
 import AdminMeeting from "../pages/admin/AdminMeeting";
 import AdminHistory from "../pages/admin/AdminHistory";
+import SharedSettings from "../pages/shared/SharedSettings";
 // TODO: After unit test remove this routes including the files ---
 
 const router = createBrowserRouter([
@@ -109,9 +110,9 @@ const router = createBrowserRouter([
                 ),
               },
               { path: "announcement", element: <AdminAnnouncement /> },
-              { path: "account-settings", element: <AdminAccountSettings /> },
               { path: "agentrequest", element: <AdminAgentRequest /> },
               { path: "offences", element: <AdminOffences /> },
+              { path: "account-settings", element: <SharedSettings /> },
             ],
           },
 
@@ -140,7 +141,7 @@ const router = createBrowserRouter([
                 path: "monitoring",
                 element: <MonitoringLayout />,
               },
-              { path: "account-settings", element: <AdminAccountSettings /> },
+              { path: "account-settings", element: <SharedSettings /> },
             ],
           },
 
@@ -186,10 +187,7 @@ const router = createBrowserRouter([
               { path: "bio-break", element: <TeamLeaderBioBreak /> },
               { path: "coaching", element: <TeamLeaderCoaching /> },
               { path: "agentrequest", element: <TeamLeaderAgentRequest /> },
-              {
-                path: "account-settings",
-                element: <TeamLeaderAccountSettings />,
-              },
+              { path: "account-settings", element: <SharedSettings /> },
             ],
           },
 
@@ -203,8 +201,8 @@ const router = createBrowserRouter([
               { path: "attendance", element: <SharedAttendance /> },
               { path: "coaching", element: <AgentCoaching /> },
               { path: "request", element: <AgentRequest /> },
-              { path: "account-settings", element: <AgentAccountSettings /> },
               { path: "offences", element: <AgentOffences /> },
+              { path: "account-settings", element: <SharedSettings /> },
             ],
           },
         ],
