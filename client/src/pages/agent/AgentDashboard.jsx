@@ -12,6 +12,7 @@ import {
 import { Doughnut } from "react-chartjs-2";
 import Chart from "chart.js/auto";
 import telexcover from "../../assets/background/telex-cover.jpg";
+import UnderContruction from "../../assets/illustrations/UnderContruction";
 
 // Sample chart data
 const data = {
@@ -36,6 +37,12 @@ const options = {
 };
 
 const AgentDashboard = () => {
+  return (
+    <section className="h-full">
+      <UnderContruction />
+    </section>
+  );
+
   return (
     <div>
       {/* Main Dashboard Content */}
@@ -320,7 +327,9 @@ const AgentDashboard = () => {
                                 </h4>
                                 <div className="flex items-center gap-1 text-xs text-gray-400 flex-shrink-0">
                                   <span>🕐</span>
-                                  <span className="hidden sm:inline">{a.time}</span>
+                                  <span className="hidden sm:inline">
+                                    {a.time}
+                                  </span>
                                 </div>
                               </div>
                               <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 leading-relaxed">

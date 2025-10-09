@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Table from "../../components/Table";
 import TableAction from "../../components/TableAction";
+import UnderContruction from "../../assets/illustrations/UnderContruction";
 
 // Modal Component
 const Modal = ({ isOpen, onClose, title, children }) => {
@@ -553,6 +554,12 @@ const TeamLeaderCoaching = () => {
   ];
 
   return (
+    <section className="h-full">
+      <UnderContruction />
+    </section>
+  );
+
+  return (
     <div>
       {/* Header */}
       <section className="flex flex-col mb-2">
@@ -893,11 +900,7 @@ const TeamLeaderCoaching = () => {
       </div>
 
       {/* Modal for Session Details */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        title="Session Details"
-      >
+      <Modal isOpen={isModalOpen} onClose={closeModal} title="Session Details">
         {selectedHistory && (
           <div className="sm:space-y-6 max-w-full">
             {/* Basic Info */}

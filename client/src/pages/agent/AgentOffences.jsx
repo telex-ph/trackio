@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { DateTime } from "luxon";
 import api from "../../utils/axios";
+import UnderContruction from "../../assets/illustrations/UnderContruction";
 
 // =================== Notification ===================
 const Notification = ({ message, type, onClose }) => {
@@ -248,6 +249,13 @@ const AgentOffences = () => {
       off.agentName === currentAgent &&
       ["Action Taken", "Escalated", "Closed"].includes(off.status)
   );
+
+  return (
+    <section className="h-full">
+      <UnderContruction />
+    </section>
+  );
+
 
   return (
     <div>

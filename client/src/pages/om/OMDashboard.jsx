@@ -18,6 +18,7 @@ import {
   TrendingUp,
   TrendingDown,
 } from "lucide-react";
+import UnderContruction from "../../assets/illustrations/UnderContruction";
 
 const OMDashboard = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -111,6 +112,12 @@ const OMDashboard = () => {
       ),
     },
   ];
+
+  return (
+    <section className="h-full">
+      <UnderContruction />
+    </section>
+  );
 
   return (
     <div className="min-h-screen">

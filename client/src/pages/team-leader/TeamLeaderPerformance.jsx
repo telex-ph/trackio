@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Chart from "chart.js/auto";
 import Table from "../../components/Table";
+import UnderContruction from "../../assets/illustrations/UnderContruction";
 
 const StatCard = memo(({ icon: Icon, title, value, change, changeType, color }) => (
   <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-lg p-6 border border-white/20 hover:shadow-xl transition-all duration-300">
@@ -526,6 +527,12 @@ const TeamLeaderPerformance = () => {
     a.download = 'attendance_report.csv';
     a.click();
   };
+
+   return (
+    <section className="h-full">
+      <UnderContruction />
+    </section>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">

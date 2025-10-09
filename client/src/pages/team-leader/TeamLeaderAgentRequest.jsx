@@ -8,6 +8,7 @@ import ConfirmationModal from "../../components/modals/ConfirmationModal.jsx";
 import RequestForm from "../../components/team-leader-request/RequestForm";
 import RequestList from "../../components/team-leader-request/RequestList";
 import RequestHistory from "../../components/team-leader-request/RequestHistory";
+import UnderContruction from "../../assets/illustrations/UnderContruction.jsx";
 
 const TeamLeaderAgentRequest = () => {
   const [requests, setRequests] = useState([]);
@@ -321,6 +322,12 @@ const TeamLeaderAgentRequest = () => {
     isoDateStr
       ? DateTime.fromISO(isoDateStr).toLocaleString(DateTime.TIME_SIMPLE)
       : "";
+
+  return (
+    <section className="h-full">
+      <UnderContruction />
+    </section>
+  );
 
   return (
     <div>

@@ -14,6 +14,7 @@ import {
 import TableAction from "../../components/TableAction";
 import Table from "../../components/Table";
 import Modal from "../../components/TableModal";
+import UnderContruction from "../../assets/illustrations/UnderContruction";
 
 const AgentCoaching = () => {
   const scrollRef = useRef(null);
@@ -427,6 +428,12 @@ const AgentCoaching = () => {
     //   filter: false,
     // },
   ];
+
+  return (
+    <section className="h-full">
+      <UnderContruction />
+    </section>
+  );
 
   return (
     <div>

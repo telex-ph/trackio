@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { DateTime } from "luxon";
 import api from "../../utils/axios";
+import UnderContruction from "../../assets/illustrations/UnderContruction";
 
 // =================== Notification ===================
 const Notification = ({ message, type, onClose }) => {
@@ -376,6 +377,12 @@ const AdminOffences = () => {
       off.status === "Action Taken" ||
       off.status === "Escalated" ||
       off.status === "Closed"
+  );
+
+  return (
+    <section className="h-full">
+      <UnderContruction />
+    </section>
   );
 
   return (
