@@ -118,7 +118,7 @@ const TimeBox = ({ attendance, config, onTimeIn, onUpdate }) => {
         </Button>
         {isTwoBtn && (
           <Button
-            className={`bg-red-500 hover:bg-red-700 p-2 transition-colors duration-200 ${
+            className={`bg-red-600! hover:bg-red-700 p-2 transition-colors duration-200 ${
               isEndDisabled ? "cursor-not-allowed opacity-60" : ""
             }`}
             onClick={handleEndClick}
