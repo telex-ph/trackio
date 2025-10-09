@@ -15,6 +15,8 @@ import Modal from "../../components/TableModal";
 import TableEmployeeDetails from "../../components/TableEmployeeDetails";
 import { useAttendance } from "../../hooks/useAttendance";
 import exportCSV from "../../utils/exportCSV";
+import EmployeeModal from "../../components/modals/EmployeeModal";
+import AbsenteeModal from "../../components/modals/AbsenteeModal";
 
 const SharedAbsentees = () => {
   const zone = "Asia/Manila";
@@ -117,6 +119,10 @@ const SharedAbsentees = () => {
     },
   ];
 
+  const handleModalOnClose = () => {
+    setIsModalOpen(false);
+  };
+
   const tableRef = useRef();
   const handleDownloadClick = () => {
     exportCSV(tableRef, "absentees-list");
@@ -159,7 +165,7 @@ const SharedAbsentees = () => {
       {/* Table */}
       <Table columns={columns} data={absentees} tableRef={tableRef} />
 
-      <Modal
+      {/* <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="Employee Absentee Details"
@@ -176,15 +182,12 @@ const SharedAbsentees = () => {
         {(isEditing) =>
           selectedRow && (
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-              {/* Employee Details */}
               <div className="xl:col-span-1 space-y-6">
                 <TableEmployeeDetails employee={selectedRow} />
               </div>
 
-              {/* Absentee Details */}
               <div className="xl:col-span-2 space-y-6">
                 <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                  {/* Date Absent & Validity */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div className="bg-white rounded-xl p-4 border border-gray-200">
                       <p className="text-xs font-bold text-gray-500 uppercase mb-2">
@@ -212,7 +215,6 @@ const SharedAbsentees = () => {
                     </div>
                   </div>
 
-                  {/* Attendance Status */}
                   <div className="bg-white rounded-xl p-4 border border-gray-200 mb-6">
                     <p className="text-xs font-bold text-gray-500 uppercase mb-2">
                       Attendance Status
@@ -222,7 +224,6 @@ const SharedAbsentees = () => {
                     </p>
                   </div>
 
-                  {/* Daily Notes */}
                   <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
                     <div className="flex items-center gap-3 mb-4">
                       <FileText className="w-5 h-5 text-gray-600" />
@@ -249,7 +250,6 @@ const SharedAbsentees = () => {
                     />
                   </div>
 
-                  {/* Upload Supporting Document */}
                   {isEditing && (
                     <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
                       <p className="text-sm font-bold text-gray-500 uppercase mb-3">
@@ -271,7 +271,6 @@ const SharedAbsentees = () => {
                     </div>
                   )}
 
-                  {/* View Supporting Documents */}
                   {selectedRow.attachments &&
                     selectedRow.attachments.length > 0 && (
                       <div className="bg-white rounded-xl p-6 border border-gray-200">
@@ -314,35 +313,36 @@ const SharedAbsentees = () => {
             </div>
           )
         }
-      </Modal>
+      </Modal> */}
+
+      {isModalOpen && (
+        <AbsenteeModal employee={selectedRow} onClose={handleModalOnClose} />
+      )}
 
       {/* File Preview Modal */}
-      <Modal
+      {/* <Modal
         isOpen={!!previewFile}
         onClose={() => setPreviewFile(null)}
         title="Document Preview"
       >
-        {
-          (/* isEditing */) =>
-            previewFile && (
-              <div className="flex justify-center">
-                {previewFile.endsWith(".pdf") ? (
-                  <iframe
-                    src={previewFile}
-                    className="w-full h-[80vh] rounded-lg"
-                    title="PDF Preview"
-                  />
-                ) : (
-                  <img
-                    src={previewFile}
-                    alt="Preview"
-                    className="max-h-[80vh] object-contain rounded-lg"
-                  />
-                )}
-              </div>
-            )
-        }
-      </Modal>
+        {previewFile && (
+          <div className="flex justify-center">
+            {previewFile.endsWith(".pdf") ? (
+              <iframe
+                src={previewFile}
+                className="w-full h-[80vh] rounded-lg"
+                title="PDF Preview"
+              />
+            ) : (
+              <img
+                src={previewFile}
+                alt="Preview"
+                className="max-h-[80vh] object-contain rounded-lg"
+              />
+            )}
+          </div>
+        )}
+      </Modal> */}
     </div>
   );
 };

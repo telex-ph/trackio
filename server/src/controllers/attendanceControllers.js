@@ -91,3 +91,18 @@ export const updateAttendance = async (req, res) => {
     });
   }
 };
+
+export const updateField = async (req, res) => {
+  const { id, field, newValue } = req.body;
+
+  try {
+    const response = await Attendance.updateFieldById(id, field, newValue);
+    res.status(200).json(response);
+  } catch (error) {
+    console.error(`Error updating in user  attendance: `, error);
+    res.status(500).json({
+      message: `Failed to update user attendance`,
+      error: error.message,
+    });
+  }
+};

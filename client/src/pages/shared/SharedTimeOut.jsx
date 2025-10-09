@@ -8,6 +8,7 @@ import TableModal from "../../components/TableModal";
 import TableEmployeeDetails from "../../components/TableEmployeeDetails";
 import { useAttendance } from "../../hooks/useAttendance";
 import exportCSV from "../../utils/exportCSV";
+import EmployeeModal from "../../components/modals/EmployeeModal";
 
 const SharedTimeOut = () => {
   const zone = "Asia/Manila";
@@ -72,6 +73,10 @@ const SharedTimeOut = () => {
       default:
         return "bg-gray-50 text-gray-600 border border-gray-200";
     }
+  };
+
+  const handleModalOnClose = () => {
+    setIsModalOpen(false);
   };
 
   const columns = [
@@ -184,8 +189,11 @@ const SharedTimeOut = () => {
 
       <Table columns={columns} data={attendancesByStatus} tableRef={tableRef} />
 
+      {isModalOpen && (
+        <EmployeeModal employee={selectedRow} onClose={handleModalOnClose} />
+      )}
       {/* Modal */}
-      <TableModal
+      {/* <TableModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="Employee Time Out Details"
@@ -195,12 +203,10 @@ const SharedTimeOut = () => {
         {(isEditing) =>
           selectedRow && (
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-              {/* Employee Details */}
               <div className="xl:col-span-1 space-y-6">
                 <TableEmployeeDetails employee={selectedRow} />
               </div>
 
-              {/* Time Out & Notes */}
               <div className="xl:col-span-2 space-y-6">
                 <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                   <div className="flex items-center gap-3 mb-6">
@@ -211,7 +217,6 @@ const SharedTimeOut = () => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    {/* Time Out */}
                     <div className="bg-white rounded-xl p-6 border-2 border-gray-900 shadow-sm">
                       <div className="flex items-center gap-3 mb-3">
                         <Clock className="w-6 h-6 text-gray-700" />
@@ -224,7 +229,6 @@ const SharedTimeOut = () => {
                       </p>
                     </div>
 
-                    {/* Status */}
                     <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
                       <div className="flex items-center gap-3 mb-3">
                         <CheckCircle className="w-6 h-6 text-gray-700" />
@@ -242,7 +246,6 @@ const SharedTimeOut = () => {
                     </div>
                   </div>
 
-                  {/* Daily Notes (editable) */}
                   <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
                     <div className="flex items-center gap-3 mb-4">
                       <FileText className="w-5 h-5 text-gray-600" />
@@ -274,7 +277,7 @@ const SharedTimeOut = () => {
             </div>
           )
         }
-      </TableModal>
+      </TableModal> */}
     </div>
   );
 };

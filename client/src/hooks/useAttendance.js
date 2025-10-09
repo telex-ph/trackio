@@ -129,11 +129,10 @@ export const useAttendance = (userId, filter) => {
           adherence,
           undertime,
           accounts,
+          notes: item.notes,
           status: item.status,
         };
       });
-
-      console.log(formattedData);
 
       setAttendancesByStatus(formattedData);
     } catch (error) {

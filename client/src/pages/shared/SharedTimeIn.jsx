@@ -4,6 +4,7 @@ import { DateTime } from "luxon";
 import { Datepicker } from "flowbite-react";
 import { Clock, FileDown, FileText, CheckCircle } from "lucide-react";
 import TableAction from "../../components/TableAction";
+import EmployeeModal from "../../components/modals/EmployeeModal";
 import TableModal from "../../components/TableModal";
 import TableEmployeeDetails from "../../components/TableEmployeeDetails";
 import { useAttendance } from "../../hooks/useAttendance";
@@ -73,6 +74,10 @@ const SharedTimeIn = () => {
       default:
         return "bg-gray-50 text-gray-600 border border-gray-200";
     }
+  };
+
+  const handleModalOnClose = () => {
+    setIsModalOpen(false);
   };
 
   // Columns
@@ -185,100 +190,10 @@ const SharedTimeIn = () => {
       </section>
       {/* Table */}
       <Table columns={columns} data={attendancesByStatus} tableRef={tableRef} />
-      {/* Modal */}
-      <TableModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Employee Details"
-        editable={true}
-        onSave={handleUpdate}
-      >
-        {(isEditing) =>
-          selectedRow && (
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-              {/* Employee Details (read-only) */}
-              <div className="xl:col-span-1 space-y-6">
-                <TableEmployeeDetails employee={selectedRow} />
-              </div>
 
-              {/* Time & Notes */}
-              <div className="xl:col-span-2 space-y-6">
-                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                  <div className="flex items-center gap-3 mb-6">
-                    <Clock className="w-5 h-5 text-gray-700" />
-                    <h3 className="text-xl font-bold text-gray-900">
-                      Time & Status Details
-                    </h3>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    {/* Time In */}
-                    <div className="bg-white rounded-xl p-6 border-2 border-gray-900 shadow-sm">
-                      <div className="flex items-center gap-3 mb-3">
-                        <Clock className="w-6 h-6 text-gray-700" />
-                        <p className="text-sm font-bold text-gray-500 uppercase">
-                          Time In
-                        </p>
-                      </div>
-                      <p className="text-4xl font-bold text-gray-900 font-mono">
-                        {selectedRow.timeIn}
-                      </p>
-                    </div>
-
-                    {/* Attendance Status */}
-                    <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                      <div className="flex items-center gap-3 mb-3">
-                        <CheckCircle className="w-6 h-6 text-gray-700" />
-                        <p className="text-sm font-bold text-gray-500 uppercase">
-                          Attendance Status
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`px-4 py-2 rounded-lg text-lg font-bold ${getStatusColor(
-                            selectedRow.status
-                          )}`}
-                        >
-                          {selectedRow.status}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Daily Notes (editable) */}
-                  <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <FileText className="w-5 h-5 text-gray-600" />
-                      <h4 className="text-lg font-bold text-gray-900">
-                        Daily Notes
-                      </h4>
-                    </div>
-
-                    {isEditing ? (
-                      <textarea
-                        className="w-full bg-white border border-blue-500 rounded-lg p-3 text-gray-800 font-medium resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        rows={4}
-                        value={selectedRow.notes}
-                        onChange={(e) =>
-                          setSelectedRow((prev) => ({
-                            ...prev,
-                            notes: e.target.value,
-                          }))
-                        }
-                        placeholder="Enter daily notes here..."
-                      />
-                    ) : (
-                      <p className="text-gray-800">
-                        {selectedRow.notes || "No notes provided."}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )
-        }
-      </TableModal>
+      {isModalOpen && (
+        <EmployeeModal employee={selectedRow} onClose={handleModalOnClose} />
+      )}
     </div>
   );
 };

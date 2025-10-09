@@ -208,6 +208,26 @@ class Attendance {
     return result;
   }
 
+  static async updateFieldById(id, field, newValue) {
+    if (!id) {
+      throw new Error("ID is required");
+    }
+
+    if (!field) {
+      throw new Error("Field is required");
+    }
+
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+    const result = await collection.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: { [field]: newValue },
+      }
+    );
+    return result;
+  }
+
   /**
    * Record a user's time-in for today.
    *

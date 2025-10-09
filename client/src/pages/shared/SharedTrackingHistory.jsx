@@ -9,9 +9,13 @@ import { Datepicker } from "flowbite-react";
 import { DateTime } from "luxon";
 import { useAttendance } from "../../hooks/useAttendance";
 import exportCSV from "../../utils/exportCSV";
+import EmployeeModal from "../../components/modals/EmployeeModal";
 
 const SharedTrackingHistory = () => {
   const zone = "Asia/Manila";
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
 
   // Initialize with today in PH time
   const [dateRange, setDateRange] = useState({
@@ -40,10 +44,6 @@ const SharedTrackingHistory = () => {
       [field]: isoDate,
     }));
   };
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null);
-  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
 
   const actionClicked = (row) => {
     setSelectedRow(row);
@@ -103,8 +103,8 @@ const SharedTrackingHistory = () => {
 
   const columns = [
     { headerName: "ID", field: "id", flex: 1 },
-    { headerName: "Name", field: "name", flex: 1 },
     { headerName: "Date", field: "date", flex: 1 },
+    { headerName: "Name", field: "name", flex: 1 },
     { headerName: "Time In", field: "timeIn", filter: false, flex: 1 },
     { headerName: "Time Out", field: "timeOut", filter: false, flex: 1 },
     {
@@ -127,6 +127,7 @@ const SharedTrackingHistory = () => {
         return `${breakStart} - ${breakEnd}`;
       },
     },
+    { headerName: "Notes", field: "notes", filter: false, flex: 1 },
     {
       headerName: "Action",
       field: "action",
@@ -137,6 +138,10 @@ const SharedTrackingHistory = () => {
       ),
     },
   ];
+
+  const handleModalOnClose = () => {
+    setIsModalOpen(false);
+  };
 
   const tableRef = useRef();
   const handleDownloadClick = () => {
@@ -178,105 +183,10 @@ const SharedTrackingHistory = () => {
       </section>
       <Table data={attendancesByStatus} columns={columns} tableRef={tableRef} />
 
-      {/* Employee Details Modal */}
-      <TableModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={`Details for ${selectedRow?.name}`}
-        editable={true}
-        onSave={handleUpdate}
-      >
-        {(isEditing) =>
-          selectedRow && (
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-              {/* Employee Details Card */}
-              <div className="xl:col-span-1 space-y-6">
-                <TableEmployeeDetails employee={selectedRow} />
-              </div>
+      {isModalOpen && (
+        <EmployeeModal employee={selectedRow} onClose={handleModalOnClose} />
+      )}
 
-              {/* Work Details + Notes + Calendar */}
-              <div className="xl:col-span-2 space-y-6">
-                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                  <div className="flex items-center gap-3 mb-6">
-                    <Clock className="w-5 h-5 text-gray-700" />
-                    <h3 className="text-xl font-bold text-gray-900">
-                      Work Details
-                    </h3>
-                  </div>
-
-                  {/* Durations */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    {Object.entries(calculateDurations(selectedRow)).map(
-                      ([key, value]) => (
-                        <div
-                          key={key}
-                          className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm"
-                        >
-                          <p className="text-sm font-bold text-gray-500 uppercase mb-2">
-                            {key}
-                          </p>
-                          <p className="text-2xl font-bold text-gray-900 font-mono">
-                            {value}
-                          </p>
-                        </div>
-                      )
-                    )}
-                  </div>
-
-                  {/* Notes */}
-                  <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <FileText className="w-5 h-5 text-gray-600" />
-                      <h4 className="text-lg font-bold text-gray-900">Notes</h4>
-                    </div>
-                    <textarea
-                      className={`w-full border rounded-lg p-3 font-medium resize-none focus:outline-none focus:ring-2 ${
-                        isEditing
-                          ? "border-blue-500 bg-white"
-                          : "border-gray-300 bg-gray-50"
-                      }`}
-                      rows={4}
-                      value={selectedRow.notes}
-                      onChange={(e) =>
-                        setSelectedRow((prev) => ({
-                          ...prev,
-                          notes: e.target.value,
-                        }))
-                      }
-                      disabled={!isEditing}
-                      placeholder="Enter notes here..."
-                    />
-                  </div>
-
-                  {/* Calendar */}
-                  <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6 shadow-sm">
-                    <h4 className="text-lg font-bold text-gray-900 mb-2">
-                      Attendance Calendar
-                    </h4>
-                    <p className="text-sm text-gray-500 mb-4">
-                      View this employee’s attendance in a monthly calendar
-                      format.
-                    </p>
-                    <button
-                      onClick={openCalendarModal}
-                      className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow transition-colors duration-200"
-                    >
-                      View Attendance Calendar
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )
-        }
-      </TableModal>
-
-      {/* Attendance Calendar Modal */}
-      <TableCalendarModal
-        isOpen={isCalendarModalOpen}
-        onClose={() => setIsCalendarModalOpen(false)}
-        data={selectedRow?.attendance || []}
-      />
     </div>
   );
 };

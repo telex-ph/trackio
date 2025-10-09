@@ -6,9 +6,14 @@ import { ChevronRight, FileDown } from "lucide-react";
 import { useAttendance } from "../../hooks/useAttendance";
 import { Datepicker } from "flowbite-react";
 import exportCSV from "../../utils/exportCSV";
+import TableAction from "../../components/TableAction";
+import EmployeeModal from "../../components/modals/EmployeeModal";
 
 const SharedUndertime = () => {
   const zone = "Asia/Manila";
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
 
   // Initialize with today in PH time
   const [dateRange, setDateRange] = useState({
@@ -58,6 +63,13 @@ const SharedUndertime = () => {
   const columns = [
     { headerName: "ID", field: "id", sortable: true, filter: true, flex: 1 },
     {
+      headerName: "Date",
+      field: "date",
+      sortable: true,
+      filter: true,
+      flex: 2,
+    },
+    {
       headerName: "Name",
       field: "name",
       sortable: true,
@@ -105,28 +117,26 @@ const SharedUndertime = () => {
       headerName: "Action",
       field: "action",
       flex: 1,
-      cellRenderer: (row) => (
-        <div className="flex gap-2">
-          <button
-            className="p-1 rounded hover:bg-yellow-200"
-            onClick={() => alert(`Edit ${row.name}`)}
-          >
-            <Edit className="w-5 h-5 text-blue-500" />
-          </button>
-          <button
-            className="p-1 rounded hover:bg-red-200"
-            onClick={() => alert(`Delete ${row.name}`)}
-          >
-            <Trash2 className="w-5 h-5 text-red-500" />
-          </button>
-        </div>
+      sortable: false,
+      filter: false,
+      cellRenderer: (params) => (
+        <TableAction action={() => actionClicked(params.data)} />
       ),
     },
   ];
 
+  const handleModalOnClose = () => {
+    setIsModalOpen(false);
+  };
+
   const tableRef = useRef();
   const handleDownloadClick = () => {
     exportCSV(tableRef, "undertime-list");
+  };
+
+  const actionClicked = (rowData) => {
+    setSelectedRow(rowData);
+    setIsModalOpen(true);
   };
 
   return (
@@ -163,6 +173,10 @@ const SharedUndertime = () => {
         </section>
       </section>
       <Table data={attendancesByStatus} columns={columns} tableRef={tableRef} />
+
+      {isModalOpen && (
+        <EmployeeModal employee={selectedRow} onClose={handleModalOnClose} />
+      )}
     </div>
   );
 };

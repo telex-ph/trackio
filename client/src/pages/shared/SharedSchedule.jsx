@@ -1,8 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Table from "../../components/Table";
-import TableModal from "../../components/TableModal";
-import TableEmployeeDetails from "../../components/TableEmployeeDetails";
-import { FileText, CalendarDays, Eye } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import useUser from "../../hooks/useUser";
 import { useNavigate } from "react-router-dom";
 import Spinner from "../../assets/loaders/Spinner";
@@ -23,16 +21,6 @@ const SharedSchedule = ({ role }) => {
 
   const handleViewClick = (id) => {
     navigate(`${id}`);
-  };
-
-  const handleUpdate = () => {
-    if (!selectedRow) return;
-    // update logic here
-  };
-
-  const calculateShiftDuration = (timeIn, timeOut) => {
-    const duration = parseTimeToMinutes(timeOut) - parseTimeToMinutes(timeIn);
-    return duration > 0 ? duration : 0;
   };
 
   const parseTimeToMinutes = (timeStr) => {
@@ -77,12 +65,6 @@ const SharedSchedule = ({ role }) => {
             >
               <CalendarDays className="w-5 h-5" />
             </div>
-            <div
-              className="flex justify-center items-center h-full cursor-pointer"
-              onClick={() => handleDetailsClicked(params.data)}
-            >
-              <Eye className="w-5 h-5" />
-            </div>
           </section>
         );
       },
@@ -116,12 +98,6 @@ const SharedSchedule = ({ role }) => {
               onClick={() => handleViewClick(id)}
             >
               <CalendarDays className="w-5 h-5" />
-            </div>
-            <div
-              className="flex justify-center items-center h-full cursor-pointer"
-              onClick={() => handleDetailsClicked(params.data)}
-            >
-              <Eye className="w-5 h-5" />
             </div>
           </section>
         );
@@ -185,112 +161,6 @@ const SharedSchedule = ({ role }) => {
           )}
         </>
       )}
-
-      {/* Modal */}
-      <TableModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={`Schedule for ${selectedRow?.name}`}
-        editable={true}
-        onSave={handleUpdate}
-      >
-        {(isEditing) =>
-          selectedRow && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                <div className="xl:col-span-1 space-y-6">
-                  <TableEmployeeDetails employee={selectedRow} />
-                </div>
-                <div className="xl:col-span-2 space-y-6">
-                  <div className="flex items-center gap-2">
-                    <CalendarDays className="w-6 h-6 text-gray-700" />
-                    <h3 className="text-xl font-bold text-gray-900">
-                      Schedule Details
-                    </h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                      <h4 className="text-sm font-medium text-gray-500 mb-1">
-                        Date
-                      </h4>
-                      <p className="text-lg font-semibold text-gray-900">
-                        {selectedRow.date}
-                      </p>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                      <h4 className="text-sm font-medium text-gray-500 mb-1">
-                        Group
-                      </h4>
-                      <p className="text-lg font-semibold text-gray-900">
-                        {selectedRow.groupName}
-                      </p>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                      <h4 className="text-sm font-medium text-gray-500 mb-1">
-                        Role / Category
-                      </h4>
-                      <p className="text-lg font-semibold text-gray-900">
-                        {selectedRow.category}
-                      </p>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                      <h4 className="text-sm font-medium text-gray-500 mb-1">
-                        Scheduled Time In
-                      </h4>
-                      <p className="text-lg font-semibold text-green-600">
-                        {selectedRow.timeIn}
-                      </p>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                      <h4 className="text-sm font-medium text-gray-500 mb-1">
-                        Scheduled Time Out
-                      </h4>
-                      <p className="text-lg font-semibold text-red-600">
-                        {selectedRow.timeOut}
-                      </p>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm md:col-span-2">
-                      <h4 className="text-sm font-medium text-gray-500 mb-1">
-                        Shift Duration
-                      </h4>
-                      <p className="text-lg font-semibold text-blue-600">
-                        {calculateShiftDuration(
-                          selectedRow.timeIn,
-                          selectedRow.timeOut
-                        )}{" "}
-                        mins
-                      </p>
-                    </div>
-                  </div>
-                  <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                    <div className="flex items-center gap-3 mb-4">
-                      <FileText className="w-5 h-5 text-gray-600" />
-                      <h4 className="text-lg font-bold text-gray-900">Notes</h4>
-                    </div>
-                    <textarea
-                      className={`w-full border rounded-lg p-3 font-medium resize-none focus:outline-none focus:ring-2 ${
-                        isEditing
-                          ? "border-blue-500 bg-white"
-                          : "border-gray-300 bg-gray-50"
-                      }`}
-                      rows={4}
-                      value={selectedRow.notes}
-                      onChange={(e) =>
-                        setSelectedRow((prev) => ({
-                          ...prev,
-                          notes: e.target.value,
-                        }))
-                      }
-                      disabled={!isEditing}
-                      placeholder="Enter notes here..."
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )
-        }
-      </TableModal>
     </div>
   );
 };
