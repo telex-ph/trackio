@@ -4,6 +4,10 @@ import { DateTime } from "luxon";
 class Absence {
   static #collection = "absences";
 
+  static async updateById() {
+    
+  }
+
   static async getAll({ startDate = null, endDate = null }) {
     const db = await connectDB();
     const collection = db.collection(this.#collection);

@@ -33,3 +33,16 @@ export const addAbsentees = async (req, res) => {
       .json({ success: false, message: "Error running cron task" });
   }
 };
+
+export const updateAbsentee = async (req, res) => {
+  try {
+    const result = await Absence.updateById(id, );
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error adding user's attendance:", error);
+    res.status(500).json({
+      message: "Failed to add attendance",
+      error: error.message,
+    });
+  }
+};
