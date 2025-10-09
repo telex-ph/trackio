@@ -49,6 +49,13 @@ const TimeBox = ({ attendance, config, onTimeIn, onUpdate }) => {
   );
 
   const duration = useMemo(() => {
+    if (fieldOne === "timeOut") {
+      return "End Shift";
+    }
+    if (fieldOne === "timeIn") {
+      return "Start Shift";
+    }
+
     if (!startTime) return "Start";
 
     if (fieldOne === "timeOut") {
