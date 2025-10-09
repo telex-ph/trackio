@@ -2,20 +2,10 @@ import React, { useRef, useState } from "react";
 import Table from "../../components/Table";
 import { DateTime } from "luxon";
 import { Datepicker } from "flowbite-react";
-import {
-  ChevronRight,
-  FileText,
-  FileDown,
-  Upload,
-  Eye,
-  Trash2,
-} from "lucide-react";
+import { FileDown } from "lucide-react";
 import TableAction from "../../components/TableAction";
-import Modal from "../../components/TableModal";
-import TableEmployeeDetails from "../../components/TableEmployeeDetails";
 import { useAttendance } from "../../hooks/useAttendance";
 import exportCSV from "../../utils/exportCSV";
-import EmployeeModal from "../../components/modals/EmployeeModal";
 import AbsenteeModal from "../../components/modals/AbsenteeModal";
 
 const SharedAbsentees = () => {
@@ -112,20 +102,9 @@ const SharedAbsentees = () => {
       headerName: "Action",
       field: "action",
       flex: 1,
-      cellRenderer: (params) => {
-        const id = params.data.id;
-        return (
-          <section className="flex h-full items-center justify-center gap-5">
-            <div
-              className="flex justify-center items-center h-full cursor-pointer"
-              onClick={() => handleViewClick(id)}
-            >
-              <CalendarDays className="w-5 h-5" />
-            </div>
-          </section>
-        );
-      },
-      filter: false,
+      cellRenderer: (params) => (
+        <TableAction action={() => actionClicked(params.data)} />
+      ),
     },
   ];
 
@@ -174,156 +153,6 @@ const SharedAbsentees = () => {
       </section>
       {/* Table */}
       <Table columns={columns} data={absentees} tableRef={tableRef} />
-
-      {/* <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Employee Absentee Details"
-        editable={true}
-        onSave={() => {
-          // Save changes to data
-          setData((prev) =>
-            prev.map((item) =>
-              item.id === selectedRow.id ? selectedRow : item
-            )
-          );
-        }}
-      >
-        {(isEditing) =>
-          selectedRow && (
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-              <div className="xl:col-span-1 space-y-6">
-                <TableEmployeeDetails employee={selectedRow} />
-              </div>
-
-              <div className="xl:col-span-2 space-y-6">
-                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div className="bg-white rounded-xl p-4 border border-gray-200">
-                      <p className="text-xs font-bold text-gray-500 uppercase mb-2">
-                        Date Absent
-                      </p>
-                      <p className="text-gray-900 font-semibold">
-                        {DateTime.fromISO(selectedRow.absentDate).toFormat(
-                          "MMMM dd, yyyy"
-                        )}
-                      </p>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 border border-gray-200">
-                      <p className="text-xs font-bold text-gray-500 uppercase mb-2">
-                        Validity
-                      </p>
-                      <span
-                        className={`inline-block px-4 py-2 rounded-lg text-lg font-bold ${
-                          selectedRow.validity?.toLowerCase() === "valid"
-                            ? "bg-green-100 text-green-800 border border-green-300"
-                            : "bg-red-100 text-red-800 border border-red-500"
-                        }`}
-                      >
-                        {selectedRow.validity}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-xl p-4 border border-gray-200 mb-6">
-                    <p className="text-xs font-bold text-gray-500 uppercase mb-2">
-                      Attendance Status
-                    </p>
-                    <p className="text-gray-900 font-semibold">
-                      {selectedRow.status}
-                    </p>
-                  </div>
-
-                  <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <FileText className="w-5 h-5 text-gray-600" />
-                      <h4 className="text-lg font-bold text-gray-900">
-                        Daily Notes
-                      </h4>
-                    </div>
-                    <textarea
-                      className={`w-full border rounded-lg p-3 font-medium resize-none focus:outline-none focus:ring-2 ${
-                        isEditing
-                          ? "border-blue-500 bg-white"
-                          : "border-gray-300 bg-gray-50"
-                      }`}
-                      rows={4}
-                      value={selectedRow.remarks}
-                      onChange={(e) =>
-                        setSelectedRow((prev) => ({
-                          ...prev,
-                          remarks: e.target.value,
-                        }))
-                      }
-                      disabled={!isEditing}
-                      placeholder="Enter daily notes here..."
-                    />
-                  </div>
-
-                  {isEditing && (
-                    <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
-                      <p className="text-sm font-bold text-gray-500 uppercase mb-3">
-                        Upload Supporting Document
-                      </p>
-                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                        <Upload className="w-6 h-6 text-gray-500 mb-2" />
-                        <p className="text-gray-500 text-sm">
-                          Drag your file(s) or{" "}
-                          <span className="text-blue-600">Browse files</span>
-                        </p>
-                        <input
-                          type="file"
-                          className="hidden"
-                          onChange={handleFileUpload}
-                          accept="image/*,application/pdf"
-                        />
-                      </label>
-                    </div>
-                  )}
-
-                  {selectedRow.attachments &&
-                    selectedRow.attachments.length > 0 && (
-                      <div className="bg-white rounded-xl p-6 border border-gray-200">
-                        <p className="text-sm font-bold text-gray-500 uppercase mb-3">
-                          View Supporting Document
-                        </p>
-                        {selectedRow.attachments.map((file, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-center justify-between p-3 border rounded-lg mb-2"
-                          >
-                            <div>
-                              <p className="font-semibold">{file.name}</p>
-                              <p className="text-xs text-gray-500">
-                                {file.size}
-                              </p>
-                            </div>
-                            <div className="flex gap-3">
-                              <button
-                                className="text-blue-600"
-                                onClick={() => setPreviewFile(file.url)}
-                              >
-                                <Eye className="w-5 h-5" />
-                              </button>
-                              {isEditing && (
-                                <button
-                                  className="text-red-500"
-                                  onClick={() => handleDeleteFile(file.name)}
-                                >
-                                  <Trash2 className="w-5 h-5" />
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                </div>
-              </div>
-            </div>
-          )
-        }
-      </Modal> */}
 
       {isModalOpen && (
         <AbsenteeModal employee={selectedRow} onClose={handleModalOnClose} />

@@ -1,6 +1,5 @@
 import {
   Users,
-  Clock,
   XCircle,
   User,
   Hash,
@@ -25,6 +24,7 @@ const AbsenteeModal = ({ employee, onClose }) => {
   const [previewFile, setPreviewFile] = useState(null);
   const [notes, setNotes] = useState(employee.notes || "");
   const noteRef = useRef();
+  const [isEdit, setEdit] = useState(false);
 
   const handleOnClose = () => {
     if (onClose) onClose();

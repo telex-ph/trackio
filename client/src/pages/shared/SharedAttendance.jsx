@@ -16,13 +16,6 @@ const SharedAttendance = () => {
     id: user?._id,
   });
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading attendance data...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-5">
