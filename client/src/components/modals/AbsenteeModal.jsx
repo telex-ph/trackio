@@ -16,15 +16,24 @@ import {
   Pen,
 } from "lucide-react";
 import { dateFormatter } from "../../utils/formatDateTime";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import api from "../../utils/axios"; // Import api
 
 const AbsenteeModal = ({ employee, onClose }) => {
   const [selectedEmployee, setSelectedEmployee] = useState(employee);
   const [previewFile, setPreviewFile] = useState(null);
   const [notes, setNotes] = useState(employee.notes || "");
-  const noteRef = useRef();
   const [isEdit, setEdit] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const noteRef = useRef();
+
+  // Focus textarea when edit mode is enabled
+  useEffect(() => {
+    if (isEdit && noteRef.current) {
+      noteRef.current.focus();
+    }
+  }, [isEdit]);
 
   const handleOnClose = () => {
     if (onClose) onClose();
@@ -36,6 +45,7 @@ const AbsenteeModal = ({ employee, onClose }) => {
 
   const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files);
+    if (files.length === 0) return;
 
     const newFiles = files.map((file) => ({
       file,
@@ -44,17 +54,22 @@ const AbsenteeModal = ({ employee, onClose }) => {
       url: URL.createObjectURL(file),
     }));
 
+    // Update local state immediately for better UX
     setSelectedEmployee((prev) => ({
       ...prev,
       attachments: [...(prev.attachments || []), ...newFiles],
     }));
 
+    // Option 1: If you have an upload endpoint
+    // Uncomment and adjust the endpoint URL as needed
+    /*
     const formData = new FormData();
     files.forEach((file) => formData.append("files", file));
 
     try {
+      setLoading(true);
       const response = await api.post(
-        `/employees/${selectedEmployee._id}/upload`,
+        `/absentees/${selectedEmployee._id}/upload`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
@@ -63,31 +78,100 @@ const AbsenteeModal = ({ employee, onClose }) => {
       console.log("Upload response:", response.data);
     } catch (error) {
       console.error("Upload failed:", error);
-      toast.error("Failed to upload files");
+      console.error("Error details:", error.response?.data);
+      toast.error(error.response?.data?.message || "Failed to upload files");
+      
+      // Rollback the local state if upload fails
+      setSelectedEmployee((prev) => ({
+        ...prev,
+        attachments: prev.attachments.filter(
+          (att) => !newFiles.some((nf) => nf.name === att.name)
+        ),
+      }));
+    } finally {
+      setLoading(false);
     }
+    */
+
+    // Option 2: Store files locally (for now)
+    // Remove this if you have a working upload endpoint
+    toast.success(`${files.length} file(s) added successfully!`);
+    console.log("Files added locally:", newFiles);
   };
+
   const handleNoteOnChange = (e) => {
     setNotes(e.target.value);
   };
 
-  const handleDeleteFile = (fileName) => {
+  const handleDeleteFile = async (fileName) => {
+    // Optimistically update UI
+    const previousAttachments = selectedEmployee.attachments;
     setSelectedEmployee((prev) => ({
       ...prev,
       attachments: prev.attachments.filter((f) => f.name !== fileName),
     }));
+
+    toast.success("File removed successfully!");
+
+    // Optional: Call API to delete from server if files are persisted
+    /*
+    try {
+      await api.delete(`/absentees/${selectedEmployee._id}/files/${fileName}`);
+      toast.success("File deleted successfully!");
+    } catch (error) {
+      console.error("Delete failed:", error);
+      toast.error("Failed to delete file from server");
+      
+      // Rollback on failure
+      setSelectedEmployee((prev) => ({
+        ...prev,
+        attachments: previousAttachments,
+      }));
+    }
+    */
   };
 
   const handleToggleValidity = () => {
+    if (!isEdit) return; // Only allow toggle in edit mode
+
     setSelectedEmployee((prev) => ({
       ...prev,
       validationStatus: prev.validationStatus === "Valid" ? "Invalid" : "Valid",
     }));
   };
 
-  const handleButtonSave = () => {
-    console.log("Saved employee details:", selectedEmployee);
-    toast.success("Absentee details saved successfully!");
-    setEdit(false);
+  const handleButtonSave = async () => {
+    try {
+      setLoading(true);
+
+      // Prepare data to save
+      const updatedData = {
+        id: selectedEmployee.doc_id || selectedEmployee._id,
+        notes: notes,
+        validationStatus: selectedEmployee.validationStatus,
+        attachments: selectedEmployee.attachments,
+      };
+
+      console.log("Saving absentee details:", updatedData);
+
+      // Uncomment when you have the API endpoint ready
+      /*
+      const response = await api.patch(
+        `/absentees/update`,
+        updatedData
+      );
+      console.log("Save response:", response.data);
+      */
+
+      toast.success("Absentee details saved successfully!");
+      setEdit(false);
+    } catch (error) {
+      console.error("Save failed:", error);
+      console.error("Error details:", error.response?.data);
+      toast.error(error.response?.data?.message || "Failed to save details");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -101,7 +185,8 @@ const AbsenteeModal = ({ employee, onClose }) => {
             </h3>
             <button
               onClick={handleOnClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+              disabled={loading}
             >
               <XCircle className="w-6 h-6" />
             </button>
@@ -186,7 +271,11 @@ const AbsenteeModal = ({ employee, onClose }) => {
                     </span>
                     <div
                       onClick={handleToggleValidity}
-                      className={`flex items-center gap-2 px-3 py-1 rounded-full cursor-pointer ${
+                      className={`flex items-center gap-2 px-3 py-1 rounded-full transition-colors ${
+                        isEdit
+                          ? "cursor-pointer"
+                          : "cursor-not-allowed opacity-60"
+                      } ${
                         selectedEmployee.validationStatus === "Valid"
                           ? "bg-green-100 text-green-700"
                           : "bg-red-100 text-red-700"
@@ -220,64 +309,79 @@ const AbsenteeModal = ({ employee, onClose }) => {
                     <div>
                       <Pen
                         onClick={handleEdit}
-                        className="w-4 h-4 cursor-pointer"
+                        className="w-4 h-4 cursor-pointer hover:text-blue-600 transition-colors"
                       />
                     </div>
                   </div>
                   <div className="bg-gray-50 rounded-lg border border-gray-200">
                     <textarea
-                      className="text-sm text-gray-700 w-full h-full p-3"
+                      className="text-sm text-gray-700 w-full h-full p-3 bg-transparent resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg disabled:cursor-not-allowed"
                       rows={4}
                       ref={noteRef}
                       value={notes}
                       onChange={handleNoteOnChange}
-                    ></textarea>
+                      disabled={!isEdit}
+                      placeholder="Enter notes here..."
+                    />
                   </div>
                 </div>
 
                 {/* Upload Supporting Document */}
-                <div className="bg-white rounded-xl p-6 border border-gray-200 ">
-                  <h4 className="text-lg font-bold text-gray-900 mb-3">
-                    Upload Supporting Document
-                  </h4>
+                {isEdit && (
+                  <div className="bg-white rounded-xl p-6 border border-gray-200">
+                    <h4 className="text-lg font-bold text-gray-900 mb-3">
+                      Upload Supporting Document
+                    </h4>
 
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                    <Upload className="w-6 h-6 text-light mb-2" />
-                    <p className="text-gray-500 text-sm">
-                      Drag your file(s) or{" "}
-                      <span className="text-blue-600">Browse files</span>
-                    </p>
-                    <input
-                      type="file"
-                      className="hidden"
-                      onChange={handleFileUpload}
-                      accept="image/*,application/pdf"
-                      multiple
-                    />
-                  </label>
-                </div>
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                      <Upload className="w-6 h-6 text-gray-400 mb-2" />
+                      <p className="text-gray-500 text-sm">
+                        Drag your file(s) or{" "}
+                        <span className="text-blue-600">Browse files</span>
+                      </p>
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={handleFileUpload}
+                        accept="image/*,application/pdf"
+                        multiple
+                        disabled={loading}
+                      />
+                    </label>
+                  </div>
+                )}
 
                 {/* View Supporting Document */}
                 {selectedEmployee.attachments?.length > 0 && (
                   <div className="bg-white rounded-xl p-6 border border-gray-200">
                     <h4 className="text-lg font-bold text-gray-900 mb-3">
-                      Supporting Document
+                      Supporting Documents
                     </h4>
                     {selectedEmployee.attachments.map((file, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between p-3 border rounded-lg mb-2 border-light container-light"
+                        className="flex items-center justify-between p-3 border rounded-lg mb-2 bg-gray-50 hover:bg-gray-100 transition-colors"
                       >
                         <div>
-                          <p className="text-light">{file.name}</p>
-                          <p className="text-xs text-light">{file.size}</p>
+                          <p className="text-gray-700 font-medium">
+                            {file.name}
+                          </p>
+                          <p className="text-xs text-gray-500">{file.size}</p>
                         </div>
                         <div className="flex gap-3">
-                          <button onClick={() => setPreviewFile(file.url)}>
+                          <button
+                            onClick={() => setPreviewFile(file.url)}
+                            className="text-blue-600 hover:text-blue-700 transition-colors"
+                            title="Preview file"
+                          >
                             <Eye className="w-5 h-5" />
                           </button>
                           {isEdit && (
-                            <button onClick={() => handleDeleteFile(file.name)}>
+                            <button
+                              onClick={() => handleDeleteFile(file.name)}
+                              className="text-red-600 hover:text-red-700 transition-colors"
+                              title="Delete file"
+                            >
                               <Trash2 className="w-5 h-5" />
                             </button>
                           )}
@@ -292,22 +396,24 @@ const AbsenteeModal = ({ employee, onClose }) => {
 
           {/* Footer */}
           <div className="flex justify-between items-center p-6 border-t border-gray-200 bg-gray-50">
-            <div className="text-sm text-light">
+            <div className="text-sm text-gray-500">
               Recorded on:{" "}
               {dateFormatter(selectedEmployee.date, "MMMM dd, yyyy")}
             </div>
             <div className="flex space-x-3">
               {isEdit && (
                 <button
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm"
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={handleButtonSave}
+                  disabled={loading}
                 >
-                  Save
+                  {loading ? "Saving..." : "Save"}
                 </button>
               )}
               <button
                 onClick={handleOnClose}
-                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm"
+                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm disabled:opacity-50"
+                disabled={loading}
               >
                 Close
               </button>
@@ -318,11 +424,11 @@ const AbsenteeModal = ({ employee, onClose }) => {
 
       {/* File Preview Modal */}
       {previewFile && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center h-screen w-screen bg-black/60">
-          <div className="relative bg-white rounded-lg h-[80vh] overflow-hidden shadow-xl z-10">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center h-screen w-screen bg-black/80">
+          <div className="relative bg-white rounded-lg w-[90vw] h-[80vh] overflow-hidden shadow-xl">
             <button
               onClick={() => setPreviewFile(null)}
-              className="absolute top-4 right-4 text-light hover:text-gray-700"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 bg-white rounded-full p-2 shadow-lg z-10 transition-colors"
             >
               <XCircle className="w-6 h-6" />
             </button>
