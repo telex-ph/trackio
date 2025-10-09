@@ -87,7 +87,7 @@ const SharedStatus = () => {
       flex: 2,
     },
     {
-      headerName: "Email Address",
+      headerName: "Email",
       field: "email",
       sortable: true,
       filter: true,
@@ -134,85 +134,6 @@ const SharedStatus = () => {
   return (
     <div>
       <Table columns={columns} data={attendancesByStatus} />
-
-      {/* Employee Details Modal */}
-      <TableModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Employee Details"
-        editable={true}
-        onSave={handleUpdate}
-        recordedAt={selectedRow?.attendance?.[0]?.date}
-      >
-        {(isEditing) =>
-          selectedRow && (
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-              <div className="xl:col-span-1 space-y-6">
-                <TableEmployeeDetails employee={selectedRow} />
-              </div>
-
-              <div className="xl:col-span-2 space-y-6">
-                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                  <div className="flex items-center gap-3 mb-6">
-                    <Clock className="w-5 h-5 text-gray-700" />
-                    <h3 className="text-xl font-bold text-gray-900">
-                      Work Details
-                    </h3>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div className="bg-white rounded-xl p-6 border-2 border-gray-900 shadow-sm">
-                      <p className="text-sm font-bold text-gray-500 uppercase mb-2">
-                        Work Duration
-                      </p>
-                      <p className="text-4xl font-bold text-gray-900 font-mono">
-                        {selectedRow.workDuration}
-                      </p>
-                    </div>
-
-                    <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                      <p className="text-sm font-bold text-gray-500 uppercase mb-2">
-                        Status
-                      </p>
-                      <span
-                        className={`px-4 py-2 rounded-lg text-lg font-bold ${getStatusColor(
-                          selectedRow.status
-                        )}`}
-                      >
-                        {selectedRow.status}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <FileText className="w-5 h-5 text-gray-600" />
-                      <h4 className="text-lg font-bold text-gray-900">Notes</h4>
-                    </div>
-                    <textarea
-                      className={`w-full border rounded-lg p-3 font-medium resize-none focus:outline-none focus:ring-2 ${
-                        isEditing
-                          ? "border-blue-500 bg-white"
-                          : "border-gray-300 bg-gray-50"
-                      }`}
-                      rows={4}
-                      value={selectedRow.notes}
-                      onChange={(e) =>
-                        setSelectedRow((prev) => ({
-                          ...prev,
-                          notes: e.target.value,
-                        }))
-                      }
-                      disabled={!isEditing}
-                      placeholder="Enter notes here..."
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )
-        }
-      </TableModal>
     </div>
   );
 };
