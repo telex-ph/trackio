@@ -102,8 +102,8 @@ const SharedAbsentees = () => {
       flex: 2,
     },
     {
-      headerName: "Valid / Invalid",
-      field: "validity",
+      headerName: "Status",
+      field: "status",
       sortable: true,
       filter: true,
       flex: 1,
@@ -112,9 +112,19 @@ const SharedAbsentees = () => {
       headerName: "Action",
       field: "action",
       flex: 1,
-      cellRenderer: (params) => (
-        <TableAction action={() => actionClicked(params.data)} />
-      ),
+      cellRenderer: (params) => {
+        const id = params.data.id;
+        return (
+          <section className="flex h-full items-center justify-center gap-5">
+            <div
+              className="flex justify-center items-center h-full cursor-pointer"
+              onClick={() => handleViewClick(id)}
+            >
+              <CalendarDays className="w-5 h-5" />
+            </div>
+          </section>
+        );
+      },
       filter: false,
     },
   ];

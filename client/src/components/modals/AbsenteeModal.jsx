@@ -12,32 +12,62 @@ import {
   Upload,
   Eye,
   Trash2,
+  CheckCircle,
+  XCircle as XMark,
+  Pen,
 } from "lucide-react";
 import { dateFormatter } from "../../utils/formatDateTime";
-import { useState } from "react";
-import { DateTime } from "luxon";
+import { useRef, useState } from "react";
+import toast from "react-hot-toast";
 
 const AbsenteeModal = ({ employee, onClose }) => {
-  const [isEdit, setEdit] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(employee);
   const [previewFile, setPreviewFile] = useState(null);
+  const [notes, setNotes] = useState(employee.notes || "");
+  const noteRef = useRef();
 
   const handleOnClose = () => {
     if (onClose) onClose();
   };
 
-  const handleEdit = () => setEdit((prev) => !prev);
+  const handleEdit = () => {
+    setEdit((prev) => !prev);
+  };
 
-  const handleFileUpload = (e) => {
-    const files = Array.from(e.target.files).map((file) => ({
+  const handleFileUpload = async (e) => {
+    const files = Array.from(e.target.files);
+
+    const newFiles = files.map((file) => ({
+      file,
       name: file.name,
       size: `${(file.size / 1024).toFixed(2)} KB`,
       url: URL.createObjectURL(file),
     }));
+
     setSelectedEmployee((prev) => ({
       ...prev,
-      attachments: [...(prev.attachments || []), ...files],
+      attachments: [...(prev.attachments || []), ...newFiles],
     }));
+
+    const formData = new FormData();
+    files.forEach((file) => formData.append("files", file));
+
+    try {
+      const response = await api.post(
+        `/employees/${selectedEmployee._id}/upload`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+
+      toast.success("Files uploaded successfully!");
+      console.log("Upload response:", response.data);
+    } catch (error) {
+      console.error("Upload failed:", error);
+      toast.error("Failed to upload files");
+    }
+  };
+  const handleNoteOnChange = (e) => {
+    setNotes(e.target.value);
   };
 
   const handleDeleteFile = (fileName) => {
@@ -45,6 +75,19 @@ const AbsenteeModal = ({ employee, onClose }) => {
       ...prev,
       attachments: prev.attachments.filter((f) => f.name !== fileName),
     }));
+  };
+
+  const handleToggleValidity = () => {
+    setSelectedEmployee((prev) => ({
+      ...prev,
+      validationStatus: prev.validationStatus === "Valid" ? "Invalid" : "Valid",
+    }));
+  };
+
+  const handleButtonSave = () => {
+    console.log("Saved employee details:", selectedEmployee);
+    toast.success("Absentee details saved successfully!");
+    setEdit(false);
   };
 
   return (
@@ -134,54 +177,85 @@ const AbsenteeModal = ({ employee, onClose }) => {
                     </div>
                   ))}
                 </div>
+
+                {/* Validity Toggle */}
+                <div className="mt-6 border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">
+                      Validation Status
+                    </span>
+                    <div
+                      onClick={handleToggleValidity}
+                      className={`flex items-center gap-2 px-3 py-1 rounded-full cursor-pointer ${
+                        selectedEmployee.validationStatus === "Valid"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {selectedEmployee.validationStatus === "Valid" ? (
+                        <CheckCircle className="w-4 h-4" />
+                      ) : (
+                        <XMark className="w-4 h-4" />
+                      )}
+                      <span className="text-sm font-semibold">
+                        {selectedEmployee.validationStatus || "Invalid"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Right Section - Work Details */}
               <div className="col-span-8 space-y-6">
                 {/* Daily Notes */}
                 <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <FileText className="w-5 h-5 text-gray-600" />
-                    <h4 className="text-lg font-bold text-gray-900">Note</h4>
+                  <div className="flex items-center justify-between space-x-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-gray-600" />
+                      <h4 className="text-lg font-semibold text-gray-900">
+                        Notes
+                      </h4>
+                    </div>
+
+                    <div>
+                      <Pen
+                        onClick={handleEdit}
+                        className="w-4 h-4 cursor-pointer"
+                      />
+                    </div>
                   </div>
-                  <textarea
-                    className={`w-full border rounded-lg p-3 font-medium resize-none focus:outline-none focus:ring-2 border-light container-light`}
-                    rows={4}
-                    value={selectedEmployee.remarks || ""}
-                    onChange={(e) =>
-                      setSelectedEmployee((prev) => ({
-                        ...prev,
-                        remarks: e.target.value,
-                      }))
-                    }
-                    disabled={!isEdit}
-                    placeholder="Enter daily notes here..."
-                  />
+                  <div className="bg-gray-50 rounded-lg border border-gray-200">
+                    <textarea
+                      className="text-sm text-gray-700 w-full h-full p-3"
+                      rows={4}
+                      ref={noteRef}
+                      value={notes}
+                      onChange={handleNoteOnChange}
+                    ></textarea>
+                  </div>
                 </div>
 
                 {/* Upload Supporting Document */}
-                {isEdit && (
-                  <div className="bg-white rounded-xl p-6 border border-gray-200 ">
-                    <h4 className="text-lg font-bold text-gray-900 mb-3">
-                      Upload Supporting Document
-                    </h4>
+                <div className="bg-white rounded-xl p-6 border border-gray-200 ">
+                  <h4 className="text-lg font-bold text-gray-900 mb-3">
+                    Upload Supporting Document
+                  </h4>
 
-                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                      <Upload className="w-6 h-6 text-light mb-2" />
-                      <p className="text-gray-500 text-sm">
-                        Drag your file(s) or{" "}
-                        <span className="text-blue-600">Browse files</span>
-                      </p>
-                      <input
-                        type="file"
-                        className="hidden"
-                        onChange={handleFileUpload}
-                        accept="image/*,application/pdf"
-                        multiple
-                      />
-                    </label>
-                  </div>
-                )}
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                    <Upload className="w-6 h-6 text-light mb-2" />
+                    <p className="text-gray-500 text-sm">
+                      Drag your file(s) or{" "}
+                      <span className="text-blue-600">Browse files</span>
+                    </p>
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                      accept="image/*,application/pdf"
+                      multiple
+                    />
+                  </label>
+                </div>
 
                 {/* View Supporting Document */}
                 {selectedEmployee.attachments?.length > 0 && (
@@ -223,12 +297,14 @@ const AbsenteeModal = ({ employee, onClose }) => {
               {dateFormatter(selectedEmployee.date, "MMMM dd, yyyy")}
             </div>
             <div className="flex space-x-3">
-              <button
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm"
-                onClick={handleEdit}
-              >
-                {isEdit ? "Save" : "Edit"}
-              </button>
+              {isEdit && (
+                <button
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm"
+                  onClick={handleButtonSave}
+                >
+                  Save
+                </button>
+              )}
               <button
                 onClick={handleOnClose}
                 className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm"

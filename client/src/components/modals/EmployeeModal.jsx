@@ -22,6 +22,8 @@ import toast from "react-hot-toast";
 const EmployeeModal = ({ employee, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState(employee.notes || "");
+  const [isEdit, setEdit] = useState(false);
+  const noteRef = useRef();
 
   const handleButtonSave = async () => {
     const field = "notes";
@@ -52,9 +54,6 @@ const EmployeeModal = ({ employee, onClose }) => {
       onClose();
     }
   };
-
-  const [isEdit, setEdit] = useState(false);
-  const noteRef = useRef();
 
   const handleEdit = () => {
     setEdit((prev) => !prev);
@@ -280,9 +279,13 @@ const EmployeeModal = ({ employee, onClose }) => {
 
               {/* Notes Section */}
               <div className="mb-6">
-                <div className="flex items-center space-x-2 mb-3">
-                  <FileText className="w-4 h-4 text-gray-600" />
-                  <h4 className="text-lg font-semibold text-gray-900">Notes</h4>
+                <div className="flex items-center justify-between space-x-2 mb-3">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-gray-600" />
+                    <h4 className="text-lg font-semibold text-gray-900">
+                      Notes
+                    </h4>
+                  </div>
 
                   <div>
                     <Pen
