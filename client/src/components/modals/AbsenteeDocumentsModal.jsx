@@ -2,6 +2,7 @@ import { XCircle, Upload, Eye, Trash2 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import api from "../../utils/axios";
+import Spinner from "../../assets/loaders/Spinner";
 
 const AbsenteeDocumentsModal = ({ employee, onClose }) => {
   const [selectedEmployee, setSelectedEmployee] = useState(employee);
@@ -30,17 +31,14 @@ const AbsenteeDocumentsModal = ({ employee, onClose }) => {
     }));
 
     // Option 1: Upload to backend
-    /*
     const formData = new FormData();
     files.forEach((file) => formData.append("files", file));
 
     try {
       setLoading(true);
-      const response = await api.post(
-        `/absentees/${selectedEmployee._id}/upload`,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
+      const response = await api.post(`/media/upload-media`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       toast.success("Files uploaded successfully!");
       console.log("Upload response:", response.data);
     } catch (error) {
@@ -57,10 +55,6 @@ const AbsenteeDocumentsModal = ({ employee, onClose }) => {
     } finally {
       setLoading(false);
     }
-    */
-
-    // Option 2: Local-only for now
-    toast.success(`${files.length} file(s) added successfully!`);
   };
 
   const handleDeleteFile = async (fileName) => {
@@ -117,21 +111,25 @@ const AbsenteeDocumentsModal = ({ employee, onClose }) => {
                 Upload Supporting Documents
               </h4>
 
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
-                <Upload className="w-6 h-6 text-gray-400 mb-2" />
-                <p className="text-gray-500 text-sm">
-                  Drag your file(s) or{" "}
-                  <span className="text-blue-600">Browse files</span>
-                </p>
-                <input
-                  type="file"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                  accept="image/*,application/pdf"
-                  multiple
-                  disabled={loading}
-                />
-              </label>
+              {loading ? (
+                <Spinner />
+              ) : (
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <Upload className="w-6 h-6 text-gray-400 mb-2" />
+                  <p className="text-gray-500 text-sm">
+                    Drag your file(s) or{" "}
+                    <span className="text-blue-600">Browse files</span>
+                  </p>
+                  <input
+                    type="file"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                    accept="image/*,application/pdf"
+                    multiple
+                    disabled={loading}
+                  />
+                </label>
+              )}
             </div>
 
             {/* List of Uploaded Files */}
@@ -191,7 +189,7 @@ const AbsenteeDocumentsModal = ({ employee, onClose }) => {
       {/* File Preview Modal */}
       {previewFile && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center h-screen w-screen bg-black/80">
-          <div className="relative bg-white rounded-lg w-[90vw] h-[80vh] overflow-hidden shadow-xl">
+          <div className="relative bg-white rounded-lg  h-[80vh] overflow-hidden shadow-xl">
             <button
               onClick={() => setPreviewFile(null)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 bg-white rounded-full p-2 shadow-lg z-10 transition-colors"
