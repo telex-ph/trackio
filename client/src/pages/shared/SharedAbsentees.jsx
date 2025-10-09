@@ -2,11 +2,12 @@ import React, { useRef, useState, useCallback, useMemo } from "react";
 import Table from "../../components/Table";
 import { DateTime } from "luxon";
 import { Datepicker } from "flowbite-react";
-import { FileDown } from "lucide-react";
+import { File, FileDown } from "lucide-react";
 import TableAction from "../../components/TableAction";
 import { useAttendance } from "../../hooks/useAttendance";
 import exportCSV from "../../utils/exportCSV";
 import AbsenteeModal from "../../components/modals/AbsenteeModal";
+import AbsenteeDocumentsModal from "../../components/modals/AbsenteeDocumentsModal";
 
 const TIMEZONE = "Asia/Manila";
 
@@ -15,6 +16,7 @@ const SharedAbsentees = () => {
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
 
   // Date range state
@@ -63,8 +65,15 @@ const SharedAbsentees = () => {
     setIsModalOpen(true);
   }, []);
 
+  // Modal handlers
+  const handleUploadClick = useCallback((rowData) => {
+    setSelectedRow(rowData);
+    setIsUploadOpen(true);
+  }, []);
+
   const handleModalClose = useCallback(() => {
     setIsModalOpen(false);
+    setIsUploadOpen(false);
     setSelectedRow(null);
   }, []);
 
@@ -121,11 +130,17 @@ const SharedAbsentees = () => {
         field: "action",
         flex: 1,
         cellRenderer: (params) => (
-          <TableAction action={() => handleActionClick(params.data)} />
+          <section className="flex items-center justify-center gap-4 h-full">
+            <File
+              className="w-5 h-5 text-gray-600 cursor-pointer"
+              onClick={() => handleUploadClick(params.data)}
+            />
+            <TableAction action={() => handleActionClick(params.data)} />
+          </section>
         ),
       },
     ],
-    [handleActionClick]
+    [handleActionClick, handleUploadClick]
   );
 
   // Convert ISO dates to JS Date for Datepicker
@@ -187,6 +202,13 @@ const SharedAbsentees = () => {
       {/* Modal */}
       {isModalOpen && selectedRow && (
         <AbsenteeModal employee={selectedRow} onClose={handleModalClose} />
+      )}
+
+      {isUploadOpen && selectedRow && (
+        <AbsenteeDocumentsModal
+          employee={selectedRow}
+          onClose={handleModalClose}
+        />
       )}
     </div>
   );
