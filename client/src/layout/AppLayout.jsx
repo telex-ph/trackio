@@ -28,7 +28,8 @@ export default function AppLayout() {
   }, []);
 
   return (
-    <div className="h-screen grid grid-cols-[auto_1fr] grid-rows-[60px_1fr] max-w-[200rem] mx-auto border-x border-gray-200">
+    // <div className="h-screen grid grid-cols-[auto_1fr] grid-rows-[70px_1fr] max-w-[200rem] mx-auto border-x border-gray-200">
+    <div className="h-screen grid grid-cols-[auto_1fr] grid-rows-[90px_1fr] max-w-[200rem] mx-auto border-x border-gray-200">
       <section className="col-start-1 col-end-3 row-start-1 row-end-2 border-b border-gray-200">
         <Topbar
           toggleSidebar={toggleSidebar}

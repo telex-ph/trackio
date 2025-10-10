@@ -3,9 +3,10 @@ import trackio from "../assets/logos/trackio.svg";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "../store/useStore";
-import { Menu, ChevronDown } from "lucide-react";
+import { Menu, ChevronDown, Info } from "lucide-react";
 import api from "../utils/axios";
 import Roles from "../constants/roles";
+import { Alert } from "flowbite-react";
 
 const Topbar = ({ toggleSidebar }) => {
   const navigator = useNavigate();
@@ -72,6 +73,31 @@ const Topbar = ({ toggleSidebar }) => {
         </button>
       </div>
 
+      <section>
+        <Alert
+          color="info"
+          icon={Info}
+          rounded
+          className="border border-blue-200"
+        >
+          <span className="font-medium text-blue-900 text-sm!">
+            Acceptance Testing Phase
+          </span>
+          <p className="text-sm! text-blue-800">
+            The system is currently undergoing{" "}
+            <strong className="text-sm!">Acceptance Testing</strong>. This phase
+            focuses on identifying any{" "}
+            <strong className="text-sm!">bugs</strong>,{" "}
+            <strong className="text-sm!">errors</strong>,{" "}
+            <strong className="text-sm!">inaccuracies</strong>, or{" "}
+            <strong className="text-sm!">missing features</strong>. If you
+            encounter any issues, please report them to the{" "}
+            <strong className="text-sm!">Tech Team</strong> so we can address
+            them promptly.
+          </p>
+        </Alert>
+      </section>
+
       {/* Right Section */}
       <div
         className="flex items-center gap-0 md:gap-2 relative"
@@ -79,9 +105,11 @@ const Topbar = ({ toggleSidebar }) => {
       >
         <img src={telex} alt="TELEX" className="w-12 h-auto" />
         <div className="hidden sm:flex flex-col">
-          <span className="font-bold">{user?.name || "TELEX"}</span>
+          <span className="font-bold">{user?.firstName || "TELEX"}</span>
           <span className="text-sm">
-            {user?.role?.replace("-", " ").toUpperCase()}
+            {user?.role
+              ?.replace("-", " ")
+              .replace(/\b\w/g, (char) => char.toUpperCase())}
           </span>
         </div>
 
