@@ -105,7 +105,7 @@ const Topbar = ({ toggleSidebar }) => {
       >
         <img src={telex} alt="TELEX" className="w-12 h-auto" />
         <div className="hidden sm:flex flex-col">
-          <span className="font-bold">{user?.firstName || "TELEX"}</span>
+          <span className="font-bold">{user?.firstName} {user?.lastName}</span>
           <span className="text-sm">
             {user?.role
               ?.replace("-", " ")
