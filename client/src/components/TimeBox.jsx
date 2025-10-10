@@ -104,32 +104,28 @@ const TimeBox = ({ attendance, config, onTimeIn, onUpdate }) => {
     <div className="flex flex-col gap-2 border-light rounded-md p-5">
       <span className="font-medium">{title}</span>
       <div className="flex gap-3">
-        <Button
-          className={`flex-1 hover:bg-[#${textColor}] hover:text-white font-bold transition-colors duration-200
+        <button
+          className={`flex-1 bg-blue-600 py-4 rounded-md text-white font-bold transition-colors duration-200
           ${isStartDisabled ? "cursor-not-allowed" : "cursor-pointer"}
           `}
-          style={{
-            backgroundColor: `#${bgColor}`,
-            color: `#${textColor}`,
-          }}
           onClick={handleStartClick}
         >
           {duration}
-        </Button>
+        </button>
         {isTwoBtn && (
-          <Button
-            className={`bg-red-600! hover:bg-red-700 p-2 transition-colors duration-200 ${
+          <button
+            className={`bg-blue-600 py-4 rounded-md p-2 transition-colors duration-200 ${
               isEndDisabled ? "cursor-not-allowed opacity-60" : ""
             }`}
             onClick={handleEndClick}
           >
             <Square />
-          </Button>
+          </button>
         )}
       </div>
       <div className="flex items-center justify-between text-sm">
         <span>
-          Started: {startTime ? formatTime(startTime) : "Not recorded"}
+          Recorded on: {startTime ? formatTime(startTime) : "Not recorded"}
         </span>
         {fieldTwo && (
           <span>

@@ -8,6 +8,7 @@ import Calendar from "../../components/Calendar";
 import { useSchedule } from "../../hooks/useSchedule";
 import { Alert } from "flowbite-react";
 import { Info } from "lucide-react";
+import Stopwatch from "../../components/Stopwatch";
 
 const SharedAttendance = () => {
   const user = useStore((state) => state.user);
@@ -48,17 +49,38 @@ const SharedAttendance = () => {
           </p>
         </Alert>
       </section>
-      <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {TIME_BOX_CONFIG.map((config) => (
-          <TimeBox
-            key={config.id}
-            attendance={attendance}
-            config={config}
-            onTimeIn={addAttendance}
-            onUpdate={updateAttendance}
-            user={user}
-          />
-        ))}
+      {/* TODO: remove  */}
+      <section className="grid grid-cols-3 gap-5">
+        {TIME_BOX_CONFIG.map((config, index) => {
+          if (index === 0) {
+            return (
+              <>
+                <TimeBox
+                  key={config.id}
+                  attendance={attendance}
+                  config={config}
+                  onTimeIn={addAttendance}
+                  onUpdate={updateAttendance}
+                  user={user}
+                />
+                <section>
+                  <Stopwatch />
+                </section>
+              </>
+            );
+          } else {
+            return (
+              <TimeBox
+                key={config.id}
+                attendance={attendance}
+                config={config}
+                onTimeIn={addAttendance}
+                onUpdate={updateAttendance}
+                user={user}
+              />
+            );
+          }
+        })}
       </section>
 
       <section>
