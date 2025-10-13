@@ -50,7 +50,7 @@ const MonitoringLayout = () => {
             <span className="hidden sm:inline">On Break</span>
           </div>
 
-          <div
+          {/* <div
             className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
               monitorPage === MONITORING_PAGES.ONLUNCH && "underline"
             }`}
@@ -58,7 +58,7 @@ const MonitoringLayout = () => {
           >
             <Sun className="h-4 w-4" />
             <span className="hidden sm:inline">On Lunch</span>
-          </div>
+          </div> */}
 
           <div
             className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${

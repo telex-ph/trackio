@@ -14,6 +14,7 @@ import {
 import TableAction from "../../components/TableAction";
 import Table from "../../components/Table";
 import Modal from "../../components/TableModal";
+import UnderContruction from "../../assets/illustrations/UnderContruction";
 
 const AgentCoaching = () => {
   const scrollRef = useRef(null);
@@ -417,16 +418,22 @@ const AgentCoaching = () => {
         </span>
       ),
     },
-    {
-      headerName: "ACTION",
-      field: "action",
-      flex: 1,
-      cellRenderer: (params) => (
-        <TableAction action={() => openModal(params.data)} />
-      ),
-      filter: false,
-    },
+    // {
+    //   headerName: "ACTION",
+    //   field: "action",
+    //   flex: 1,
+    //   cellRenderer: (params) => (
+    //     <TableAction action={() => openModal(params.data)} />
+    //   ),
+    //   filter: false,
+    // },
   ];
+
+  return (
+    <section className="h-full">
+      <UnderContruction />
+    </section>
+  );
 
   return (
     <div>
@@ -620,127 +627,6 @@ const AgentCoaching = () => {
           </div>
         </div>
       </div>
-
-      {/* Modal */}
-      <Modal isOpen={isModalOpen} onClose={closeModal} title="Session Details">
-        {(isEditing) =>
-          selectedSession && (
-            <div className="space-y-4 sm:space-y-6 max-w-full">
-              {/* Basic Info */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                <div className="space-y-3 sm:space-y-4">
-                  <div className="bg-gray-50 rounded-xl p-3 sm:p-4">
-                    <h3 className="font-semibold text-gray-800 mb-2 text-sm sm:text-base">
-                      Session Information
-                    </h3>
-                    <div className="space-y-2 text-xs sm:text-sm">
-                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
-                        <span className="text-gray-600 font-medium">Type:</span>
-                        <span
-                          className={`px-2 sm:px-3 py-1 rounded-lg font-medium border text-xs sm:text-sm ${
-                            typeColors[selectedSession.type]
-                          } w-fit`}
-                        >
-                          {selectedSession.type}
-                        </span>
-                      </div>
-                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
-                        <span className="text-gray-600 font-medium">
-                          Facilitator:
-                        </span>
-                        <span className="font-medium text-gray-800 break-words">
-                          {selectedSession.facilitator}
-                        </span>
-                      </div>
-                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
-                        <span className="text-gray-600 font-medium">Date:</span>
-                        <span className="font-medium text-gray-800">
-                          {selectedSession.date}
-                        </span>
-                      </div>
-                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
-                        <span className="text-gray-600 font-medium">Time:</span>
-                        <span className="font-medium text-gray-800">
-                          {selectedSession.time}
-                        </span>
-                      </div>
-                      {selectedSession.timeLeft && (
-                        <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
-                          <span className="text-gray-600 font-medium">
-                            Time Left:
-                          </span>
-                          <span className="font-medium text-red-600">
-                            {selectedSession.timeLeft}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3 sm:space-y-4">
-                  <div className="bg-gray-50 rounded-xl p-3 sm:p-4">
-                    <h3 className="font-semibold text-gray-800 mb-2 text-sm sm:text-base">
-                      Status
-                    </h3>
-                    <span
-                      className={`inline-block px-3 sm:px-4 py-1 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold ${getStatusColor(
-                        selectedSession.status
-                      )}`}
-                    >
-                      {selectedSession.status}
-                    </span>
-                    {selectedSession.remarks &&
-                      selectedSession.remarks !== "-" && (
-                        <div className="mt-3">
-                          <p className="text-xs sm:text-sm text-gray-600 font-medium mb-1">
-                            Remarks:
-                          </p>
-                          <p className="text-xs sm:text-sm text-gray-700 break-words">
-                            {selectedSession.remarks}
-                          </p>
-                        </div>
-                      )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Full Agenda */}
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 sm:p-6 border-l-4 border-blue-500">
-                <h3 className="font-semibold text-gray-800 mb-3 text-sm sm:text-base">
-                  Complete Agenda
-                </h3>
-                <p className="text-gray-700 leading-relaxed text-xs sm:text-sm break-words">
-                  {selectedSession.agenda}
-                </p>
-              </div>
-
-              {/* Materials */}
-              {selectedSession.materials &&
-                selectedSession.materials.length > 0 && (
-                  <div className="bg-purple-50 rounded-xl p-4 sm:p-6">
-                    <h3 className="font-semibold text-gray-800 mb-3 text-sm sm:text-base">
-                      Materials & Resources
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {selectedSession.materials.map((material, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center gap-3 bg-white rounded-lg p-3 border border-purple-200"
-                        >
-                          <FileText className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                          <span className="text-gray-700 text-xs sm:text-sm break-words">
-                            {material}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-            </div>
-          )
-        }
-      </Modal>
     </div>
   );
 };

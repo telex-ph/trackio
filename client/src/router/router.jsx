@@ -89,6 +89,7 @@ const router = createBrowserRouter([
             children: [
               { index: true, element: <Navigate to="dashboard" replace /> },
               { path: "dashboard", element: <AdminDashboard /> },
+              { path: "attendance", element: <SharedAttendance /> },
               {
                 path: "tracking",
                 element: <TrackingLayout role={Roles.ADMIN} />,

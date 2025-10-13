@@ -1,358 +1,215 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useCallback, useMemo } from "react";
 import Table from "../../components/Table";
 import { DateTime } from "luxon";
 import { Datepicker } from "flowbite-react";
-import {
-  ChevronRight,
-  FileText,
-  FileDown,
-  Upload,
-  Eye,
-  Trash2,
-} from "lucide-react";
+import { File, FileDown } from "lucide-react";
 import TableAction from "../../components/TableAction";
-import Modal from "../../components/TableModal";
-import TableEmployeeDetails from "../../components/TableEmployeeDetails";
 import { useAttendance } from "../../hooks/useAttendance";
 import exportCSV from "../../utils/exportCSV";
-import EmployeeModal from "../../components/modals/EmployeeModal";
 import AbsenteeModal from "../../components/modals/AbsenteeModal";
+import AbsenteeDocumentsModal from "../../components/modals/AbsenteeDocumentsModal";
+
+const TIMEZONE = "Asia/Manila";
 
 const SharedAbsentees = () => {
-  const zone = "Asia/Manila";
+  const tableRef = useRef();
 
+  // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
 
-  const [dateRange, setDateRange] = useState({
-    startDate: DateTime.now().setZone(zone).startOf("day").toUTC().toISO(),
-    endDate: DateTime.now().setZone(zone).endOf("day").toUTC().toISO(),
-  });
+  // Date range state
+  const [dateRange, setDateRange] = useState(() => ({
+    startDate: DateTime.now().setZone(TIMEZONE).startOf("day").toUTC().toISO(),
+    endDate: DateTime.now().setZone(TIMEZONE).endOf("day").toUTC().toISO(),
+  }));
 
-  const filter = {
-    startDate: dateRange.startDate,
-    endDate: dateRange.endDate,
-  };
+  // Fetch absentees data
+  const filter = useMemo(
+    () => ({
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
+    }),
+    [dateRange.startDate, dateRange.endDate]
+  );
 
   const { absentees, loading } = useAttendance(null, filter);
 
-  const handleDatePicker = (date, field) => {
+  // Date picker handler
+  const handleDatePicker = useCallback((date, field) => {
     if (!date) return;
+
     const isoDate =
       field === "startDate"
-        ? DateTime.fromJSDate(date).setZone(zone).startOf("day").toUTC().toISO()
-        : DateTime.fromJSDate(date).setZone(zone).endOf("day").toUTC().toISO();
+        ? DateTime.fromJSDate(date)
+            .setZone(TIMEZONE)
+            .startOf("day")
+            .toUTC()
+            .toISO()
+        : DateTime.fromJSDate(date)
+            .setZone(TIMEZONE)
+            .endOf("day")
+            .toUTC()
+            .toISO();
 
     setDateRange((prev) => ({
       ...prev,
       [field]: isoDate,
     }));
-  };
+  }, []);
 
-  const [previewFile, setPreviewFile] = useState(null);
-
-  const actionClicked = (rowData) => {
+  // Modal handlers
+  const handleActionClick = useCallback((rowData) => {
     setSelectedRow(rowData);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-    const newAttachment = {
-      name: file.name,
-      size: `${(file.size / 1024).toFixed(1)}kb`,
-      url: URL.createObjectURL(file),
-    };
-    setSelectedRow((prev) => ({
-      ...prev,
-      attachments: [...(prev.attachments || []), newAttachment],
-    }));
-  };
+  // Modal handlers
+  const handleUploadClick = useCallback((rowData) => {
+    setSelectedRow(rowData);
+    setIsUploadOpen(true);
+  }, []);
 
-  const handleDeleteFile = (fileName) => {
-    setSelectedRow((prev) => ({
-      ...prev,
-      attachments: prev.attachments.filter((f) => f.name !== fileName),
-    }));
-  };
-
-  const columns = [
-    { headerName: "ID", field: "id", sortable: true, filter: true, flex: 1 },
-
-    {
-      headerName: "Date",
-      field: "date",
-      sortable: true,
-      filter: true,
-      flex: 2,
-    },
-    {
-      headerName: "Name",
-      field: "name",
-      sortable: true,
-      filter: true,
-      flex: 2,
-    },
-    {
-      headerName: "Email",
-      field: "email",
-      sortable: true,
-      filter: true,
-      flex: 2,
-    },
-    {
-      headerName: "Status",
-      field: "status",
-      sortable: true,
-      filter: true,
-      flex: 1,
-    },
-    {
-      headerName: "Action",
-      field: "action",
-      flex: 1,
-      cellRenderer: (params) => {
-        const id = params.data.id;
-        return (
-          <section className="flex h-full items-center justify-center gap-5">
-            <div
-              className="flex justify-center items-center h-full cursor-pointer"
-              onClick={() => handleViewClick(id)}
-            >
-              <CalendarDays className="w-5 h-5" />
-            </div>
-          </section>
-        );
-      },
-      filter: false,
-    },
-  ];
-
-  const handleModalOnClose = () => {
+  const handleModalClose = useCallback(() => {
     setIsModalOpen(false);
-  };
+    setIsUploadOpen(false);
+    setSelectedRow(null);
+  }, []);
 
-  const tableRef = useRef();
-  const handleDownloadClick = () => {
-    exportCSV(tableRef, "absentees-list");
-  };
+  // Export handler
+  const handleExportClick = useCallback(() => {
+    try {
+      exportCSV(tableRef, "absentees-list");
+    } catch (error) {
+      console.error("Failed to export CSV:", error);
+      // You can add toast notification here
+    }
+  }, []);
+
+  // Table columns configuration
+  const columns = useMemo(
+    () => [
+      {
+        headerName: "ID",
+        field: "id",
+        sortable: true,
+        filter: true,
+        flex: 1,
+      },
+      {
+        headerName: "Date",
+        field: "date",
+        sortable: true,
+        filter: true,
+        flex: 2,
+      },
+      {
+        headerName: "Name",
+        field: "name",
+        sortable: true,
+        filter: true,
+        flex: 2,
+      },
+      {
+        headerName: "Email",
+        field: "email",
+        sortable: true,
+        filter: true,
+        flex: 2,
+      },
+      {
+        headerName: "Status",
+        field: "status",
+        sortable: true,
+        filter: true,
+        flex: 1,
+      },
+      {
+        headerName: "Action",
+        field: "action",
+        flex: 1,
+        cellRenderer: (params) => (
+          <section className="flex items-center justify-center gap-4 h-full">
+            <File
+              className="w-5 h-5 text-gray-600 cursor-pointer"
+              onClick={() => handleUploadClick(params.data)}
+            />
+            <TableAction action={() => handleActionClick(params.data)} />
+          </section>
+        ),
+      },
+    ],
+    [handleActionClick, handleUploadClick]
+  );
+
+  // Convert ISO dates to JS Date for Datepicker
+  const startDateValue = useMemo(
+    () => DateTime.fromISO(dateRange.startDate).setZone(TIMEZONE).toJSDate(),
+    [dateRange.startDate]
+  );
+
+  const endDateValue = useMemo(
+    () => DateTime.fromISO(dateRange.endDate).setZone(TIMEZONE).toJSDate(),
+    [dateRange.endDate]
+  );
 
   return (
-    <div>
-      {/* Date Picker */}
+    <div className="space-y-4">
+      {/* Header Section */}
       <section className="flex items-center justify-between">
-        <section className="flex gap-4 mb-4">
+        {/* Date Range Filters */}
+        <div className="flex gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Start Date</label>
             <Datepicker
-              value={DateTime.fromISO(dateRange.startDate)
-                .setZone(zone)
-                .toJSDate()}
+              value={startDateValue}
               onChange={(date) => handleDatePicker(date, "startDate")}
+              maxDate={new Date()}
             />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">End Date</label>
             <Datepicker
-              value={DateTime.fromISO(dateRange.endDate)
-                .setZone(zone)
-                .toJSDate()}
+              value={endDateValue}
               onChange={(date) => handleDatePicker(date, "endDate")}
+              maxDate={new Date()}
+              minDate={startDateValue}
             />
           </div>
-        </section>
-        <section>
-          <button
-            className="px-4 py-3 flex items-center gap-2 rounded-md cursor-pointer bg-blue-700 text-white"
-            onClick={handleDownloadClick}
-          >
-            <FileDown className="w-4 h-4" />
-            <span>Export</span>
-          </button>
-        </section>
+        </div>
+
+        {/* Export Button */}
+        <button
+          className="px-4 py-3 flex items-center gap-2 rounded-md cursor-pointer bg-blue-700 hover:bg-blue-800 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={handleExportClick}
+          disabled={loading || !absentees?.length}
+          title={!absentees?.length ? "No data to export" : "Export to CSV"}
+        >
+          <FileDown className="w-4 h-4" />
+          <span>Export</span>
+        </button>
       </section>
-      {/* Table */}
-      <Table columns={columns} data={absentees} tableRef={tableRef} />
 
-      {/* <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Employee Absentee Details"
-        editable={true}
-        onSave={() => {
-          // Save changes to data
-          setData((prev) =>
-            prev.map((item) =>
-              item.id === selectedRow.id ? selectedRow : item
-            )
-          );
-        }}
-      >
-        {(isEditing) =>
-          selectedRow && (
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-              <div className="xl:col-span-1 space-y-6">
-                <TableEmployeeDetails employee={selectedRow} />
-              </div>
+      {/* Table Section */}
+      <Table
+        columns={columns}
+        data={absentees || []}
+        tableRef={tableRef}
+        loading={loading}
+      />
 
-              <div className="xl:col-span-2 space-y-6">
-                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div className="bg-white rounded-xl p-4 border border-gray-200">
-                      <p className="text-xs font-bold text-gray-500 uppercase mb-2">
-                        Date Absent
-                      </p>
-                      <p className="text-gray-900 font-semibold">
-                        {DateTime.fromISO(selectedRow.absentDate).toFormat(
-                          "MMMM dd, yyyy"
-                        )}
-                      </p>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 border border-gray-200">
-                      <p className="text-xs font-bold text-gray-500 uppercase mb-2">
-                        Validity
-                      </p>
-                      <span
-                        className={`inline-block px-4 py-2 rounded-lg text-lg font-bold ${
-                          selectedRow.validity?.toLowerCase() === "valid"
-                            ? "bg-green-100 text-green-800 border border-green-300"
-                            : "bg-red-100 text-red-800 border border-red-500"
-                        }`}
-                      >
-                        {selectedRow.validity}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-xl p-4 border border-gray-200 mb-6">
-                    <p className="text-xs font-bold text-gray-500 uppercase mb-2">
-                      Attendance Status
-                    </p>
-                    <p className="text-gray-900 font-semibold">
-                      {selectedRow.status}
-                    </p>
-                  </div>
-
-                  <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <FileText className="w-5 h-5 text-gray-600" />
-                      <h4 className="text-lg font-bold text-gray-900">
-                        Daily Notes
-                      </h4>
-                    </div>
-                    <textarea
-                      className={`w-full border rounded-lg p-3 font-medium resize-none focus:outline-none focus:ring-2 ${
-                        isEditing
-                          ? "border-blue-500 bg-white"
-                          : "border-gray-300 bg-gray-50"
-                      }`}
-                      rows={4}
-                      value={selectedRow.remarks}
-                      onChange={(e) =>
-                        setSelectedRow((prev) => ({
-                          ...prev,
-                          remarks: e.target.value,
-                        }))
-                      }
-                      disabled={!isEditing}
-                      placeholder="Enter daily notes here..."
-                    />
-                  </div>
-
-                  {isEditing && (
-                    <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
-                      <p className="text-sm font-bold text-gray-500 uppercase mb-3">
-                        Upload Supporting Document
-                      </p>
-                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                        <Upload className="w-6 h-6 text-gray-500 mb-2" />
-                        <p className="text-gray-500 text-sm">
-                          Drag your file(s) or{" "}
-                          <span className="text-blue-600">Browse files</span>
-                        </p>
-                        <input
-                          type="file"
-                          className="hidden"
-                          onChange={handleFileUpload}
-                          accept="image/*,application/pdf"
-                        />
-                      </label>
-                    </div>
-                  )}
-
-                  {selectedRow.attachments &&
-                    selectedRow.attachments.length > 0 && (
-                      <div className="bg-white rounded-xl p-6 border border-gray-200">
-                        <p className="text-sm font-bold text-gray-500 uppercase mb-3">
-                          View Supporting Document
-                        </p>
-                        {selectedRow.attachments.map((file, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-center justify-between p-3 border rounded-lg mb-2"
-                          >
-                            <div>
-                              <p className="font-semibold">{file.name}</p>
-                              <p className="text-xs text-gray-500">
-                                {file.size}
-                              </p>
-                            </div>
-                            <div className="flex gap-3">
-                              <button
-                                className="text-blue-600"
-                                onClick={() => setPreviewFile(file.url)}
-                              >
-                                <Eye className="w-5 h-5" />
-                              </button>
-                              {isEditing && (
-                                <button
-                                  className="text-red-500"
-                                  onClick={() => handleDeleteFile(file.name)}
-                                >
-                                  <Trash2 className="w-5 h-5" />
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                </div>
-              </div>
-            </div>
-          )
-        }
-      </Modal> */}
-
-      {isModalOpen && (
-        <AbsenteeModal employee={selectedRow} onClose={handleModalOnClose} />
+      {/* Modal */}
+      {isModalOpen && selectedRow && (
+        <AbsenteeModal employee={selectedRow} onClose={handleModalClose} />
       )}
 
-      {/* File Preview Modal */}
-      {/* <Modal
-        isOpen={!!previewFile}
-        onClose={() => setPreviewFile(null)}
-        title="Document Preview"
-      >
-        {previewFile && (
-          <div className="flex justify-center">
-            {previewFile.endsWith(".pdf") ? (
-              <iframe
-                src={previewFile}
-                className="w-full h-[80vh] rounded-lg"
-                title="PDF Preview"
-              />
-            ) : (
-              <img
-                src={previewFile}
-                alt="Preview"
-                className="max-h-[80vh] object-contain rounded-lg"
-              />
-            )}
-          </div>
-        )}
-      </Modal> */}
+      {isUploadOpen && selectedRow && (
+        <AbsenteeDocumentsModal
+          employee={selectedRow}
+          onClose={handleModalClose}
+        />
+      )}
     </div>
   );
 };

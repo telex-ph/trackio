@@ -16,10 +16,12 @@ export const addSchedules = async (req, res) => {
   }
 
   const formattedSchedules = schedules.map((schedule) => {
-    const baseDate = DateTime.fromISO(schedule.date).startOf("day");
+    const baseDate = DateTime.fromISO(schedule.date, {
+      zone: "Asia/Manila",
+    }).startOf("day");
 
     const mergeDateAndTime = (timeISO) => {
-      const time = DateTime.fromISO(timeISO);
+      const time = DateTime.fromISO(timeISO, { zone: "Asia/Manila" });
       return baseDate
         .set({
           hour: time.hour,
@@ -71,7 +73,9 @@ export const deleteSchedules = async (req, res) => {
 
   // Since the date stored in db is in utc
   const shiftSchedulesInUTC = shiftSchedules.map((schedule) => {
-    return DateTime.fromISO(schedule).toJSDate();
+    return DateTime.fromISO(schedule, { zone: "Asia/Manila" })
+      .toUTC()
+      .toJSDate();
   });
 
   try {

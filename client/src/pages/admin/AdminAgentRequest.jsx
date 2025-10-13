@@ -9,6 +9,7 @@ import ConfirmationModal from "../../components/modals/ConfirmationModal.jsx";
 import AdminRequestDetails from "../../components/admin-request/RequestDetails.jsx";
 import AdminActiveRequests from "../../components/admin-request/ActiveRequests.jsx";
 import AdminRequestHistory from "../../components/admin-request/RequestHistory.jsx";
+import UnderContruction from "../../assets/illustrations/UnderContruction.jsx";
 
 const AdminAgentRequest = () => {
   const [requests, setRequests] = useState([]);
@@ -100,6 +101,12 @@ const AdminAgentRequest = () => {
       setRemarks("");
     }
   };
+
+   return (
+    <section className="h-full">
+      <UnderContruction />
+    </section>
+  );
 
   return (
     <div>

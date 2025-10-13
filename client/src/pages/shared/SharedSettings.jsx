@@ -25,6 +25,7 @@ import api from "../../utils/axios";
 import toast from "react-hot-toast";
 import { useStore } from "../../store/useStore";
 import validatePassword from "../../utils/validatePassword";
+import UnderContruction from "../../assets/illustrations/UnderContruction";
 
 const SharedSettings = () => {
   const user = useStore((state) => state.user);
@@ -221,7 +222,8 @@ const SharedSettings = () => {
               {/* Profile Section */}
               {activeSection === "profile" && (
                 <div className="p-8">
-                  <div className="flex items-center justify-between mb-8">
+                  <UnderContruction />
+                  {/* <div className="flex items-center justify-between mb-8">
                     <div>
                       <h2 className="text-3xl font-bold text-gray-800 mb-2">
                         Account Settings
@@ -242,9 +244,7 @@ const SharedSettings = () => {
                   </div>
 
                   <div className="grid grid-cols-1 2xl:grid-cols-5 gap-12">
-                    {/* Avatar */}
                     <div className="2xl:col-span-2 flex flex-col items-center">
-                      {/* Avatar Card */}
                       <div className="relative w-70 h-70 bg-white rounded-2xl shadow-lg border-2 border-red-300 hover:border-red-500 transition-all duration-300 overflow-hidden cursor-pointer flex items-center justify-center">
                         <img
                           src={formData.avatar || telex}
@@ -252,7 +252,6 @@ const SharedSettings = () => {
                           className="w-full h-full object-contain"
                         />
 
-                        {/* Hidden File Input */}
                         <input
                           type="file"
                           accept="image/*"
@@ -270,7 +269,6 @@ const SharedSettings = () => {
                           }}
                         />
 
-                        {/* Left-side Upload Icon */}
                         {isEditing && (
                           <button
                             className="absolute bottom-3 left-3 w-10 h-10 bg-white/50 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-white/70 transition-all duration-300"
@@ -283,7 +281,6 @@ const SharedSettings = () => {
                           </button>
                         )}
 
-                        {/* Right-side Camera Icon (Open Modal) */}
                         {isEditing && (
                           <button
                             className="absolute bottom-3 right-3 w-10 h-10 bg-white/50 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-white/70 transition-all duration-300"
@@ -298,10 +295,8 @@ const SharedSettings = () => {
                       </div>
                     </div>
 
-                    {/* Company Info */}
                     <div className="2xl:col-span-3">
                       <div className="bg-gradient-to-r from-rose-50 to-red-50 rounded-2xl p-6 border border-red-200/50 space-y-6">
-                        {/* Company Name */}
                         <div className="group">
                           <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center space-x-2">
                             <Building2 size={16} />
@@ -318,7 +313,6 @@ const SharedSettings = () => {
                           />
                         </div>
 
-                        {/* Account Name & Email */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                           <div className="group">
                             <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center space-x-2">
@@ -356,7 +350,6 @@ const SharedSettings = () => {
                           </div>
                         </div>
 
-                        {/* Contact & Address */}
                         <div className="group">
                           <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center space-x-2">
                             <Phone size={16} />
@@ -402,7 +395,6 @@ const SharedSettings = () => {
                           />
                         </div>
 
-                        {/* Social Media */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-x-12">
                           <div className="group">
                             <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center space-x-2">
@@ -440,7 +432,6 @@ const SharedSettings = () => {
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
                   {isEditing && (
                     <div className="flex justify-end gap-4 mt-12 pt-8 border-t border-gray-200">
                       <button
@@ -456,7 +447,7 @@ const SharedSettings = () => {
                         Save Changes
                       </button>
                     </div>
-                  )}
+                  )} */}
                 </div>
               )}
 
@@ -543,12 +534,12 @@ const SharedSettings = () => {
               {/* Preferences Section / About Company */}
               {activeSection === "preferences" && (
                 <div className="p-8 space-y-8">
-                  <div className="bg-gradient-to-r from-rose-50 to-red-50 rounded-2xl p-6 border border-red-200/50 space-y-6">
+                  <UnderContruction />
+                  {/* <div className="bg-gradient-to-r from-rose-50 to-red-50 rounded-2xl p-6 border border-red-200/50 space-y-6">
                     <h2 className="text-2xl font-bold text-gray-800 mb-4">
                       About Company
                     </h2>
 
-                    {/* Vision */}
                     <div className="group">
                       <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center space-x-2">
                         <Eye size={16} />
@@ -564,7 +555,6 @@ const SharedSettings = () => {
                       />
                     </div>
 
-                    {/* Mission */}
                     <div className="group">
                       <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center space-x-2">
                         <Flag size={16} />
@@ -580,7 +570,6 @@ const SharedSettings = () => {
                       />
                     </div>
 
-                    {/* Core Values */}
                     <div className="group">
                       <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center space-x-2">
                         <Star size={16} />
@@ -593,7 +582,6 @@ const SharedSettings = () => {
                       </ul>
                     </div>
 
-                    {/* Services */}
                     <div className="group">
                       <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center space-x-2">
                         <Briefcase size={16} />
@@ -613,13 +601,12 @@ const SharedSettings = () => {
                       </div>
                     </div>
 
-                    {/* Save Button aligned to the right */}
                     <div className="flex justify-end mt-6">
                       <button className="px-6 py-3 bg-white text-red-700 border-2 border-red-700 rounded-xl transition-all duration-300 shadow-md hover:bg-red-50 hover:shadow-lg transform hover:-translate-y-1 font-semibold">
                         Save About Info
                       </button>
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               )}
             </div>

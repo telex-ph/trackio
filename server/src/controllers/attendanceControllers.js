@@ -1,6 +1,7 @@
 import Attendance from "../model/Attendance.js";
 import { DateTime } from "luxon";
 import Schedules from "../model/Schedule.js";
+import { STATUS } from "../../../client/src/constants/status.js";
 
 export const addAttendance = async (req, res) => {
   const id = req.params.id;
@@ -81,6 +82,30 @@ export const updateAttendance = async (req, res) => {
       }
     });
 
+    if (status === STATUS.OOF) {
+      const attendance = await Attendance.getByDocId(id);
+      const breaks = attendance.breaks;
+      const latestBreak = breaks[breaks.length - 1];
+
+      if (!latestBreak.end) {
+        const now = DateTime.now().setZone("Asia/Manila");
+        latestBreak.end = now.toJSDate();
+
+        const start = DateTime.fromJSDate(latestBreak.start).setZone(
+          "Asia/Manila"
+        );
+
+        const diffInMs = now.diff(start, "milliseconds").milliseconds;
+        latestBreak.duration = diffInMs;
+
+        const previousTotal = attendance.totalBreak || 0;
+        const newTotalBreak = previousTotal + diffInMs;
+
+        await Attendance.updateFieldById(id, "breaks", breaks);
+        await Attendance.updateFieldById(id, "totalBreak", newTotalBreak);
+      }
+    }
+
     const response = await Attendance.updateById(id, fields, status);
     res.status(200).json(response);
   } catch (error) {
@@ -102,6 +127,74 @@ export const updateField = async (req, res) => {
     console.error(`Error updating in user  attendance: `, error);
     res.status(500).json({
       message: `Failed to update user attendance`,
+      error: error.message,
+    });
+  }
+};
+
+export const updateBreakStart = async (req, res) => {
+  const { docId, totalBreak } = req.body;
+  const breaks = (req.body.breaks || []).map((b) => ({
+    ...b,
+    start: b.start
+      ? DateTime.fromISO(b.start, { zone: "Asia/Manila" }).toJSDate()
+      : null,
+    end: b.end
+      ? DateTime.fromISO(b.end, { zone: "Asia/Manila" }).toJSDate()
+      : null,
+  }));
+
+  const newBreak = {
+    start: DateTime.now().setZone("Asia/Manila").toJSDate(),
+  };
+  const newBreaks = [...breaks, newBreak];
+
+  try {
+    await Attendance.updateFieldById(docId, "breaks", newBreaks);
+    await Attendance.updateFieldById(docId, "totalBreak", totalBreak);
+    await Attendance.updateFieldById(docId, "status", STATUS.ON_BREAK);
+    res.status(200).json({ message: "Updated successfully" });
+  } catch (error) {
+    console.error(`Error starting break in user attendance: `, error);
+    res.status(500).json({
+      message: `Failed to start break`,
+      error: error.message,
+    });
+  }
+};
+
+export const updateBreakPause = async (req, res) => {
+  const { docId, totalBreak } = req.body;
+
+  const breaks = (req.body.breaks || []).map((b) => ({
+    ...b,
+    start: b.start
+      ? DateTime.fromISO(b.start, { zone: "Asia/Manila" }).toJSDate()
+      : null,
+    end: b.end
+      ? DateTime.fromISO(b.end, { zone: "Asia/Manila" }).toJSDate()
+      : null,
+  }));
+
+  const prevBreak = breaks[breaks.length - 1];
+
+  // current end time (PH time)
+  const end = DateTime.now().setZone("Asia/Manila");
+  prevBreak.end = end.toJSDate();
+
+  const start = DateTime.fromJSDate(prevBreak.start).setZone("Asia/Manila");
+  const diffInMinutes = end.diff(start, "minutes").minutes;
+  prevBreak.duration = diffInMinutes;
+
+  try {
+    await Attendance.updateFieldById(docId, "breaks", breaks);
+    await Attendance.updateFieldById(docId, "totalBreak", totalBreak);
+    await Attendance.updateFieldById(docId, "status", STATUS.WORKING);
+    return res.status(200).json({ message: "Updated successfully" });
+  } catch (error) {
+    console.error(`Error ending break in user attendance: `, error);
+    res.status(500).json({
+      message: `Failed to end break`,
       error: error.message,
     });
   }

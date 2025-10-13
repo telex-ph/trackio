@@ -20,6 +20,7 @@ import {
 import { DateTime } from "luxon";
 import Table from "../../components/Table";
 import api from "../../utils/axios";
+import UnderContruction from "../../assets/illustrations/UnderContruction";
 
 // Custom Notification Component
 const Notification = ({ message, type, onClose }) => {
@@ -754,6 +755,12 @@ const AdminAnnouncement = () => {
       },
     ],
     []
+  );
+
+  return (
+    <section className="h-full">
+      <UnderContruction />
+    </section>
   );
 
   return (
