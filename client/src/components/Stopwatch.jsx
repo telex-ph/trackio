@@ -10,54 +10,59 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
   const [isRunning, setIsRunning] = useState(false);
   const [loading, setLoading] = useState(false);
   const intervalRef = useRef(null);
+  const startRef = useRef(null); // Real start timestamp
 
+  // Initialize time on attendance change
   useEffect(() => {
-    if (attendance?.breaks?.length > 0) {
-      const latestBreak = attendance.breaks[attendance.breaks.length - 1];
+    if (!attendance) return;
 
-      // Convert total break (from DB, in ms)
-      let baseTime = attendance.totalBreak || 0;
+    const latestBreak =
+      attendance.breaks?.[attendance.breaks.length - 1] || null;
 
-      // If ongoing break (no end time)
-      if (latestBreak && !latestBreak.end) {
-        const start = DateTime.fromISO(latestBreak.start).setZone(
-          "Asia/Manila"
-        );
-        const now = DateTime.now().setZone("Asia/Manila");
-        const ongoingMs = now.diff(start, "milliseconds").milliseconds;
-        baseTime += ongoingMs; // add ongoing duration to total
-      }
+    let baseTime = attendance.totalBreak || 0;
 
-      setTime(baseTime);
+    if (latestBreak && !latestBreak.end) {
+      const start = DateTime.fromISO(latestBreak.start).setZone("Asia/Manila");
+      const now = DateTime.now().setZone("Asia/Manila");
+      baseTime += now.diff(start, "milliseconds").milliseconds;
+
+      // set real start timestamp for accurate timer
+      startRef.current = Date.now() - baseTime;
+      setIsRunning(true);
     }
+
+    setTime(baseTime);
   }, [attendance]);
 
+  // Start/pause based on status
   useEffect(() => {
     if (attendance?.status === STATUS.ON_BREAK) {
-      setIsRunning(true);
-    } else if (attendance?.status === STATUS.WORKING) {
+      if (!isRunning) {
+        startRef.current = Date.now() - time;
+        setIsRunning(true);
+      }
+    } else {
       setIsRunning(false);
     }
   }, [attendance?.status]);
 
+  // Accurate timer using real clock
   useEffect(() => {
     if (isRunning) {
       intervalRef.current = setInterval(() => {
-        setTime((prev) => prev + 10);
-      }, 10);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+        const now = Date.now();
+        setTime(now - startRef.current);
+      }, 200); // update every 200ms for smooth seconds
+    } else if (intervalRef.current) {
+      clearInterval(intervalRef.current);
     }
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [isRunning]);
 
+  // Format HH:MM:SS
   const formatTime = (milliseconds) => {
     const totalSeconds = Math.floor(milliseconds / 1000);
     const hours = Math.floor(totalSeconds / 3600);
@@ -78,7 +83,6 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
       toast.error("Please time in first before starting your break.");
       return;
     }
-
     if (attendance.timeOut) {
       toast.error("You have already timed out for today.");
       return;
@@ -86,7 +90,9 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
 
     try {
       setLoading(true);
+
       if (!isRunning) {
+        startRef.current = Date.now() - time;
         const res = await api.patch("/attendance/update-break-start", {
           docId: attendance._id,
           breaks: attendance.breaks || [],
@@ -95,7 +101,6 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
         toast.success("Break started!");
         console.log("Break started:", res.data);
       } else {
-        // 🔴 END BREAK
         const res = await api.patch("/attendance/update-break-pause", {
           docId: attendance._id,
           breaks: attendance.breaks || [],
@@ -122,13 +127,10 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
 
   const formatDuration = (ms) => {
     if (!ms || ms <= 0) return "0h 0m 0s";
-
     const dur = Duration.fromMillis(ms);
-
     const hours = Math.floor(dur.as("hours"));
     const minutes = Math.floor(dur.as("minutes") % 60);
     const seconds = Math.floor(dur.as("seconds") % 60);
-
     return `${hours}h ${minutes}m ${seconds}s`;
   };
 
@@ -145,6 +147,7 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
           </h3>
         </div>
       </div>
+
       {attendance?.status === STATUS.OOF ? (
         <h3 className="text-black text-center p-7">
           Overall Break Duration: {formatDuration(attendance.totalBreak || 0)}
