@@ -131,6 +131,8 @@ export const useAttendance = (userId, filter) => {
           accounts,
           notes: item.notes,
           status: item.status,
+          breaks: item.breaks,
+          totalBreak: item.totalBreak,
         };
       });
 
@@ -225,6 +227,7 @@ export const useAttendance = (userId, filter) => {
   return {
     attendance,
     attendancesByStatus,
+    fetchUserAttendance,
     absentees,
     loading,
     error,

@@ -5,7 +5,13 @@ import { formatTime } from "../utils/formatDateTime";
 import toast from "react-hot-toast";
 import { calculateDuration, getButtonState } from "../utils/attendanceHelpers";
 
-const TimeBox = ({ attendance, config, onTimeIn, onUpdate }) => {
+const TimeBox = ({
+  attendance,
+  config,
+  onTimeIn,
+  onUpdate,
+  fetchUserAttendance,
+}) => {
   const {
     title,
     isTwoBtn,
@@ -79,7 +85,7 @@ const TimeBox = ({ attendance, config, onTimeIn, onUpdate }) => {
     attendance?.timeIn,
   ]);
 
-  const handleStartClick = () => {
+  const handleStartClick = async () => {
     if (isStartDisabled) {
       if (startErrorMessage) toast.error(startErrorMessage);
       return;
@@ -92,7 +98,7 @@ const TimeBox = ({ attendance, config, onTimeIn, onUpdate }) => {
     }
   };
 
-  const handleEndClick = () => {
+  const handleEndClick = async () => {
     if (isEndDisabled) {
       if (endErrorMessage) toast.error(endErrorMessage);
       return;
@@ -101,35 +107,31 @@ const TimeBox = ({ attendance, config, onTimeIn, onUpdate }) => {
   };
 
   return (
-    <div className="flex flex-col gap-2 border-light rounded-md p-5">
-      <span className="font-medium">{title}</span>
+    <div className="flex flex-col gap-2 border-light rounded-md p-5 container-light">
+      <h3 className="text-black">{title}</h3>
       <div className="flex gap-3">
-        <Button
-          className={`flex-1 hover:bg-[#${textColor}] hover:text-white font-bold transition-colors duration-200
+        <button
+          className={`flex-1 bg-blue-600 py-4 rounded-md text-white font-bold transition-colors duration-200
           ${isStartDisabled ? "cursor-not-allowed" : "cursor-pointer"}
           `}
-          style={{
-            backgroundColor: `#${bgColor}`,
-            color: `#${textColor}`,
-          }}
           onClick={handleStartClick}
         >
           {duration}
-        </Button>
+        </button>
         {isTwoBtn && (
-          <Button
-            className={`bg-red-600! hover:bg-red-700 p-2 transition-colors duration-200 ${
+          <button
+            className={`bg-blue-600 py-4 rounded-md p-2 transition-colors duration-200 ${
               isEndDisabled ? "cursor-not-allowed opacity-60" : ""
             }`}
             onClick={handleEndClick}
           >
             <Square />
-          </Button>
+          </button>
         )}
       </div>
       <div className="flex items-center justify-between text-sm">
-        <span>
-          Started: {startTime ? formatTime(startTime) : "Not recorded"}
+        <span className="text-light">
+          Recorded on: {startTime ? formatTime(startTime) : "Not recorded"}
         </span>
         {fieldTwo && (
           <span>
