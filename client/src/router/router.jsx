@@ -66,6 +66,8 @@ import AdminMeeting from "../pages/admin/AdminMeeting";
 import AdminHistory from "../pages/admin/AdminHistory";
 import SharedSettings from "../pages/shared/SharedSettings";
 import ResetPassword from "../pages/global/ResetPassword";
+import SharedTeamManagement from "../pages/shared/SharedTeamManagement";
+import SharedTeamViewMembers from "../pages/shared/SharedTeamViewMembers";
 // TODO: After unit test remove this routes including the files ---
 
 const router = createBrowserRouter([
@@ -170,6 +172,14 @@ const router = createBrowserRouter([
               {
                 path: "monitoring",
                 element: <MonitoringLayout />,
+              },
+              {
+                path: "team",
+                element: <SharedTeamManagement />,
+              },
+              {
+                path: "team/:id",
+                element: <SharedTeamViewMembers />,
               },
               // TODO: remove
               // { path: "schedule", element: <TeamLeaderSchedule /> },
