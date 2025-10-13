@@ -163,42 +163,44 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
             </div>
           </div>
 
-          {/* Timer Display */}
-          <div className="flex items-center justify-center gap-4 mb-8">
-            <h3 className="font-bold">{hours}</h3>
-            <h3 className="font-bold">:</h3>
-            <h3 className="font-bold">{minutes}</h3>
-            <h3 className="font-bold">:</h3>
-            <h3 className="font-bold">{seconds}</h3>
-          </div>
+          {loading ? (
+            <Spinner />
+          ) : (
+            <>
+              {/* Timer Display */}
+              <div className="flex items-center justify-center gap-4 mb-8">
+                <h3 className="font-bold">{hours}</h3>
+                <h3 className="font-bold">:</h3>
+                <h3 className="font-bold">{minutes}</h3>
+                <h3 className="font-bold">:</h3>
+                <h3 className="font-bold">{seconds}</h3>
+              </div>
 
-          {/* Buttons */}
-          <div className="flex gap-4 justify-center">
-            {loading ? (
-              <Spinner />
-            ) : (
-              <button
-                onClick={handleStartPause}
-                className={`px-12 py-4 rounded-md font-semibold text-lg transition-all cursor-pointer ${
-                  isRunning
-                    ? "bg-red-500 hover:bg-red-600 text-white"
-                    : "bg-blue-600 hover:bg-blue-700 text-white"
-                }`}
-              >
-                {isRunning ? (
-                  <span className="flex items-center gap-2">
-                    <span className="inline-block w-4 h-4 bg-white"></span>
-                    Pause
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <span className="inline-block w-0 h-0 border-t-8 border-t-transparent border-l-12 border-l-white border-b-8 border-b-transparent ml-1"></span>
-                    Start
-                  </span>
-                )}
-              </button>
-            )}
-          </div>
+              {/* Buttons */}
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={handleStartPause}
+                  className={`px-12 py-4 rounded-md font-semibold text-lg transition-all cursor-pointer ${
+                    isRunning
+                      ? "bg-red-500 hover:bg-red-600 text-white"
+                      : "bg-blue-600 hover:bg-blue-700 text-white"
+                  }`}
+                >
+                  {isRunning ? (
+                    <span className="flex items-center gap-2">
+                      <span className="inline-block w-4 h-4 bg-white"></span>
+                      Pause
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <span className="inline-block w-0 h-0 border-t-8 border-t-transparent border-l-12 border-l-white border-b-8 border-b-transparent ml-1"></span>
+                      Start
+                    </span>
+                  )}
+                </button>
+              </div>
+            </>
+          )}
         </>
       )}
     </section>
