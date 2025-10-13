@@ -131,6 +131,12 @@ class Attendance {
     return attendances;
   }
 
+  static async getByDocId(docId) {
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+    return await collection.findOne({ _id: new ObjectId(docId) });
+  }
+
   /**
    * Get all attendance records for a specific user for today.
    *

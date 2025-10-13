@@ -1,12 +1,9 @@
 import { useRef, useState } from "react";
 import Table from "../../components/Table";
 import TableAction from "../../components/TableAction";
-import TableModal from "../../components/TableModal";
-import TableEmployeeDetails from "../../components/TableEmployeeDetails";
-import TableCalendarModal from "../../components/TableCalendarModal";
-import { Clock, FileText, FileDown } from "lucide-react";
+import { FileDown } from "lucide-react";
 import { Datepicker } from "flowbite-react";
-import { DateTime } from "luxon";
+import { DateTime, Duration } from "luxon";
 import { useAttendance } from "../../hooks/useAttendance";
 import exportCSV from "../../utils/exportCSV";
 import EmployeeModal from "../../components/modals/EmployeeModal";
@@ -108,25 +105,17 @@ const SharedTrackingHistory = () => {
     { headerName: "Time In", field: "timeIn", filter: false, flex: 1 },
     { headerName: "Time Out", field: "timeOut", filter: false, flex: 1 },
     {
-      headerName: "Morning Break",
+      headerName: "Overall Break Duration",
       filter: false,
       flex: 1,
       cellRenderer: (params) => {
-        const breakStart = params.data.firstBreakStart;
-        const breakEnd = params.data.firstBreakEnd;
-        return `${breakStart} - ${breakEnd}`;
+        const totalBreak = params.data.totalBreak;
+        const formattedTotalBreak =
+          Duration.fromMillis(totalBreak).toFormat("hh:mm:ss");
+        return `${formattedTotalBreak}`;
       },
     },
-    {
-      headerName: "Afternoon Break",
-      filter: false,
-      flex: 1,
-      cellRenderer: (params) => {
-        const breakStart = params.data.secondBreakStart;
-        const breakEnd = params.data.secondBreakEnd;
-        return `${breakStart} - ${breakEnd}`;
-      },
-    },
+
     { headerName: "Notes", field: "notes", filter: false, flex: 1 },
     {
       headerName: "Action",
@@ -186,7 +175,6 @@ const SharedTrackingHistory = () => {
       {isModalOpen && (
         <EmployeeModal employee={selectedRow} onClose={handleModalOnClose} />
       )}
-
     </div>
   );
 };

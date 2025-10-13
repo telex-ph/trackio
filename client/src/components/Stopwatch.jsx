@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import api from "../utils/axios";
 import Spinner from "../assets/loaders/Spinner";
 import { STATUS } from "../constants/status";
-import { DateTime } from "luxon";
+import { DateTime, Duration } from "luxon";
 
 export default function Stopwatch({ attendance, fetchUserAttendance }) {
   const [time, setTime] = useState(0);
@@ -120,9 +120,17 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
   const maxTime = 90 * 60 * 1000;
   const progress = Math.min((time / maxTime) * 100, 100);
 
-  // const user = useStore((state) => state.user);
-  // const { attendance, loading, addAttendance, updateAttendance } =
-  //   useAttendance(user?._id);
+  const formatDuration = (ms) => {
+    if (!ms || ms <= 0) return "0h 0m 0s";
+
+    const dur = Duration.fromMillis(ms);
+
+    const hours = Math.floor(dur.as("hours"));
+    const minutes = Math.floor(dur.as("minutes") % 60);
+    const seconds = Math.floor(dur.as("seconds") % 60);
+
+    return `${hours}h ${minutes}m ${seconds}s`;
+  };
 
   return (
     <section className="container-light border-light rounded-md p-5 w-full">
@@ -137,54 +145,62 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
           </h3>
         </div>
       </div>
-      <div className="mb-4">
-        <div className="w-full bg-white rounded-md h-3 overflow-hidden border-light">
-          <div
-            className="bg-blue-600 h-full rounded-full transition-all duration-100"
-            style={{ width: `${progress}%` }}
-          ></div>
-        </div>
-        <div className="text-center mt-2 text-sm text-gray-500">
-          {progress.toFixed(1)}% of 1:30:00
-        </div>
-      </div>
+      {attendance?.status === STATUS.OOF ? (
+        <h3 className="text-black text-center p-7">
+          Overall Break Duration: {formatDuration(attendance.totalBreak || 0)}
+        </h3>
+      ) : (
+        <>
+          <div className="mb-4">
+            <div className="w-full bg-white rounded-md h-3 overflow-hidden border-light">
+              <div
+                className="bg-blue-600 h-full rounded-full transition-all duration-100"
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
+            <div className="text-center mt-2 text-sm text-gray-500">
+              {progress.toFixed(1)}% of 1:30:00
+            </div>
+          </div>
 
-      {/* Timer Display */}
-      <div className="flex items-center justify-center gap-4 mb-8">
-        <h3 className="font-bold">{hours}</h3>
-        <h3 className="font-bold">:</h3>
-        <h3 className="font-bold">{minutes}</h3>
-        <h3 className="font-bold">:</h3>
-        <h3 className="font-bold">{seconds}</h3>
-      </div>
+          {/* Timer Display */}
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <h3 className="font-bold">{hours}</h3>
+            <h3 className="font-bold">:</h3>
+            <h3 className="font-bold">{minutes}</h3>
+            <h3 className="font-bold">:</h3>
+            <h3 className="font-bold">{seconds}</h3>
+          </div>
 
-      {/* Buttons */}
-      <div className="flex gap-4 justify-center">
-        {loading ? (
-          <Spinner />
-        ) : (
-          <button
-            onClick={handleStartPause}
-            className={`px-12 py-4 rounded-md font-semibold text-lg transition-all cursor-pointer ${
-              isRunning
-                ? "bg-red-500 hover:bg-red-600 text-white"
-                : "bg-blue-600 hover:bg-blue-700 text-white"
-            }`}
-          >
-            {isRunning ? (
-              <span className="flex items-center gap-2">
-                <span className="inline-block w-4 h-4 bg-white"></span>
-                Pause
-              </span>
+          {/* Buttons */}
+          <div className="flex gap-4 justify-center">
+            {loading ? (
+              <Spinner />
             ) : (
-              <span className="flex items-center gap-2">
-                <span className="inline-block w-0 h-0 border-t-8 border-t-transparent border-l-12 border-l-white border-b-8 border-b-transparent ml-1"></span>
-                Start
-              </span>
+              <button
+                onClick={handleStartPause}
+                className={`px-12 py-4 rounded-md font-semibold text-lg transition-all cursor-pointer ${
+                  isRunning
+                    ? "bg-red-500 hover:bg-red-600 text-white"
+                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                }`}
+              >
+                {isRunning ? (
+                  <span className="flex items-center gap-2">
+                    <span className="inline-block w-4 h-4 bg-white"></span>
+                    Pause
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <span className="inline-block w-0 h-0 border-t-8 border-t-transparent border-l-12 border-l-white border-b-8 border-b-transparent ml-1"></span>
+                    Start
+                  </span>
+                )}
+              </button>
             )}
-          </button>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </section>
   );
 }

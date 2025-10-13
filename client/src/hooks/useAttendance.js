@@ -131,6 +131,8 @@ export const useAttendance = (userId, filter) => {
           accounts,
           notes: item.notes,
           status: item.status,
+          breaks: item.breaks,
+          totalBreak: item.totalBreak,
         };
       });
 

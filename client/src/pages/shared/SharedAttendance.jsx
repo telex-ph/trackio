@@ -67,6 +67,7 @@ const SharedAttendance = () => {
                   onTimeIn={addAttendance}
                   onUpdate={updateAttendance}
                   user={user}
+                  fetchUserAttendance={fetchUserAttendance}
                 />
                 <section>
                   <Stopwatch
@@ -85,6 +86,7 @@ const SharedAttendance = () => {
                 onTimeIn={addAttendance}
                 onUpdate={updateAttendance}
                 user={user}
+                fetchUserAttendance={fetchUserAttendance}
               />
             );
           }

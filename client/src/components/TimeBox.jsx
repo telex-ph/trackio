@@ -5,7 +5,13 @@ import { formatTime } from "../utils/formatDateTime";
 import toast from "react-hot-toast";
 import { calculateDuration, getButtonState } from "../utils/attendanceHelpers";
 
-const TimeBox = ({ attendance, config, onTimeIn, onUpdate }) => {
+const TimeBox = ({
+  attendance,
+  config,
+  onTimeIn,
+  onUpdate,
+  fetchUserAttendance,
+}) => {
   const {
     title,
     isTwoBtn,
@@ -79,7 +85,7 @@ const TimeBox = ({ attendance, config, onTimeIn, onUpdate }) => {
     attendance?.timeIn,
   ]);
 
-  const handleStartClick = () => {
+  const handleStartClick = async () => {
     if (isStartDisabled) {
       if (startErrorMessage) toast.error(startErrorMessage);
       return;
@@ -92,7 +98,7 @@ const TimeBox = ({ attendance, config, onTimeIn, onUpdate }) => {
     }
   };
 
-  const handleEndClick = () => {
+  const handleEndClick = async () => {
     if (isEndDisabled) {
       if (endErrorMessage) toast.error(endErrorMessage);
       return;
@@ -101,8 +107,8 @@ const TimeBox = ({ attendance, config, onTimeIn, onUpdate }) => {
   };
 
   return (
-    <div className="flex flex-col gap-2 border-light rounded-md p-5">
-      <span className="font-medium">{title}</span>
+    <div className="flex flex-col gap-2 border-light rounded-md p-5 container-light">
+      <h3 className="text-black">{title}</h3>
       <div className="flex gap-3">
         <button
           className={`flex-1 bg-blue-600 py-4 rounded-md text-white font-bold transition-colors duration-200
@@ -124,7 +130,7 @@ const TimeBox = ({ attendance, config, onTimeIn, onUpdate }) => {
         )}
       </div>
       <div className="flex items-center justify-between text-sm">
-        <span>
+        <span className="text-light">
           Recorded on: {startTime ? formatTime(startTime) : "Not recorded"}
         </span>
         {fieldTwo && (

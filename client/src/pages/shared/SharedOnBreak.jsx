@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import Table from "../../components/Table";
-import { DateTime } from "luxon";
+import { DateTime, Duration } from "luxon";
 import { useAttendance } from "../../hooks/useAttendance";
+import { dateFormatter, formatTime } from "../../utils/formatDateTime";
 
 const SharedOnBreak = () => {
   const fmt = "hh:mm a";
@@ -19,8 +20,6 @@ const SharedOnBreak = () => {
   };
 
   const { attendancesByStatus, loading } = useAttendance(null, filter);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null);
 
   // Columns
   const columns = [
@@ -47,27 +46,37 @@ const SharedOnBreak = () => {
       flex: 1,
     },
     {
-      headerName: "Morning Break",
+      headerName: "Start of Break",
       filter: false,
       flex: 1,
       cellRenderer: (params) => {
-        console.log(params.data);
-
-        const breakStart = params.data.firstBreakStart;
-        const breakEnd = params.data.firstBreakEnd;
-        return `${breakStart} - ${breakEnd}`;
+        const item = params.data;
+        const latest = item.breaks[item.breaks.length - 1].start;
+        const formattedStartBreak = formatTime(latest);
+        return `${formattedStartBreak}`;
       },
     },
     {
-      headerName: "Afternoon Break",
+      headerName: "Overall Duration",
       filter: false,
       flex: 1,
       cellRenderer: (params) => {
-        const breakStart = params.data.secondBreakStart;
-        const breakEnd = params.data.secondBreakEnd;
-        return `${breakStart} - ${breakEnd}`;
+        const totalBreak = params.data.totalBreak;
+        const formattedTotalBreak =
+          Duration.fromMillis(totalBreak).toFormat("hh:mm:ss");
+        return `${formattedTotalBreak}`;
       },
     },
+    // {
+    //   headerName: "Afternoon Break",
+    //   filter: false,
+    //   flex: 1,
+    //   cellRenderer: (params) => {
+    //     const breakStart = params.data.secondBreakStart;
+    //     const breakEnd = params.data.secondBreakEnd;
+    //     return `${breakStart} - ${breakEnd}`;
+    //   },
+    // },
     // {
     //   headerName: "Extended Break Duration",
     //   field: "extendedBreak",

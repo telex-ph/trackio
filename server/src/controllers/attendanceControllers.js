@@ -82,6 +82,30 @@ export const updateAttendance = async (req, res) => {
       }
     });
 
+    if (status === STATUS.OOF) {
+      const attendance = await Attendance.getByDocId(id);
+      const breaks = attendance.breaks;
+      const latestBreak = breaks[breaks.length - 1];
+
+      if (!latestBreak.end) {
+        const now = DateTime.now().setZone("Asia/Manila");
+        latestBreak.end = now.toJSDate();
+
+        const start = DateTime.fromJSDate(latestBreak.start).setZone(
+          "Asia/Manila"
+        );
+
+        const diffInMs = now.diff(start, "milliseconds").milliseconds;
+        latestBreak.duration = diffInMs;
+
+        const previousTotal = attendance.totalBreak || 0;
+        const newTotalBreak = previousTotal + diffInMs;
+
+        await Attendance.updateFieldById(id, "breaks", breaks);
+        await Attendance.updateFieldById(id, "totalBreak", newTotalBreak);
+      }
+    }
+
     const response = await Attendance.updateById(id, fields, status);
     res.status(200).json(response);
   } catch (error) {
