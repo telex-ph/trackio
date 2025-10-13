@@ -225,6 +225,7 @@ export const useAttendance = (userId, filter) => {
   return {
     attendance,
     attendancesByStatus,
+    fetchUserAttendance,
     absentees,
     loading,
     error,

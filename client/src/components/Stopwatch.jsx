@@ -1,15 +1,44 @@
 import { useState, useEffect, useRef } from "react";
-import { useAttendance } from "../hooks/useAttendance";
-import { useStore } from "../store/useStore";
-import { STATUS } from "../constants/status";
-import { ATTENDANCE_FIELDS } from "../constants/attendance";
 import toast from "react-hot-toast";
 import api from "../utils/axios";
+import Spinner from "../assets/loaders/Spinner";
+import { STATUS } from "../constants/status";
+import { DateTime } from "luxon";
 
-export default function Stopwatch() {
+export default function Stopwatch({ attendance, fetchUserAttendance }) {
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
+  const [loading, setLoading] = useState(false);
   const intervalRef = useRef(null);
+
+  useEffect(() => {
+    if (attendance?.breaks?.length > 0) {
+      const latestBreak = attendance.breaks[attendance.breaks.length - 1];
+
+      // Convert total break (from DB, in ms)
+      let baseTime = attendance.totalBreak || 0;
+
+      // If ongoing break (no end time)
+      if (latestBreak && !latestBreak.end) {
+        const start = DateTime.fromISO(latestBreak.start).setZone(
+          "Asia/Manila"
+        );
+        const now = DateTime.now().setZone("Asia/Manila");
+        const ongoingMs = now.diff(start, "milliseconds").milliseconds;
+        baseTime += ongoingMs; // add ongoing duration to total
+      }
+
+      setTime(baseTime);
+    }
+  }, [attendance]);
+
+  useEffect(() => {
+    if (attendance?.status === STATUS.ON_BREAK) {
+      setIsRunning(true);
+    } else if (attendance?.status === STATUS.WORKING) {
+      setIsRunning(false);
+    }
+  }, [attendance?.status]);
 
   useEffect(() => {
     if (isRunning) {
@@ -44,22 +73,35 @@ export default function Stopwatch() {
 
   const { hours, minutes, seconds } = formatTime(time);
 
-  const user = useStore((state) => state.user);
   const handleStartPause = async () => {
+    if (!attendance) {
+      toast.error("Please time in first before starting your break.");
+      return;
+    }
+
+    if (attendance.timeOut) {
+      toast.error("You have already timed out for today.");
+      return;
+    }
+
     try {
+      setLoading(true);
       if (!isRunning) {
-        // 🟢 START BREAK
-        const res = await api.post("/attendance/start", {
-          userId: user?._id,
+        const res = await api.patch("/attendance/update-break-start", {
+          docId: attendance._id,
+          breaks: attendance.breaks || [],
+          totalBreak: time,
         });
         toast.success("Break started!");
         console.log("Break started:", res.data);
       } else {
         // 🔴 END BREAK
-        const res = await api.patch("/attendance/end", {
-          userId: user?._id,
+        const res = await api.patch("/attendance/update-break-pause", {
+          docId: attendance._id,
+          breaks: attendance.breaks || [],
+          totalBreak: time,
         });
-        toast.success("Break ended!");
+        toast.success("Break stopped!");
         console.log("Break ended:", res.data);
       }
 
@@ -69,6 +111,9 @@ export default function Stopwatch() {
       toast.error(
         err.response?.data?.error || "Something went wrong. Please try again."
       );
+    } finally {
+      await fetchUserAttendance();
+      setLoading(false);
     }
   };
 
@@ -115,26 +160,30 @@ export default function Stopwatch() {
 
       {/* Buttons */}
       <div className="flex gap-4 justify-center">
-        <button
-          onClick={handleStartPause}
-          className={`px-12 py-4 rounded-md font-semibold text-lg transition-all cursor-pointer ${
-            isRunning
-              ? "bg-red-500 hover:bg-red-600 text-white"
-              : "bg-blue-600 hover:bg-blue-700 text-white"
-          }`}
-        >
-          {isRunning ? (
-            <span className="flex items-center gap-2">
-              <span className="inline-block w-4 h-4 bg-white"></span>
-              Pause
-            </span>
-          ) : (
-            <span className="flex items-center gap-2">
-              <span className="inline-block w-0 h-0 border-t-8 border-t-transparent border-l-12 border-l-white border-b-8 border-b-transparent ml-1"></span>
-              Start
-            </span>
-          )}
-        </button>
+        {loading ? (
+          <Spinner />
+        ) : (
+          <button
+            onClick={handleStartPause}
+            className={`px-12 py-4 rounded-md font-semibold text-lg transition-all cursor-pointer ${
+              isRunning
+                ? "bg-red-500 hover:bg-red-600 text-white"
+                : "bg-blue-600 hover:bg-blue-700 text-white"
+            }`}
+          >
+            {isRunning ? (
+              <span className="flex items-center gap-2">
+                <span className="inline-block w-4 h-4 bg-white"></span>
+                Pause
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                <span className="inline-block w-0 h-0 border-t-8 border-t-transparent border-l-12 border-l-white border-b-8 border-b-transparent ml-1"></span>
+                Start
+              </span>
+            )}
+          </button>
+        )}
       </div>
     </section>
   );

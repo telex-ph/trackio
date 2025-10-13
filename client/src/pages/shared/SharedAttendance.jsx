@@ -12,8 +12,13 @@ import Stopwatch from "../../components/Stopwatch";
 
 const SharedAttendance = () => {
   const user = useStore((state) => state.user);
-  const { attendance, loading, addAttendance, updateAttendance } =
-    useAttendance(user?._id);
+  const {
+    attendance,
+    loading,
+    addAttendance,
+    updateAttendance,
+    fetchUserAttendance,
+  } = useAttendance(user?._id);
 
   const { loading: scheduleLoading } = useSchedule({
     id: user?._id,
@@ -64,7 +69,10 @@ const SharedAttendance = () => {
                   user={user}
                 />
                 <section>
-                  <Stopwatch />
+                  <Stopwatch
+                    attendance={attendance}
+                    fetchUserAttendance={fetchUserAttendance}
+                  />
                 </section>
               </>
             );
