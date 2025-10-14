@@ -1,13 +1,46 @@
+import { ObjectId } from "mongodb";
 import User from "../model/User.js";
 
 export const getUsers = async (req, res) => {
+  const { search } = req.query;
+
   try {
-    const users = await User.getAll();
+    const users = await User.getAll(search);
     res.status(200).json(users);
   } catch (error) {
     console.error("Error fetching users: ", error);
     res.status(500).json({
       message: "Failed to fetch list of users",
+      error: error.message,
+    });
+  }
+};
+
+export const updateUser = async (req, res) => {
+  const { id } = req.params;
+  let { field, newValue } = req.body;
+
+  try {
+    if (!field || newValue === undefined) {
+      return res
+        .status(400)
+        .json({ message: "field and newValue are required" });
+    }
+
+    if (typeof newValue === "string" && ObjectId.isValid(newValue)) {
+      newValue = new ObjectId(newValue);
+    }
+
+    const updatedUser = await User.update(id, field, newValue);
+
+    res.status(200).json({
+      message: "User updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({
+      message: "Failed to update user",
       error: error.message,
     });
   }

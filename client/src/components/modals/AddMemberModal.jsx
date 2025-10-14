@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { Label, TextInput, Radio } from "flowbite-react";
-import { Search } from "lucide-react";
+import { Info, Search, TriangleAlert } from "lucide-react";
 import api from "../../utils/axios";
 import toast from "react-hot-toast";
 import Table from "../../components/Table";
+import { Alert } from "flowbite-react";
 
 const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
   const [form, setForm] = useState({
@@ -19,7 +20,7 @@ const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
 
-  // Handle text input changes
+  // Handle text input
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -44,22 +45,29 @@ const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
     }
   };
 
-  // Submit handler
+  // Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       setLoading(true);
-
       if (userType === "existing") {
+        if (selectedUser.teamLeaderId) {
+          toast.error("This user is already assigned to another team leader.");
+          return;
+        }
+
         if (!selectedUser) {
           toast.error("Please select a user from the search results");
           return;
         }
 
-        await api.post("/group/add-member-existing", {
+        await api.patch(`/group/add-member/${selectedUser._id}`, {
           teamId,
-          userId: selectedUser._id,
+        });
+
+        await api.patch(`/user/update-user/${selectedUser._id}`, {
+          field: "groupId",
+          newValue: teamId,
         });
       } else {
         const { employeeId, firstName, lastName, email, phoneNumber } = form;
@@ -79,25 +87,23 @@ const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
         });
 
         const id = response.data._id;
-        await api.patch(`/group/add-member/${id}`, {
-          teamId,
-        });
+        await api.patch(`/group/add-member/${id}`, { teamId });
       }
 
       toast.success("Member added successfully!");
       onConfirm();
+      onClose();
     } catch (error) {
       console.error("Error adding member:", error);
       toast.error("Failed to add member");
     } finally {
       setLoading(false);
-      onClose();
     }
   };
 
   if (!isOpen) return null;
 
-  // AG Grid columns for search results
+  // AG Grid columns
   const columns = [
     { headerName: "First Name", field: "firstName", flex: 1 },
     { headerName: "Last Name", field: "lastName", flex: 1 },
@@ -135,7 +141,10 @@ const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
               id="existing"
               name="userType"
               checked={userType === "existing"}
-              onChange={() => setUserType("existing")}
+              onChange={() => {
+                setUserType("existing");
+                setSelectedUser(null);
+              }}
             />
             <span>Existing User</span>
           </label>
@@ -145,7 +154,11 @@ const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
               id="new"
               name="userType"
               checked={userType === "new"}
-              onChange={() => setUserType("new")}
+              onChange={() => {
+                setUserType("new");
+                setSearchResults([]);
+                setSelectedUser(null);
+              }}
             />
             <span>New User</span>
           </label>
@@ -154,69 +167,85 @@ const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
         {/* --- EXISTING USER MODE --- */}
         {userType === "existing" && (
           <div className="mb-4">
-            <Label htmlFor="searchUser" value="Search Agents" />
-            <div className="flex items-center gap-2">
-              <TextInput
-                id="searchUser"
-                name="searchUser"
-                placeholder="Search by name or email..."
-                className="w-full"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
-              />
-              <button
-                type="button"
-                onClick={() => handleSearch(searchTerm)}
-                className="bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center cursor-pointer"
-              >
-                <Search size={18} />
-              </button>
-            </div>
+            {/* Only show search if user not yet selected */}
+            {!selectedUser && (
+              <>
+                <Label htmlFor="searchUser" value="Search Agents" />
+                <div className="flex items-center gap-2">
+                  <TextInput
+                    id="searchUser"
+                    name="searchUser"
+                    placeholder="Search by name or email..."
+                    className="w-full"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleSearch(searchTerm)}
+                    className="bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center cursor-pointer"
+                  >
+                    <Search size={18} />
+                  </button>
+                </div>
+              </>
+            )}
 
             {/* Table Results */}
-            {searchResults.length > 0 && !selectedUser && (
+            {!selectedUser && searchResults.length > 0 && (
               <div className="mt-4">
                 <Table
                   data={searchResults}
                   columns={columns}
-                  onRowClicked={(row) => setSelectedUser(row.data)}
                   loading={loading}
+                  onRowClicked={(row) => setSelectedUser(row.data)}
                 />
               </div>
             )}
 
-            {/* Selected user view */}
+            {/* Selected user details */}
             {selectedUser && (
-              <div className="mt-4 border rounded-md p-4 bg-gray-50">
+              <div className="mt-4 rounded-md p-4 ">
                 <h4 className="font-semibold text-lg mb-2">Selected Agent</h4>
-                <p>
-                  <strong>ID:</strong> {selectedUser._id}
-                </p>
-                <p>
-                  <strong>Name:</strong> {selectedUser.firstName}{" "}
-                  {selectedUser.lastName}
-                </p>
-                <p>
-                  <strong>Email:</strong> {selectedUser.email}
-                </p>
-                <p>
-                  <strong>Phone:</strong> {selectedUser.phoneNumber}
-                </p>
-                <p>
-                  <strong>Status:</strong>{" "}
-                  {selectedUser.groupId ? (
-                    <span className="text-green-600 font-medium">
-                      Assigned to TL
+                <div className="space-y-1">
+                  <p>
+                    <strong>ID:</strong>{" "}
+                    <span className="text-light">{selectedUser._id}</span>
+                  </p>
+                  <p>
+                    <strong>Name:</strong>{" "}
+                    <span className="text-light">
+                      {selectedUser.firstName} {selectedUser.lastName}
                     </span>
-                  ) : (
-                    <span className="text-red-600 font-medium">Unassigned</span>
-                  )}
-                </p>
+                  </p>
+                  <p>
+                    <strong>Email:</strong>{" "}
+                    <span className="text-light">{selectedUser.email}</span>
+                  </p>
+                  <p>
+                    <strong>Phone:</strong>{" "}
+                    <span className="text-light">
+                      {selectedUser.phoneNumber || "N/A"}
+                    </span>
+                  </p>
+                  <div className="flex gap-1">
+                    <strong>Status:</strong>{" "}
+                    {selectedUser.groupId ? (
+                      <div className="flex gap-2 text-red-600 font-medium">
+                        <TriangleAlert className="w-5 h-5" />
+                        <span>Already assigned to another TL</span>
+                      </div>
+                    ) : (
+                      <span className="font-medium">Unassigned</span>
+                    )}
+                  </div>
+                </div>
 
                 <button
+                  type="button"
                   onClick={() => setSelectedUser(null)}
-                  className="mt-4 bg-gray-200 px-3 py-1 rounded-md hover:bg-gray-300"
+                  className="flex-1 bg-gray-200 text-gray-800 p-3 rounded-md font-medium hover:bg-gray-300 transition-colors text-sm sm:text-base cursor-pointer mt-4"
                 >
                   Back to Search
                 </button>
@@ -288,10 +317,28 @@ const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
                 onChange={handleChange}
               />
             </div>
+
+            <section>
+              <Alert
+                color="info"
+                icon={Info}
+                rounded
+                className="border border-blue-200"
+              >
+                <span className="font-medium text-blue-900 text-sm!">
+                  New Member Information
+                </span>
+                <p className="text-sm! text-blue-800 mt-1">
+                  New members should request a new password by clicking{" "}
+                  <strong>"Forgot Password"</strong> on the login page to
+                  securely access their account.
+                </p>
+              </Alert>
+            </section>
           </div>
         )}
 
-        {/* --- Footer Buttons --- */}
+        {/* Footer Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 mt-8">
           <button
             type="button"

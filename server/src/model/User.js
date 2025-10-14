@@ -56,13 +56,30 @@ class User {
     return user;
   }
 
-  static async getAll() {
+  static async getAll(search = "") {
     const db = await connectDB();
     const collection = db.collection(this.#collection);
 
-    // Get all users scheduled today
+    const query = { role: "agent" };
+
+    if (search && search.trim()) {
+      const regex = new RegExp(`^${search}`, "i");
+      const conditions = [
+        { firstName: regex },
+        { lastName: regex },
+        { email: regex },
+      ];
+
+      if (/^[a-fA-F0-9]{24}$/.test(search)) {
+        conditions.push({ _id: new ObjectId(search) });
+      }
+
+      query.$or = conditions;
+    }
+
     const users = await collection
-      .find({}, { projection: { password: 0 } })
+      .find(query, { projection: { password: 0 } })
+      .limit(20)
       .toArray();
 
     return users;
@@ -236,6 +253,36 @@ class User {
       .find({ shiftDays: weekday }, { projection: { password: 0 } })
       .toArray();
     return usersOnShift;
+  }
+
+  static async update(id, field, newValue) {
+    if (!id) {
+      throw new Error("ID is required");
+    }
+    if (!field) {
+      throw new Error("Field is required");
+    }
+
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+
+    const updateData = { [field]: newValue };
+
+    const result = await collection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updateData }
+    );
+
+    if (result.matchedCount === 0) {
+      throw new Error("User not found");
+    }
+
+    const updatedUser = await collection.findOne(
+      { _id: new ObjectId(id) },
+      { projection: { password: 0 } }
+    );
+
+    return updatedUser;
   }
 }
 

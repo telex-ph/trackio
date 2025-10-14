@@ -40,13 +40,15 @@ const SharedTeamViewMembers = () => {
   const handleDelete = async () => {
     if (!selectedMember) return;
 
-    console.log(selectedMember._id);
-    console.log(teamId);
-
     try {
       setLoading(true);
       await api.patch(`/group/remove-member/${selectedMember._id}`, {
         groupId: teamId,
+      });
+
+      await api.patch(`/user/update-user/${selectedMember._id}`, {
+        field: "groupId",
+        newValue: null,
       });
       toast.success(`${selectedMember.firstName} has been removed`);
       fetchTeamMember();
