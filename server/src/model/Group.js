@@ -4,7 +4,7 @@ import { ObjectId } from "mongodb";
 class Group {
   static #collection = "groups";
 
-  static async getUserGroup(id) {
+  static async getAll(id) {
     if (!id) {
       throw new Error("ID is required");
     }
@@ -49,6 +49,48 @@ class Group {
     return groups;
   }
 
+  static async get(id) {
+    if (!id) {
+      throw new Error("ID is required");
+    }
+
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+
+    const result = await collection
+      .aggregate([
+        { $match: { teamLeaderId: new ObjectId(id) } },
+        {
+          $lookup: {
+            from: "accounts",
+            localField: "accountIds",
+            foreignField: "_id",
+            as: "accounts",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "agentIds",
+            foreignField: "_id",
+            as: "agents",
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            teamLeaderId: 1,
+            createdAt: 1,
+            accounts: { _id: 1, name: 1, createdAt: 1 },
+            agents: { _id: 1, firstName: 1, lastName: 1, email: 1 },
+          },
+        },
+      ])
+      .toArray();
+    return result[0] || null;
+  }
+
   static async addGroup(teamLeaderId, name) {
     if (!name || !teamLeaderId) {
       throw new Error("Group name and teamLeaderId are required");
@@ -90,10 +132,65 @@ class Group {
     return result.modifiedCount; // return number of updated documents
   }
 
-  static async getById(id) {
+  static async addMember(groupId, userId) {
+    if (!groupId || !userId) {
+      throw new Error("Group ID and User ID are required");
+    }
+
     const db = await connectDB();
     const collection = db.collection(this.#collection);
-    return await collection.findOne({ _id: new ObjectId(id) });
+
+    const groupObjectId = new ObjectId(groupId);
+    const userObjectId = new ObjectId(userId);
+
+    // Find the group first
+    const group = await collection.findOne({ _id: groupObjectId });
+    if (!group) {
+      throw new Error("Group not found");
+    }
+
+    // Check if user is already a member
+    const alreadyMember =
+      (group.agentIds && group.agentIds.includes(userObjectId)) ||
+      (group.accountIds && group.accountIds.includes(userObjectId));
+
+    if (alreadyMember) {
+      throw new Error("User is already a member of this group");
+    }
+
+    // Add to agentIds array
+    const update = await collection.updateOne(
+      { _id: groupObjectId },
+      { $push: { agentIds: userObjectId } }
+    );
+
+    if (update.modifiedCount === 0) {
+      throw new Error("Failed to add member to the group");
+    }
+
+    // Return updated group
+    const updatedGroup = await collection.findOne({ _id: groupObjectId });
+    return updatedGroup;
+  }
+
+  static async removeMember(groupId, userId) {
+    if (!groupId || !userId) {
+      throw new Error("groupId and userId are required");
+    }
+
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+
+    const result = await collection.updateOne(
+      { _id: new ObjectId(groupId) },
+      { $pull: { agentIds: new ObjectId(userId) } }
+    );
+
+    if (result.modifiedCount === 0) {
+      throw new Error("Member not found or already removed");
+    }
+
+    return { message: "Member removed successfully" };
   }
 }
 

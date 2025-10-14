@@ -13,6 +13,20 @@ export const getUsers = async (req, res) => {
   }
 };
 
+export const addUser = async (req, res) => {
+  try {
+    const userData = req.body;
+    const newUser = await User.addUser(userData);
+    res.status(201).json(newUser);
+  } catch (error) {
+    console.error("Error adding user:", error);
+    res.status(500).json({
+      message: "Failed to add user",
+      error: error.message,
+    });
+  }
+};
+
 export const getUser = async (req, res) => {
   const id = req.params.id;
   try {

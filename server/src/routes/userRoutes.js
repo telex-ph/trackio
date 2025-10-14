@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  addUser,
   getUser,
   getUsers,
   getUsersByRoleScope,
@@ -7,6 +8,8 @@ import {
 const router = express.Router();
 
 router.get("/get-users", getUsers);
+
+router.post("/add-user", addUser);
 
 router.get("/get-user/:id", getUser);
 

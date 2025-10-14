@@ -3,14 +3,20 @@ import {
   getUserGroups,
   addGroup,
   updateGroup,
-  getGroupMembers,
+  getGroup,
+  addMember,
+  removeMember,
 } from "../controllers/groupController.js";
 
 const router = express.Router();
 
 router.get("/get-groups/:id", getUserGroups);
 
-router.get("/get-group-members/:id", getGroupMembers);
+router.patch("/add-member/:id", addMember);
+
+router.patch("/remove-member/:id", removeMember);
+
+router.get("/get-group/:id", getGroup);
 
 router.post("/add-group", addGroup);
 

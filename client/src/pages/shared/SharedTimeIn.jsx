@@ -111,13 +111,6 @@ const SharedTimeIn = () => {
       flex: 2,
     },
     {
-      headerName: "Account",
-      field: "accounts",
-      sortable: true,
-      filter: true,
-      flex: 2,
-    },
-    {
       headerName: "Shift Start",
       field: "shiftStart",
       sortable: true,

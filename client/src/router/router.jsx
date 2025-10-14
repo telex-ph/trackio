@@ -174,11 +174,11 @@ const router = createBrowserRouter([
                 element: <MonitoringLayout />,
               },
               {
-                path: "team",
+                path: "manage-team",
                 element: <SharedTeamManagement />,
               },
               {
-                path: "team/:id",
+                path: "team",
                 element: <SharedTeamViewMembers />,
               },
               // TODO: remove

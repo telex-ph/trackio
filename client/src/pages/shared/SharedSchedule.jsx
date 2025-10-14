@@ -39,9 +39,9 @@ const SharedSchedule = ({ role }) => {
   // Columns for Frontoffice (without department)
   const frontofficeColumns = [
     { headerName: "ID", field: "id", flex: 1 },
-    { headerName: "Name", field: "name", flex: 2 },
-    { headerName: "Accounts", field: "accounts", flex: 2 },
-    { headerName: "Group", field: "groupName", flex: 2 },
+    { headerName: "First Name", field: "firstName", flex: 1 },
+    { headerName: "Last Name", field: "lastName", flex: 1 },
+    { headerName: "Email", field: "email", flex: 1 },
     {
       headerName: "Upcoming Schedules",
       field: "upcomingScheduleCount",

@@ -21,6 +21,30 @@ class User {
     return user;
   }
 
+  static async addUser(data) {
+    if (!data.firstName || !data.lastName || !data.email) {
+      throw new Error("Missing required fields");
+    }
+
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+
+    const newUser = {
+      employeeId: data.employeeId || null,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      groupId: new ObjectId(data.teamId),
+      email: data.email.toLowerCase(),
+      phoneNumber: data.phoneNumber || null,
+      role: data.role || "agent",
+      password: "$2a$10$1jHppZ6SOnm4wnTMDg0kPOY9FHu/0L31MdP50WaeGmnVkLpeLPpau",
+      createdAt: new Date(),
+    };
+
+    const result = await collection.insertOne(newUser);
+    return { _id: result.insertedId, ...newUser };
+  }
+
   static async getByEmail(email) {
     if (!email) {
       throw new Error("Email is required");
