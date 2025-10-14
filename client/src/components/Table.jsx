@@ -8,7 +8,7 @@ import "@ag-grid-community/styles/ag-theme-quartz.css";
 
 ModuleRegistry.registerModules([ClientSideRowModelModule]);
 
-const Table = ({ data, columns, tableRef }) => {
+const Table = ({ data, columns, tableRef, onRowClicked }) => {
   const gridRef = useRef();
 
   const defaultColDef = useMemo(
@@ -40,6 +40,7 @@ const Table = ({ data, columns, tableRef }) => {
           pagination={true}
           paginationPageSize={15}
           paginationPageSizeSelector={[15, 25, 50]}
+          onRowClicked={onRowClicked ? onRowClicked : null}
         />
       </div>
     </section>

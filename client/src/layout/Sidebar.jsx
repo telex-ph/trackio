@@ -14,6 +14,7 @@ import {
   BookPlus,
   List,
   GalleryVerticalEnd,
+  Users,
 } from "lucide-react";
 import { useStore } from "../store/useStore";
 import Role from "../constants/roles";
@@ -160,6 +161,12 @@ const TeamLeaderSidebar = ({
         isCollapsed={isCollapsed}
       />
     </CustomCollapse>
+    <SidebarLink
+      to="/team-leader/team"
+      icon={Users}
+      label="Team"
+      isCollapsed={isCollapsed}
+    />
     <SidebarLink
       to="/team-leader/coaching"
       icon={Video}

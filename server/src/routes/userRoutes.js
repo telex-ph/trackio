@@ -1,12 +1,18 @@
 import express from "express";
 import {
+  addUser,
   getUser,
   getUsers,
   getUsersByRoleScope,
+  updateUser,
 } from "../controllers/userControllers.js";
 const router = express.Router();
 
 router.get("/get-users", getUsers);
+
+router.post("/add-user", addUser);
+
+router.patch("/update-user/:id", updateUser);
 
 router.get("/get-user/:id", getUser);
 
