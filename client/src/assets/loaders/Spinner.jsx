@@ -1,7 +1,7 @@
 export default function Spinner({
   size = 40,
-  color1 = "#470905",
-  color2 = "#967171",
+  color1 = "#1a56db",
+  color2 = "#FAF9F6",
 }) {
   return (
     <div className="flex items-center justify-center">

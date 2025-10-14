@@ -44,6 +44,10 @@
   font-style: normal;
 }
 
+:root {
+  --primary-color: #1a56db;
+}
+
 *,
 *::before,
 *::after {
@@ -95,7 +99,6 @@ h6 {
 }
 /* Splash background gradient animation */
 .splash-bg {
-  background: linear-gradient(135deg, #470905, #800000, #ff1a1a);
   background-size: 400% 400%;
   animation: gradientMove 6s ease infinite;
 }
