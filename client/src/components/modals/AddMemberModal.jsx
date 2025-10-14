@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { Label, TextInput, Radio } from "flowbite-react";
+import { Search } from "lucide-react";
 import api from "../../utils/axios";
 import toast from "react-hot-toast";
+import Table from "../../components/Table";
 
 const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
   const [form, setForm] = useState({
@@ -12,30 +14,37 @@ const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
     phoneNumber: "",
   });
   const [loading, setLoading] = useState(false);
-  const [userType, setUserType] = useState("new");
+  const [userType, setUserType] = useState("existing");
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
 
+  // Handle text input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Search function
   const handleSearch = async (value) => {
-    setSearchTerm(value);
     if (!value.trim()) {
-      setSearchResults([]);
+      toast.error("Please enter a search term");
       return;
     }
     try {
-      const res = await api.get(`/users/search?query=${value}`);
-      setSearchResults(res.data);
+      setLoading(true);
+      const res = await api.get(`/user/get-users?search=${value}`);
+      setSearchResults(res.data || []);
+      if (res.data.length === 0) toast("No users found.");
     } catch (error) {
       console.error("Search error:", error);
+      toast.error("Failed to search users");
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -88,14 +97,29 @@ const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
 
   if (!isOpen) return null;
 
+  // AG Grid columns for search results
+  const columns = [
+    { headerName: "First Name", field: "firstName", flex: 1 },
+    { headerName: "Last Name", field: "lastName", flex: 1 },
+    { headerName: "Email", field: "email", flex: 1 },
+    { headerName: "Phone", field: "phoneNumber", flex: 1 },
+    {
+      headerName: "Team Assigned",
+      field: "groupId",
+      flex: 1,
+      cellRenderer: (params) =>
+        params.value ? "Has TL Assigned" : "No TL Assigned",
+    },
+  ];
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Dark background (no blur) */}
+      {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/50"></div>
 
       <form
         onSubmit={handleSubmit}
-        className="relative bg-white rounded-xl p-10 max-w-2xl w-full shadow-2xl border border-gray-300"
+        className="relative bg-white rounded-xl p-10 max-w-6xl w-full shadow-2xl border border-gray-300 overflow-y-auto max-h-[90vh]"
       >
         <h3 className="text-2xl font-bold text-gray-800 text-center mb-3">
           Add New Member
@@ -104,7 +128,7 @@ const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
           Choose whether to add an existing user or create a new one manually.
         </p>
 
-        {/* Radio selection */}
+        {/* Radio selector */}
         <div className="flex gap-6 justify-center mb-6">
           <label className="flex items-center gap-2">
             <Radio
@@ -127,42 +151,81 @@ const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
           </label>
         </div>
 
-        {/* Existing User Search */}
+        {/* --- EXISTING USER MODE --- */}
         {userType === "existing" && (
           <div className="mb-4">
-            <Label htmlFor="searchUser" value="Search User by Name or Email" />
-            <TextInput
-              id="searchUser"
-              name="searchUser"
-              placeholder="Type to search..."
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && e.preventDefault()} // prevent accidental submit
-            />
-            {searchResults.length > 0 && (
-              <div className="mt-2 border rounded-md max-h-40 overflow-y-auto">
-                {searchResults.map((user) => (
-                  <div
-                    key={user._id}
-                    onClick={() => setSelectedUser(user)}
-                    className={`p-2 cursor-pointer hover:bg-blue-50 ${
-                      selectedUser?._id === user._id
-                        ? "bg-blue-100"
-                        : "bg-white"
-                    }`}
-                  >
-                    <p className="font-medium">
-                      {user.firstName} {user.lastName}
-                    </p>
-                    <p className="text-sm text-gray-500">{user.email}</p>
-                  </div>
-                ))}
+            <Label htmlFor="searchUser" value="Search Agents" />
+            <div className="flex items-center gap-2">
+              <TextInput
+                id="searchUser"
+                name="searchUser"
+                placeholder="Search by name or email..."
+                className="w-full"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
+              />
+              <button
+                type="button"
+                onClick={() => handleSearch(searchTerm)}
+                className="bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center cursor-pointer"
+              >
+                <Search size={18} />
+              </button>
+            </div>
+
+            {/* Table Results */}
+            {searchResults.length > 0 && !selectedUser && (
+              <div className="mt-4">
+                <Table
+                  data={searchResults}
+                  columns={columns}
+                  onRowClicked={(row) => setSelectedUser(row.data)}
+                  loading={loading}
+                />
+              </div>
+            )}
+
+            {/* Selected user view */}
+            {selectedUser && (
+              <div className="mt-4 border rounded-md p-4 bg-gray-50">
+                <h4 className="font-semibold text-lg mb-2">Selected Agent</h4>
+                <p>
+                  <strong>ID:</strong> {selectedUser._id}
+                </p>
+                <p>
+                  <strong>Name:</strong> {selectedUser.firstName}{" "}
+                  {selectedUser.lastName}
+                </p>
+                <p>
+                  <strong>Email:</strong> {selectedUser.email}
+                </p>
+                <p>
+                  <strong>Phone:</strong> {selectedUser.phoneNumber}
+                </p>
+                <p>
+                  <strong>Status:</strong>{" "}
+                  {selectedUser.groupId ? (
+                    <span className="text-green-600 font-medium">
+                      Assigned to TL
+                    </span>
+                  ) : (
+                    <span className="text-red-600 font-medium">Unassigned</span>
+                  )}
+                </p>
+
+                <button
+                  onClick={() => setSelectedUser(null)}
+                  className="mt-4 bg-gray-200 px-3 py-1 rounded-md hover:bg-gray-300"
+                >
+                  Back to Search
+                </button>
               </div>
             )}
           </div>
         )}
 
-        {/* New User Manual Form */}
+        {/* --- NEW USER MODE --- */}
         {userType === "new" && (
           <div className="space-y-4 mt-4">
             <div>
@@ -228,7 +291,7 @@ const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
           </div>
         )}
 
-        {/* Footer Buttons */}
+        {/* --- Footer Buttons --- */}
         <div className="flex flex-col sm:flex-row gap-4 mt-8">
           <button
             type="button"
