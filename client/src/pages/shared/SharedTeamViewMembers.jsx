@@ -23,8 +23,8 @@ const SharedTeamViewMembers = () => {
     try {
       setLoading(true);
       const response = await api.get(`/group/get-group/${user._id}`);
-      setMembers(response.data.agents || []);
-      setTeamId(response.data._id);
+      setMembers(response?.data?.agents || []);
+      setTeamId(response?.data?._id);
     } catch (error) {
       console.error("Error fetching user group:", error);
       toast.error("Failed to load team members");
