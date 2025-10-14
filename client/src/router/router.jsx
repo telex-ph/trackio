@@ -192,7 +192,7 @@ const router = createBrowserRouter([
                 element: (
                   <SharedViewSchedule
                     role={Roles.TEAM_LEADER}
-                    readOnly={true}
+                    readOnly={false}
                   />
                 ),
               },
