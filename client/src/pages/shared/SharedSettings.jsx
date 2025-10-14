@@ -203,7 +203,7 @@ const SharedSettings = () => {
                       onClick={() => setActiveSection(section.id)}
                       className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
                         activeSection === section.id
-                          ? "bg-gradient-to-r from-red-900 to-red-900 text-white shadow-lg transform scale-105"
+                          ? "bg-(--primary-color) from-red-900 to-red-900 text-white shadow-lg transform scale-105"
                           : "text-gray-600 hover:bg-red-50 hover:text-red-800"
                       }`}
                     >

@@ -72,8 +72,10 @@ const SidebarLink = ({ to, icon: Icon, label, isCollapsed }) => (
     className={({ isActive }) =>
       `flex items-center ${
         isCollapsed ? "justify-center px-2 py-2" : "gap-2 px-3 py-2"
-      } rounded-lg transition-colors duration-200 ${
-        isActive ? "bg-[#571A1A] text-white" : "text-black hover:bg-gray-100"
+      } rounded-md ${
+        isActive
+          ? "bg-(--primary-color) text-white"
+          : "text-black hover:bg-gray-100"
       }`
     }
   >

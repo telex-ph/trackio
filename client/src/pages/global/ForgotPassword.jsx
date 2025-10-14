@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Button, Label, TextInput, Alert } from "flowbite-react";
 import { HiInformationCircle } from "react-icons/hi";
 
-import telexLogo from "../../assets/logos/telex.png";
+import trackio from "../../assets/logos/trackio.svg";
 import ellipse from "../../assets/shapes/ellipse.svg";
 import telexvid from "../../assets/video/telexvid.mp4";
 import api from "../../utils/axios";
+import Wristwatch from "../../assets/illustrations/Wristwatch";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -62,11 +63,10 @@ const ForgotPassword = () => {
       {/* Left Side */}
       <div className="flex-1 flex flex-col justify-center p-8 lg:p-24 gap-10">
         <div className="flex flex-col gap-2">
-          <img src={telexLogo} alt="Telex PH" className="size-20 z-10" />
-          <h1 className="font-bold text-2xl text-[#470905]">Forgot Password</h1>
-          <p className="text-gray-600">
-            Enter your email and we’ll send you instructions to reset your
-            password.
+          <img src={trackio} alt="Telex PH" className="size-60 z-10 h-fit" />
+          <h1 className="font-bold">Login</h1>
+          <p className="text-light">
+            All fields are required. Make sure your details are correct.
           </p>
         </div>
 
@@ -111,8 +111,7 @@ const ForgotPassword = () => {
 
           <Button
             type="submit"
-            style={{ backgroundColor: "#470905" }}
-            className="hover:opacity-90 transition-opacity"
+            className="hover:opacity-90 transition-opacity bg-(--primary-color)"
             disabled={loading}
           >
             {loading ? "Sending..." : "Send Reset Link"}
@@ -120,29 +119,35 @@ const ForgotPassword = () => {
         </form>
 
         <p
-          className="underline text-sm cursor-pointer text-gray-500 mt-4 hover:text-[#470905] transition-colors"
+          className="underline text-sm cursor-pointer text-gray-500 mt-4 hover:text-(--primary-color) transition-colors"
           onClick={() => navigate("/login")}
         >
           Back to Login
         </p>
       </div>
 
+      <div className="flex-1 hidden lg:flex justify-center items-center flex-col overflow-hidden relative -z-10">
+        <section className="w-full h-full fixed -bottom-40">
+          <Wristwatch />
+        </section>
+      </div>
+
       {/* Right Side */}
-      <div className="flex-1 hidden lg:flex justify-center items-center flex-col bg-[#470905] relative rounded-l-lg p-24 overflow-hidden border border-[#582e2b]/40">
+      {/* <div className="flex-1 hidden lg:flex justify-center items-center flex-col hover:text-(--primary-color)] relative rounded-l-lg p-24 overflow-hidden border border-[#582e2b]/40">
         <img
           src={ellipse}
           className="absolute -top-64 -right-65"
           alt="Background Shape"
         />
 
-        {/* Logo + Title */}
+  
         <div
           className={`absolute inset-0 flex flex-col items-center justify-center gap-6 transition-all duration-[1500ms] ease-in-out ${
             showVideo ? "opacity-0" : "opacity-100"
           }`}
         >
           <img
-            src={telexLogo}
+           
             alt="Telex PH"
             className="w-3/4 h-3/4 object-contain"
           />
@@ -151,7 +156,7 @@ const ForgotPassword = () => {
           </p>
         </div>
 
-        {/* Video */}
+    
         {showVideo && (
           <video
             src={telexvid}
@@ -163,7 +168,7 @@ const ForgotPassword = () => {
             onEnded={() => setTimeout(() => setShowVideo(false), 500)} // smooth fade back
           />
         )}
-      </div>
+      </div> */}
     </section>
   );
 };

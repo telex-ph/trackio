@@ -103,9 +103,10 @@ const Topbar = ({ toggleSidebar }) => {
         className="flex items-center gap-0 md:gap-2 relative"
         ref={dropdownRef}
       >
-        <img src={telex} alt="TELEX" className="w-12 h-auto" />
         <div className="hidden sm:flex flex-col">
-          <span className="font-bold">{user?.firstName} {user?.lastName}</span>
+          <span className="font-bold">
+            {user?.firstName} {user?.lastName}
+          </span>
           <span className="text-sm">
             {user?.role
               ?.replace("-", " ")
@@ -116,7 +117,7 @@ const Topbar = ({ toggleSidebar }) => {
         {/* Dropdown Toggle */}
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="p-2 rounded hover:bg-[#6f2a2a] hover:[&>*]:text-white cursor-pointer"
+          className="p-2 rounded hover:bg-(--primary-color) hover:[&>*]:text-white cursor-pointer"
           aria-label="Open Account Dropdown"
         >
           <ChevronDown className="w-5 h-5" />

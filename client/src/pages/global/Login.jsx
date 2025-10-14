@@ -11,11 +11,12 @@ import {
 import api from "../../utils/axios";
 import { Eye, EyeClosed } from "lucide-react";
 import microsoftLogo from "../../assets/logos/microsoft.svg";
-import telexLogo from "../../assets/logos/telex.png";
+import trackio from "../../assets/logos/trackio.svg";
 import ellipse from "../../assets/shapes/ellipse.svg";
 import telexvid from "../../assets/video/telexvid.mp4";
 import Spinner from "../../assets/loaders/Spinner";
 import { useAuth } from "../../hooks/useAuth";
+import Wristwatch from "../../assets/illustrations/Wristwatch";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -67,7 +68,7 @@ const Login = () => {
       <div className="flex items-center justify-center h-screen splash-bg">
         <div className="flex flex-col items-center gap-4 animate-fadeIn">
           <img
-            src={telexLogo}
+            src={trackio}
             alt="Telex PH"
             className="w-72 h-72 md:w-80 md:h-80 animate-bounceShadow"
           />
@@ -86,7 +87,7 @@ const Login = () => {
       {/* Left Side */}
       <div className="flex-1 flex flex-col justify-center p-8 lg:p-24 gap-10">
         <div className="flex flex-col gap-2">
-          <img src={telexLogo} alt="Telex PH" className="size-20 z-10" />
+          <img src={trackio} alt="Telex PH" className="size-60 z-10 h-fit" />
           <h1 className="font-bold">Login</h1>
           <p className="text-light">
             All fields are required. Make sure your details are correct.
@@ -153,7 +154,7 @@ const Login = () => {
 
           <Button
             type="submit"
-            className={`bg-[#470905] hover:bg-[#470905]`}
+            className={`bg-(--primary-color) hover:bg-(--primary-color)`}
             disabled={isLoading}
           >
             {isLoading ? <Spinner width={5} height={5} /> : "Log In"}
@@ -161,18 +162,25 @@ const Login = () => {
         </form>
       </div>
 
+      <div className="flex-1 hidden lg:flex justify-center items-center flex-col overflow-hidden relative -z-10">
+        <section className="w-full h-full fixed -bottom-40">
+          <Wristwatch />
+        </section>
+      </div>
+
       {/* Right Side */}
-      <div className="flex-1 hidden lg:flex justify-center items-center flex-col bg-[#470905] relative rounded-l-lg p-24 overflow-hidden border border-[#582e2b]/40">
+      {/* <div className="flex-1 hidden lg:flex justify-center items-center flex-col bg-[#470905] relative rounded-l-lg p-24 overflow-hidden border border-[#582e2b]/40">
         <img
           src={ellipse}
           className="absolute -top-64 -right-65"
           alt="Background Shape"
-        />
+        /> */}
 
-        {/* Logo + Title */}
-        <div
-          className={`absolute inset-0 flex flex-col items-center justify-center gap-6 transition-all duration-1500 ease-in-out ${showVideo ? "opacity-0" : "opacity-100"
-            }`}
+      {/* Logo + Title */}
+      {/* <div
+          className={`absolute inset-0 flex flex-col items-center justify-center gap-6 transition-all duration-1500 ease-in-out ${
+            showVideo ? "opacity-0" : "opacity-100"
+          }`}
         >
           <img
             src={telexLogo}
@@ -182,20 +190,21 @@ const Login = () => {
           <p className="text-4xl md:text-5xl text-white text-center font-semibold">
             Business Support Services Inc.
           </p>
-        </div>
+        </div> */}
 
-        {/* Video (play once, then back to logo) */}
-        {showVideo && (
+      {/* Video (play once, then back to logo) */}
+      {/* {showVideo && (
           <video
             src={telexvid}
             autoPlay
             muted
-            className={`absolute  hidden lg:flex inset-0 w-full h-full object-cover rounded-l-lg transition-all duration-1500 ease-in-out ${showVideo ? "opacity-100" : "opacity-0"
-              }`}
+            className={`absolute  hidden lg:flex inset-0 w-full h-full object-cover rounded-l-lg transition-all duration-1500 ease-in-out ${
+              showVideo ? "opacity-100" : "opacity-0"
+            }`}
             onEnded={() => setShowVideo(false)}
           />
-        )}
-      </div>
+        )} */}
+      {/* </div> */}
     </section>
   );
 };
