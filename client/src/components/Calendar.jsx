@@ -181,7 +181,7 @@ const Calendar = ({ handleBtnsClick, loading, readOnly = false }) => {
 
         <button
           onClick={goToToday}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-(--primary-color) text-white rounded-lg transition-colors"
         >
           <Home className="w-4 h-4" />
           Today
@@ -304,7 +304,7 @@ const Calendar = ({ handleBtnsClick, loading, readOnly = false }) => {
                 ? "bg-blue-100 text-blue-800 font-bold"
                 : "";
               const selectedClass = isSelected(date)
-                ? "bg-blue-600 text-white"
+                ? "bg-(--primary-color) text-white"
                 : "";
               const currentMonthClass = isCurrentMonth
                 ? "text-gray-900"

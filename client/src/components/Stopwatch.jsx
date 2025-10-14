@@ -152,7 +152,7 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
           <div className="mb-4">
             <div className="w-full bg-white rounded-md h-3 overflow-hidden border-light">
               <div
-                className="bg-blue-600 h-full rounded-full transition-all duration-100"
+                className="bg-(--primary-color) h-full rounded-full transition-all duration-100"
                 style={{ width: `${progress}%` }}
               ></div>
             </div>
@@ -181,7 +181,7 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
                   className={`px-12 py-4 rounded-md font-semibold text-lg transition-all cursor-pointer ${
                     isRunning
                       ? "bg-red-500 hover:bg-red-600 text-white"
-                      : "bg-blue-600 hover:bg-blue-700 text-white"
+                      : "bg-(--primary-color) text-white"
                   }`}
                 >
                   {isRunning ? (
