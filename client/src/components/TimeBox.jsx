@@ -111,7 +111,7 @@ const TimeBox = ({
       <h3 className="text-black">{title}</h3>
       <div className="flex gap-3">
         <button
-          className={`flex-1 bg-blue-600 py-4 rounded-md text-white font-bold transition-colors duration-200
+          className={`flex-1 bg-(--primary-color) py-4 rounded-md text-white font-bold transition-colors duration-200
           ${isStartDisabled ? "cursor-not-allowed" : "cursor-pointer"}
           `}
           onClick={handleStartClick}
@@ -120,7 +120,7 @@ const TimeBox = ({
         </button>
         {isTwoBtn && (
           <button
-            className={`bg-blue-600 py-4 rounded-md p-2 transition-colors duration-200 ${
+            className={`bg-(--primary-color) py-4 rounded-md p-2 transition-colors duration-200 ${
               isEndDisabled ? "cursor-not-allowed opacity-60" : ""
             }`}
             onClick={handleEndClick}
