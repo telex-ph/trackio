@@ -47,7 +47,7 @@ const SharedAttendance = () => {
             Upcoming Biometric Integration
           </span>
           <p className="text-sm text-blue-900">
-            These five boxes will be replaced by the{" "}
+            These boxes will be replaced by the{" "}
             <strong>Biometric System</strong> once we move to the new office.
             After that, only <strong>duration data</strong> will be visible
             here.
