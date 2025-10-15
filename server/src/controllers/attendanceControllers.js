@@ -82,12 +82,16 @@ export const updateAttendance = async (req, res) => {
       }
     });
 
-    if (status === STATUS.OOF) {
-      const attendance = await Attendance.getByDocId(id);
+    const attendance = await Attendance.getByDocId(id);
+    if (
+      status === STATUS.OOF &&
+      attendance.breaks &&
+      attendance.breaks.length > 0
+    ) {
       const breaks = attendance.breaks;
-      const latestBreak = breaks[breaks.length - 1];
+      const latestBreak = breaks[breaks?.length - 1];
 
-      if (!latestBreak.end) {
+      if (breaks && !latestBreak.end) {
         const now = DateTime.now().setZone("Asia/Manila");
         latestBreak.end = now.toJSDate();
 

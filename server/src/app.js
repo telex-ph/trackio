@@ -17,6 +17,7 @@ import requestRoutes from "../src/routes/requestRoutes.js";
 import offenseRoutes from "./routes/offenseRoutes.js";
 import scheduleRoutes from "./routes/scheduleRoutes.js";
 import groupRoutes from "./routes/groupRoutes.js";
+import serverRoutes from "./routes/serverRoutes.js";
 
 const app = express();
 dotenv.config();
@@ -48,5 +49,6 @@ app.use("/api/requests", requestRoutes);
 app.use("/api/offenses", offenseRoutes);
 app.use("/api/schedule", scheduleRoutes);
 app.use("/api/group", groupRoutes);
+app.use("/api/server", serverRoutes);
 
 export default app;
