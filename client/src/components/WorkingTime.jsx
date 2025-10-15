@@ -17,24 +17,32 @@ const WorkingTime = ({ timeIn, timeOut }) => {
   const end = timeOut ? DateTime.fromISO(timeOut).setZone("Asia/Manila") : null;
 
   useEffect(() => {
+    let frameId;
+    let lastUpdate = 0;
+
     const update = () => {
       const now = end || DateTime.now().setZone("Asia/Manila");
-      const difference = now
+      const diff = now
         .diff(target, ["days", "hours", "minutes", "seconds"])
         .toObject();
-      setTime(difference);
+      setTime(diff);
     };
 
-    update();
+    const loop = (timestamp) => {
+      if (timestamp - lastUpdate >= 1000) {
+        lastUpdate = timestamp;
+        update();
+      }
+      frameId = requestAnimationFrame(loop);
+    };
 
-    let interval;
     if (!end) {
-      interval = setInterval(update, 1000);
+      frameId = requestAnimationFrame(loop);
+    } else {
+      update();
     }
 
-    return () => {
-      if (interval) clearInterval(interval);
-    };
+    return () => cancelAnimationFrame(frameId);
   }, [timeIn, timeOut]);
 
   return (
