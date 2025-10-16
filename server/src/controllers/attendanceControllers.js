@@ -148,8 +148,9 @@ export const updateBreakStart = async (req, res) => {
       : null,
   }));
 
+  const now = DateTime.now().setZone("Asia/Manila").toJSDate();
   const newBreak = {
-    start: DateTime.now().setZone("Asia/Manila").toJSDate(),
+    start: now,
   };
   const newBreaks = [...breaks, newBreak];
 
@@ -157,6 +158,7 @@ export const updateBreakStart = async (req, res) => {
     await Attendance.updateFieldById(docId, "breaks", newBreaks);
     await Attendance.updateFieldById(docId, "totalBreak", totalBreak);
     await Attendance.updateFieldById(docId, "status", STATUS.ON_BREAK);
+    await Attendance.updateFieldById(docId, "updatedAt", now);
     res.status(200).json({ message: "Updated successfully" });
   } catch (error) {
     console.error(`Error starting break in user attendance: `, error);
@@ -194,11 +196,25 @@ export const updateBreakPause = async (req, res) => {
     await Attendance.updateFieldById(docId, "breaks", breaks);
     await Attendance.updateFieldById(docId, "totalBreak", totalBreak);
     await Attendance.updateFieldById(docId, "status", STATUS.WORKING);
+    await Attendance.updateFieldById(docId, "updatedAt", end.toJSDate());
     return res.status(200).json({ message: "Updated successfully" });
   } catch (error) {
     console.error(`Error ending break in user attendance: `, error);
     res.status(500).json({
       message: `Failed to end break`,
+      error: error.message,
+    });
+  }
+};
+
+export const getAllOnBreak = async (req, res) => {
+  try {
+    const response = await Attendance.getAllOnBreak();
+    res.status(200).json(response);
+  } catch (error) {
+    console.error("Error fetching attendances on break: ", error);
+    res.status(500).json({
+      message: "Failed to fetch attendances on break",
       error: error.message,
     });
   }

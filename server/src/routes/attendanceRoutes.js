@@ -8,6 +8,7 @@ import {
   updateField,
   updateBreakStart,
   updateBreakPause,
+  getAllOnBreak,
 } from "../controllers/attendanceControllers.js";
 
 const router = Router();
@@ -15,6 +16,8 @@ const router = Router();
 router.post("/add-attendance/:id", verifyJWT, addAttendance);
 
 router.get("/get-attendances", verifyJWT, getAttendances);
+
+router.get("/get-all-onbreak", getAllOnBreak);
 
 router.get("/get-attendance/:id", verifyJWT, getAttendance);
 
