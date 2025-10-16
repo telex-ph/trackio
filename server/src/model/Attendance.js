@@ -308,6 +308,38 @@ class Attendance {
       })
       .toArray();
   }
+
+  static async getAllOnBreak() {
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+
+    const attendances = await collection
+      .aggregate([
+        { $match: { status: "On Break" } },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: "$user" },
+        {
+          $project: {
+            _id: "$_id",
+            firstName: "$user.firstName",
+            lastName: "$user.lastName",
+            employeeId: 1,
+            breaks: 1,
+            totalBreakTime: "$totalBreak",
+            updatedAt: "$updatedAt",
+          },
+        },
+      ])
+      .toArray();
+    return attendances;
+  }
 }
 
 export default Attendance;

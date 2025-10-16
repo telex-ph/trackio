@@ -15,6 +15,7 @@ import {
   List,
   GalleryVerticalEnd,
   Users,
+  Users2Icon,
 } from "lucide-react";
 import { useStore } from "../store/useStore";
 import Role from "../constants/roles";
@@ -165,7 +166,7 @@ const TeamLeaderSidebar = ({
     </CustomCollapse>
     <SidebarLink
       to="/team-leader/team"
-      icon={Users}
+      icon={Users2Icon}
       label="Team"
       isCollapsed={isCollapsed}
     />
@@ -292,6 +293,7 @@ const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       label="Monitoring"
       isCollapsed={isCollapsed}
     />
+
     <SidebarLink
       to="/admin/offences"
       icon={Calendar}
@@ -308,6 +310,12 @@ const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       to="/admin/announcement"
       icon={Megaphone}
       label="Announcement"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
+      to="/admin/account-management"
+      icon={Users2Icon}
+      label="Account"
       isCollapsed={isCollapsed}
     />
   </div>

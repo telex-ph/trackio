@@ -68,6 +68,8 @@ import SharedSettings from "../pages/shared/SharedSettings";
 import ResetPassword from "../pages/global/ResetPassword";
 import SharedTeamManagement from "../pages/shared/SharedTeamManagement";
 import SharedTeamViewMembers from "../pages/shared/SharedTeamViewMembers";
+import AdminAccountManagement from "../pages/admin/AdminAccountManagement";
+import LiveMonitoring from "../pages/global/LiveMonitoring";
 // TODO: After unit test remove this routes including the files ---
 
 const router = createBrowserRouter([
@@ -75,6 +77,7 @@ const router = createBrowserRouter([
   { path: "login", element: <Login /> },
   { path: "forgot-password", element: <ForgotPassword /> },
   { path: "reset-password", element: <ResetPassword /> },
+  { path: "live-monitoring", element: <LiveMonitoring /> },
 
   // Protected App Routes
   {
@@ -117,6 +120,10 @@ const router = createBrowserRouter([
               { path: "announcement", element: <AdminAnnouncement /> },
               { path: "agentrequest", element: <AdminAgentRequest /> },
               { path: "offences", element: <AdminOffences /> },
+              {
+                path: "account-management",
+                element: <AdminAccountManagement />,
+              },
               { path: "account-settings", element: <SharedSettings /> },
             ],
           },
