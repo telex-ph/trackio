@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 import api from "../../utils/axios";
 
 // Use environment variable for socket URL
-const URL = import.meta.env.VITE_API_BASE_URL;
+const URL = import.meta.env.VITE_API_RENDER_BASE_URL;
 const socket = io(URL, {
   transports: ["websocket", "polling"],
 });
