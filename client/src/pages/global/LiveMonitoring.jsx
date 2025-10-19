@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
-import api from "../../utils/axios";
-import { AnimatePresence, motion } from "framer-motion";
 
 export default function LiveBreaks() {
   const [message, setMessage] = useState("");
