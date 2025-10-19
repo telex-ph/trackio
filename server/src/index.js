@@ -1,4 +1,3 @@
-// index.js
 import dotenv from "dotenv";
 import app from "./app.js";
 import initSocket from "./sockets/initSocket.js";

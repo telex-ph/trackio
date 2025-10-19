@@ -1,40 +1,38 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
+const SOCKET_URL =
+  import.meta.env.VITE_API_RENDER_BASE_URL || "http://localhost:3000";
+
 export default function LiveBreaks() {
-  const [message, setMessage] = useState("");
-
-  const socket = io("http://localhost:3000");
-
-  const handleOnSubmit = (e) => {
-    e.preventDefault();
-    socket.emit("statuses", message);
-  };
+  const [statuses, setStatuses] = useState([]);
 
   useEffect(() => {
-    const handleStatuses = (msg) => {
-      console.log(msg);
-    };
+    const socket = io(SOCKET_URL, {
+      transports: ["websocket", "polling"],
+      reconnection: true,
+    });
 
-    socket.on("statuses", handleStatuses);
+    socket.on("statuses", (msg) => {
+      console.log("Received:", msg);
+      setStatuses(msg);
+    });
 
     return () => {
-      socket.off("statuses", handleStatuses);
+      socket.disconnect();
     };
   }, []);
 
   return (
     <div className="p-4">
-      <form onSubmit={handleOnSubmit}>
-        <input
-          type="text"
-          onChange={(e) => setMessage(e.target.value)}
-          className="container-light border-light"
-        />
-        <button type="submit" className="bg-red-300">
-          Submit
-        </button>
-      </form>
+      <div className="mt-4">
+        <h2 className="font-bold">On Break Statuses:</h2>
+        <ul className="list-disc pl-4">
+          {statuses.map((item, i) => (
+            <li key={i}>{item.employeeName || JSON.stringify(item)}</li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

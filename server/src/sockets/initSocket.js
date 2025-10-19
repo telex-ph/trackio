@@ -1,9 +1,9 @@
 import { Server } from "socket.io";
-import chatHandler from "./handlers/chatHandler.js";
+import statusHandler from "./handlers/statusHandler.js";
 
 let io;
 
-const initSocket = (server) => {
+const initSocket = async (server) => {
   io = new Server(server, {
     cors: {
       origin: [
@@ -20,12 +20,13 @@ const initSocket = (server) => {
   io.on("connection", (socket) => {
     console.log("Client connected:", socket.id);
 
-    chatHandler(io, socket);
-
     socket.on("disconnect", () => {
       console.log("Client disconnected:", socket.id);
     });
   });
+
+  // Status watcher
+  await statusHandler(io);
 };
 
 export default initSocket;
