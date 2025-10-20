@@ -10,6 +10,7 @@ import { useStore } from "../store/useStore";
 import SharedMonitoring from "../pages/shared/SharedMonitoring";
 import MONITORING_PAGES from "../constants/monitoringSubPages";
 import formatPathName from "../utils/formatPathName";
+import live from "../assets/shapes/live.png";
 
 const MonitoringLayout = () => {
   const monitorPage = useStore((state) => state.monitorPage);
@@ -29,7 +30,17 @@ const MonitoringLayout = () => {
           </p>
         </div>
 
-        <nav className="flex gap-2 justify-end flex-1">
+        <nav className="flex gap-2 justify-end items-center flex-1">
+          <div>
+            <img
+              src={live}
+              alt="Live"
+              className="w-auto h-16 mr-3 cursor-pointer"
+              onClick={() => {
+                window.open("/live-monitoring", "_blank");
+              }}
+            />
+          </div>
           <div
             className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
               monitorPage === MONITORING_PAGES.STATUS && "underline"
