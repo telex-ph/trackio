@@ -1,0 +1,32 @@
+import { Server } from "socket.io";
+import statusHandler from "./handlers/statusHandler.js";
+
+let io;
+
+const initSocket = async (server) => {
+  io = new Server(server, {
+    cors: {
+      origin: [
+        "http://localhost:5173",
+        "https://localhost:5173",
+        "https://trackio-frontend.vercel.app",
+        "http://telextrackio.com/",
+      ],
+      methods: ["*"],
+      credentials: true,
+    },
+  });
+
+  io.on("connection", (socket) => {
+    console.log("Client connected:", socket.id);
+
+    socket.on("disconnect", () => {
+      console.log("Client disconnected:", socket.id);
+    });
+  });
+
+  // Status watcher
+  await statusHandler(io);
+};
+
+export default initSocket;

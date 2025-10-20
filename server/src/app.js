@@ -51,4 +51,27 @@ app.use("/api/schedule", scheduleRoutes);
 app.use("/api/group", groupRoutes);
 app.use("/api/server", serverRoutes);
 
+// import { createServer } from "http";
+// import { Server } from "socket.io";
+
+// const server = createServer(app);
+// const io = new Server(server, {
+//   cors: {
+//     origin: [
+//       "http://localhost:5173",
+//       "https://localhost:5173",
+//       "https://trackio-frontend.vercel.app",
+//       "https://www.telextrackio.com",
+//     ],
+//     methods: ["GET", "POST"],
+//     credentials: true,
+//   },
+// });
+
+// io.on("connection", (socket) => {
+//   socket.on("statuses", (msg) => {
+//     io.emit("statuses", msg);
+//   });
+// });
+
 export default app;
