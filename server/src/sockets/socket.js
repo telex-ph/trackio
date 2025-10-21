@@ -10,7 +10,7 @@ const socket = async (server) => {
         "http://localhost:5173",
         "https://localhost:5173",
         "https://trackio-frontend.vercel.app",
-        "http://telextrackio.com/",
+        "https://telextrackio.com",
       ],
       methods: ["*"],
       credentials: true,
