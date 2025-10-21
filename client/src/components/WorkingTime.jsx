@@ -1,10 +1,12 @@
-import { useEffect, useState, memo } from "react";
+import { useEffect, useState, useRef, memo } from "react";
 import { DateTime } from "luxon";
 import api from "../utils/axios";
 
 const WorkingTime = ({ timeIn, timeOut }) => {
   const [time, setTime] = useState({});
   const [offset, setOffset] = useState(0);
+  const intervalRef = useRef(null);
+  const lastSyncRef = useRef(Date.now());
 
   const target = DateTime.fromISO(timeIn, { zone: "utc" }).setZone(
     "Asia/Manila"
@@ -13,6 +15,7 @@ const WorkingTime = ({ timeIn, timeOut }) => {
     ? DateTime.fromISO(timeOut, { zone: "utc" }).setZone("Asia/Manila")
     : null;
 
+  // 🕒 Sync offset once initially
   useEffect(() => {
     const fetchServerTime = async () => {
       try {
@@ -21,6 +24,7 @@ const WorkingTime = ({ timeIn, timeOut }) => {
         const clientNow = DateTime.now().setZone("utc");
         const diff = serverNow.toMillis() - clientNow.toMillis();
         setOffset(diff);
+        lastSyncRef.current = Date.now();
       } catch (err) {
         console.error("Failed to fetch server time:", err);
       }
@@ -29,20 +33,39 @@ const WorkingTime = ({ timeIn, timeOut }) => {
     fetchServerTime();
   }, []);
 
+  // Main ticking + periodic resync logic
   useEffect(() => {
-    const update = () => {
-      const now = end
-        ? end
-        : DateTime.now().plus({ milliseconds: offset }).setZone("Asia/Manila");
-      const diff = now
-        .diff(target, ["days", "hours", "minutes", "seconds"])
-        .toObject();
-      setTime(diff);
+    const tick = async () => {
+      try {
+        const now = end
+          ? end
+          : DateTime.now()
+              .plus({ milliseconds: offset })
+              .setZone("Asia/Manila");
+
+        const diff = now
+          .diff(target, ["days", "hours", "minutes", "seconds"])
+          .toObject();
+
+        setTime(diff);
+
+        if (Date.now() - lastSyncRef.current >= 30000) {
+          const { data } = await api.get("/server/server-time");
+          const serverNow = DateTime.fromISO(data.now, { zone: "utc" });
+          const clientNow = DateTime.now().setZone("utc");
+          const diff = serverNow.toMillis() - clientNow.toMillis();
+          setOffset(diff);
+          lastSyncRef.current = Date.now();
+        }
+      } catch (err) {
+        console.error("Failed to sync with server:", err);
+      }
     };
 
-    update();
-    const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
+    tick(); // run immediately once
+    intervalRef.current = setInterval(tick, 1000);
+
+    return () => clearInterval(intervalRef.current);
   }, [timeIn, timeOut, offset]);
 
   const formatTime = (num) => String(Math.floor(num || 0)).padStart(2, "0");
@@ -63,4 +86,4 @@ const WorkingTime = ({ timeIn, timeOut }) => {
   );
 };
 
-export default WorkingTime;
+export default memo(WorkingTime);
