@@ -12,24 +12,29 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
   const intervalRef = useRef(null);
 
   useEffect(() => {
-    if (attendance?.breaks?.length > 0) {
-      const latestBreak = attendance.breaks[attendance.breaks.length - 1];
+    const calculateTime = async () => {
+      if (attendance?.breaks?.length > 0) {
+        const latestBreak = attendance.breaks[attendance.breaks.length - 1];
 
-      // Convert total break (from DB, in ms)
-      let baseTime = attendance.totalBreak || 0;
+        // Convert total break (from DB, in ms)
+        let baseTime = attendance.totalBreak || 0;
 
-      // If ongoing break (no end time)
-      if (latestBreak && !latestBreak.end) {
-        const start = DateTime.fromISO(latestBreak.start).setZone(
-          "Asia/Manila"
-        );
-        const now = DateTime.now().setZone("Asia/Manila");
-        const ongoingMs = now.diff(start, "milliseconds").milliseconds;
-        baseTime += ongoingMs; // add ongoing duration to total
+        // If ongoing break (no end time)
+        if (latestBreak && !latestBreak.end) {
+          const start = DateTime.fromISO(latestBreak.start).setZone(
+            "Asia/Manila"
+          );
+
+          const { data } = await api.get("/server/server-time");
+          const now = DateTime.fromISO(data.now, { zone: "utc" });
+          const ongoingMs = now.diff(start, "milliseconds").milliseconds;
+          baseTime += ongoingMs;
+        }
+
+        setTime(baseTime);
       }
-
-      setTime(baseTime);
-    }
+    };
+    calculateTime();
   }, [attendance]);
 
   useEffect(() => {
