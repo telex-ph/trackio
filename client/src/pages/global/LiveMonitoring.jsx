@@ -35,8 +35,6 @@ export default function LiveBreaks() {
     });
 
     socket.on("statuses", (statuses) => {
-      console.log(statuses);
-
       setStatuses(statuses);
     });
 
