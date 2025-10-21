@@ -35,6 +35,8 @@ export default function LiveBreaks() {
     });
 
     socket.on("statuses", (statuses) => {
+      console.log(statuses);
+
       setStatuses(statuses);
     });
 
@@ -87,9 +89,6 @@ export default function LiveBreaks() {
 
   return (
     <section>
-      <section className="flex items-center justify-between px-5 py-3">
-        <img src={trackio} alt="Telex PH" className="w-40 h-auto" />
-      </section>
       <section>
         <ServerTime />
       </section>
