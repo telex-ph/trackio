@@ -11,20 +11,18 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
   const [loading, setLoading] = useState(false);
   const intervalRef = useRef(null);
 
+  // Calculate base time on mount or attendance update
   useEffect(() => {
     const calculateTime = async () => {
       if (attendance?.breaks?.length > 0) {
         const latestBreak = attendance.breaks[attendance.breaks.length - 1];
-
-        // Convert total break (from DB, in ms)
         let baseTime = attendance.totalBreak || 0;
 
-        // If ongoing break (no end time)
+        // If user is on an ongoing break
         if (latestBreak && !latestBreak.end) {
           const start = DateTime.fromISO(latestBreak.start).setZone(
             "Asia/Manila"
           );
-
           const { data } = await api.get("/server/server-time");
           const now = DateTime.fromISO(data.now, { zone: "utc" });
           const ongoingMs = now.diff(start, "milliseconds").milliseconds;
@@ -37,6 +35,7 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
     calculateTime();
   }, [attendance]);
 
+  // Track whether the timer should be running
   useEffect(() => {
     if (attendance?.status === STATUS.ON_BREAK) {
       setIsRunning(true);
@@ -45,24 +44,54 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
     }
   }, [attendance?.status]);
 
+  // Hybrid ticking system (local + server resync)
   useEffect(() => {
-    if (isRunning) {
-      intervalRef.current = setInterval(() => {
-        setTime((prev) => prev + 10);
-      }, 10);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+    if (isRunning && attendance?.breaks?.length > 0) {
+      const latestBreak = attendance.breaks[attendance.breaks.length - 1];
+      const start = DateTime.fromISO(latestBreak.start).setZone("Asia/Manila");
+
+      let offset = 0; // ms difference between server & local time
+      let lastSync = Date.now();
+
+      const syncWithServer = async () => {
+        try {
+          const { data } = await api.get("/server/server-time");
+          const serverNow = DateTime.fromISO(data.now, { zone: "utc" });
+          const localNow = DateTime.now();
+          offset = serverNow.toMillis() - localNow.toMillis();
+          lastSync = localNow.toMillis();
+        } catch (err) {
+          console.error("Failed to sync with server:", err);
+        }
+      };
+
+      const tick = () => {
+        const localNow = DateTime.now().plus({ milliseconds: offset });
+        const elapsed =
+          localNow.diff(start, "milliseconds").milliseconds +
+          (attendance.totalBreak || 0);
+        setTime(elapsed);
+      };
+
+      // Initial sync then start ticking
+      syncWithServer().then(() => {
+        tick();
+        intervalRef.current = setInterval(() => {
+          const now = Date.now();
+          tick();
+
+          // Resync with server every 30 seconds
+          if (now - lastSync >= 30000) {
+            syncWithServer();
+          }
+        }, 1000);
+      });
+
+      return () => clearInterval(intervalRef.current);
     }
+  }, [isRunning, attendance]);
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [isRunning]);
-
+  //  Format time for display
   const formatTime = (milliseconds) => {
     const totalSeconds = Math.floor(milliseconds / 1000);
     const hours = Math.floor(totalSeconds / 3600);
@@ -78,6 +107,7 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
 
   const { hours, minutes, seconds } = formatTime(time);
 
+  // Handle start/pause logic
   const handleStartPause = async () => {
     if (!attendance) {
       toast.error("Please time in first before starting your break.");
@@ -92,15 +122,14 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
     try {
       setLoading(true);
       if (!isRunning) {
-        const res = await api.patch("/attendance/update-break-start", {
+        await api.patch("/attendance/update-break-start", {
           docId: attendance._id,
           breaks: attendance.breaks || [],
           totalBreak: time,
         });
         toast.success("Break started!");
       } else {
-        // 🔴 END BREAK
-        const res = await api.patch("/attendance/update-break-pause", {
+        await api.patch("/attendance/update-break-pause", {
           docId: attendance._id,
           breaks: attendance.breaks || [],
           totalBreak: time,
@@ -120,14 +149,14 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
     }
   };
 
-  const maxTime = 90 * 60 * 1000;
+  // 📊 Progress display
+  const maxTime = 90 * 60 * 1000; // 1 hour 30 mins
   const progress = Math.min((time / maxTime) * 100, 100);
 
   const formatDuration = (ms) => {
     if (!ms || ms <= 0) return "0h 0m 0s";
 
     const dur = Duration.fromMillis(ms);
-
     const hours = Math.floor(dur.as("hours"));
     const minutes = Math.floor(dur.as("minutes") % 60);
     const seconds = Math.floor(dur.as("seconds") % 60);
@@ -137,7 +166,7 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
 
   return (
     <section className="container-light border-light rounded-md p-5 w-full">
-      {/* Progress Bar */}
+      {/* Header */}
       <div className="mb-3">
         <div className="flex items-center gap-2">
           <h3 className="text-black">
@@ -148,12 +177,14 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
           </h3>
         </div>
       </div>
+
       {attendance?.status === STATUS.OOF ? (
         <h3 className="text-black text-center p-7">
           Overall Break Duration: {formatDuration(attendance.totalBreak || 0)}
         </h3>
       ) : (
         <>
+          {/* Progress bar */}
           <div className="mb-4">
             <div className="w-full bg-white rounded-md h-3 overflow-hidden border-light">
               <div
@@ -170,7 +201,7 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
             <Spinner />
           ) : (
             <>
-              {/* Timer Display */}
+              {/* Timer display */}
               <div className="flex items-center justify-center gap-4 mb-8">
                 <h3 className="font-bold">{hours}</h3>
                 <h3 className="font-bold">:</h3>
