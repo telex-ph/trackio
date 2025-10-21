@@ -3,7 +3,7 @@ import statusHandler from "./handlers/statusHandler.js";
 
 let io;
 
-const initSocket = async (server) => {
+const socket = async (server) => {
   io = new Server(server, {
     cors: {
       origin: [
@@ -27,6 +27,7 @@ const initSocket = async (server) => {
 
   // Status watcher
   await statusHandler(io);
+
 };
 
-export default initSocket;
+export default socket;

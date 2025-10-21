@@ -1,12 +1,12 @@
 import dotenv from "dotenv";
 import app from "./app.js";
-import initSocket from "./sockets/initSocket.js";
+import socket from "./sockets/socket.js";
 import { createServer } from "http";
 dotenv.config();
 
 const server = createServer(app);
 
-initSocket(server);
+socket(server);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, async () => {
