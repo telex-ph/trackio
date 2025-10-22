@@ -55,7 +55,7 @@ export default function LiveBreaks() {
     .map((status) => {
       const breaksCount = status.breaks?.length - 1;
       // if (!breaksCount) return null;
-      const lastBreakStart = status.breaks[breaksCount].start;
+      const lastBreakStart = status.breaks[breaksCount]?.start;
       // if (!lastBreakStart) return null;
 
       const percentage = calculatePercentage(
@@ -67,6 +67,8 @@ export default function LiveBreaks() {
         status.totalBreakTime +
         now.toMillis() -
         DateTime.fromISO(lastBreakStart).toMillis();
+
+      if (isNaN(breakDurationMs)) return null;
 
       const duration = Duration.fromMillis(breakDurationMs).shiftTo(
         "hours",
