@@ -16,6 +16,7 @@ import {
   GalleryVerticalEnd,
   Users,
   Users2Icon,
+  Ticket,
 } from "lucide-react";
 import { useStore } from "../store/useStore";
 import Role from "../constants/roles";
@@ -112,6 +113,12 @@ const AgentSidebar = ({ isCollapsed }) => (
       label="Incident Reports"
       isCollapsed={isCollapsed}
     />
+    <SidebarLink
+      to="/agent/ticket"
+      icon={Ticket}
+      label="Ticket"
+      isCollapsed={isCollapsed}
+    />
   </div>
 );
 
@@ -171,12 +178,17 @@ const TeamLeaderSidebar = ({
       isCollapsed={isCollapsed}
     />
     <SidebarLink
+      to="/team-leader/ticket"
+      icon={Ticket}
+      label="Ticket"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
       to="/team-leader/coaching"
       icon={Video}
       label="Coaching"
       isCollapsed={isCollapsed}
     />
-
     <SidebarLink
       to="/team-leader/performance"
       icon={BarChart}
