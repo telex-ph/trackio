@@ -14,7 +14,7 @@ class Schedules {
 
     const bulkOps = schedules.map((schedule) => ({
       updateOne: {
-        filter: { date: schedule.date },
+        filter: { userId: schedule.userId, date: schedule.date },
         update: { $set: schedule },
         upsert: true,
       },
