@@ -14,10 +14,15 @@ class User {
 
     const db = await connectDB();
     const collection = db.collection(this.#collection);
+
     const user = await collection.findOne(
-      { _id: new ObjectId(id) },
+      {
+        _id: new ObjectId(id),
+        isDeleted: { $ne: true },
+      },
       { projection: { password: 0 } }
     );
+
     return user;
   }
 
@@ -52,24 +57,38 @@ class User {
 
     const db = await connectDB();
     const collection = db.collection(this.#collection);
-    const user = await collection.findOne({ email: email });
+
+    const user = await collection.findOne({
+      email: email,
+      isDeleted: { $ne: true }, // exclude soft-deleted users
+    });
+
     return user;
   }
 
-  static async getAll(search = "") {
+  static async getAll(search = "", role = Roles.AGENT) {
     const db = await connectDB();
     const collection = db.collection(this.#collection);
 
-    const query = { role: "agent" };
+    // Base query: exclude soft-deleted users
+    const query = { isDeleted: { $ne: true } };
 
+    // If a role filter is provided
+    if (role) {
+      query.role = role;
+    }
+
+    // If there's a search keyword
     if (search && search.trim()) {
-      const regex = new RegExp(`^${search}`, "i");
+      const regex = new RegExp(search, "i");
+
       const conditions = [
         { firstName: regex },
         { lastName: regex },
         { email: regex },
       ];
 
+      // Also allow searching by ObjectId
       if (/^[a-fA-F0-9]{24}$/.test(search)) {
         conditions.push({ _id: new ObjectId(search) });
       }
@@ -77,9 +96,9 @@ class User {
       query.$or = conditions;
     }
 
+    // Fetch filtered users (excluding deleted ones)
     const users = await collection
       .find(query, { projection: { password: 0 } })
-      .limit(20)
       .toArray();
 
     return users;
@@ -92,7 +111,7 @@ class User {
     const db = await connectDB();
     const collection = db.collection(this.#collection);
 
-    let query = {};
+    let query = { isDeleted: { $ne: true } };
 
     switch (role) {
       case Roles.TEAM_LEADER:
@@ -100,7 +119,8 @@ class User {
         break;
       case Roles.OM:
       case Roles.ADMIN:
-        query = {};
+        // Admin/OM can see everyone, but still exclude deleted users
+        query = { isDeleted: { $ne: true } };
         break;
       default:
         query._id = new ObjectId(id);
@@ -135,7 +155,7 @@ class User {
           },
         },
 
-        // Lookup schedules assigned to this user (only from today and future)
+        // Lookup schedules assigned to this user (today & future only)
         {
           $lookup: {
             from: "schedules",
@@ -167,7 +187,7 @@ class User {
           },
         },
 
-        // Remove unnecessary data
+        // Clean projection
         {
           $project: {
             password: 0,
@@ -200,6 +220,10 @@ class User {
 
     if (!user) {
       throw new Error("User not found");
+    }
+
+    if (user.isDeleted) {
+      throw new Error("This account has been deactivated.");
     }
 
     if (user.password !== password) {
@@ -248,10 +272,16 @@ class User {
     const now = DateTime.utc();
     const weekday = now.weekday;
 
-    // Get all users scheduled today
     const usersOnShift = await users
-      .find({ shiftDays: weekday }, { projection: { password: 0 } })
+      .find(
+        {
+          shiftDays: weekday,
+          $or: [{ isDeleted: { $exists: false } }, { isDeleted: false }],
+        },
+        { projection: { password: 0 } }
+      )
       .toArray();
+
     return usersOnShift;
   }
 
