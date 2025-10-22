@@ -5,6 +5,7 @@ import {
   getUser,
   getUsers,
   getUsersByRoleScope,
+  updateDetails,
   updateUser,
 } from "../controllers/userControllers.js";
 const router = express.Router();
@@ -16,6 +17,8 @@ router.post("/add-user", addUser);
 router.patch("/delete-user/:id", deleteUser);
 
 router.patch("/update-user/:id", updateUser);
+
+router.patch("/update-details/:id", updateDetails);
 
 router.get("/get-user/:id", getUser);
 
