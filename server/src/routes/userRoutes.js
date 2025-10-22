@@ -1,6 +1,7 @@
 import express from "express";
 import {
   addUser,
+  deleteUser,
   getUser,
   getUsers,
   getUsersByRoleScope,
@@ -11,6 +12,8 @@ const router = express.Router();
 router.get("/get-users", getUsers);
 
 router.post("/add-user", addUser);
+
+router.patch("/delete-user/:id", deleteUser);
 
 router.patch("/update-user/:id", updateUser);
 

@@ -180,10 +180,10 @@ const router = createBrowserRouter([
                 path: "monitoring",
                 element: <MonitoringLayout />,
               },
-              {
-                path: "manage-team",
-                element: <SharedTeamManagement />,
-              },
+              // {
+              //   path: "manage-team",
+              //   element: <SharedTeamManagement />,
+              // },
               {
                 path: "team",
                 element: <SharedTeamViewMembers />,

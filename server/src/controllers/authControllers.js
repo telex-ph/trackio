@@ -13,7 +13,12 @@ export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.getByEmail(email);
+
     if (!user) throw new Error("User not found");
+
+
+    console.log(user);
+    
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new Error("Invalid credentials");
