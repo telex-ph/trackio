@@ -255,6 +255,57 @@ const OMSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
   </div>
 );
 
+const HRSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
+  <div className="space-y-1">
+    <SidebarLink
+      to="/human-resources/dashboard"
+      icon={LayoutGrid}
+      label="Dashboard"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
+      to="/human-resources/attendance"
+      icon={Bell}
+      label="Attendance"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
+      to="/human-resources/schedule"
+      icon={BookPlus}
+      label="Schedule"
+      isCollapsed={isCollapsed}
+    />
+    <CustomCollapse
+      icon={<Clock className="w-5 h-5" />}
+      label="Tracking"
+      isCollapsed={isCollapsed}
+      open={activeDropdown === "tracking"}
+      onToggle={() =>
+        setActiveDropdown(activeDropdown === "tracking" ? null : "tracking")
+      }
+    >
+      <SidebarLink
+        to={`/human-resources/tracking/list`}
+        icon={List}
+        label="List"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to={`/human-resources/tracking/history`}
+        icon={GalleryVerticalEnd}
+        label="History"
+        isCollapsed={isCollapsed}
+      />
+    </CustomCollapse>
+    <SidebarLink
+      to="/human-resources/monitoring"
+      icon={Activity}
+      label="Monitoring"
+      isCollapsed={isCollapsed}
+    />
+  </div>
+);
+
 // Admin Sidebar
 const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
   <div className="space-y-1">
@@ -353,6 +404,14 @@ export const Sidebar = ({ isCollapsed }) => {
       case Role.OM:
         return (
           <OMSidebar
+            isCollapsed={isCollapsed}
+            activeDropdown={activeDropdown}
+            setActiveDropdown={setActiveDropdown}
+          />
+        );
+      case Role.HR:
+        return (
+          <HRSidebar
             isCollapsed={isCollapsed}
             activeDropdown={activeDropdown}
             setActiveDropdown={setActiveDropdown}

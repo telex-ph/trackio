@@ -158,6 +158,35 @@ const router = createBrowserRouter([
             ],
           },
 
+          // HR
+          {
+            element: <ProtectedRoutes role={Roles.HR} />,
+            path: "human-resources",
+            children: [
+              { index: true, element: <Navigate to="dashboard" replace /> },
+              { path: "dashboard", element: <OMDashboard /> },
+              { path: "attendance", element: <SharedAttendance /> },
+              { path: "schedule", element: <SharedSchedule role={Roles.OM} /> },
+              {
+                path: "schedule/:id",
+                element: <SharedViewSchedule role={Roles.OM} />,
+              },
+              {
+                path: "tracking",
+                element: <TrackingLayout role={Roles.OM} />,
+                children: [
+                  { path: "list", element: <SharedTrackingLists /> },
+                  { path: "history", element: <SharedTrackingHistory /> },
+                ],
+              },
+              {
+                path: "monitoring",
+                element: <MonitoringLayout />,
+              },
+              { path: "account-settings", element: <SharedSettings /> },
+            ],
+          },
+
           // Team Leader Routes
           {
             element: <ProtectedRoutes role={Roles.TEAM_LEADER} />,
