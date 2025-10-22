@@ -36,8 +36,9 @@ export default async function statusHandler(io) {
           { $sort: { createdAt: -1 } },
           {
             $match: {
-              status: STATUS.ON_BREAK,
+              status: { $in: [STATUS.ON_BREAK, STATUS.WORKING] },
               createdAt: { $gte: startOfYesterday, $lt: startOfTomorrow },
+              breaks: { $exists: true },
             },
           },
 
@@ -60,6 +61,7 @@ export default async function statusHandler(io) {
               lastName: "$user.lastName",
               employeeId: 1,
               breaks: 1,
+              status: 1,
               totalBreakTime: "$totalBreak",
               updatedAt: 1,
             },
