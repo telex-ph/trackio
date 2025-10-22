@@ -68,7 +68,7 @@ const AdminAccountManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { data } = await api.get("/user/get-users");
+      const { data } = await api.get("/user/get-users?role=");
       setUsers(data);
     } catch (error) {
       console.error("Error fetching users:", error);

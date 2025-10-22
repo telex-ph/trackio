@@ -46,6 +46,30 @@ export const updateUser = async (req, res) => {
   }
 };
 
+export const updateDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body.updates;
+
+    let updatedUser;
+
+    for (const [field, newValue] of Object.entries(updates)) {
+      updatedUser = await User.update(id, field, newValue);
+    }
+
+    res.status(200).json({
+      message: "User updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({
+      message: "Failed to update user",
+      error: error.message,
+    });
+  }
+};
+
 export const addUser = async (req, res) => {
   try {
     const userData = req.body;

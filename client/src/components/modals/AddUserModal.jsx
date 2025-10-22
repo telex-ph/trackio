@@ -68,7 +68,7 @@ const AddUserModal = ({
         await api.post("/user/add-user", data);
         toast.success("User added successfully!");
       } else {
-        await api.put(`/user/update-user/${user._id}`, data);
+        await api.patch(`/user/update-details/${user._id}`, { updates: data });
         toast.success("User updated successfully!");
       }
 
