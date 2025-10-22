@@ -5,6 +5,7 @@ import { DateTime, Duration } from "luxon";
 import ServerTime from "../../components/ServerTime";
 import trackio from "../../assets/logos/trackio.svg";
 import Happy from "../../assets/illustrations/Happy";
+import { STATUS } from "../../constants/status";
 
 const SOCKET_URL =
   import.meta.env.VITE_API_RENDER_BASE_URL || "http://localhost:3000";
@@ -52,8 +53,10 @@ export default function LiveBreaks() {
 
   const processedStatuses = statuses
     .map((status) => {
-      const lastBreakStart = status.breaks[status.breaks.length - 1]?.start;
-      if (!lastBreakStart) return null;
+      const breaksCount = status.breaks?.length - 1;
+      // if (!breaksCount) return null;
+      const lastBreakStart = status.breaks[breaksCount].start;
+      // if (!lastBreakStart) return null;
 
       const percentage = calculatePercentage(
         status.totalBreakTime,
@@ -78,7 +81,7 @@ export default function LiveBreaks() {
     .filter(Boolean);
 
   const onBreakStatuses = processedStatuses
-    .filter((s) => s.percentage < 100)
+    .filter((s) => s.percentage < 100 && s.status == STATUS.ON_BREAK)
     .sort((a, b) => b.percentage - a.percentage);
 
   const overBreakStatuses = processedStatuses
