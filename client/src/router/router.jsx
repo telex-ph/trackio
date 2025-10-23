@@ -47,6 +47,9 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import ProtectedRoutes from "./ProtectedRoutes";
 import Roles from "../constants/roles";
 
+// Human Resources
+import HROffenses from "../pages/hr/HROffenses";
+
 // TODO: After unit test remove this routes including the files ---
 import OMSchedule from "../pages/om/OMSchedule";
 import OMViewSchedule from "../pages/om/OMViewSchedule";
@@ -182,6 +185,10 @@ const router = createBrowserRouter([
               {
                 path: "monitoring",
                 element: <MonitoringLayout />,
+              },
+              {
+                path: "offenses",
+                element: <HROffenses />,
               },
               { path: "account-settings", element: <SharedSettings /> },
             ],
