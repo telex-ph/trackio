@@ -11,11 +11,12 @@ import {
   Bell,
   Search,
   Eye,
+  Hash // Import Hash
 } from "lucide-react";
 import { DateTime } from "luxon";
 import api from "../../utils/axios";
-import UnderContruction from "../../assets/illustrations/UnderContruction";
 
+// ... (Notification and ConfirmationModal components remain the same) ...
 // =================== Notification ===================
 const Notification = ({ message, type, onClose }) => {
   const [isVisible, setIsVisible] = useState(true);
@@ -98,11 +99,13 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, message }) => {
 
 // =================== Main Component ===================
 const AgentOffences = () => {
+  // ... (state variables remain the same) ...
   const [isViewMode, setIsViewMode] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [offenses, setOffenses] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentUser, setCurrentUser] = useState(null); 
 
   const [notification, setNotification] = useState({
     message: "",
@@ -117,7 +120,7 @@ const AgentOffences = () => {
     agentName: "",
     offenseCategory: "",
     offenseType: "",
-    offenseSeverity: "",
+    offenseLevel: "", // <-- RENAMED from offenseSeverity
     dateOfOffense: "",
     status: "",
     actionTaken: "",
@@ -126,10 +129,21 @@ const AgentOffences = () => {
     isRead: false,
   });
 
-  const currentAgent = "Current Agent"; // Replace with actual agent name from auth or context
-
+  // ... (showNotification, fetchCurrentUser, fetchOffenses, useEffect remain the same) ...
   const showNotification = (message, type) => {
     setNotification({ message, type, isVisible: true });
+  };
+
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await api.get("/auth/get-auth-user");
+      setCurrentUser(response.data);
+      return response.data; 
+    } catch (error) {
+      console.error("Error fetching current user:", error);
+      showNotification("Failed to load user data. Please log in again.", "error");
+      return null;
+    }
   };
 
   const fetchOffenses = async () => {
@@ -137,25 +151,41 @@ const AgentOffences = () => {
       setIsLoading(true);
       const response = await api.get("/offenses");
       setOffenses(response.data);
+      return response.data;
     } catch (error) {
       console.error("Error fetching offenses:", error);
       showNotification("Failed to load offenses. Please try again.", "error");
+      return []; 
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchOffenses();
-  }, []);
+    const loadData = async () => {
+      const fetchedUser = await fetchCurrentUser(); 
+      const fetchedOffenses = await fetchOffenses(); 
 
-  // =================== Reset Form ===================
+      console.log("INITIAL Current User Data (after fetch):", fetchedUser); 
+      console.log("INITIAL All Fetched Offenses (after fetch):", fetchedOffenses); 
+    };
+    loadData();
+  }, []); 
+
+  useEffect(() => {
+      console.log("Current User State Updated:", currentUser);
+  }, [currentUser]);
+
+  useEffect(() => {
+      console.log("Offenses State Updated:", offenses);
+  }, [offenses]);
+
   const resetForm = () => {
     setFormData({
       agentName: "",
       offenseCategory: "",
       offenseType: "",
-      offenseSeverity: "",
+      offenseLevel: "", // <-- RENAMED
       dateOfOffense: "",
       status: "",
       actionTaken: "",
@@ -167,7 +197,6 @@ const AgentOffences = () => {
     setEditingId(null);
   };
 
-  // =================== View ===================
   const handleView = (off) => {
     setIsViewMode(true);
     setEditingId(off._id);
@@ -175,7 +204,7 @@ const AgentOffences = () => {
       agentName: off.agentName,
       offenseCategory: off.offenseCategory,
       offenseType: off.offenseType,
-      offenseSeverity: off.offenseSeverity,
+      offenseLevel: off.offenseLevel || "", // <-- RENAMED
       dateOfOffense: off.dateOfOffense,
       status: off.status,
       actionTaken: off.actionTaken,
@@ -185,56 +214,36 @@ const AgentOffences = () => {
     });
   };
 
+  // ... (handleMarkAsRead, formatDisplayDate remain the same) ...
   const handleMarkAsRead = async () => {
+    if (!editingId) return;
     try {
       const payload = { isRead: true };
       await api.put(`/offenses/${editingId}`, payload);
       showNotification("Marked as read successfully!", "success");
       resetForm();
-      fetchOffenses();
+      fetchOffenses(); 
     } catch (error) {
       console.error("Error marking as read:", error);
       showNotification("Failed to mark as read. Please try again.", "error");
     }
   };
 
-  const handleDeleteClick = (id) => {
-    setItemToDelete(id);
-    setIsConfirmationModalOpen(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!itemToDelete) return;
-
-    try {
-      await api.delete(`/offenses/${itemToDelete}`);
-      showNotification("Offense deleted successfully!", "success");
-      fetchOffenses();
-    } catch (error) {
-      console.error("Error deleting offense:", error);
-      showNotification("Failed to delete offense. Please try again.", "error");
-    } finally {
-      setIsConfirmationModalOpen(false);
-      setItemToDelete(null);
-    }
-  };
-
-  // =================== Formatting ===================
   const formatDisplayDate = (dateStr) =>
     dateStr
       ? DateTime.fromISO(dateStr).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)
       : "";
 
-  // Filter offenses based on search query and exclude resolved statuses, only for current agent
+
   const filteredOffenses = offenses.filter(
     (off) =>
-      off.agentName === currentAgent &&
+      currentUser && 
+      off.employeeId === currentUser.employeeId && 
       !["Action Taken", "Escalated", "Closed"].includes(off.status) &&
       [
-        off.agentName,
         off.offenseType,
         off.offenseCategory,
-        off.offenseSeverity,
+        off.offenseLevel || "", // <-- RENAMED
         off.status,
         off.actionTaken,
         off.remarks || "",
@@ -246,20 +255,18 @@ const AgentOffences = () => {
 
   const resolvedOffenses = offenses.filter(
     (off) =>
-      off.agentName === currentAgent &&
+      currentUser && 
+      off.employeeId === currentUser.employeeId && 
       ["Action Taken", "Escalated", "Closed"].includes(off.status)
   );
 
-  return (
-    <section className="h-full">
-      <UnderContruction />
-    </section>
-  );
-
+  console.log("Filtered 'Cases in Progress':", filteredOffenses);
+  console.log("Filtered 'Case History':", resolvedOffenses);
 
   return (
     <div>
-      {notification.isVisible && (
+      {/* ... (Notification remains the same) ... */}
+       {notification.isVisible && (
         <Notification
           message={notification.message}
           type={notification.type}
@@ -267,26 +274,18 @@ const AgentOffences = () => {
         />
       )}
 
-      <ConfirmationModal
-        isOpen={isConfirmationModalOpen}
-        onClose={() => setIsConfirmationModalOpen(false)}
-        onConfirm={handleConfirmDelete}
-        message="Are you sure you want to delete this offense?"
-      />
-
+      {/* ... (section header remains the same) ... */}
       <section className="flex flex-col mb-2">
         <div className="flex items-center gap-1">
           <h2>Offense Management</h2>
         </div>
-        <p className="text-gray-600">
-          View your disciplinary offenses.
-        </p>
+        <p className="text-gray-600">View your disciplinary offenses.</p>
       </section>
 
-      {/* Two-Column Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
-        {/* View Offense */}
+        {/* === View Offense Details Section === */}
         <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
+          {/* ... (header remains the same) ... */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-indigo-100 rounded-lg">
@@ -308,7 +307,7 @@ const AgentOffences = () => {
 
           {isViewMode ? (
             <div className="space-y-6">
-              {/* Agent Name */}
+              {/* ... (Agent Name, Category, Type remain the same) ... */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Agent Name
@@ -317,10 +316,7 @@ const AgentOffences = () => {
                   {formData.agentName}
                 </p>
               </div>
-
-              {/* Offense Category & Type - Single Row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                {/* Category */}
                 <div className="space-y-2">
                   <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                     Offense Category
@@ -329,8 +325,6 @@ const AgentOffences = () => {
                     {formData.offenseCategory || "N/A"}
                   </p>
                 </div>
-
-                {/* Type */}
                 <div className="space-y-2">
                   <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                     Offense Type
@@ -341,14 +335,14 @@ const AgentOffences = () => {
                 </div>
               </div>
 
-              {/* Severity & Date */}
+              {/* === ITO ANG BINAGO === */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-2">
                   <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                    Offense Severity
+                    Offense Level {/* Changed Label */}
                   </label>
                   <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
-                    {formData.offenseSeverity || "N/A"}
+                    {formData.offenseLevel || "N/A"} {/* Changed Field */}
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -363,8 +357,9 @@ const AgentOffences = () => {
                   </div>
                 </div>
               </div>
+              {/* === DULO NG PAGBABAGO === */}
 
-              {/* Status */}
+              {/* ... (Status, Action Taken, Remarks, Evidence, Buttons remain the same) ... */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Status
@@ -373,8 +368,6 @@ const AgentOffences = () => {
                   {formData.status || "N/A"}
                 </p>
               </div>
-
-              {/* Action Taken */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Action Taken
@@ -383,8 +376,6 @@ const AgentOffences = () => {
                   {formData.actionTaken || "N/A"}
                 </p>
               </div>
-
-              {/* Remarks */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Remarks
@@ -393,8 +384,6 @@ const AgentOffences = () => {
                   {formData.remarks || "No remarks"}
                 </p>
               </div>
-
-              {/* Evidence */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Evidence
@@ -416,8 +405,6 @@ const AgentOffences = () => {
                   </p>
                 )}
               </div>
-
-              {/* Buttons */}
               <div className="flex gap-4">
                 <button
                   onClick={resetForm}
@@ -436,14 +423,15 @@ const AgentOffences = () => {
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-center py-10 text-gray-500 italic">
+             <div className="flex items-center justify-center py-10 text-gray-500 italic">
               Select an offense from the list to view details.
             </div>
           )}
         </div>
-        {/* Offense Records */}
+        {/* === Offense Records List Section === */}
         <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
-          <div className="flex items-center justify-between mb-6">
+          {/* ... (header and search bar remain the same, maybe update placeholder) ... */}
+           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-red-100 rounded-lg">
                 <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
@@ -456,8 +444,6 @@ const AgentOffences = () => {
               {filteredOffenses.length} Records
             </span>
           </div>
-
-          {/* Search Bar */}
           <div className="mb-6">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -465,7 +451,7 @@ const AgentOffences = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by offense type, category..."
+                placeholder="Search by level, type, category..." // Updated placeholder
                 className="w-full pl-10 pr-4 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
               />
             </div>
@@ -478,7 +464,7 @@ const AgentOffences = () => {
                   key={off._id}
                   className="group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border border-gray-100"
                 >
-                  {/* Header */}
+                  {/* ... (card header remains the same) ... */}
                   <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
                     <div className="flex items-start gap-3 sm:gap-4">
                       <div className="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors">
@@ -503,29 +489,33 @@ const AgentOffences = () => {
                           >
                             {off.status}
                           </span>
-                          {off.isRead && <CheckCircle className="w-4 h-4 text-green-500" />}
+                          {off.isRead ? (
+                            <span className="flex items-center gap-1 text-green-600 text-xs">
+                              <CheckCircle className="w-4 h-4" /> Read
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-red-600 text-xs font-bold">
+                              <Bell className="w-4 h-4" /> Unread
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Details */}
+                  {/* === ITO ANG BINAGO === */}
                   <div className="space-y-3 mb-4">
-                    <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                      <User className="w-3 h-3 sm:w-4 sm:h-4" />
-                      Agent:{" "}
-                      <span className="font-medium">{off.agentName}</span>
-                    </p>
                     <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
                       <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
                       Category:{" "}
                       <span className="font-medium">{off.offenseCategory}</span>
                     </p>
                     <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                      <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
-                      Severity:{" "}
-                      <span className="font-medium">{off.offenseSeverity}</span>
+                      <Hash className="w-3 h-3 sm:w-4 sm:h-4" /> {/* Changed Icon */}
+                      Level:{" "}
+                      <span className="font-medium">{off.offenseLevel || 'N/A'}</span> {/* Changed Text and Field */}
                     </p>
+                  {/* === DULO NG PAGBABAGO === */}
 
                     <div className="bg-red-50 rounded-xl p-3 sm:p-4 border-l-4 border-red-500">
                       <p className="text-xs sm:text-sm text-gray-700">
@@ -536,6 +526,7 @@ const AgentOffences = () => {
                       </p>
                     </div>
 
+                    {/* ... (remarks and evidence remain the same) ... */}
                     {off.remarks && (
                       <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border-l-4 border-gray-400">
                         <p className="text-xs sm:text-sm text-gray-700">
@@ -543,7 +534,7 @@ const AgentOffences = () => {
                             Remarks:
                           </span>{" "}
                           {off.remarks}
-                        </p>
+                        </p> 
                       </div>
                     )}
 
@@ -569,7 +560,7 @@ const AgentOffences = () => {
                     )}
                   </div>
 
-                  {/* Buttons */}
+                  {/* ... (buttons remain the same) ... */}
                   <div className="flex gap-3">
                     <button
                       onClick={() => handleView(off)}
@@ -582,7 +573,7 @@ const AgentOffences = () => {
               ))}
             </div>
           ) : (
-            <div className="flex items-center justify-center py-10 text-gray-500 italic">
+             <div className="flex items-center justify-center py-10 text-gray-500 italic">
               {isLoading
                 ? "Loading offenses..."
                 : searchQuery
@@ -592,8 +583,9 @@ const AgentOffences = () => {
           )}
         </div>
       </div>
-      {/* Request History */}
+      {/* === Case History Section === */}
       <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
+        {/* ... (header remains the same) ... */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-100 rounded-lg">
@@ -612,15 +604,17 @@ const AgentOffences = () => {
           <div className="w-full overflow-x-auto overflow-y-auto max-h-200">
             <table className="w-full text-left border-collapse">
               <thead>
+                {/* === ITO ANG BINAGO === */}
                 <tr className="border-b border-gray-200 text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wider">
                   <th className="p-4 whitespace-nowrap">Date</th>
-                  <th className="p-4 whitespace-nowrap">Agent</th>
+                  {/* <th className="p-4 whitespace-nowrap">Agent</th> REMOVED since this is agent's own view */}
                   <th className="p-4 whitespace-nowrap">Offense Type</th>
-                  <th className="p-4 whitespace-nowrap">Severity</th>
+                  <th className="p-4 whitespace-nowrap">Level</th> {/* Changed Header */}
                   <th className="p-4 whitespace-nowrap">Status</th>
                   <th className="p-4 whitespace-nowrap">Action Taken</th>
                   <th className="p-4 whitespace-nowrap">Remarks</th>
                 </tr>
+                {/* === DULO NG PAGBABAGO === */}
               </thead>
               <tbody>
                 {resolvedOffenses.map((off) => (
@@ -631,15 +625,17 @@ const AgentOffences = () => {
                     <td className="p-4 text-sm text-gray-600">
                       {formatDisplayDate(off.dateOfOffense)}
                     </td>
-                    <td className="p-4 text-sm text-gray-800 font-medium">
+                    {/* <td className="p-4 text-sm text-gray-800 font-medium">
                       {off.agentName}
-                    </td>
+                    </td> REMOVED */}
                     <td className="p-4 text-sm text-gray-600">
                       {off.offenseType}
                     </td>
+                    {/* === ITO ANG BINAGO === */}
                     <td className="p-4 text-sm text-gray-600">
-                      {off.offenseSeverity}
+                      {off.offenseLevel || 'N/A'} {/* Changed Field */}
                     </td>
+                    {/* === DULO NG PAGBABAGO === */}
                     <td className="p-4">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium ${
