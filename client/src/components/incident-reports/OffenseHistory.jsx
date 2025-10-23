@@ -1,8 +1,8 @@
 import React from "react";
 import { DateTime } from "luxon";
-import { FileText, Eye, Download } from "lucide-react"; // Added icons
+import { FileText, Eye, Download } from "lucide-react";
 
-// --- NEW HELPER FUNCTION ---
+// --- HELPER FUNCTION ---
 // Converts Base64 data URL to a browser-readable Blob URL
 // This fixes the "blank screen" issue when viewing PDFs
 const base64ToBlobUrl = (base64, type) => {
@@ -117,22 +117,29 @@ const OffenseHistory = ({ offenses, isLoading }) => {
                               key={idx}
                               className="flex items-center gap-2"
                             >
+                              {/* File name as text */}
+                              <span className="truncate" title={ev.fileName}>{ev.fileName}</span>
+                              
+                              {/* View icon button */}
                               <a
                                 href={viewUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-800 underline"
+                                className="p-1 text-gray-500 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
+                                title="View"
                               >
-                                {ev.fileName}
+                                <Eye className="w-4 h-4" />
                               </a>
+                              
+                              {/* Download icon button */}
                               <a
                                 href={ev.data}
                                 download={ev.fileName}
                                 className="p-1 text-gray-500 hover:text-green-600 rounded-md hover:bg-green-50 transition-colors"
+                                title="Download"
                               >
                                 <Download className="w-4 h-4" />
                               </a>
-                              
                             </div>
                           );
                         })}

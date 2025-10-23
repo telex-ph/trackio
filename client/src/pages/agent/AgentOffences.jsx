@@ -12,7 +12,7 @@ import {
   Search,
   Eye,
   Hash,
-  Download, // icon
+  Download,
 } from "lucide-react";
 import { DateTime } from "luxon";
 import api from "../../utils/axios";
@@ -22,14 +22,12 @@ import api from "../../utils/axios";
 // Ito ang nag-aayos ng "blank screen" issue kapag nag-vi-view ng PDFs
 const base64ToBlobUrl = (base64, type) => {
   try {
-    // Hahatiin ang Base64 string "data:type;base64,..."
     const base64Data = base64.split(",")[1];
     if (!base64Data) {
       console.error("Invalid Base64 string");
       return base64; // Fallback
     }
 
-    // Ide-decode ang Base64 string
     const binaryString = atob(base64Data);
     const len = binaryString.length;
     const bytes = new Uint8Array(len);
@@ -37,15 +35,12 @@ const base64ToBlobUrl = (base64, type) => {
       bytes[i] = binaryString.charCodeAt(i);
     }
 
-    // Gagawa ng Blob
     const blob = new Blob([bytes], { type: type });
-
-    // Gagawa at ibabalik ang Object URL
     const url = URL.createObjectURL(blob);
     return url;
   } catch (e) {
     console.error("Failed to convert Base64 to Blob URL:", e);
-    return base64; // Fallback sa original data kung pumalya
+    return base64; // Fallback
   }
 };
 // --- END OF HELPER FUNCTION ---
@@ -242,8 +237,7 @@ const AgentOffences = () => {
       showNotification("Marked as read successfully!", "success");
       resetForm();
       fetchOffenses();
-    } catch (error)
-    {
+    } catch (error) {
       console.error("Error marking as read:", error);
       showNotification("Failed to mark as read. Please try again.", "error");
     }
@@ -296,6 +290,7 @@ const AgentOffences = () => {
       </section>
 
       <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
+        {/* --- OFFENSE DETAILS --- */}
         <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -318,8 +313,7 @@ const AgentOffences = () => {
 
           {isViewMode ? (
             <div className="space-y-6">
-              {/* Agent Name, Category, Type, Level, Date, Status, ActionTaken, Remarks... */}
-              {/* ... (Walang pagbabago sa ibang fields) ... */}
+              {/* Other Fields (Agent Name, Category, etc.) */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Agent Name
@@ -392,15 +386,13 @@ const AgentOffences = () => {
                 </p>
               </div>
 
-              {/* --- MODIFIED EVIDENCE SECTION (Ginaya sa Screenshot) --- */}
+              {/* Evidence Section (Styled like the screenshot) */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Evidence
                 </label>
                 {formData.evidence.length > 0 ? (
                   <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
-                    {/* Ginawa kong .slice(0, 1) para lang sa unang file, 
-                        para match sa logic ng HR form */}
                     {formData.evidence.slice(0, 1).map((ev, idx) => {
                       const viewUrl = base64ToBlobUrl(ev.data, ev.type);
                       return (
@@ -442,7 +434,7 @@ const AgentOffences = () => {
                   </div>
                 )}
               </div>
-              {/* --- END OF MODIFIED SECTION --- */}
+              {/* End of Evidence Section */}
 
               <div className="flex gap-4">
                 <button
@@ -467,8 +459,9 @@ const AgentOffences = () => {
             </div>
           )}
         </div>
+        
+        {/* --- CASES IN PROGRESS --- */}
         <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
-          {/* ... (Cases In Progress - Walang pagbabago dito, OK na) ... */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-red-100 rounded-lg">
@@ -640,8 +633,9 @@ const AgentOffences = () => {
           )}
         </div>
       </div>
+      
+      {/* --- CASE HISTORY --- */}
       <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
-        {/* ... (Case History - Walang pagbabago dito, OK na) ... */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-100 rounded-lg">
@@ -699,6 +693,8 @@ const AgentOffences = () => {
                     <td className="p-4 text-sm text-gray-600">
                       {off.actionTaken}
                     </td>
+
+                    {/* --- MODIFIED EVIDENCE COLUMN --- */}
                     <td className="p-4 text-sm text-gray-600">
                       {off.evidence && off.evidence.length > 0 ? (
                         <div className="flex flex-col items-start gap-2">
@@ -709,18 +705,26 @@ const AgentOffences = () => {
                                 key={idx}
                                 className="flex items-center gap-2"
                               >
+                                {/* File name as text */}
+                                <span className="truncate" title={ev.fileName}>{ev.fileName}</span>
+
+                                {/* View icon button */}
                                 <a
                                   href={viewUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-blue-600 hover:text-blue-800 underline"
+                                  className="p-1 text-gray-500 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
+                                  title="View"
                                 >
-                                  {ev.fileName}
+                                  <Eye className="w-4 h-4" />
                                 </a>
+
+                                {/* Download icon button */}
                                 <a
                                   href={ev.data}
                                   download={ev.fileName}
                                   className="p-1 text-gray-500 hover:text-green-600 rounded-md hover:bg-green-50 transition-colors"
+                                  title="Download"
                                 >
                                   <Download className="w-4 h-4" />
                                 </a>
@@ -732,6 +736,8 @@ const AgentOffences = () => {
                         "—"
                       )}
                     </td>
+                    {/* --- END OF MODIFIED SECTION --- */}
+
                     <td className="p-4 text-sm text-gray-600">
                       {off.remarks || "—"}
                     </td>
