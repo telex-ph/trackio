@@ -13,7 +13,7 @@ import {
   XCircle,
   Bell,
   Search,
-  Hash 
+  Hash,
 } from "lucide-react";
 import { DateTime } from "luxon";
 import api from "../../utils/axios";
@@ -41,17 +41,19 @@ const HROffenses = () => {
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
 
+  // --- MODIFICATION 1: Added 'evidence: []' to initial state ---
   const [formData, setFormData] = useState({
     agentName: "",
     employeeId: "",
     agentRole: "",
     offenseCategory: "",
     offenseType: "",
-    offenseLevel: "", 
+    offenseLevel: "",
     dateOfOffense: "",
     status: "",
     actionTaken: "",
     remarks: "",
+    evidence: [], // Added this line
   });
 
   const showNotification = (message, type) => {
@@ -128,18 +130,24 @@ const HROffenses = () => {
       !formData.employeeId ||
       !formData.offenseCategory ||
       !formData.offenseType ||
-      !formData.offenseLevel || 
+      !formData.offenseLevel ||
       !formData.dateOfOffense ||
       !formData.status ||
       !formData.actionTaken
     ) {
-      showNotification("Please fill in all required fields, including selecting an agent", "error");
+      showNotification(
+        "Please fill in all required fields, including selecting an agent",
+        "error"
+      );
       return;
     }
 
     try {
+      // --- MODIFICATION 3: 'payload' now contains existing evidence by default ---
       const payload = { ...formData };
-      if (selectedFile) { 
+
+      if (selectedFile) {
+        // If new file is selected, overwrite evidence
         const base64File = await fileToBase64(selectedFile);
         payload.evidence = [
           {
@@ -149,10 +157,10 @@ const HROffenses = () => {
             data: base64File,
           },
         ];
-      } else {
-        payload.evidence = []; 
       }
-
+      // --- REMOVED 'else { payload.evidence = []; }' ---
+      // If no new file, 'payload.evidence' (from formData) is used,
+      // preserving the existing file or an empty array if removed.
 
       if (isEditMode) {
         await api.put(`/offenses/${editingId}`, payload);
@@ -170,6 +178,7 @@ const HROffenses = () => {
     }
   };
 
+  // --- MODIFICATION 2: Added 'evidence: []' to reset state ---
   const resetForm = () => {
     setFormData({
       agentName: "",
@@ -177,13 +186,14 @@ const HROffenses = () => {
       agentRole: "",
       offenseCategory: "",
       offenseType: "",
-      offenseLevel: "", 
+      offenseLevel: "",
       dateOfOffense: "",
       status: "",
       actionTaken: "",
       remarks: "",
+      evidence: [], // Added this line
     });
-    setSelectedFile(null); 
+    setSelectedFile(null);
     setIsEditMode(false);
     setEditingId(null);
   };
@@ -191,19 +201,21 @@ const HROffenses = () => {
   const handleEdit = (off) => {
     setIsEditMode(true);
     setEditingId(off._id);
+    // --- MODIFICATION 2: Now sets 'evidence' in formData ---
     setFormData({
       agentName: off.agentName,
       employeeId: off.employeeId || "",
       agentRole: off.agentRole || "",
       offenseCategory: off.offenseCategory,
       offenseType: off.offenseType,
-      offenseLevel: off.offenseLevel || "", 
+      offenseLevel: off.offenseLevel || "",
       dateOfOffense: off.dateOfOffense,
       status: off.status,
       actionTaken: off.actionTaken,
       remarks: off.remarks || "",
+      evidence: off.evidence || [], // Added this line
     });
-    setSelectedFile(null); 
+    setSelectedFile(null); // Clear any staged file
   };
 
   const handleDeleteClick = (id) => {
@@ -273,8 +285,8 @@ const HROffenses = () => {
         <OffenseForm
           formData={formData}
           setFormData={setFormData}
-          selectedFile={selectedFile} 
-          setSelectedFile={setSelectedFile} 
+          selectedFile={selectedFile}
+          setSelectedFile={setSelectedFile}
           isDragOver={isDragOver}
           setIsDragOver={setIsDragOver}
           isEditMode={isEditMode}

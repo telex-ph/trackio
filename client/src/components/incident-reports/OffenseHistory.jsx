@@ -1,6 +1,34 @@
 import React from "react";
 import { DateTime } from "luxon";
-import { FileText } from "lucide-react";
+import { FileText, Eye, Download } from "lucide-react"; // Added icons
+
+// --- NEW HELPER FUNCTION ---
+// Converts Base64 data URL to a browser-readable Blob URL
+// This fixes the "blank screen" issue when viewing PDFs
+const base64ToBlobUrl = (base64, type) => {
+  try {
+    const base64Data = base64.split(",")[1];
+    if (!base64Data) {
+      console.error("Invalid Base64 string");
+      return base64; // Fallback
+    }
+
+    const binaryString = atob(base64Data);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], { type: type });
+    const url = URL.createObjectURL(blob);
+    return url;
+  } catch (e) {
+    console.error("Failed to convert Base64 to Blob URL:", e);
+    return base64; // Fallback
+  }
+};
+// --- END OF HELPER FUNCTION ---
 
 const OffenseHistory = ({ offenses, isLoading }) => {
   const formatDisplayDate = (dateStr) =>
@@ -38,9 +66,10 @@ const OffenseHistory = ({ offenses, isLoading }) => {
                 <th className="p-4 whitespace-nowrap">Date</th>
                 <th className="p-4 whitespace-nowrap">Agent</th>
                 <th className="p-4 whitespace-nowrap">Offense Type</th>
-                <th className="p-4 whitespace-nowrap">Severity</th>
+                <th className="p-4 whitespace-nowrap">Level</th>
                 <th className="p-4 whitespace-nowrap">Status</th>
                 <th className="p-4 whitespace-nowrap">Action Taken</th>
+                <th className="p-4 whitespace-nowrap">Evidence</th>
                 <th className="p-4 whitespace-nowrap">Remarks</th>
               </tr>
             </thead>
@@ -56,9 +85,11 @@ const OffenseHistory = ({ offenses, isLoading }) => {
                   <td className="p-4 text-sm text-gray-800 font-medium">
                     {off.agentName}
                   </td>
-                  <td className="p-4 text-sm text-gray-600">{off.offenseType}</td>
                   <td className="p-4 text-sm text-gray-600">
-                    {off.offenseSeverity}
+                    {off.offenseType}
+                  </td>
+                  <td className="p-4 text-sm text-gray-600">
+                    {off.offenseLevel || "N/A"}
                   </td>
                   <td className="p-4">
                     <span
@@ -71,7 +102,47 @@ const OffenseHistory = ({ offenses, isLoading }) => {
                       {off.status}
                     </span>
                   </td>
-                  <td className="p-4 text-sm text-gray-600">{off.actionTaken}</td>
+                  <td className="p-4 text-sm text-gray-600">
+                    {off.actionTaken}
+                  </td>
+
+                  {/* --- MODIFIED EVIDENCE COLUMN DATA --- */}
+                  <td className="p-4 text-sm text-gray-600">
+                    {off.evidence && off.evidence.length > 0 ? (
+                      <div className="flex flex-col items-start gap-2">
+                        {off.evidence.map((ev, idx) => {
+                          const viewUrl = base64ToBlobUrl(ev.data, ev.type);
+                          return (
+                            <div
+                              key={idx}
+                              className="flex items-center gap-2"
+                            >
+                              <a
+                                href={viewUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 underline"
+                              >
+                                {ev.fileName}
+                              </a>
+                              <a
+                                href={ev.data}
+                                download={ev.fileName}
+                                className="p-1 text-gray-500 hover:text-green-600 rounded-md hover:bg-green-50 transition-colors"
+                              >
+                                <Download className="w-4 h-4" />
+                              </a>
+                              
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  {/* --- END OF MODIFIED SECTION --- */}
+
                   <td className="p-4 text-sm text-gray-600">
                     {off.remarks || "—"}
                   </td>
