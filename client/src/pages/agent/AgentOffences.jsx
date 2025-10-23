@@ -131,6 +131,9 @@ const AgentOffences = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
 
+  // Bagong state para sa search ng history
+  const [historySearchQuery, setHistorySearchQuery] = useState("");
+
   const [notification, setNotification] = useState({
     message: "",
     type: "",
@@ -248,6 +251,7 @@ const AgentOffences = () => {
       ? DateTime.fromISO(dateStr).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)
       : "";
 
+  // Filter para sa "Cases In Progress"
   const filteredOffenses = offenses.filter(
     (off) =>
       currentUser &&
@@ -260,17 +264,30 @@ const AgentOffences = () => {
         off.status,
         off.actionTaken,
         off.remarks || "",
+        formatDisplayDate(off.dateOfOffense),
       ]
         .join(" ")
         .toLowerCase()
-        .includes(searchQuery.toLowerCase())
+        .includes(searchQuery.toLowerCase()) // Gumagamit ng main searchQuery
   );
 
+  // Filter para sa "Case History"
   const resolvedOffenses = offenses.filter(
     (off) =>
       currentUser &&
       off.employeeId === currentUser.employeeId &&
-      ["Action Taken", "Escalated", "Closed"].includes(off.status)
+      ["Action Taken", "Escalated", "Closed"].includes(off.status) &&
+      [
+        off.offenseType,
+        off.offenseLevel || "",
+        off.status,
+        off.actionTaken,
+        off.remarks || "",
+        formatDisplayDate(off.dateOfOffense),
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(historySearchQuery.toLowerCase()) // Gumagamit ng historySearchQuery
   );
 
   return (
@@ -313,7 +330,7 @@ const AgentOffences = () => {
 
           {isViewMode ? (
             <div className="space-y-6">
-              {/* Other Fields (Agent Name, Category, etc.) */}
+              {/* Agent Name */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Agent Name
@@ -322,6 +339,7 @@ const AgentOffences = () => {
                   {formData.agentName}
                 </p>
               </div>
+              {/* Category & Type */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-2">
                   <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -340,6 +358,7 @@ const AgentOffences = () => {
                   </p>
                 </div>
               </div>
+              {/* Level & Date */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-2">
                   <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -361,6 +380,7 @@ const AgentOffences = () => {
                   </div>
                 </div>
               </div>
+              {/* Status */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Status
@@ -369,6 +389,7 @@ const AgentOffences = () => {
                   {formData.status || "N/A"}
                 </p>
               </div>
+              {/* Action Taken */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Action Taken
@@ -377,6 +398,7 @@ const AgentOffences = () => {
                   {formData.actionTaken || "N/A"}
                 </p>
               </div>
+              {/* Remarks */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Remarks
@@ -436,6 +458,7 @@ const AgentOffences = () => {
               </div>
               {/* End of Evidence Section */}
 
+              {/* Buttons */}
               <div className="flex gap-4">
                 <button
                   onClick={resetForm}
@@ -650,6 +673,20 @@ const AgentOffences = () => {
           </span>
         </div>
 
+        {/* Search Bar para sa History */}
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              value={historySearchQuery}
+              onChange={(e) => setHistorySearchQuery(e.target.value)}
+              placeholder="Search history by level, type, status..."
+              className="w-full pl-10 pr-4 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-green-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
+            />
+          </div>
+        </div>
+
         {resolvedOffenses.length > 0 ? (
           <div className="w-full overflow-x-auto overflow-y-auto max-h-200">
             <table className="w-full text-left border-collapse">
@@ -673,7 +710,7 @@ const AgentOffences = () => {
                     <td className="p-4 text-sm text-gray-600">
                       {formatDisplayDate(off.dateOfOffense)}
                     </td>
-                    <td className="p-4 text-sm text-gray-600">
+                    <td className="p-4 text-sm text-gray-60V00">
                       {off.offenseType}
                     </td>
                     <td className="p-4 text-sm text-gray-600">
@@ -694,7 +731,7 @@ const AgentOffences = () => {
                       {off.actionTaken}
                     </td>
 
-                    {/* --- MODIFIED EVIDENCE COLUMN --- */}
+                    {/* Evidence Column na may icons */}
                     <td className="p-4 text-sm text-gray-600">
                       {off.evidence && off.evidence.length > 0 ? (
                         <div className="flex flex-col items-start gap-2">
@@ -705,10 +742,9 @@ const AgentOffences = () => {
                                 key={idx}
                                 className="flex items-center gap-2"
                               >
-                                {/* File name as text */}
-                                <span className="truncate" title={ev.fileName}>{ev.fileName}</span>
-
-                                {/* View icon button */}
+                                <span className="truncate" title={ev.fileName}>
+                                  {ev.fileName}
+                                </span>
                                 <a
                                   href={viewUrl}
                                   target="_blank"
@@ -718,8 +754,6 @@ const AgentOffences = () => {
                                 >
                                   <Eye className="w-4 h-4" />
                                 </a>
-
-                                {/* Download icon button */}
                                 <a
                                   href={ev.data}
                                   download={ev.fileName}
@@ -736,7 +770,7 @@ const AgentOffences = () => {
                         "—"
                       )}
                     </td>
-                    {/* --- END OF MODIFIED SECTION --- */}
+                    {/* End of Evidence Column */}
 
                     <td className="p-4 text-sm text-gray-600">
                       {off.remarks || "—"}
@@ -750,6 +784,8 @@ const AgentOffences = () => {
           <div className="flex items-center justify-center py-10 text-gray-500 italic">
             {isLoading
               ? "Loading history..."
+              : historySearchQuery // Pinalitan para sa history search
+              ? "No matching history records found."
               : "No resolved offense records found."}
           </div>
         )}

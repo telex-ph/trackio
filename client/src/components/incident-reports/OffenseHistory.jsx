@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react"; // Added useState
 import { DateTime } from "luxon";
-import { FileText, Eye, Download } from "lucide-react";
+import { FileText, Eye, Download, Search } from "lucide-react"; // Added Search
 
 // --- HELPER FUNCTION ---
 // Converts Base64 data URL to a browser-readable Blob URL
@@ -31,17 +31,33 @@ const base64ToBlobUrl = (base64, type) => {
 // --- END OF HELPER FUNCTION ---
 
 const OffenseHistory = ({ offenses, isLoading }) => {
+  const [searchQuery, setSearchQuery] = useState(""); // --- Added search state ---
+
   const formatDisplayDate = (dateStr) =>
     dateStr
       ? DateTime.fromISO(dateStr).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)
       : "";
 
+  // --- MODIFIED resolvedOffenses to include search filter ---
   const resolvedOffenses = offenses.filter(
     (off) =>
-      off.status === "Action Taken" ||
-      off.status === "Escalated" ||
-      off.status === "Closed"
+      (off.status === "Action Taken" ||
+        off.status === "Escalated" ||
+        off.status === "Closed") &&
+      [
+        off.agentName,
+        off.offenseType,
+        off.offenseLevel || "",
+        off.status,
+        off.actionTaken,
+        off.remarks || "",
+        formatDisplayDate(off.dateOfOffense), // Search by formatted date
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
   );
+  // --- END OF MODIFICATION ---
 
   return (
     <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
@@ -58,6 +74,22 @@ const OffenseHistory = ({ offenses, isLoading }) => {
           {resolvedOffenses.length} Records
         </span>
       </div>
+
+      {/* --- ADDED SEARCH BAR --- */}
+      <div className="mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search history by agent, level, type..."
+            className="w-full pl-10 pr-4 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-green-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
+          />
+        </div>
+      </div>
+      {/* --- END OF SEARCH BAR --- */}
+
       {resolvedOffenses.length > 0 ? (
         <div className="w-full overflow-x-auto overflow-y-auto max-h-200">
           <table className="w-full text-left border-collapse">
@@ -105,8 +137,6 @@ const OffenseHistory = ({ offenses, isLoading }) => {
                   <td className="p-4 text-sm text-gray-600">
                     {off.actionTaken}
                   </td>
-
-                  {/* --- MODIFIED EVIDENCE COLUMN DATA --- */}
                   <td className="p-4 text-sm text-gray-600">
                     {off.evidence && off.evidence.length > 0 ? (
                       <div className="flex flex-col items-start gap-2">
@@ -117,10 +147,9 @@ const OffenseHistory = ({ offenses, isLoading }) => {
                               key={idx}
                               className="flex items-center gap-2"
                             >
-                              {/* File name as text */}
-                              <span className="truncate" title={ev.fileName}>{ev.fileName}</span>
-                              
-                              {/* View icon button */}
+                              <span className="truncate" title={ev.fileName}>
+                                {ev.fileName}
+                              </span>
                               <a
                                 href={viewUrl}
                                 target="_blank"
@@ -130,8 +159,6 @@ const OffenseHistory = ({ offenses, isLoading }) => {
                               >
                                 <Eye className="w-4 h-4" />
                               </a>
-                              
-                              {/* Download icon button */}
                               <a
                                 href={ev.data}
                                 download={ev.fileName}
@@ -148,8 +175,6 @@ const OffenseHistory = ({ offenses, isLoading }) => {
                       "—"
                     )}
                   </td>
-                  {/* --- END OF MODIFIED SECTION --- */}
-
                   <td className="p-4 text-sm text-gray-600">
                     {off.remarks || "—"}
                   </td>
@@ -160,8 +185,11 @@ const OffenseHistory = ({ offenses, isLoading }) => {
         </div>
       ) : (
         <div className="flex items-center justify-center py-10 text-gray-500 italic">
+          {/* --- MODIFIED no results text --- */}
           {isLoading
             ? "Loading history..."
+            : searchQuery
+            ? "No matching history records found."
             : "No resolved offense records found."}
         </div>
       )}
