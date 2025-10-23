@@ -303,6 +303,12 @@ const HRSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       label="Monitoring"
       isCollapsed={isCollapsed}
     />
+    <SidebarLink
+      to="/human-resources/offenses"
+      icon={Calendar}
+      label="Offenses"
+      isCollapsed={isCollapsed}
+    />
   </div>
 );
 
