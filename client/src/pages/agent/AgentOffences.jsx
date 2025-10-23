@@ -11,10 +11,44 @@ import {
   Bell,
   Search,
   Eye,
-  Hash 
+  Hash,
+  Download, // icon
 } from "lucide-react";
 import { DateTime } from "luxon";
 import api from "../../utils/axios";
+
+// --- HELPER FUNCTION ---
+// Kino-convert ang Base64 data URL sa isang browser-readable Blob URL
+// Ito ang nag-aayos ng "blank screen" issue kapag nag-vi-view ng PDFs
+const base64ToBlobUrl = (base64, type) => {
+  try {
+    // Hahatiin ang Base64 string "data:type;base64,..."
+    const base64Data = base64.split(",")[1];
+    if (!base64Data) {
+      console.error("Invalid Base64 string");
+      return base64; // Fallback
+    }
+
+    // Ide-decode ang Base64 string
+    const binaryString = atob(base64Data);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    // Gagawa ng Blob
+    const blob = new Blob([bytes], { type: type });
+
+    // Gagawa at ibabalik ang Object URL
+    const url = URL.createObjectURL(blob);
+    return url;
+  } catch (e) {
+    console.error("Failed to convert Base64 to Blob URL:", e);
+    return base64; // Fallback sa original data kung pumalya
+  }
+};
+// --- END OF HELPER FUNCTION ---
 
 const Notification = ({ message, type, onClose }) => {
   const [isVisible, setIsVisible] = useState(true);
@@ -100,7 +134,7 @@ const AgentOffences = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [offenses, setOffenses] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentUser, setCurrentUser] = useState(null); 
+  const [currentUser, setCurrentUser] = useState(null);
 
   const [notification, setNotification] = useState({
     message: "",
@@ -115,7 +149,7 @@ const AgentOffences = () => {
     agentName: "",
     offenseCategory: "",
     offenseType: "",
-    offenseLevel: "", 
+    offenseLevel: "",
     dateOfOffense: "",
     status: "",
     actionTaken: "",
@@ -132,10 +166,13 @@ const AgentOffences = () => {
     try {
       const response = await api.get("/auth/get-auth-user");
       setCurrentUser(response.data);
-      return response.data; 
+      return response.data;
     } catch (error) {
       console.error("Error fetching current user:", error);
-      showNotification("Failed to load user data. Please log in again.", "error");
+      showNotification(
+        "Failed to load user data. Please log in again.",
+        "error"
+      );
       return null;
     }
   };
@@ -149,7 +186,7 @@ const AgentOffences = () => {
     } catch (error) {
       console.error("Error fetching offenses:", error);
       showNotification("Failed to load offenses. Please try again.", "error");
-      return []; 
+      return [];
     } finally {
       setIsLoading(false);
     }
@@ -157,29 +194,18 @@ const AgentOffences = () => {
 
   useEffect(() => {
     const loadData = async () => {
-      const fetchedUser = await fetchCurrentUser(); 
-      const fetchedOffenses = await fetchOffenses(); 
-
-      console.log("INITIAL Current User Data (after fetch):", fetchedUser); 
-      console.log("INITIAL All Fetched Offenses (after fetch):", fetchedOffenses); 
+      await fetchCurrentUser();
+      await fetchOffenses();
     };
     loadData();
-  }, []); 
-
-  useEffect(() => {
-      console.log("Current User State Updated:", currentUser);
-  }, [currentUser]);
-
-  useEffect(() => {
-      console.log("Offenses State Updated:", offenses);
-  }, [offenses]);
+  }, []);
 
   const resetForm = () => {
     setFormData({
       agentName: "",
       offenseCategory: "",
       offenseType: "",
-      offenseLevel: "", 
+      offenseLevel: "",
       dateOfOffense: "",
       status: "",
       actionTaken: "",
@@ -198,7 +224,7 @@ const AgentOffences = () => {
       agentName: off.agentName,
       offenseCategory: off.offenseCategory,
       offenseType: off.offenseType,
-      offenseLevel: off.offenseLevel || "", 
+      offenseLevel: off.offenseLevel || "",
       dateOfOffense: off.dateOfOffense,
       status: off.status,
       actionTaken: off.actionTaken,
@@ -215,8 +241,9 @@ const AgentOffences = () => {
       await api.put(`/offenses/${editingId}`, payload);
       showNotification("Marked as read successfully!", "success");
       resetForm();
-      fetchOffenses(); 
-    } catch (error) {
+      fetchOffenses();
+    } catch (error)
+    {
       console.error("Error marking as read:", error);
       showNotification("Failed to mark as read. Please try again.", "error");
     }
@@ -227,11 +254,10 @@ const AgentOffences = () => {
       ? DateTime.fromISO(dateStr).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)
       : "";
 
-
   const filteredOffenses = offenses.filter(
     (off) =>
-      currentUser && 
-      off.employeeId === currentUser.employeeId && 
+      currentUser &&
+      off.employeeId === currentUser.employeeId &&
       !["Action Taken", "Escalated", "Closed"].includes(off.status) &&
       [
         off.offenseType,
@@ -248,17 +274,14 @@ const AgentOffences = () => {
 
   const resolvedOffenses = offenses.filter(
     (off) =>
-      currentUser && 
-      off.employeeId === currentUser.employeeId && 
+      currentUser &&
+      off.employeeId === currentUser.employeeId &&
       ["Action Taken", "Escalated", "Closed"].includes(off.status)
   );
 
-  console.log("Filtered 'Cases in Progress':", filteredOffenses);
-  console.log("Filtered 'Case History':", resolvedOffenses);
-
   return (
     <div>
-       {notification.isVisible && (
+      {notification.isVisible && (
         <Notification
           message={notification.message}
           type={notification.type}
@@ -295,6 +318,8 @@ const AgentOffences = () => {
 
           {isViewMode ? (
             <div className="space-y-6">
+              {/* Agent Name, Category, Type, Level, Date, Status, ActionTaken, Remarks... */}
+              {/* ... (Walang pagbabago sa ibang fields) ... */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Agent Name
@@ -321,14 +346,13 @@ const AgentOffences = () => {
                   </p>
                 </div>
               </div>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-2">
                   <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                     Offense Level
                   </label>
                   <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
-                    {formData.offenseLevel || "N/A"} 
+                    {formData.offenseLevel || "N/A"}
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -367,27 +391,59 @@ const AgentOffences = () => {
                   {formData.remarks || "No remarks"}
                 </p>
               </div>
+
+              {/* --- MODIFIED EVIDENCE SECTION (Ginaya sa Screenshot) --- */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Evidence
                 </label>
                 {formData.evidence.length > 0 ? (
-                  <div className="space-y-2">
-                    {formData.evidence.map((ev, idx) => (
-                      <p
-                        key={idx}
-                        className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base underline cursor-pointer"
-                      >
-                        {ev.fileName}
-                      </p>
-                    ))}
+                  <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
+                    {/* Ginawa kong .slice(0, 1) para lang sa unang file, 
+                        para match sa logic ng HR form */}
+                    {formData.evidence.slice(0, 1).map((ev, idx) => {
+                      const viewUrl = base64ToBlobUrl(ev.data, ev.type);
+                      return (
+                        <div key={idx} className="flex flex-col gap-3">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                            <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
+                              {ev.fileName}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={viewUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                            >
+                              <Eye className="w-4 h-4" />
+                              View
+                            </a>
+                            <a
+                              href={ev.data}
+                              download={ev.fileName}
+                              className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                            >
+                              <Download className="w-4 h-4" />
+                              Download
+                            </a>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
-                  <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
-                    No evidence
-                  </p>
+                  <div className="border-2 border-dashed rounded-2xl p-4 border-gray-300 bg-gray-50/30">
+                    <p className="text-center text-gray-500 text-sm italic">
+                      No evidence attached.
+                    </p>
+                  </div>
                 )}
               </div>
+              {/* --- END OF MODIFIED SECTION --- */}
+
               <div className="flex gap-4">
                 <button
                   onClick={resetForm}
@@ -406,13 +462,14 @@ const AgentOffences = () => {
               </div>
             </div>
           ) : (
-             <div className="flex items-center justify-center py-10 text-gray-500 italic">
+            <div className="flex items-center justify-center py-10 text-gray-500 italic">
               Select an offense from the list to view details.
             </div>
           )}
         </div>
         <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
-           <div className="flex items-center justify-between mb-6">
+          {/* ... (Cases In Progress - Walang pagbabago dito, OK na) ... */}
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-red-100 rounded-lg">
                 <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
@@ -432,7 +489,7 @@ const AgentOffences = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by level, type, category..." 
+                placeholder="Search by level, type, category..."
                 className="w-full pl-10 pr-4 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
               />
             </div>
@@ -490,9 +547,11 @@ const AgentOffences = () => {
                       <span className="font-medium">{off.offenseCategory}</span>
                     </p>
                     <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                      <Hash className="w-3 h-3 sm:w-4 sm:h-4" /> 
+                      <Hash className="w-3 h-3 sm:w-4 sm:h-4" />
                       Level:{" "}
-                      <span className="font-medium">{off.offenseLevel || 'N/A'}</span> 
+                      <span className="font-medium">
+                        {off.offenseLevel || "N/A"}
+                      </span>
                     </p>
 
                     <div className="bg-red-50 rounded-xl p-3 sm:p-4 border-l-4 border-red-500">
@@ -511,28 +570,50 @@ const AgentOffences = () => {
                             Remarks:
                           </span>{" "}
                           {off.remarks}
-                        </p> 
+                        </p>
                       </div>
                     )}
 
                     {off.evidence && off.evidence.length > 0 && (
                       <div className="bg-purple-50 rounded-xl p-3 sm:p-4 border-l-4 border-purple-500">
-                        <p className="text-xs sm:text-sm text-gray-700 flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-purple-600" />
-                          <span className="font-semibold text-gray-800">
-                            Evidence:
-                          </span>
-                          <span className="text-purple-700">
-                            {off.evidence.map((ev, idx) => (
-                              <span
+                        <div className="text-xs sm:text-sm text-gray-700">
+                          <div className="flex items-center gap-2 mb-2">
+                            <FileText className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                            <span className="font-semibold text-gray-800">
+                              Evidence:
+                            </span>
+                          </div>
+                          {off.evidence.map((ev, idx) => {
+                            const viewUrl = base64ToBlobUrl(ev.data, ev.type);
+                            return (
+                              <div
                                 key={idx}
-                                className="ml-1 underline cursor-pointer"
+                                className="flex items-center justify-between gap-2 w-full p-2 bg-white border border-purple-100 rounded-lg mt-1"
                               >
-                                {ev.fileName}
-                              </span>
-                            ))}
-                          </span>
-                        </p>
+                                <span className="text-purple-700 truncate text-xs font-medium">
+                                  {ev.fileName}
+                                </span>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <a
+                                    href={viewUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-1 text-gray-500 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
+                                  >
+                                    <Eye className="w-3.5 h-3.5" />
+                                  </a>
+                                  <a
+                                    href={ev.data}
+                                    download={ev.fileName}
+                                    className="p-1 text-gray-500 hover:text-green-600 rounded-md hover:bg-green-50 transition-colors"
+                                  >
+                                    <Download className="w-3.5 h-3.5" />
+                                  </a>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -549,7 +630,7 @@ const AgentOffences = () => {
               ))}
             </div>
           ) : (
-             <div className="flex items-center justify-center py-10 text-gray-500 italic">
+            <div className="flex items-center justify-center py-10 text-gray-500 italic">
               {isLoading
                 ? "Loading offenses..."
                 : searchQuery
@@ -560,6 +641,7 @@ const AgentOffences = () => {
         </div>
       </div>
       <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
+        {/* ... (Case History - Walang pagbabago dito, OK na) ... */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-100 rounded-lg">
@@ -581,9 +663,10 @@ const AgentOffences = () => {
                 <tr className="border-b border-gray-200 text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wider">
                   <th className="p-4 whitespace-nowrap">Date</th>
                   <th className="p-4 whitespace-nowrap">Offense Type</th>
-                  <th className="p-4 whitespace-nowrap">Level</th> 
+                  <th className="p-4 whitespace-nowrap">Level</th>
                   <th className="p-4 whitespace-nowrap">Status</th>
                   <th className="p-4 whitespace-nowrap">Action Taken</th>
+                  <th className="p-4 whitespace-nowrap">Evidence</th>
                   <th className="p-4 whitespace-nowrap">Remarks</th>
                 </tr>
               </thead>
@@ -600,7 +683,7 @@ const AgentOffences = () => {
                       {off.offenseType}
                     </td>
                     <td className="p-4 text-sm text-gray-600">
-                      {off.offenseLevel || 'N/A'} 
+                      {off.offenseLevel || "N/A"}
                     </td>
                     <td className="p-4">
                       <span
@@ -615,6 +698,39 @@ const AgentOffences = () => {
                     </td>
                     <td className="p-4 text-sm text-gray-600">
                       {off.actionTaken}
+                    </td>
+                    <td className="p-4 text-sm text-gray-600">
+                      {off.evidence && off.evidence.length > 0 ? (
+                        <div className="flex flex-col items-start gap-2">
+                          {off.evidence.map((ev, idx) => {
+                            const viewUrl = base64ToBlobUrl(ev.data, ev.type);
+                            return (
+                              <div
+                                key={idx}
+                                className="flex items-center gap-2"
+                              >
+                                <a
+                                  href={viewUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:text-blue-800 underline"
+                                >
+                                  {ev.fileName}
+                                </a>
+                                <a
+                                  href={ev.data}
+                                  download={ev.fileName}
+                                  className="p-1 text-gray-500 hover:text-green-600 rounded-md hover:bg-green-50 transition-colors"
+                                >
+                                  <Download className="w-4 h-4" />
+                                </a>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     <td className="p-4 text-sm text-gray-600">
                       {off.remarks || "—"}
