@@ -9,11 +9,11 @@ import {
   Bell,
   Hash,
   FileText,
-  Eye, // Added
-  Download, // Added
+  Eye,
+  Download,
 } from "lucide-react";
 
-// --- NEW HELPER FUNCTION ---
+// --- HELPER FUNCTION ---
 // Converts Base64 data URL to a browser-readable Blob URL
 // This fixes the "blank screen" issue when viewing PDFs
 const base64ToBlobUrl = (base64, type) => {
@@ -107,10 +107,44 @@ const OffenseList = ({
               className="group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border border-gray-100"
             >
               <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
-                {/* ... (No changes here) ... */}
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div className="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors">
+                    <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-2 group-hover:text-red-600 transition-colors">
+                      {off.offenseType}
+                    </h4>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
+                      <span className="text-xs text-gray-500">
+                        Date: {formatDisplayDate(off.dateOfOffense)}
+                      </span>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          off.status === "Pending Review"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : off.status === "Under Investigation"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-gray-200 text-gray-600"
+                        }`}
+                      >
+                        {off.status}
+                      </span>
+
+                      {off.isRead ? (
+                        <span className="flex items-center gap-1 text-green-600 text-xs">
+                          <CheckCircle className="w-4 h-4" /> Read by Agent
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-gray-500 text-xs">
+                          <Bell className="w-4 h-4" /> Unread by Agent
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="space-y-3 mb-4">
-                {/* ... (No changes in Agent, Category, Level, Action, Remarks) ... */}
                 <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
                   <User className="w-3 h-3 sm:w-4 sm:h-4" />
                   Agent: <span className="font-medium">{off.agentName}</span>
@@ -151,7 +185,6 @@ const OffenseList = ({
                   </div>
                 )}
                 
-                {/* --- MODIFIED EVIDENCE SECTION --- */}
                 {off.evidence && off.evidence.length > 0 && (
                   <div className="bg-purple-50 rounded-xl p-3 sm:p-4 border-l-4 border-purple-500">
                     <div className="text-xs sm:text-sm text-gray-700">
@@ -194,7 +227,6 @@ const OffenseList = ({
                     </div>
                   </div>
                 )}
-                {/* --- END OF MODIFIED SECTION --- */}
               </div>
               <div className="flex gap-3">
                 <button
