@@ -13,13 +13,14 @@ import {
   Eye,
   Hash,
   Download,
+  X as ClearIcon, // Added ClearIcon for reset
 } from "lucide-react";
-import { DateTime } from "luxon";
+import { DateTime } from "luxon"; // Import DateTime
 import api from "../../utils/axios";
 
 // --- HELPER FUNCTION ---
-// Kino-convert ang Base64 data URL sa isang browser-readable Blob URL
-// Ito ang nag-aayos ng "blank screen" issue kapag nag-vi-view ng PDFs
+// Converts Base64 data URL to a browser-readable Blob URL
+// This fixes the "blank screen" issue when viewing PDFs
 const base64ToBlobUrl = (base64, type) => {
   try {
     const base64Data = base64.split(",")[1];
@@ -36,7 +37,11 @@ const base64ToBlobUrl = (base64, type) => {
     }
 
     const blob = new Blob([bytes], { type: type });
+    // Create and return the Object URL
     const url = URL.createObjectURL(blob);
+    // Optional: Revoke the URL when it's no longer needed (e.g., in useEffect cleanup or when component unmounts)
+    // This helps free up memory, but be careful not to revoke too early if the URL is still needed.
+    // setTimeout(() => URL.revokeObjectURL(url), 60000); // Example: Revoke after 1 minute
     return url;
   } catch (e) {
     console.error("Failed to convert Base64 to Blob URL:", e);
@@ -128,11 +133,16 @@ const AgentOffences = () => {
   const [editingId, setEditingId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [offenses, setOffenses] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(""); // For Cases in Progress
   const [currentUser, setCurrentUser] = useState(null);
 
-  // Bagong state para sa search ng history
+  // States for History Filters
   const [historySearchQuery, setHistorySearchQuery] = useState("");
+  const [historyStartDate, setHistoryStartDate] = useState("");
+  const [historyEndDate, setHistoryEndDate] = useState("");
+
+   // Get today's date in YYYY-MM-DD format for max attribute
+  const today = DateTime.now().toISODate();
 
   const [notification, setNotification] = useState({
     message: "",
@@ -141,7 +151,7 @@ const AgentOffences = () => {
   });
 
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState(null);
+  const [itemToDelete, setItemToDelete] = useState(null); // Although not used here, keep for consistency if needed later
 
   const [formData, setFormData] = useState({
     agentName: "",
@@ -239,7 +249,7 @@ const AgentOffences = () => {
       await api.put(`/offenses/${editingId}`, payload);
       showNotification("Marked as read successfully!", "success");
       resetForm();
-      fetchOffenses();
+      fetchOffenses(); // Re-fetch to update the list immediately
     } catch (error) {
       console.error("Error marking as read:", error);
       showNotification("Failed to mark as read. Please try again.", "error");
@@ -251,7 +261,12 @@ const AgentOffences = () => {
       ? DateTime.fromISO(dateStr).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)
       : "";
 
-  // Filter para sa "Cases In Progress"
+  const handleHistoryDateReset = () => {
+      setHistoryStartDate("");
+      setHistoryEndDate("");
+  };
+
+  // Filter for "Cases In Progress"
   const filteredOffenses = offenses.filter(
     (off) =>
       currentUser &&
@@ -268,27 +283,42 @@ const AgentOffences = () => {
       ]
         .join(" ")
         .toLowerCase()
-        .includes(searchQuery.toLowerCase()) // Gumagamit ng main searchQuery
+        .includes(searchQuery.toLowerCase()) // Uses the main searchQuery
   );
 
-  // Filter para sa "Case History"
-  const resolvedOffenses = offenses.filter(
-    (off) =>
+  // Filter for "Case History"
+  const resolvedOffenses = offenses.filter((off) => {
+    // Basic status & user filter
+    const isResolved =
       currentUser &&
       off.employeeId === currentUser.employeeId &&
-      ["Action Taken", "Escalated", "Closed"].includes(off.status) &&
-      [
-        off.offenseType,
-        off.offenseLevel || "",
-        off.status,
-        off.actionTaken,
-        off.remarks || "",
-        formatDisplayDate(off.dateOfOffense),
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(historySearchQuery.toLowerCase()) // Gumagamit ng historySearchQuery
-  );
+      ["Action Taken", "Escalated", "Closed"].includes(off.status);
+    if (!isResolved) return false;
+
+    // Text search filter
+    const textMatch = [
+      off.offenseType,
+      off.offenseLevel || "",
+      off.status,
+      off.actionTaken,
+      off.remarks || "",
+      formatDisplayDate(off.dateOfOffense),
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(historySearchQuery.toLowerCase());
+    if (!textMatch) return false;
+
+    // Date range filter using Luxon
+    const offenseDate = DateTime.fromISO(off.dateOfOffense).startOf("day");
+    const start = historyStartDate ? DateTime.fromISO(historyStartDate).startOf("day") : null;
+    const end = historyEndDate ? DateTime.fromISO(historyEndDate).startOf("day") : null;
+
+    const isAfterStartDate = start ? offenseDate >= start : true;
+    const isBeforeEndDate = end ? offenseDate <= end : true;
+
+    return isAfterStartDate && isBeforeEndDate; // Return true only if all filters pass
+  });
 
   return (
     <div>
@@ -408,7 +438,7 @@ const AgentOffences = () => {
                 </p>
               </div>
 
-              {/* Evidence Section (Styled like the screenshot) */}
+              {/* Evidence Section (Styled like HR Form) */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Evidence
@@ -519,7 +549,8 @@ const AgentOffences = () => {
                   className="group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border border-gray-100"
                 >
                   <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
-                    <div className="flex items-start gap-3 sm:gap-4">
+                     {/* Card Header Content */}
+                     <div className="flex items-start gap-3 sm:gap-4">
                       <div className="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors">
                         <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
                       </div>
@@ -557,7 +588,8 @@ const AgentOffences = () => {
                   </div>
 
                   <div className="space-y-3 mb-4">
-                    <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
+                     {/* Card Body Content */}
+                     <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
                       <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
                       Category:{" "}
                       <span className="font-medium">{off.offenseCategory}</span>
@@ -673,17 +705,49 @@ const AgentOffences = () => {
           </span>
         </div>
 
-        {/* Search Bar para sa History */}
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+        {/* Filters for History */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {/* Search Bar */}
+          <div className="md:col-span-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                value={historySearchQuery}
+                onChange={(e) => setHistorySearchQuery(e.target.value)}
+                placeholder="Search history..."
+                className="w-full pl-10 pr-4 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-green-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
+              />
+            </div>
+          </div>
+
+          {/* Date Filters */}
+          <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
             <input
-              type="text"
-              value={historySearchQuery}
-              onChange={(e) => setHistorySearchQuery(e.target.value)}
-              placeholder="Search history by level, type, status..."
-              className="w-full pl-10 pr-4 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-green-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
+              type="date"
+              value={historyStartDate}
+              onChange={(e) => setHistoryStartDate(e.target.value)}
+              max={historyEndDate || today} // Cannot be after end date or today
+              className="w-full px-4 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-green-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
+              title="Start Date"
             />
+            <input
+              type="date"
+              value={historyEndDate}
+              onChange={(e) => setHistoryEndDate(e.target.value)}
+              min={historyStartDate} // Cannot be before start date
+              max={today}       // Cannot be in the future
+              className="w-full px-4 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-green-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
+              title="End Date"
+            />
+            <button
+              onClick={handleHistoryDateReset}
+              className="flex items-center justify-center gap-1 sm:col-start-3 p-3 bg-gray-100 text-gray-600 rounded-2xl hover:bg-gray-200 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!historyStartDate && !historyEndDate}
+              title="Clear Dates"
+            >
+              <ClearIcon className="w-4 h-4" /> Clear Dates
+            </button>
           </div>
         </div>
 
@@ -710,7 +774,7 @@ const AgentOffences = () => {
                     <td className="p-4 text-sm text-gray-600">
                       {formatDisplayDate(off.dateOfOffense)}
                     </td>
-                    <td className="p-4 text-sm text-gray-60V00">
+                    <td className="p-4 text-sm text-gray-600">
                       {off.offenseType}
                     </td>
                     <td className="p-4 text-sm text-gray-600">
@@ -731,7 +795,7 @@ const AgentOffences = () => {
                       {off.actionTaken}
                     </td>
 
-                    {/* Evidence Column na may icons */}
+                    {/* Evidence Column with icons */}
                     <td className="p-4 text-sm text-gray-600">
                       {off.evidence && off.evidence.length > 0 ? (
                         <div className="flex flex-col items-start gap-2">
@@ -784,8 +848,8 @@ const AgentOffences = () => {
           <div className="flex items-center justify-center py-10 text-gray-500 italic">
             {isLoading
               ? "Loading history..."
-              : historySearchQuery // Pinalitan para sa history search
-              ? "No matching history records found."
+              : historySearchQuery || historyStartDate || historyEndDate // Check if any filter is active
+              ? "No matching history records found for the selected filters."
               : "No resolved offense records found."}
           </div>
         )}
