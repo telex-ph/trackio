@@ -1,8 +1,6 @@
 import React from "react";
 import { DateTime } from "luxon";
-// === ADD FileText TO THIS IMPORT ===
 import { Clock, User, ChevronDown, Search, CheckCircle, Bell, Hash, FileText } from "lucide-react"; 
-// === END OF CHANGE ===
 
 const OffenseList = ({
   offenses,
@@ -40,7 +38,6 @@ const OffenseList = ({
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-red-100 rounded-lg">
-            {/* Now FileText is defined */}
             <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" /> 
           </div>
           <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
@@ -142,7 +139,6 @@ const OffenseList = ({
                 {off.evidence && off.evidence.length > 0 && (
                   <div className="bg-purple-50 rounded-xl p-3 sm:p-4 border-l-4 border-purple-500">
                     <p className="text-xs sm:text-sm text-gray-700 flex items-center gap-2">
-                      {/* Use FileText icon here as well */}
                       <FileText className="w-4 h-4 text-purple-600" /> 
                       <span className="font-semibold text-gray-800">Evidence:</span>
                       <span className="text-purple-700">

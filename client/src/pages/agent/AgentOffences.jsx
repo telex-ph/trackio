@@ -11,13 +11,11 @@ import {
   Bell,
   Search,
   Eye,
-  Hash // Import Hash
+  Hash 
 } from "lucide-react";
 import { DateTime } from "luxon";
 import api from "../../utils/axios";
 
-// ... (Notification and ConfirmationModal components remain the same) ...
-// =================== Notification ===================
 const Notification = ({ message, type, onClose }) => {
   const [isVisible, setIsVisible] = useState(true);
 
@@ -61,7 +59,6 @@ const Notification = ({ message, type, onClose }) => {
   );
 };
 
-// =================== Confirmation Modal ===================
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, message }) => {
   if (!isOpen) return null;
 
@@ -97,9 +94,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, message }) => {
   );
 };
 
-// =================== Main Component ===================
 const AgentOffences = () => {
-  // ... (state variables remain the same) ...
   const [isViewMode, setIsViewMode] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -120,7 +115,7 @@ const AgentOffences = () => {
     agentName: "",
     offenseCategory: "",
     offenseType: "",
-    offenseLevel: "", // <-- RENAMED from offenseSeverity
+    offenseLevel: "", 
     dateOfOffense: "",
     status: "",
     actionTaken: "",
@@ -129,7 +124,6 @@ const AgentOffences = () => {
     isRead: false,
   });
 
-  // ... (showNotification, fetchCurrentUser, fetchOffenses, useEffect remain the same) ...
   const showNotification = (message, type) => {
     setNotification({ message, type, isVisible: true });
   };
@@ -185,7 +179,7 @@ const AgentOffences = () => {
       agentName: "",
       offenseCategory: "",
       offenseType: "",
-      offenseLevel: "", // <-- RENAMED
+      offenseLevel: "", 
       dateOfOffense: "",
       status: "",
       actionTaken: "",
@@ -204,7 +198,7 @@ const AgentOffences = () => {
       agentName: off.agentName,
       offenseCategory: off.offenseCategory,
       offenseType: off.offenseType,
-      offenseLevel: off.offenseLevel || "", // <-- RENAMED
+      offenseLevel: off.offenseLevel || "", 
       dateOfOffense: off.dateOfOffense,
       status: off.status,
       actionTaken: off.actionTaken,
@@ -214,7 +208,6 @@ const AgentOffences = () => {
     });
   };
 
-  // ... (handleMarkAsRead, formatDisplayDate remain the same) ...
   const handleMarkAsRead = async () => {
     if (!editingId) return;
     try {
@@ -243,7 +236,7 @@ const AgentOffences = () => {
       [
         off.offenseType,
         off.offenseCategory,
-        off.offenseLevel || "", // <-- RENAMED
+        off.offenseLevel || "",
         off.status,
         off.actionTaken,
         off.remarks || "",
@@ -265,7 +258,6 @@ const AgentOffences = () => {
 
   return (
     <div>
-      {/* ... (Notification remains the same) ... */}
        {notification.isVisible && (
         <Notification
           message={notification.message}
@@ -273,8 +265,6 @@ const AgentOffences = () => {
           onClose={() => setNotification({ ...notification, isVisible: false })}
         />
       )}
-
-      {/* ... (section header remains the same) ... */}
       <section className="flex flex-col mb-2">
         <div className="flex items-center gap-1">
           <h2>Offense Management</h2>
@@ -283,9 +273,7 @@ const AgentOffences = () => {
       </section>
 
       <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
-        {/* === View Offense Details Section === */}
         <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
-          {/* ... (header remains the same) ... */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-indigo-100 rounded-lg">
@@ -307,7 +295,6 @@ const AgentOffences = () => {
 
           {isViewMode ? (
             <div className="space-y-6">
-              {/* ... (Agent Name, Category, Type remain the same) ... */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Agent Name
@@ -335,14 +322,13 @@ const AgentOffences = () => {
                 </div>
               </div>
 
-              {/* === ITO ANG BINAGO === */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-2">
                   <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                    Offense Level {/* Changed Label */}
+                    Offense Level
                   </label>
                   <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
-                    {formData.offenseLevel || "N/A"} {/* Changed Field */}
+                    {formData.offenseLevel || "N/A"} 
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -357,9 +343,6 @@ const AgentOffences = () => {
                   </div>
                 </div>
               </div>
-              {/* === DULO NG PAGBABAGO === */}
-
-              {/* ... (Status, Action Taken, Remarks, Evidence, Buttons remain the same) ... */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Status
@@ -428,9 +411,7 @@ const AgentOffences = () => {
             </div>
           )}
         </div>
-        {/* === Offense Records List Section === */}
         <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
-          {/* ... (header and search bar remain the same, maybe update placeholder) ... */}
            <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-red-100 rounded-lg">
@@ -451,7 +432,7 @@ const AgentOffences = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by level, type, category..." // Updated placeholder
+                placeholder="Search by level, type, category..." 
                 className="w-full pl-10 pr-4 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
               />
             </div>
@@ -464,7 +445,6 @@ const AgentOffences = () => {
                   key={off._id}
                   className="group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border border-gray-100"
                 >
-                  {/* ... (card header remains the same) ... */}
                   <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
                     <div className="flex items-start gap-3 sm:gap-4">
                       <div className="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors">
@@ -503,7 +483,6 @@ const AgentOffences = () => {
                     </div>
                   </div>
 
-                  {/* === ITO ANG BINAGO === */}
                   <div className="space-y-3 mb-4">
                     <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
                       <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -511,11 +490,10 @@ const AgentOffences = () => {
                       <span className="font-medium">{off.offenseCategory}</span>
                     </p>
                     <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                      <Hash className="w-3 h-3 sm:w-4 sm:h-4" /> {/* Changed Icon */}
+                      <Hash className="w-3 h-3 sm:w-4 sm:h-4" /> 
                       Level:{" "}
-                      <span className="font-medium">{off.offenseLevel || 'N/A'}</span> {/* Changed Text and Field */}
+                      <span className="font-medium">{off.offenseLevel || 'N/A'}</span> 
                     </p>
-                  {/* === DULO NG PAGBABAGO === */}
 
                     <div className="bg-red-50 rounded-xl p-3 sm:p-4 border-l-4 border-red-500">
                       <p className="text-xs sm:text-sm text-gray-700">
@@ -526,7 +504,6 @@ const AgentOffences = () => {
                       </p>
                     </div>
 
-                    {/* ... (remarks and evidence remain the same) ... */}
                     {off.remarks && (
                       <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border-l-4 border-gray-400">
                         <p className="text-xs sm:text-sm text-gray-700">
@@ -560,7 +537,6 @@ const AgentOffences = () => {
                     )}
                   </div>
 
-                  {/* ... (buttons remain the same) ... */}
                   <div className="flex gap-3">
                     <button
                       onClick={() => handleView(off)}
@@ -583,9 +559,7 @@ const AgentOffences = () => {
           )}
         </div>
       </div>
-      {/* === Case History Section === */}
       <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
-        {/* ... (header remains the same) ... */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-100 rounded-lg">
@@ -604,17 +578,14 @@ const AgentOffences = () => {
           <div className="w-full overflow-x-auto overflow-y-auto max-h-200">
             <table className="w-full text-left border-collapse">
               <thead>
-                {/* === ITO ANG BINAGO === */}
                 <tr className="border-b border-gray-200 text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wider">
                   <th className="p-4 whitespace-nowrap">Date</th>
-                  {/* <th className="p-4 whitespace-nowrap">Agent</th> REMOVED since this is agent's own view */}
                   <th className="p-4 whitespace-nowrap">Offense Type</th>
-                  <th className="p-4 whitespace-nowrap">Level</th> {/* Changed Header */}
+                  <th className="p-4 whitespace-nowrap">Level</th> 
                   <th className="p-4 whitespace-nowrap">Status</th>
                   <th className="p-4 whitespace-nowrap">Action Taken</th>
                   <th className="p-4 whitespace-nowrap">Remarks</th>
                 </tr>
-                {/* === DULO NG PAGBABAGO === */}
               </thead>
               <tbody>
                 {resolvedOffenses.map((off) => (
@@ -625,17 +596,12 @@ const AgentOffences = () => {
                     <td className="p-4 text-sm text-gray-600">
                       {formatDisplayDate(off.dateOfOffense)}
                     </td>
-                    {/* <td className="p-4 text-sm text-gray-800 font-medium">
-                      {off.agentName}
-                    </td> REMOVED */}
                     <td className="p-4 text-sm text-gray-600">
                       {off.offenseType}
                     </td>
-                    {/* === ITO ANG BINAGO === */}
                     <td className="p-4 text-sm text-gray-600">
-                      {off.offenseLevel || 'N/A'} {/* Changed Field */}
+                      {off.offenseLevel || 'N/A'} 
                     </td>
-                    {/* === DULO NG PAGBABAGO === */}
                     <td className="p-4">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium ${

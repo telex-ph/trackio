@@ -1,4 +1,3 @@
-// HROffenses.jsx (Main component - updated)
 import React, { useState, useEffect } from "react";
 import {
   Calendar,
@@ -14,7 +13,7 @@ import {
   XCircle,
   Bell,
   Search,
-  Hash // Make sure Hash is imported
+  Hash 
 } from "lucide-react";
 import { DateTime } from "luxon";
 import api from "../../utils/axios";
@@ -25,7 +24,6 @@ import OffenseList from "../../components/incident-reports/OffenseList";
 import OffenseHistory from "../../components/incident-reports/OffenseHistory";
 
 const HROffenses = () => {
-  // === ENSURE THESE STATE DECLARATIONS ARE PRESENT ===
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -49,13 +47,12 @@ const HROffenses = () => {
     agentRole: "",
     offenseCategory: "",
     offenseType: "",
-    offenseLevel: "", // Renamed field
+    offenseLevel: "", 
     dateOfOffense: "",
     status: "",
     actionTaken: "",
     remarks: "",
   });
-  // === END OF STATE DECLARATIONS ===
 
   const showNotification = (message, type) => {
     setNotification({ message, type, isVisible: true });
@@ -131,7 +128,7 @@ const HROffenses = () => {
       !formData.employeeId ||
       !formData.offenseCategory ||
       !formData.offenseType ||
-      !formData.offenseLevel || // Use renamed field
+      !formData.offenseLevel || 
       !formData.dateOfOffense ||
       !formData.status ||
       !formData.actionTaken
@@ -142,7 +139,7 @@ const HROffenses = () => {
 
     try {
       const payload = { ...formData };
-      if (selectedFile) { // Check if selectedFile exists before using
+      if (selectedFile) { 
         const base64File = await fileToBase64(selectedFile);
         payload.evidence = [
           {
@@ -153,7 +150,7 @@ const HROffenses = () => {
           },
         ];
       } else {
-        payload.evidence = []; // Ensure evidence is an empty array if no file selected
+        payload.evidence = []; 
       }
 
 
@@ -180,13 +177,13 @@ const HROffenses = () => {
       agentRole: "",
       offenseCategory: "",
       offenseType: "",
-      offenseLevel: "", // Use renamed field
+      offenseLevel: "", 
       dateOfOffense: "",
       status: "",
       actionTaken: "",
       remarks: "",
     });
-    setSelectedFile(null); // Reset selectedFile state
+    setSelectedFile(null); 
     setIsEditMode(false);
     setEditingId(null);
   };
@@ -200,14 +197,13 @@ const HROffenses = () => {
       agentRole: off.agentRole || "",
       offenseCategory: off.offenseCategory,
       offenseType: off.offenseType,
-      offenseLevel: off.offenseLevel || "", // Use renamed field
+      offenseLevel: off.offenseLevel || "", 
       dateOfOffense: off.dateOfOffense,
       status: off.status,
       actionTaken: off.actionTaken,
       remarks: off.remarks || "",
-      // Evidence is not re-populated for edit, user must re-upload if needed
     });
-    setSelectedFile(null); // Reset file input when editing
+    setSelectedFile(null); 
   };
 
   const handleDeleteClick = (id) => {
@@ -277,8 +273,8 @@ const HROffenses = () => {
         <OffenseForm
           formData={formData}
           setFormData={setFormData}
-          selectedFile={selectedFile} // Pass selectedFile state
-          setSelectedFile={setSelectedFile} // Pass the setter function
+          selectedFile={selectedFile} 
+          setSelectedFile={setSelectedFile} 
           isDragOver={isDragOver}
           setIsDragOver={setIsDragOver}
           isEditMode={isEditMode}

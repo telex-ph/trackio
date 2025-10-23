@@ -1,9 +1,7 @@
-// OffenseForm.jsx (Complete updated code)
 import React, { useState, useEffect, useRef } from "react";
 import { Calendar, Upload, X, Plus, Edit, FileText, Search, User, Hash } from "lucide-react";
 import api from "../../utils/axios";
 
-// ... (offenseTypesByCategory remains the same) ...
 const offenseTypesByCategory = {
   Attendance: [
     "Tardiness / Lates",
@@ -55,7 +53,6 @@ const OffenseForm = ({
   handleSubmit,
   showNotification,
 }) => {
-  // ... (state and other functions remain the same) ...
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -148,13 +145,10 @@ const OffenseForm = ({
     return emp && typeof emp === 'object' && emp._id && emp.firstName && emp.lastName;
   };
 
-  // === ITO ANG DINAGDAG: Kunin ang date ngayon ===
   const today = new Date().toISOString().split('T')[0];
-  // === DULO NG DAGDAG ===
 
   return (
     <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
-      {/* ... (header remains the same) ... */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div
@@ -180,7 +174,6 @@ const OffenseForm = ({
         )}
       </div>
       <div className="space-y-6">
-        {/* ... (Agent Name search and display remain the same) ... */}
         <div className="space-y-2" ref={searchRef}>
           <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
             Agent Name *
@@ -240,7 +233,6 @@ const OffenseForm = ({
           )}
         </div>
 
-        {/* ... (Offense Category and Type remain the same) ... */}
          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           <div className="space-y-2">
             <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -279,7 +271,6 @@ const OffenseForm = ({
           </div>
         </div>
 
-        {/* === Offense Level and Date Row === */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           <div className="space-y-2">
             <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -304,20 +295,16 @@ const OffenseForm = ({
             </label>
             <div className="relative">
               <Calendar className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-red-500 z-10" />
-              {/* === ITO ANG BINAGO: Dinagdag ang max attribute === */}
               <input
                 type="date"
                 value={formData.dateOfOffense}
                 onChange={(e) => handleInputChange("dateOfOffense", e.target.value)}
-                max={today} // <-- Dinagdag ito para i-disable ang future dates
                 className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
               />
-              {/* === DULO NG PAGBABAGO === */}
             </div>
           </div>
         </div>
 
-        {/* ... (Status, Action Taken, Remarks, Upload, Button remain the same) ... */}
          <div className="space-y-2">
           <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
             Status *
