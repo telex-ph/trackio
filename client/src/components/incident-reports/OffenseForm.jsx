@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import api from "../../utils/axios";
 
-// --- NEW HELPER FUNCTION ---
+// --- HELPER FUNCTION ---
 // Converts Base64 data URL to a browser-readable Blob URL
 // This fixes the "blank screen" issue when viewing PDFs
 const base64ToBlobUrl = (base64, type) => {
@@ -195,7 +195,13 @@ const OffenseForm = ({
     );
   };
 
-  const today = new Date().toISOString().split("T")[0];
+  // --- MODIFICATION: Kinukuha ang LOCAL date, hindi UTC ---
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // 0-indexed kaya +1
+  const day = String(date.getDate()).padStart(2, '0'); // Kukunin ang local date
+  const today = `${year}-${month}-${day}`; // Format: YYYY-MM-DD
+  // --- END OF MODIFICATION ---
 
   return (
     <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
@@ -369,6 +375,8 @@ const OffenseForm = ({
                 onChange={(e) =>
                   handleInputChange("dateOfOffense", e.target.value)
                 }
+                // Ito na yung TAMA. 'today' (Oct 24) ay kasama sa enabled.
+                max={today}
                 className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
               />
             </div>
@@ -435,13 +443,11 @@ const OffenseForm = ({
           ></textarea>
         </div>
 
-        {/* --- MODIFIED UPLOAD EVIDENCE SECTION --- */}
+        {/* Upload Evidence Section */}
         <div className="space-y-2">
           <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
             Upload Evidence
           </label>
-
-          {/* STATE 1: New file is selected */}
           {selectedFile ? (
             <div className="border-2 border-dashed rounded-2xl p-4 border-green-400 bg-green-50">
               <div className="flex items-center justify-between gap-3">
@@ -454,7 +460,7 @@ const OffenseForm = ({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setSelectedFile(null); // Clear the new file
+                    setSelectedFile(null);
                   }}
                   className="text-red-500 hover:text-red-700 text-xs font-semibold"
                 >
@@ -462,12 +468,9 @@ const OffenseForm = ({
                 </button>
               </div>
             </div>
-          ) : /* STATE 2: Existing file is present (Edit Mode) */
-          !selectedFile && existingEvidence.length > 0 ? (
+          ) : !selectedFile && existingEvidence.length > 0 ? (
             <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
-              {/* --- ADDED .slice(0, 1) to handle only one file as per UI --- */}
               {existingEvidence.slice(0, 1).map((ev, idx) => {
-                // --- ADDED HELPER FUNCTION CALL ---
                 const viewUrl = base64ToBlobUrl(ev.data, ev.type);
                 return (
                   <div key={idx} className="flex flex-col gap-3">
@@ -479,7 +482,6 @@ const OffenseForm = ({
                     </div>
                     <div className="flex items-center gap-2">
                       <a
-                        // --- CHANGED href to viewUrl ---
                         href={viewUrl}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -498,7 +500,6 @@ const OffenseForm = ({
                       </a>
                       <button
                         onClick={() => {
-                          // Remove existing file from state
                           setFormData((prev) => ({ ...prev, evidence: [] }));
                         }}
                         className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-red-50 border border-red-200 rounded-lg text-red-600 hover:bg-red-100 text-xs font-medium transition-colors"
@@ -512,7 +513,6 @@ const OffenseForm = ({
               })}
             </div>
           ) : (
-            /* STATE 3: Default upload box */
             <div
               className={`relative border-2 border-dashed rounded-2xl p-4 transition-all duration-300 ${
                 isDragOver
@@ -543,7 +543,6 @@ const OffenseForm = ({
             </div>
           )}
         </div>
-        {/* --- END OF MODIFIED SECTION --- */}
 
         <button
           onClick={handleSubmit}
