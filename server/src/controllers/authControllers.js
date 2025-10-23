@@ -247,16 +247,21 @@ export const deleteToken = async (req, res) => {
   res.json({ message: "Logged out successfully", isLoggedOut: true });
 };
 
-export const getAuthUser = (req, res) => {
+export const getAuthUser = async (req, res) => { 
   try {
-    if (!req.user) {
+    if (!req.user || !req.user._id) { 
       return res.status(401).json({
-        message: "User not authenticated",
+        message: "User not authenticated or missing ID",
       });
     }
+    const fullUser = await User.getById(req.user._id); 
 
-    const user = req.user;
-    res.status(200).json(user);
+    if (!fullUser) {
+      return res.status(404).json({
+        message: "Authenticated user not found in database",
+      });
+    }
+    res.status(200).json(fullUser); 
   } catch (error) {
     console.error("Error getting authenticated user:", error);
     res.status(500).json({
