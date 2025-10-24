@@ -2,9 +2,11 @@ import { useState, useRef } from "react";
 import { Pen, Trash2, Ticket } from "lucide-react";
 import Table from "../../components/Table";
 import toast from "react-hot-toast";
+import axios from "axios";
 
 const TicketsTable = () => {
   const tableRef = useRef();
+  const [isLoading, setIsLoading] = useState(false);
 
   // 🧾 Fake records for now
   const [tickets, setTickets] = useState([
@@ -57,22 +59,36 @@ const TicketsTable = () => {
     toast.success("Ticket deleted");
   };
 
-  const handleAddTicket = () => {
-    const newTicket = {
-      _id: String(Date.now()),
-      workspaceId: "68f1a7f70036cc2896bc",
-      requesteeId: "68e3f51d0018e067bf4e",
-      ticketNo: tickets.length + 124,
-      subject: "New Ticket",
-      description: "This is a newly added test ticket.",
-      attachment: "https://example.com/new.png",
-      category: "SOFTWARE",
-      severity: "Severity 2",
-      status: "OPEN",
-    };
-
-    setTickets((prev) => [newTicket, ...prev]);
+  const handleAddTicket = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.post(
+        "https://ticketing-system-eight-kappa.vercel.app/api/ittickets",
+        {
+          subject: "No Internet",
+          description: "Umuulan kasi.",
+          attachment:
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTUDPyytMlavyIMMo71V_elwe_b_gKdDOXdPg&s",
+          category: "HARDWARE",
+          severity: "LOW",
+          status: "OPEN",
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "Cookie":
+              "jay-tkt-sys-session=eyJpZCI6IjY4ZTNmNTFkMDAxOGUwNjdiZjRlIiwic2VjcmV0IjoiMDliN2U1OTVlYWFmNzBlYjA2ZWM5NjVkNDY4NmEyZGI4MWQ3N2ExNjE3MzRjYzI5NmE4ODlmYzllNjE0MDNlZTA2MzA3ZDMwMjFlZjVlMWZhNDg2MzRiNGE3NmUzMmFiZDcyZDdhYmFhZWE4ZWFkYWZjODEwMmYyYzYyMDAxZGYzZThlNzM1YTk4ZWIyNWZkZThkYjk1NjYwYWUyYjEzNmFlZDAzMWU4Y2Y4NTIwMTZkOWU5NzFmYmJjNDk4NzJiMThjNTE3MjFiN2Q2ZTEyNzYwNTcxYmI3NmUxOTYxNTdhZjA5N2E3NmU5OGJiYmVjYWJhZWI1ZjE0ODRjM2QxYyJ9",
+          },
+        }
+      );
+      console.log(response.data);
     toast.success("Fake ticket added");
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+
   };
 
   const columns = [
