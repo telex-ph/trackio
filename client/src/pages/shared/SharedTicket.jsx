@@ -60,6 +60,9 @@ const TicketsTable = () => {
   };
 
   const handleAddTicket = async () => {
+    const COOKIE_VALUE =
+      "jay-tkt-sys-session=eyJpZCI6IjY4ZTNmNTFkMDAxOGUwNjdiZjRlIiwic2VjcmV0IjoiMDliN2U1OTVlYWFmNzBlYjA2ZWM5NjVkNDY4NmEyZGI4MWQ3N2ExNjE3MzRjYzI5NmE4ODlmYzllNjE0MDNlZTA2MzA3ZDMwMjFlZjVlMWZhNDg2MzRiNGE3NmUzMmFiZDcyZDdhYmFhZWE4ZWFkYWZjODEwMmYyYzYyMDAxZGYzZThlNzM1YTk4ZWIyNWZkZThkYjk1NjYwYWUyYjEzNmFlZDAzMWU4Y2Y4NTIwMTZkOWU5NzFmYmJjNDk4NzJiMThjNTE3MjFiN2Q2ZTEyNzYwNTcxYmI3NmUxOTYxNTdhZjA5N2E3NmU5OGJiYmVjYWJhZWI1ZjE0ODRjM2QxYyJ9";
+
     try {
       setIsLoading(true);
       const response = await axios.post(
@@ -76,19 +79,18 @@ const TicketsTable = () => {
         {
           headers: {
             "Content-Type": "application/json",
-            "Cookie":
-              "jay-tkt-sys-session=eyJpZCI6IjY4ZTNmNTFkMDAxOGUwNjdiZjRlIiwic2VjcmV0IjoiMDliN2U1OTVlYWFmNzBlYjA2ZWM5NjVkNDY4NmEyZGI4MWQ3N2ExNjE3MzRjYzI5NmE4ODlmYzllNjE0MDNlZTA2MzA3ZDMwMjFlZjVlMWZhNDg2MzRiNGE3NmUzMmFiZDcyZDdhYmFhZWE4ZWFkYWZjODEwMmYyYzYyMDAxZGYzZThlNzM1YTk4ZWIyNWZkZThkYjk1NjYwYWUyYjEzNmFlZDAzMWU4Y2Y4NTIwMTZkOWU5NzFmYmJjNDk4NzJiMThjNTE3MjFiN2Q2ZTEyNzYwNTcxYmI3NmUxOTYxNTdhZjA5N2E3NmU5OGJiYmVjYWJhZWI1ZjE0ODRjM2QxYyJ9",
+            "Authorization":
+              "Bearer standard_077ed3b9b01c0863d40827030797f5e602b32b89fe2f3f94cc495b475802c16512013466aaf82efa0d966bff7d6cf837d00e0bfdc9e91f4f290e893ba28c4d6330310f6428f7befc9ad39cd5a55f3b3ba09822aed74a922bf1e6ca958b2f844fab5259c0d69318160bb91d4ab2bf2bec0c72f6d94bf0666a59559c3992aa8b47",
           },
         }
       );
       console.log(response.data);
-    toast.success("Fake ticket added");
+      toast.success("Ticket added successfuly");
     } catch (error) {
       console.error(error);
     } finally {
       setIsLoading(false);
     }
-
   };
 
   const columns = [
