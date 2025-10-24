@@ -17,6 +17,7 @@ import TeamLeaderBioBreak from "../pages/team-leader/TeamLeaderBioBreak";
 import TeamLeaderCoaching from "../pages/team-leader/TeamLeaderCoaching";
 import TeamLeaderAgentRequest from "../pages/team-leader/TeamLeaderAgentRequest";
 import TeamLeaderAccountSettings from "../pages/team-leader/TeamLeaderAccountSettings";
+import TeamLeaderOffenses from "../pages/team-leader/TeamLeaderOffenses";
 
 // Operation Manager Routes
 import OMDashboard from "../pages/om/OMDashboard";
@@ -246,6 +247,7 @@ const router = createBrowserRouter([
               { path: "agentrequest", element: <TeamLeaderAgentRequest /> },
               { path: "ticket", element: <SharedTicket /> },
               { path: "account-settings", element: <SharedSettings /> },
+              { path: "offenses", element: <TeamLeaderOffenses /> },
             ],
           },
 

@@ -201,6 +201,12 @@ const TeamLeaderSidebar = ({
       label="Agent Request"
       isCollapsed={isCollapsed}
     />
+    <SidebarLink
+      to="/team-leader/offenses" 
+      icon={Calendar} 
+      label="Offenses"
+      isCollapsed={isCollapsed}
+    />
   </div>
 );
 
