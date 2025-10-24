@@ -70,6 +70,7 @@ import SharedTeamManagement from "../pages/shared/SharedTeamManagement";
 import SharedTeamViewMembers from "../pages/shared/SharedTeamViewMembers";
 import AdminAccountManagement from "../pages/admin/AdminAccountManagement";
 import LiveMonitoring from "../pages/global/LiveMonitoring";
+import SharedTicket from "../pages/shared/SharedTicket";
 // TODO: After unit test remove this routes including the files ---
 
 const router = createBrowserRouter([
@@ -157,6 +158,35 @@ const router = createBrowserRouter([
             ],
           },
 
+          // HR
+          {
+            element: <ProtectedRoutes role={Roles.HR} />,
+            path: "human-resources",
+            children: [
+              { index: true, element: <Navigate to="dashboard" replace /> },
+              { path: "dashboard", element: <OMDashboard /> },
+              { path: "attendance", element: <SharedAttendance /> },
+              { path: "schedule", element: <SharedSchedule role={Roles.OM} /> },
+              {
+                path: "schedule/:id",
+                element: <SharedViewSchedule role={Roles.OM} />,
+              },
+              {
+                path: "tracking",
+                element: <TrackingLayout role={Roles.OM} />,
+                children: [
+                  { path: "list", element: <SharedTrackingLists /> },
+                  { path: "history", element: <SharedTrackingHistory /> },
+                ],
+              },
+              {
+                path: "monitoring",
+                element: <MonitoringLayout />,
+              },
+              { path: "account-settings", element: <SharedSettings /> },
+            ],
+          },
+
           // Team Leader Routes
           {
             element: <ProtectedRoutes role={Roles.TEAM_LEADER} />,
@@ -207,6 +237,7 @@ const router = createBrowserRouter([
               { path: "bio-break", element: <TeamLeaderBioBreak /> },
               { path: "coaching", element: <TeamLeaderCoaching /> },
               { path: "agentrequest", element: <TeamLeaderAgentRequest /> },
+              { path: "ticket", element: <SharedTicket /> },
               { path: "account-settings", element: <SharedSettings /> },
             ],
           },
@@ -222,6 +253,7 @@ const router = createBrowserRouter([
               { path: "coaching", element: <AgentCoaching /> },
               { path: "request", element: <AgentRequest /> },
               { path: "offences", element: <AgentOffences /> },
+              { path: "ticket", element: <SharedTicket /> },
               { path: "account-settings", element: <SharedSettings /> },
             ],
           },

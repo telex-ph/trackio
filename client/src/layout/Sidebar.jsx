@@ -16,6 +16,7 @@ import {
   GalleryVerticalEnd,
   Users,
   Users2Icon,
+  Ticket,
 } from "lucide-react";
 import { useStore } from "../store/useStore";
 import Role from "../constants/roles";
@@ -112,6 +113,12 @@ const AgentSidebar = ({ isCollapsed }) => (
       label="Incident Reports"
       isCollapsed={isCollapsed}
     />
+    <SidebarLink
+      to="/agent/ticket"
+      icon={Ticket}
+      label="Ticket"
+      isCollapsed={isCollapsed}
+    />
   </div>
 );
 
@@ -171,12 +178,17 @@ const TeamLeaderSidebar = ({
       isCollapsed={isCollapsed}
     />
     <SidebarLink
+      to="/team-leader/ticket"
+      icon={Ticket}
+      label="Ticket"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
       to="/team-leader/coaching"
       icon={Video}
       label="Coaching"
       isCollapsed={isCollapsed}
     />
-
     <SidebarLink
       to="/team-leader/performance"
       icon={BarChart}
@@ -236,6 +248,57 @@ const OMSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
     </CustomCollapse>
     <SidebarLink
       to="/operation-manager/monitoring"
+      icon={Activity}
+      label="Monitoring"
+      isCollapsed={isCollapsed}
+    />
+  </div>
+);
+
+const HRSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
+  <div className="space-y-1">
+    <SidebarLink
+      to="/human-resources/dashboard"
+      icon={LayoutGrid}
+      label="Dashboard"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
+      to="/human-resources/attendance"
+      icon={Bell}
+      label="Attendance"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
+      to="/human-resources/schedule"
+      icon={BookPlus}
+      label="Schedule"
+      isCollapsed={isCollapsed}
+    />
+    <CustomCollapse
+      icon={<Clock className="w-5 h-5" />}
+      label="Tracking"
+      isCollapsed={isCollapsed}
+      open={activeDropdown === "tracking"}
+      onToggle={() =>
+        setActiveDropdown(activeDropdown === "tracking" ? null : "tracking")
+      }
+    >
+      <SidebarLink
+        to={`/human-resources/tracking/list`}
+        icon={List}
+        label="List"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to={`/human-resources/tracking/history`}
+        icon={GalleryVerticalEnd}
+        label="History"
+        isCollapsed={isCollapsed}
+      />
+    </CustomCollapse>
+    <SidebarLink
+      to="/human-resources/monitoring"
       icon={Activity}
       label="Monitoring"
       isCollapsed={isCollapsed}
@@ -341,6 +404,14 @@ export const Sidebar = ({ isCollapsed }) => {
       case Role.OM:
         return (
           <OMSidebar
+            isCollapsed={isCollapsed}
+            activeDropdown={activeDropdown}
+            setActiveDropdown={setActiveDropdown}
+          />
+        );
+      case Role.HR:
+        return (
+          <HRSidebar
             isCollapsed={isCollapsed}
             activeDropdown={activeDropdown}
             setActiveDropdown={setActiveDropdown}
