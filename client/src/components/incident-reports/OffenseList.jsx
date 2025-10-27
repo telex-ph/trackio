@@ -61,6 +61,7 @@ const OffenseList = ({
         off.agentName,
         off.agentRole || "",
         off.offenseType,
+        off.otherOffenseType || "", // <-- ADDED THIS FOR SEARCH
         off.offenseCategory,
         off.offenseLevel || "",
         off.status,
@@ -113,7 +114,10 @@ const OffenseList = ({
                   </div>
                   <div className="flex-1">
                     <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-2 group-hover:text-red-600 transition-colors">
-                      {off.offenseType}
+                      {/* --- MODIFICATION: LOGIC FOR 'OTHER' --- */}
+                      {off.offenseType === "Other"
+                        ? off.otherOffenseType
+                        : off.offenseType}
                     </h4>
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
                       <span className="text-xs text-gray-500">

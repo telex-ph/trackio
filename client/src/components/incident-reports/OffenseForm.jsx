@@ -14,15 +14,12 @@ import {
 } from "lucide-react";
 import api from "../../utils/axios";
 
-// --- HELPER FUNCTION ---
-// Converts Base64 data URL to a browser-readable Blob URL
-// This fixes the "blank screen" issue when viewing PDFs
 const base64ToBlobUrl = (base64, type) => {
   try {
     const base64Data = base64.split(",")[1];
     if (!base64Data) {
       console.error("Invalid Base64 string");
-      return base64; // Fallback
+      return base64;
     }
 
     const binaryString = atob(base64Data);
@@ -37,10 +34,9 @@ const base64ToBlobUrl = (base64, type) => {
     return url;
   } catch (e) {
     console.error("Failed to convert Base64 to Blob URL:", e);
-    return base64; // Fallback
+    return base64;
   }
 };
-// --- END OF HELPER FUNCTION ---
 
 const offenseTypesByCategory = {
   Attendance: [
@@ -200,8 +196,7 @@ const OffenseForm = ({
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0'); // 0-indexed kaya +1
   const day = String(date.getDate()).padStart(2, '0'); // Kukunin ang local date
-  const today = `${year}-${month}-${day}`; // Format: YYYY-MM-DD
-  // --- END OF MODIFICATION ---
+  const today = `${year}-${month}-${day}`;
 
   return (
     <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
@@ -297,6 +292,7 @@ const OffenseForm = ({
           )}
         </div>
 
+        {/* --- START: MODIFIED BLOCK (from previous request) --- */}
         {/* Offense Category / Type */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           <div className="space-y-2">
@@ -305,9 +301,12 @@ const OffenseForm = ({
             </label>
             <select
               value={formData.offenseCategory}
-              onChange={(e) =>
-                handleInputChange("offenseCategory", e.target.value)
-              }
+              onChange={(e) => {
+                // Pag nagpalit ng category, i-reset ang type at otherType
+                handleInputChange("offenseCategory", e.target.value);
+                handleInputChange("offenseType", "");
+                handleInputChange("otherOffenseType", ""); // Assuming this exists
+              }}
               className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
             >
               <option value="">Select category</option>
@@ -324,10 +323,17 @@ const OffenseForm = ({
             </label>
             <select
               value={formData.offenseType}
-              onChange={(e) =>
-                handleInputChange("offenseType", e.target.value)
-              }
-              className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
+              onChange={(e) => {
+                // Pag nagpalit ng type, i-check kung "Other"
+                const value = e.target.value;
+                handleInputChange("offenseType", value);
+                if (value !== "Other") {
+                  // Kung hindi "Other", i-clear ang otherType field
+                  handleInputChange("otherOffenseType", "");
+                }
+              }}
+              disabled={!formData.offenseCategory} // I-disable kung walang category
+              className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base disabled:bg-gray-100 disabled:text-gray-400"
             >
               <option value="">Select offense type</option>
               {formData.offenseCategory &&
@@ -338,9 +344,34 @@ const OffenseForm = ({
                     </option>
                   )
                 )}
+              {/* ADDED "OTHER" OPTION */}
+              {formData.offenseCategory && (
+                <option value="Other">Other (Please specify)</option>
+              )}
             </select>
           </div>
         </div>
+
+        {/* --- ADDED CONDITIONAL TEXT INPUT (from previous request) --- */}
+        {/* Lalabas lang ito kapag "Other" ang pinili sa Offense Type */}
+        {formData.offenseType === "Other" && (
+          <div className="space-y-2">
+            <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+              Other Offense Type *
+            </label>
+            <input
+              type="text"
+              value={formData.otherOffenseType || ""}
+              onChange={(e) =>
+                handleInputChange("otherOffenseType", e.target.value)
+              }
+              placeholder="Please specify the offense"
+              className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
+            />
+          </div>
+        )}
+        {/* --- END: MODIFIED BLOCK --- */}
+
 
         {/* Offense Level / Date */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">

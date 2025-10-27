@@ -41,19 +41,20 @@ const HROffenses = () => {
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
 
-  // --- MODIFICATION 1: Added 'evidence: []' to initial state ---
+  // --- MODIFICATION 1: Added 'otherOffenseType' and 'evidence' ---
   const [formData, setFormData] = useState({
     agentName: "",
     employeeId: "",
     agentRole: "",
     offenseCategory: "",
     offenseType: "",
+    otherOffenseType: "", // <-- ADDED THIS
     offenseLevel: "",
     dateOfOffense: "",
     status: "",
     actionTaken: "",
     remarks: "",
-    evidence: [], // Added this line
+    evidence: [],
   });
 
   const showNotification = (message, type) => {
@@ -130,6 +131,8 @@ const HROffenses = () => {
       !formData.employeeId ||
       !formData.offenseCategory ||
       !formData.offenseType ||
+      // --- MODIFICATION 4: Check otherOffenseType if offenseType is 'Other' ---
+      (formData.offenseType === "Other" && !formData.otherOffenseType) ||
       !formData.offenseLevel ||
       !formData.dateOfOffense ||
       !formData.status ||
@@ -178,7 +181,7 @@ const HROffenses = () => {
     }
   };
 
-  // --- MODIFICATION 2: Added 'evidence: []' to reset state ---
+  // --- MODIFICATION 2: Added 'otherOffenseType' and 'evidence' ---
   const resetForm = () => {
     setFormData({
       agentName: "",
@@ -186,12 +189,13 @@ const HROffenses = () => {
       agentRole: "",
       offenseCategory: "",
       offenseType: "",
+      otherOffenseType: "", // <-- ADDED THIS
       offenseLevel: "",
       dateOfOffense: "",
       status: "",
       actionTaken: "",
       remarks: "",
-      evidence: [], // Added this line
+      evidence: [],
     });
     setSelectedFile(null);
     setIsEditMode(false);
@@ -201,19 +205,20 @@ const HROffenses = () => {
   const handleEdit = (off) => {
     setIsEditMode(true);
     setEditingId(off._id);
-    // --- MODIFICATION 2: Now sets 'evidence' in formData ---
+    // --- MODIFICATION 2: Now sets 'otherOffenseType' and 'evidence' ---
     setFormData({
       agentName: off.agentName,
       employeeId: off.employeeId || "",
       agentRole: off.agentRole || "",
       offenseCategory: off.offenseCategory,
       offenseType: off.offenseType,
+      otherOffenseType: off.otherOffenseType || "", // <-- ADDED THIS
       offenseLevel: off.offenseLevel || "",
       dateOfOffense: off.dateOfOffense,
       status: off.status,
       actionTaken: off.actionTaken,
       remarks: off.remarks || "",
-      evidence: off.evidence || [], // Added this line
+      evidence: off.evidence || [],
     });
     setSelectedFile(null); // Clear any staged file
   };

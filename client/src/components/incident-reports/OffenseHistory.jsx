@@ -49,6 +49,7 @@ const OffenseHistory = ({ offenses, isLoading }) => {
     const textMatch = [
       off.agentName,
       off.offenseType,
+      off.otherOffenseType || "", // <-- ADDED THIS FOR SEARCH
       off.offenseLevel || "",
       off.status,
       off.actionTaken,
@@ -166,7 +167,10 @@ const OffenseHistory = ({ offenses, isLoading }) => {
                     {off.agentName}
                   </td>
                   <td className="p-4 text-sm text-gray-600">
-                    {off.offenseType}
+                    {/* --- MODIFICATION: LOGIC FOR 'OTHER' --- */}
+                    {off.offenseType === "Other"
+                      ? off.otherOffenseType
+                      : off.offenseType}
                   </td>
                   <td className="p-4 text-sm text-gray-600">
                     {off.offenseLevel || "N/A"}
