@@ -4,6 +4,7 @@ import api from "../../utils/axios";
 import toast from "react-hot-toast";
 import Table from "../../components/Table";
 import { Pen, Trash2 } from "lucide-react";
+import TeamModal from "../../components/modals/TeamModal";
 import AddMemberModal from "../../components/modals/AddMemberModal";
 import DeleteTeamMemberModal from "../../components/modals/DeleteTeamMemberModal";
 
@@ -17,13 +18,21 @@ const SharedTeamViewMembers = () => {
   const [isDeleteOpen, setDeleteOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
 
+  const [isTeamModal, setTeamModal] = useState(false);
+
   const teamRef = useRef();
 
   const fetchTeamMember = async () => {
     try {
       setLoading(true);
       const response = await api.get(`/group/get-group/${user._id}`);
+
+      if (!response.data) {
+        setTeamModal(true);
+      }
+
       setMembers(response?.data?.agents || []);
+
       setTeamId(response?.data?._id);
     } catch (error) {
       console.error("Error fetching user group:", error);
@@ -71,6 +80,10 @@ const SharedTeamViewMembers = () => {
   const handleConfirmAdd = () => {
     setIsModalOpen(false);
     fetchTeamMember();
+  };
+
+  const handleTeamModal = (value) => {
+    setTeamModal(value);
   };
 
   // 📋 Table columns
@@ -121,32 +134,44 @@ const SharedTeamViewMembers = () => {
         </button>
       </div>
 
-      <Table
-        data={members}
-        tableRef={teamRef}
-        columns={columns}
-        loading={loading}
-      />
+      {!isTeamModal ? (
+        <>
+          <Table
+            data={members}
+            tableRef={teamRef}
+            columns={columns}
+            loading={loading}
+          />
 
-      {isModalOpen && (
-        <AddMemberModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          onConfirm={handleConfirmAdd}
-          teamId={teamId}
-        />
-      )}
+          {isModalOpen && (
+            <AddMemberModal
+              isOpen={isModalOpen}
+              onClose={handleCloseModal}
+              onConfirm={handleConfirmAdd}
+              teamId={teamId}
+            />
+          )}
 
-      {isDeleteOpen && (
-        <DeleteTeamMemberModal
-          isOpen={isDeleteOpen}
-          onClose={() => setDeleteOpen(false)}
-          onConfirm={handleDelete}
-          itemName={`${
-            selectedMember?.firstName + " " + selectedMember?.lastName ||
-            "this member"
-          }`}
-          loading={loading}
+          {isDeleteOpen && (
+            <DeleteTeamMemberModal
+              isOpen={isDeleteOpen}
+              onClose={() => setDeleteOpen(false)}
+              onConfirm={handleDelete}
+              itemName={`${
+                selectedMember?.firstName + " " + selectedMember?.lastName ||
+                "this member"
+              }`}
+              loading={loading}
+            />
+          )}
+        </>
+      ) : (
+        <TeamModal
+          isOpen={isTeamModal}
+          onClose={() => handleTeamModal(false)}
+          onConfirm={() => {
+            window.location.reload();
+          }}
         />
       )}
     </div>
