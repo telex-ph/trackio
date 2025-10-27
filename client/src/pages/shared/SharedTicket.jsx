@@ -7,6 +7,7 @@ import Table from "../../components/Table";
 import toast from "react-hot-toast";
 import axios from "axios";
 import api from "../../utils/axios";
+import UnderContruction from "../../assets/illustrations/UnderContruction";
 
 const TicketsTable = () => {
   const tableRef = useRef();
@@ -43,7 +44,7 @@ const TicketsTable = () => {
     try {
       const formData = new FormData();
       formData.append("files", attachmentFile);
-       formData.append("folder", "tickets");
+      formData.append("folder", "tickets");
       const res = await api.post(`/media/upload-media`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -120,6 +121,12 @@ const TicketsTable = () => {
       ),
     },
   ];
+
+  return (
+    <section className="h-full">
+      <UnderContruction />
+    </section>
+  );
 
   return (
     <div>
