@@ -5,8 +5,10 @@ import api from "../../utils/axios";
 import toast from "react-hot-toast";
 import Table from "../../components/Table";
 import { Alert } from "flowbite-react";
+import { useStore } from "../../store/useStore";
 
 const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
+  const user = useStore((state) => state.user);
   const [form, setForm] = useState({
     employeeId: "",
     firstName: "",
@@ -63,6 +65,7 @@ const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
 
         await api.patch(`/group/add-member/${selectedUser._id}`, {
           teamId,
+          teamLeaderId: user._id,
         });
 
         await api.patch(`/user/update-user/${selectedUser._id}`, {
@@ -87,7 +90,10 @@ const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
         });
 
         const id = response.data._id;
-        await api.patch(`/group/add-member/${id}`, { teamId });
+        await api.patch(`/group/add-member/${id}`, {
+          teamId,
+          teamLeaderId: user._id,
+        });
       }
 
       toast.success("Member added successfully!");
