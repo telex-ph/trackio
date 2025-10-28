@@ -16,8 +16,8 @@ const connectDB = async () => {
   if (!dbInstance) {
     try {
       await client.connect();
-      dbInstance = client.db(process.env.trackio);
-      console.log("Database connected");
+      dbInstance = client.db(process.env.DB_NAME);
+      console.log(`Database connected`);
     } catch (error) {
       console.error("Database connection error:", error);
       throw error;
