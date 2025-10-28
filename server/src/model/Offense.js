@@ -26,7 +26,6 @@ class Offense {
 
     const offenseWithTimestamp = {
       ...offenseData,
-      isRead: false, // ✅ default when creating
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -39,6 +38,8 @@ class Offense {
     const db = await connectDB();
     const collection = db.collection(this.#collection);
 
+    delete updatedData._id;
+
     const dataWithTimestamp = {
       ...updatedData,
       updatedAt: new Date(),
@@ -49,8 +50,7 @@ class Offense {
       { $set: dataWithTimestamp },
       { returnDocument: "after" }
     );
-
-    console.log("MongoDB update result:", result);
+    
     return result.value;
   }
 
@@ -79,6 +79,21 @@ class Offense {
     const db = await connectDB();
     const collection = db.collection(this.#collection);
     return await collection.find({ status }).toArray();
+  }
+
+  // Get offenses by Reporter ID
+  static async getByReporterId(reporterId) {
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+    try {
+      const query = { reportedById: new ObjectId(reporterId) };
+      const result = await collection.find(query).toArray();
+      return result;
+    } catch (dbError) {
+      // Iwan ang error log para sa production debugging
+      console.error("MODEL - Database query failed:", dbError);
+      throw dbError; // Re-throw the error
+    }
   }
 }
 

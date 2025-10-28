@@ -8,17 +8,32 @@ import {
   getOffensesByAgent,
   getOffensesByCategory,
   getOffensesByStatus,
+  getOffensesByReporter,
 } from "../controllers/offenseControllers.js";
+
+import { verifyJWT as auth } from "../middlewares/verifyJWT.js";
 
 const router = express.Router();
 
-router.get("/", getOffenses);
-router.get("/:id", getOffenseById);
-router.get("/agent/:agentName", getOffensesByAgent);
-router.get("/category/:category", getOffensesByCategory);
-router.get("/status/:status", getOffensesByStatus);
+// Para sa HR/Admin (kinukuha lahat, o para sa AgentOffences page)
+router.get("/", auth, getOffenses);
 
-router.post("/", addOffense);
-router.put("/:id", updateOffense);
-router.delete("/:id", deleteOffense);
+// Para sa Reporter (AgentCreateOffenses page)
+router.get("/reporter/:id", auth, getOffensesByReporter);
+
+// Iba pang filter routes
+router.get("/agent/:agentName", auth, getOffensesByAgent);
+router.get("/category/:category", auth, getOffensesByCategory);
+router.get("/status/:status", auth, getOffensesByStatus);
+
+// Para sa pagkuha ng isang offense gamit ang _id
+router.get("/:id", auth, getOffenseById);
+
+// Para sa Reporter na nagsu-submit ng report
+router.post("/", auth, addOffense);
+
+router.put("/:id", auth, updateOffense);
+
+router.delete("/:id", auth, deleteOffense);
+
 export default router;
