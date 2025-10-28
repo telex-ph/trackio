@@ -9,6 +9,7 @@ import AgentCoaching from "../pages/agent/AgentCoaching";
 import AgentAccountSettings from "../pages/agent/AgentAccountSettings";
 import AgentRequest from "../pages/agent/AgentRequest";
 import AgentOffences from "../pages/agent/AgentOffences";
+import AgentCreateOffenses from "../pages/agent/AgentCreateOffenses";
 
 // Team Leader Routes
 import TeamLeaderDashboard from "../pages/team-leader/TeamLeaderDashboard";
@@ -17,7 +18,9 @@ import TeamLeaderBioBreak from "../pages/team-leader/TeamLeaderBioBreak";
 import TeamLeaderCoaching from "../pages/team-leader/TeamLeaderCoaching";
 import TeamLeaderAgentRequest from "../pages/team-leader/TeamLeaderAgentRequest";
 import TeamLeaderAccountSettings from "../pages/team-leader/TeamLeaderAccountSettings";
+import TeamLeaderCreateOffense from "../pages/team-leader/TeamLeaderCreateOffense";
 import TeamLeaderOffenses from "../pages/team-leader/TeamLeaderOffenses";
+// -------------------
 
 // Operation Manager Routes
 import OMDashboard from "../pages/om/OMDashboard";
@@ -50,6 +53,7 @@ import Roles from "../constants/roles";
 
 // Human Resources
 import HROffenses from "../pages/hr/HROffenses";
+import HRReportedOffenses from "../pages/hr/HRReportedOffenses";
 
 // TODO: After unit test remove this routes including the files ---
 import OMSchedule from "../pages/om/OMSchedule";
@@ -93,6 +97,7 @@ const router = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
+          // Admin Routes
           {
             element: <ProtectedRoutes role={Roles.ADMIN} />,
             path: "admin",
@@ -130,6 +135,14 @@ const router = createBrowserRouter([
                 element: <AdminAccountManagement />,
               },
               { path: "account-settings", element: <SharedSettings /> },
+              {
+                path: "offenses",
+                element: <HROffenses />,
+              },
+              {
+                path: "createoffense",
+                element: <HRReportedOffenses />,
+              },
             ],
           },
 
@@ -162,7 +175,7 @@ const router = createBrowserRouter([
             ],
           },
 
-          // HR
+          // HR Routes
           {
             element: <ProtectedRoutes role={Roles.HR} />,
             path: "human-resources",
@@ -170,14 +183,14 @@ const router = createBrowserRouter([
               { index: true, element: <Navigate to="dashboard" replace /> },
               { path: "dashboard", element: <OMDashboard /> },
               { path: "attendance", element: <SharedAttendance /> },
-              { path: "schedule", element: <SharedSchedule role={Roles.OM} /> },
+              { path: "schedule", element: <SharedSchedule role={Roles.HR} /> },
               {
                 path: "schedule/:id",
-                element: <SharedViewSchedule role={Roles.OM} />,
+                element: <SharedViewSchedule role={Roles.HR} />,
               },
               {
                 path: "tracking",
-                element: <TrackingLayout role={Roles.OM} />,
+                element: <TrackingLayout role={Roles.HR} />,
                 children: [
                   { path: "list", element: <SharedTrackingLists /> },
                   { path: "history", element: <SharedTrackingHistory /> },
@@ -190,6 +203,10 @@ const router = createBrowserRouter([
               {
                 path: "offenses",
                 element: <HROffenses />,
+              },
+              {
+                path: "reported-ir",
+                element: <HRReportedOffenses />,
               },
               { path: "account-settings", element: <SharedSettings /> },
             ],
@@ -218,16 +235,10 @@ const router = createBrowserRouter([
                 path: "monitoring",
                 element: <MonitoringLayout />,
               },
-              // {
-              //   path: "manage-team",
-              //   element: <SharedTeamManagement />,
-              // },
               {
                 path: "team",
                 element: <SharedTeamViewMembers />,
               },
-              // TODO: remove
-              // { path: "schedule", element: <TeamLeaderSchedule /> },
               {
                 path: "schedule",
                 element: <SharedSchedule role={Roles.TEAM_LEADER} />,
@@ -242,12 +253,20 @@ const router = createBrowserRouter([
                 ),
               },
               { path: "performance", element: <TeamLeaderPerformance /> },
-              { path: "bio-break", element: <TeamLeaderBioBreak /> },
+              // { path: "bio-break", element: <TeamLeaderBioBreak /> },
               { path: "coaching", element: <TeamLeaderCoaching /> },
               { path: "agentrequest", element: <TeamLeaderAgentRequest /> },
               { path: "ticket", element: <SharedTicket /> },
               { path: "account-settings", element: <SharedSettings /> },
-              { path: "offenses", element: <TeamLeaderOffenses /> },
+              {
+                path: "offenses",
+                element: <TeamLeaderOffenses />,
+              },
+              {
+                path: "createoffense",
+                element: <TeamLeaderCreateOffense />,
+              },
+              // ------------------------------------
             ],
           },
 
@@ -258,12 +277,17 @@ const router = createBrowserRouter([
             children: [
               { index: true, element: <Navigate to="dashboard" replace /> },
               { path: "dashboard", element: <AgentDashboard /> },
-              { path: "attendance", element: <SharedAttendance /> },
-              { path: "coaching", element: <AgentCoaching /> },
-              { path: "request", element: <AgentRequest /> },
-              { path: "offences", element: <AgentOffences /> },
+              {
+                path: "attendance",
+                element: <SharedAttendance readOnly={true} />,
+              },
+              { path: "coaching", element: <AgentCoaching /> }, 
+              { path: "offenses", element: <AgentOffences /> },
+
               { path: "ticket", element: <SharedTicket /> },
               { path: "account-settings", element: <SharedSettings /> },
+
+              { path: "createoffense", element: <AgentCreateOffenses /> },
             ],
           },
         ],
