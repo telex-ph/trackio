@@ -16,7 +16,7 @@ const connectDB = async () => {
   if (!dbInstance) {
     try {
       await client.connect();
-      dbInstance = client.db("trackio"); // make sure this matches your Atlas DB
+      dbInstance = client.db("test"); 
       console.log("Database connected");
     } catch (error) {
       console.error("Database connection error:", error);
