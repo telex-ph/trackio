@@ -60,8 +60,9 @@ const OffenseList = ({
       [
         off.agentName,
         off.agentRole || "",
+        off.reporterName || "", // <-- IDINAGDAG PARA SA SEARCH
         off.offenseType,
-        off.otherOffenseType || "", // <-- ADDED THIS FOR SEARCH
+        off.otherOffenseType || "",
         off.offenseCategory,
         off.offenseLevel || "",
         off.status,
@@ -95,7 +96,7 @@ const OffenseList = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by agent, role, level, type..."
+            placeholder="Search by agent, reporter, role, level, type..."
             className="w-full pl-10 pr-4 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
           />
         </div>
@@ -114,7 +115,6 @@ const OffenseList = ({
                   </div>
                   <div className="flex-1">
                     <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-2 group-hover:text-red-600 transition-colors">
-                      {/* --- MODIFICATION: LOGIC FOR 'OTHER' --- */}
                       {off.offenseType === "Other"
                         ? off.otherOffenseType
                         : off.offenseType}
@@ -158,6 +158,17 @@ const OffenseList = ({
                     </span>
                   )}
                 </p>
+
+                {/* --- ITO ANG BAGONG DAGDAG --- */}
+                {off.reporterName && (
+                  <p className="text-xs sm:text-sm text-gray-500 flex items-center gap-2">
+                    <User className="w-3 h-3 sm:w-4 sm:h-4" />
+                    Reported by:{" "}
+                    <span className="font-medium">{off.reporterName}</span>
+                  </p>
+                )}
+                {/* --- END NG DAGDAG --- */}
+
                 <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
                   <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
                   Category:{" "}
@@ -188,7 +199,7 @@ const OffenseList = ({
                     </p>
                   </div>
                 )}
-                
+
                 {off.evidence && off.evidence.length > 0 && (
                   <div className="bg-purple-50 rounded-xl p-3 sm:p-4 border-l-4 border-purple-500">
                     <div className="text-xs sm:text-sm text-gray-700">
@@ -227,7 +238,7 @@ const OffenseList = ({
                             </div>
                           </div>
                         );
-                      })}
+})}
                     </div>
                   </div>
                 )}
