@@ -21,14 +21,12 @@ const base64ToBlobUrl = (base64, type) => {
       console.error("Invalid Base64 string");
       return base64;
     }
-
     const binaryString = atob(base64Data);
     const len = binaryString.length;
     const bytes = new Uint8Array(len);
     for (let i = 0; i < len; i++) {
       bytes[i] = binaryString.charCodeAt(i);
     }
-
     const blob = new Blob([bytes], { type: type });
     const url = URL.createObjectURL(blob);
     return url;
@@ -88,6 +86,7 @@ const OffenseForm = ({
   resetForm,
   handleSubmit,
   showNotification,
+  isAgentForm = false, // <-- DAGDAG ITO (default to false)
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -191,11 +190,10 @@ const OffenseForm = ({
     );
   };
 
-  // --- MODIFICATION: Kinukuha ang LOCAL date, hindi UTC ---
   const date = new Date();
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // 0-indexed kaya +1
-  const day = String(date.getDate()).padStart(2, '0'); // Kukunin ang local date
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   const today = `${year}-${month}-${day}`;
 
   return (
@@ -214,7 +212,7 @@ const OffenseForm = ({
             )}
           </div>
           <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
-            {isEditMode ? "Edit Offense" : "Create Incident Report"}
+            {isEditMode ? "Edit Incident Report" : "Create Incident Report"}
           </h3>
         </div>
         {isEditMode && (
@@ -292,7 +290,6 @@ const OffenseForm = ({
           )}
         </div>
 
-        {/* --- START: MODIFIED BLOCK (from previous request) --- */}
         {/* Offense Category / Type */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           <div className="space-y-2">
@@ -302,10 +299,9 @@ const OffenseForm = ({
             <select
               value={formData.offenseCategory}
               onChange={(e) => {
-                // Pag nagpalit ng category, i-reset ang type at otherType
                 handleInputChange("offenseCategory", e.target.value);
                 handleInputChange("offenseType", "");
-                handleInputChange("otherOffenseType", ""); // Assuming this exists
+                handleInputChange("otherOffenseType", "");
               }}
               className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
             >
@@ -324,15 +320,13 @@ const OffenseForm = ({
             <select
               value={formData.offenseType}
               onChange={(e) => {
-                // Pag nagpalit ng type, i-check kung "Other"
                 const value = e.target.value;
                 handleInputChange("offenseType", value);
                 if (value !== "Other") {
-                  // Kung hindi "Other", i-clear ang otherType field
                   handleInputChange("otherOffenseType", "");
                 }
               }}
-              disabled={!formData.offenseCategory} // I-disable kung walang category
+              disabled={!formData.offenseCategory}
               className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base disabled:bg-gray-100 disabled:text-gray-400"
             >
               <option value="">Select offense type</option>
@@ -344,7 +338,6 @@ const OffenseForm = ({
                     </option>
                   )
                 )}
-              {/* ADDED "OTHER" OPTION */}
               {formData.offenseCategory && (
                 <option value="Other">Other (Please specify)</option>
               )}
@@ -352,8 +345,7 @@ const OffenseForm = ({
           </div>
         </div>
 
-        {/* --- ADDED CONDITIONAL TEXT INPUT (from previous request) --- */}
-        {/* Lalabas lang ito kapag "Other" ang pinili sa Offense Type */}
+        {/* Other Offense Type */}
         {formData.offenseType === "Other" && (
           <div className="space-y-2">
             <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -370,30 +362,32 @@ const OffenseForm = ({
             />
           </div>
         )}
-        {/* --- END: MODIFIED BLOCK --- */}
 
-
-        {/* Offense Level / Date */}
+        {/* --- START OF MODIFIED BLOCK --- */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <div className="space-y-2">
-            <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-              Offense Level *
-            </label>
-            <select
-              value={formData.offenseLevel}
-              onChange={(e) =>
-                handleInputChange("offenseLevel", e.target.value)
-              }
-              className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-            >
-              <option value="">Select level</option>
-              <option value="1st Offense">1st Offense</option>
-              <option value="2nd Offense">2nd Offense</option>
-              <option value="3rd Offense">3rd Offense</option>
-              <option value="4th Offense">4th Offense</option>
-              <option value="5th Offense+">5th Offense+</option>
-            </select>
-          </div>
+          {/* Ito ay itatago kung agent form */}
+          {!isAgentForm && (
+            <div className="space-y-2">
+              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                Offense Level *
+              </label>
+              <select
+                value={formData.offenseLevel}
+                onChange={(e) =>
+                  handleInputChange("offenseLevel", e.target.value)
+                }
+                className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
+              >
+                <option value="">Select level</option>
+                <option value="1st Offense">1st Offense</option>
+                <option value="2nd Offense">2nd Offense</option>
+                <option value="3rd Offense">3rd Offense</option>
+                <option value="4th Offense">4th Offense</option>
+                <option value="5th Offense+">5th Offense+</option>
+              </select>
+            </div>
+          )}
+
           <div className="space-y-2">
             <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
               Date of Offense *
@@ -406,7 +400,6 @@ const OffenseForm = ({
                 onChange={(e) =>
                   handleInputChange("dateOfOffense", e.target.value)
                 }
-                // Ito na yung TAMA. 'today' (Oct 24) ay kasama sa enabled.
                 max={today}
                 className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
               />
@@ -414,52 +407,64 @@ const OffenseForm = ({
           </div>
         </div>
 
-        {/* Status */}
-        <div className="space-y-2">
-          <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-            Status *
-          </label>
-          <select
-            value={formData.status}
-            onChange={(e) => handleInputChange("status", e.target.value)}
-            className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-          >
-            <option value="">Select status</option>
-            <option value="Pending Review">Pending Review</option>
-            <option value="Under Investigation">Under Investigation</option>
-            <option value="For Counseling">For Counseling</option>
-            <option value="Action Taken">Action Taken</option>
-            <option value="Escalated">Escalated</option>
-            <option value="Closed">Closed</option>
-          </select>
-        </div>
+        {/* Itatago ang Status at Action Taken kung agent form */}
+        {!isAgentForm && (
+          <>
+            {/* Status */}
+            <div className="space-y-2">
+              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                Status *
+              </label>
+              <select
+                value={formData.status}
+                onChange={(e) => handleInputChange("status", e.target.value)}
+                className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
+              >
+                <option value="">Select status</option>
+                <option value="Pending Review">Pending Review</option>
+                <option value="Under Investigation">Under Investigation</option>
+                <option value="For Counseling">For Counseling</option>
+                <option value="Action Taken">Action Taken</option>
+                <option value="Escalated">Escalated</option>
+                <option value="Closed">Closed</option>
+              </select>
+            </div>
 
-        {/* Action Taken */}
-        <div className="space-y-2">
-          <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-            Action Taken *
-          </label>
-          <select
-            value={formData.actionTaken}
-            onChange={(e) => handleInputChange("actionTaken", e.target.value)}
-            className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-          >
-            <option value="">Select action</option>
-            <option value="Coaching / Counseling">Coaching / Counseling</option>
-            <option value="Verbal Warning">Verbal Warning</option>
-            <option value="Written Warning">Written Warning</option>
-            <option value="Final Written Warning">Final Written Warning</option>
-            <option value="Performance Improvement Plan (PIP)">
-              Performance Improvement Plan (PIP)
-            </option>
-            <option value="Suspension">Suspension</option>
-            <option value="Demotion / Reassignment">
-              Demotion / Reassignment
-            </option>
-            <option value="Termination">Termination</option>
-            <option value="None">None</option>
-          </select>
-        </div>
+            {/* Action Taken */}
+            <div className="space-y-2">
+              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                Action Taken *
+              </label>
+              <select
+                value={formData.actionTaken}
+                onChange={(e) =>
+                  handleInputChange("actionTaken", e.target.value)
+                }
+                className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
+              >
+                <option value="">Select action</option>
+                <option value="Coaching / Counseling">
+                  Coaching / Counseling
+                </option>
+                <option value="Verbal Warning">Verbal Warning</option>
+                <option value="Written Warning">Written Warning</option>
+                <option value="Final Written Warning">
+                  Final Written Warning
+                </option>
+                <option value="Performance Improvement Plan (PIP)">
+                  Performance Improvement Plan (PIP)
+                </option>
+                <option value="Suspension">Suspension</option>
+                <option value="Demotion / Reassignment">
+                  Demotion / Reassignment
+                </option>
+                <option value="Termination">Termination</option>
+                <option value="None">None</option>
+              </select>
+            </div>
+          </>
+        )}
+        {/* --- END OF MODIFIED BLOCK --- */}
 
         {/* Remarks */}
         <div className="space-y-2">
@@ -579,7 +584,7 @@ const OffenseForm = ({
           onClick={handleSubmit}
           className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all duration-300 font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
         >
-          {isEditMode ? "Update Offense" : "Submit Offense"}
+          {isEditMode ? "Update Report" : "Submit Report"}
         </button>
       </div>
     </div>
