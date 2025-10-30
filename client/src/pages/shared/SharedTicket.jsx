@@ -2,14 +2,35 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Pen, Trash2, Ticket, X } from "lucide-react";
-import { Label, TextInput, Button } from "flowbite-react";
+import { Label, TextInput, Button, Spinner } from "flowbite-react";
 import Table from "../../components/Table";
-import TableAction from "../../components/TableAction"; // --- BAGONG DAGDAG ---
+import TableAction from "../../components/TableAction";
 import toast from "react-hot-toast";
 import axios from "axios";
 import api from "../../utils/axios";
 import UnderContruction from "../../assets/illustrations/UnderContruction";
 import { useStore } from "../../store/useStore";
+
+// Helper function para sa pag-format ng date
+const formatDate = (dateString) => {
+  if (!dateString) {
+    return <span className="text-gray-500">N/A</span>;
+  }
+  return new Date(dateString).toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
+// --- START: I-define ang Bearer Token dito ---
+// Ginamit ko lang 'yung nasa example mo kanina
+const bearerToken =
+  "Bearer standard_077ed3b9b01c0863d40827030797f5e602b32b89fe2f3f94cc495b475802c16512013466aaf82efa0d966bff7d6cf837d00e0bfdc9e91f4f290e893ba28c4d6330310f6428f7befc9ad39cd5a55f3b3ba09822aed74a922bf1e6ca958b2f844fab5259c0d69318160bb91d4ab2bf2bec0c72f6d94bf0666a59559c3992aa8b47";
+// --- END: I-define ang Bearer Token dito ---
 
 const TicketsTable = () => {
   const user = useStore((state) => state.user);
@@ -20,11 +41,15 @@ const TicketsTable = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attachmentFile, setAttachmentFile] = useState(null);
 
-  console.log(user);
+  // --- NA-UPDATE: States para sa Details Modal ---
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isModalLoading, setIsModalLoading] = useState(false); // Galing sa logic mo
+  const [selectedTicket, setSelectedTicket] = useState(null); // Galing sa logic mo (trigger)
+  const [ticketDetails, setTicketDetails] = useState(null); // Galing sa logic mo (data)
 
   const [formData, setFormData] = useState({
     email: user.email,
-    stationNo: "", // Naka-set sa empty string para sa placeholder
+    stationNo: "",
     subject: "",
     description: "",
     category: "",
@@ -33,6 +58,8 @@ const TicketsTable = () => {
   });
 
   const [tickets, setTickets] = useState([]);
+
+  // useEffect para sa pag-fetch ng listahan ng tickets (Table)
   useEffect(() => {
     const fetchTickets = async () => {
       if (!user.email) {
@@ -50,8 +77,7 @@ const TicketsTable = () => {
         const response = await axios.get(url, {
           headers: {
             "Content-Type": "application/json",
-            Authorization:
-              "Bearer standard_077ed3b9b01c0863d40827030797f5e602b32b89fe2f3f94cc495b475802c16512013466aaf82efa0d966bff7d6cf837d00e0bfdc9e91f4f290e893ba28c4d6330310f6428f7befc9ad39cd5a55f3b3ba09822aed74a922bf1e6ca958b2f844fab5259c0d69318160bb91d4ab2bf2bec0c72f6d94bf0666a59559c3992aa8b47",
+            Authorization: bearerToken, // Ginamit ang variable
           },
         });
         setTickets(response.data.data.documents || []);
@@ -65,11 +91,51 @@ const TicketsTable = () => {
     };
 
     fetchTickets();
-    // --- FIX ---
-    // Tinanggal ang formData.stationNo sa dependency array.
   }, [user.email]);
 
+  // --- BAGONG DAGDAG: Ito 'yung useEffect mo para sa Details Modal ---
+  useEffect(() => {
+    const fetchTicketDetails = async () => {
+      // Kung walang user, email, o ticket na pinili, huwag tumuloy
+      if (!isDetailsModalOpen || !selectedTicket || !user.email) {
+        return;
+      }
+
+      setIsModalLoading(true);
+      setTicketDetails(null); // I-clear muna ang lumang data
+
+      try {
+        const url = `https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/overview/${user.email}/${selectedTicket.ticketNo}`;
+
+        console.log("Fetching details from:", url); // For debugging
+
+        const response = await axios.get(url, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: bearerToken, // Ginamit ang variable
+          },
+        });
+
+        // I-assume natin na ang data ay nasa response.data.data
+        // Paki-adjust kung iba ang structure (e.g., response.data lang)
+        setTicketDetails(response.data.data || response.data);
+      } catch (error) {
+        console.error("Failed to fetch ticket details:", error);
+        toast.error("Could not fetch ticket details.");
+        // Isara ang modal kung nag-error
+        setIsDetailsModalOpen(false);
+      } finally {
+        setIsModalLoading(false);
+      }
+    };
+
+    fetchTicketDetails();
+    // Ang dependency array na ito ang magti-trigger ng fetch:
+  }, [isDetailsModalOpen, selectedTicket, user.email]);
+  // --- END: useEffect ---
+
   const handleFileUpload = async () => {
+    // ... (logic for file upload)
     if (!attachmentFile) return null;
     try {
       const formData = new FormData();
@@ -91,6 +157,7 @@ const TicketsTable = () => {
   };
 
   const handleAddTicket = async (e) => {
+    // ... (logic for adding a ticket)
     e.preventDefault();
     try {
       setIsSubmitting(true);
@@ -101,15 +168,13 @@ const TicketsTable = () => {
         "https://ticketing-system-eight-kappa.vercel.app/api/ittickets",
         {
           ...formData,
-          // Siguraduhin na ang stationNo ay numero bago ipadala
           stationNo: Number(formData.stationNo),
           attachment: uploadedUrl || "",
         },
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization:
-              "Bearer standard_077ed3b9b01c0863d40827030797f5e602b32b89fe2f3f94cc495b475802c16512013466aaf82efa0d966bff7d6cf837d00e0bfdc9e91f4f290e893ba28c4d6330310f6428f7befc9ad39cd5a55f3b3ba09822aed74a922bf1e6ca958b2f844fab5259c0d69318160bb91d4ab2bf2bec0c72f6d94bf0666a59559c3992aa8b47",
+            Authorization: bearerToken, // Ginamit ang variable
           },
         }
       );
@@ -120,7 +185,7 @@ const TicketsTable = () => {
 
       setFormData({
         email: user.email,
-        stationNo: "", // Reset pabalik sa empty string
+        stationNo: "",
         subject: "",
         description: "",
         category: "",
@@ -136,28 +201,29 @@ const TicketsTable = () => {
     }
   };
 
-  // --- BAGONG DAGDAG: Action Handlers para sa Table ---
-  // Pwede mong palitan ang logic nito (e.g., mag-open ng modal, mag-navigate, etc.)
+  // --- NA-UPDATE: handleViewDetails ---
+  // Ngayon, nagse-set na lang ito ng state para i-trigger ang useEffect
   const handleViewDetails = (ticketData) => {
-    console.log("View Details:", ticketData);
-    toast.success(`Opening details for Ticket #${ticketData.ticketNo}`);
-    // Halimbawa:
-    // setViewingTicket(ticketData);
-    // setIsDetailsModalOpen(true);
+    console.log("Setting selected ticket:", ticketData);
+    setSelectedTicket(ticketData); // I-set ang ticket data galing sa row
+    setIsDetailsModalOpen(true); // Buksan ang modal
   };
 
   const handleEdit = (ticketData) => {
     console.log("Edit:", ticketData);
     toast.info(`Editing Ticket #${ticketData.ticketNo}`);
-    // Halimbawa:
-    // setEditingTicket(ticketData);
-    // setIsEditModalOpen(true);
   };
 
   const handleDelete = (ticketData) => {
     console.log("Delete:", ticketData);
-    // Dito mo ilalagay ang logic for confirmation (e.g., SweetAlert)
     toast.error(`Deleting Ticket #${ticketData.ticketNo}`);
+  };
+
+  // --- BAGONG DAGDAG: Function para isara ang details modal at mag-clear ng state ---
+  const closeDetailsModal = () => {
+    setIsDetailsModalOpen(false);
+    setSelectedTicket(null);
+    setTicketDetails(null);
   };
 
   const columns = [
@@ -171,14 +237,11 @@ const TicketsTable = () => {
       flex: 1,
       sortable: false,
       filter: false,
-      // --- NA-UPDATE: Gumagamit na ng TableAction at iba pang buttons ---
       cellRenderer: (params) => (
         <section className="flex items-center gap-2 justify-center h-full">
-          {/* Ito yung component na pinapa-import mo */}
+          {/* Ito na yung tatawag sa na-update na handleViewDetails */}
           <TableAction action={() => handleViewDetails(params.data)} />
 
-          {/* Bonus: Dinagdag ko na rin ang edit/delete buttons
-              gamit ang Pen at Trash2 icons na in-import mo */}
           <button
             onClick={() => handleEdit(params.data)}
             className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
@@ -227,7 +290,7 @@ const TicketsTable = () => {
         loading={isLoading}
       />
 
-      {/* Modal */}
+      {/* Add Ticket Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
           <div className="bg-dark rounded-xl shadow-lg p-6 w-full max-w-lg relative border border-light container-light">
@@ -243,7 +306,7 @@ const TicketsTable = () => {
             </h3>
 
             <form onSubmit={handleAddTicket} className="space-y-4">
-              {/* --- START: UPDATED STATION NUMBER --- */}
+              {/* Station Number */}
               <div>
                 <Label htmlFor="stationNo" className="text-light mb-2 block">
                   Station Number
@@ -256,16 +319,11 @@ const TicketsTable = () => {
                   max="178"
                   onChange={(e) => {
                     const value = e.target.value;
-
-                    // Payagan ang empty string (para ma-clear ang field)
                     if (value === "") {
                       setFormData({ ...formData, stationNo: "" });
                       return;
                     }
-
                     const numValue = Number(value);
-
-                    // I-check kung ang numero ay integer at nasa pagitan ng 1 at 178
                     if (
                       !isNaN(numValue) &&
                       numValue >= 1 &&
@@ -277,21 +335,15 @@ const TicketsTable = () => {
                         stationNo: numValue,
                       });
                     } else if (numValue > 178) {
-                      // Kung lumagpas sa 178, i-set sa 178
                       setFormData({ ...formData, stationNo: 178 });
                     }
-                    // Kung mas mababa sa 1 (like 0) or decimal (like 1.5), huwag i-update ang state,
-                    // na epektibong pinipigilan ang pag-type.
                   }}
                   required
                   className="flex-1"
-                  // Gamitin ang "|| ''" para ipakita ang placeholder kapag ang value ay ""
-                  // at hindi magpakita ng "0"
                   value={formData.stationNo || ""}
                   placeholder="Enter station number (1-178)"
                 />
               </div>
-              {/* --- END: UPDATED STATION NUMBER --- */}
 
               {/* Subject */}
               <div>
@@ -434,6 +486,244 @@ const TicketsTable = () => {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- NA-UPDATE: Details Modal --- */}
+      {/* Gumagamit na ng 'closeDetailsModal' function */}
+      {isDetailsModalOpen && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="bg-dark rounded-xl shadow-lg p-6 w-full max-w-lg relative border border-light container-light">
+            <button
+              onClick={closeDetailsModal} // Ginamit ang close function
+              className="absolute top-3 right-3 text-light hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h3 className="text-lg font-semibold mb-4 text-light">
+              Ticket Details
+            </h3>
+
+            {/* Gumagamit na ng 'isModalLoading' state */}
+            {isModalLoading ? (
+              // Loading State
+              <div className="flex justify-center items-center h-48">
+                <Spinner size="xl" />
+                <span className="text-light ml-3">Loading details...</span>
+              </div>
+            ) : ticketDetails ? ( // Gumagamit na ng 'ticketDetails' state
+              // Data Loaded State
+              <div className="space-y-4 text-light max-h-[70vh] overflow-y-auto pr-2">
+                {/* --- Group 1: Main Info --- */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">
+                      Ticket No
+                    </p>
+                    <p className="text-lg font-bold">
+                      {ticketDetails.ticketNo}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">
+                      Status
+                    </p>
+                    <p className="text-lg font-bold text-blue-400">
+                      {ticketDetails.status}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">
+                      Severity
+                    </p>
+                    <p className="text-lg">{ticketDetails.severity}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">
+                      Category
+                    </p>
+                    <p className="text-lg">{ticketDetails.category}</p>
+                  </div>
+                </div>
+
+                <hr className="border-gray-600" />
+
+                {/* --- Group 2: Requester --- */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">
+                      Requester ID
+                    </p>
+                    <p className="text-md break-all">
+                      {ticketDetails.requesteeId || (
+                        <span className="text-gray-500">N/A</span>
+                      )}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">
+                      Station No
+                    </p>
+                    <p className="text-md">{ticketDetails.stationNo}</p>
+                  </div>
+                </div>
+
+                <hr className="border-gray-600" />
+
+                {/* --- Group 3: Content --- */}
+                <div>
+                  <p className="text-sm font-medium text-gray-400">
+                    Subject
+                  </p>
+                  <p className="text-lg">{ticketDetails.subject}</p>
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-gray-400">
+                    Description
+                  </p>
+                  <p className="p-3 bg-black/20 rounded-lg mt-1 whitespace-pre-wrap">
+                    {ticketDetails.description || (
+                      <span className="text-gray-500">
+                        No description provided.
+                      </span>
+                    )}
+                  </p>
+                </div>
+
+                {ticketDetails.attachment &&
+                ticketDetails.attachment.length > 0 ? (
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">
+                      Attachment
+                    </p>
+                    <a
+                      href={ticketDetails.attachment}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:underline break-all"
+                    >
+                      View Attachment
+                    </a>
+                  </div>
+                ) : null}
+
+                {/* --- Group 4: Timeline --- */}
+                <hr className="border-gray-600" />
+                <h4 className="text-md font-semibold text-gray-300">
+                  Timeline
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">
+                      Date Created
+                    </p>
+                    <p className="text-md">
+                      {formatDate(ticketDetails.$createdAt)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">
+                      Last Updated
+                    </p>
+                    <p className="text-md">
+                      {formatDate(ticketDetails.$updatedAt)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">
+                      Date Resolved
+                    </p>
+                    <p className="text-md">
+                      {formatDate(ticketDetails.resolved_at)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">
+                      Date Closed
+                    </p>
+                    <p className="text-md">
+                      {formatDate(ticketDetails.closed_at)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* --- Group 5: Resolution & Feedback --- */}
+                <hr className="border-gray-600" />
+                <h4 className="text-md font-semibold text-gray-300">
+                  Resolution
+                </h4>
+                <div>
+                  <p className="text-sm font-medium text-gray-400">
+                    Assigned To (ID)
+                  </p>
+                  <p className="text-md">
+                    {ticketDetails.assigneeId || (
+                      <span className="text-gray-500">
+                        Not yet assigned
+                      </span>
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-400">
+                    Resolution Notes
+                  </p>
+                  <p className="p-3 bg-black/20 rounded-lg mt-1 whitespace-pre-wrap">
+                    {ticketDetails.resolutionText || (
+                      <span className="text-gray-500">
+                        No resolution notes yet.
+                      </span>
+                    )}
+                  </p>
+                </div>
+
+                <h4 className="text-md font-semibold text-gray-300 mt-4">
+                  User Feedback
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">
+                      Rating
+                    </p>
+                    <p className="text-md">
+                      {ticketDetails.rating || (
+                        <span className="text-gray-500">No rating</span>
+                      )}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">
+                      Feedback
+                    </p>
+                    <p className="text-md">
+                      {ticketDetails.feedback || (
+                        <span className="text-gray-500">No feedback</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                {/* --- Footer --- */}
+                <div className="flex justify-end pt-4">
+                  <Button
+                    type="button"
+                    onClick={closeDetailsModal} // Ginamit ang close function
+                    color="white"
+                    className="border border-light text-light"
+                  >
+                    Close
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              // Error State (kung walang details na na-load)
+              <div className="text-light text-center h-48 flex items-center justify-center">
+                <p>Could not load ticket details.</p>
+              </div>
+            )}
           </div>
         </div>
       )}
