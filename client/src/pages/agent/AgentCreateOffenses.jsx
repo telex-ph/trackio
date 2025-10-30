@@ -7,7 +7,7 @@ import api from "../../utils/axios";
 // Import all the reusable components
 import Notification from "../../components/incident-reports/Notification";
 import ConfirmationModal from "../../components/incident-reports/ConfirmationModal";
-import OffenseForm from "../../components/incident-reports/OffenseForm";
+import OffenseForm from "../../components/HRIncidentReport/ReportedIR/CreateIR/OffenseForm";
 import TLCasesInProgress from "../../components/incident-reports/TLCasesInProgress";
 import TLCaseHistory from "../../components/incident-reports/TLCaseHistory";
 
@@ -89,45 +89,48 @@ const AgentCreateOffenses = () => {
     setNotification({ message, type, isVisible: true });
   };
 
-  // --- REPORTER-SPECIFIC FUNCTIONS ---
-  const fetchCurrentUser = async () => {
-    try {
-      const timestamp = Date.now();
-      const response = await api.get(`/auth/get-auth-user?_=${timestamp}`);
-      setCurrentUser(response.data);
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching current user:", error);
-      showNotification(
-        "Failed to load user data. Please log in again.",
-        "error"
-      );
-      return null;
-    }
-  };
+const fetchCurrentUser = async () => {
+  try {
+    const timestamp = Date.now();
+    const response = await api.get(`/auth/get-auth-user?_=${timestamp}`);
+    console.log("👤 Current User:", response.data); // ✅ Debug
+    console.log("🆔 User ID:", response.data._id); // ✅ Debug
+    setCurrentUser(response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching current user:", error);
+    showNotification(
+      "Failed to load user data. Please log in again.",
+      "error"
+    );
+    return null;
+  }
+};
 
   const fetchMySubmittedReports = async (userId) => {
-    if (!userId) {
-      showNotification("Could not verify user to fetch reports.", "error");
-      return;
-    }
-    try {
-      setIsLoading(true);
-      const timestamp = Date.now();
-      const response = await api.get(
-        `/offenses/reporter/${userId}?_=${timestamp}`
-      );
-      setSubmittedReports(response.data);
-    } catch (error) {
-      console.error("Error fetching my submitted reports:", error);
-      showNotification(
-        "Failed to load my submitted reports. Please try again.",
-        "error"
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  if (!userId) {
+    showNotification("Could not verify user to fetch reports.", "error");
+    return;
+  }
+  try {
+    setIsLoading(true);
+    const timestamp = Date.now();
+    console.log("🔍 Fetching reports for user ID:", userId); // ✅ Debug
+    const response = await api.get(
+      `/offenses/reporter/${userId}?_=${timestamp}`
+    );
+    console.log("📋 Fetched reports:", response.data); // ✅ Debug
+    setSubmittedReports(response.data);
+  } catch (error) {
+    console.error("Error fetching my submitted reports:", error);
+    showNotification(
+      "Failed to load my submitted reports. Please try again.",
+      "error"
+    );
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // Load data on component mount
   useEffect(() => {
