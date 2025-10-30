@@ -32,30 +32,32 @@ export const getOffenseById = async (req, res) => {
   }
 };
 
-// Add (Para sa AgentCreateOffenses)
 export const addOffense = async (req, res) => {
-  try {
-    const offenseData = req.body;
-    const user = req.user;
+  try {
+    const offenseData = req.body;
+    const user = req.user; 
 
-    const newOffenseData = {
-      ...offenseData,
-      reportedById: new ObjectId(user.id), // ID ng nag-report
-      reporterName: `${user.firstName} ${user.lastName}`, // Pangalan ng nag-report
-      status: "Pending Review", // Default status
-      isRead: false, // Default read status
-      isReadByHR: false, // Default HR read status
-    };
+    console.log("Backend req.user:", user); 
 
-    const newOffense = await Offense.create(newOffenseData);
-    res.status(201).json(newOffense);
-  } catch (error) {
-    // Iwan ang error log para sa production debugging
-    console.error("CONTROLLER - Error adding offense:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to add offense", error: error.message });
-  }
+    const newOffenseData = {
+      ...offenseData,
+
+      reportedById: new ObjectId(user._id), 
+
+      reporterName: `${user.firstName} ${user.lastName}`, 
+      status: "Pending Review", 
+      isRead: false, 
+      isReadByHR: false,
+    };
+
+    const newOffense = await Offense.create(newOffenseData);
+    res.status(201).json(newOffense);
+  } catch (error) {
+    console.error("CONTROLLER - Error adding offense:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to add offense", error: error.message });
+  }
 };
 
 export const updateOffense = async (req, res) => {
