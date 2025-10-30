@@ -1,21 +1,30 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Pen, Trash2, Ticket, X } from "lucide-react";
 import { Label, TextInput, Button } from "flowbite-react";
 import Table from "../../components/Table";
+import TableAction from "../../components/TableAction"; // --- BAGONG DAGDAG ---
 import toast from "react-hot-toast";
 import axios from "axios";
 import api from "../../utils/axios";
 import UnderContruction from "../../assets/illustrations/UnderContruction";
+import { useStore } from "../../store/useStore";
 
 const TicketsTable = () => {
+  const user = useStore((state) => state.user);
+
   const tableRef = useRef();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [attachmentFile, setAttachmentFile] = useState(null);
 
+  console.log(user);
+
   const [formData, setFormData] = useState({
+    email: user.email,
+    stationNo: "", // Naka-set sa empty string para sa placeholder
     subject: "",
     description: "",
     category: "",
@@ -23,22 +32,43 @@ const TicketsTable = () => {
     status: "OPEN",
   });
 
-  const [tickets, setTickets] = useState([
-    {
-      _id: "1",
-      workspaceId: "68f1a7f70036cc2896bc",
-      requesteeId: "68e3f51d0018e067bf4e",
-      ticketNo: 124,
-      subject: "No Internet",
-      description: "No internet connection since morning.",
-      attachment: "https://example.com/image1.png",
-      category: "NETWORK",
-      severity: "Severity 1",
-      status: "OPEN",
-    },
-  ]);
+  const [tickets, setTickets] = useState([]);
+  useEffect(() => {
+    const fetchTickets = async () => {
+      if (!user.email) {
+        setIsLoading(false);
+        setFormData((prev) => ({ ...prev, email: "" }));
+        return;
+      }
 
-  // Upload single attachment
+      setFormData((prev) => ({ ...prev, email: user.email }));
+
+      setIsLoading(true);
+      try {
+        const url = `https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/${user.email}`;
+
+        const response = await axios.get(url, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization:
+              "Bearer standard_077ed3b9b01c0863d40827030797f5e602b32b89fe2f3f94cc495b475802c16512013466aaf82efa0d966bff7d6cf837d00e0bfdc9e91f4f290e893ba28c4d6330310f6428f7befc9ad39cd5a55f3b3ba09822aed74a922bf1e6ca958b2f844fab5259c0d69318160bb91d4ab2bf2bec0c72f6d94bf0666a59559c3992aa8b47",
+          },
+        });
+        setTickets(response.data.data.documents || []);
+      } catch (error) {
+        console.error("Failed to fetch tickets:", error);
+        toast.error("Failed to load tickets");
+        setTickets([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTickets();
+    // --- FIX ---
+    // Tinanggal ang formData.stationNo sa dependency array.
+  }, [user.email]);
+
   const handleFileUpload = async () => {
     if (!attachmentFile) return null;
     try {
@@ -63,16 +93,16 @@ const TicketsTable = () => {
   const handleAddTicket = async (e) => {
     e.preventDefault();
     try {
-      setIsLoading(true);
+      setIsSubmitting(true);
 
-      // 1️⃣ Upload file first
       const uploadedUrl = await handleFileUpload();
 
-      // 2️⃣ Submit ticket
       const response = await axios.post(
         "https://ticketing-system-eight-kappa.vercel.app/api/ittickets",
         {
           ...formData,
+          // Siguraduhin na ang stationNo ay numero bago ipadala
+          stationNo: Number(formData.stationNo),
           attachment: uploadedUrl || "",
         },
         {
@@ -88,8 +118,9 @@ const TicketsTable = () => {
       toast.success("Ticket added successfully");
       setIsModalOpen(false);
 
-      // Reset
       setFormData({
+        email: user.email,
+        stationNo: "", // Reset pabalik sa empty string
         subject: "",
         description: "",
         category: "",
@@ -101,8 +132,32 @@ const TicketsTable = () => {
       console.error(error);
       toast.error("Failed to add ticket");
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
+  };
+
+  // --- BAGONG DAGDAG: Action Handlers para sa Table ---
+  // Pwede mong palitan ang logic nito (e.g., mag-open ng modal, mag-navigate, etc.)
+  const handleViewDetails = (ticketData) => {
+    console.log("View Details:", ticketData);
+    toast.success(`Opening details for Ticket #${ticketData.ticketNo}`);
+    // Halimbawa:
+    // setViewingTicket(ticketData);
+    // setIsDetailsModalOpen(true);
+  };
+
+  const handleEdit = (ticketData) => {
+    console.log("Edit:", ticketData);
+    toast.info(`Editing Ticket #${ticketData.ticketNo}`);
+    // Halimbawa:
+    // setEditingTicket(ticketData);
+    // setIsEditModalOpen(true);
+  };
+
+  const handleDelete = (ticketData) => {
+    console.log("Delete:", ticketData);
+    // Dito mo ilalagay ang logic for confirmation (e.g., SweetAlert)
+    toast.error(`Deleting Ticket #${ticketData.ticketNo}`);
   };
 
   const columns = [
@@ -116,17 +171,33 @@ const TicketsTable = () => {
       flex: 1,
       sortable: false,
       filter: false,
-      cellRenderer: () => (
-        <section className="flex items-center gap-5 justify-center h-full"></section>
+      // --- NA-UPDATE: Gumagamit na ng TableAction at iba pang buttons ---
+      cellRenderer: (params) => (
+        <section className="flex items-center gap-2 justify-center h-full">
+          {/* Ito yung component na pinapa-import mo */}
+          <TableAction action={() => handleViewDetails(params.data)} />
+
+          {/* Bonus: Dinagdag ko na rin ang edit/delete buttons
+              gamit ang Pen at Trash2 icons na in-import mo */}
+          <button
+            onClick={() => handleEdit(params.data)}
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+            title="Edit Ticket"
+          >
+            <Pen size={18} className="text-blue-600" />
+          </button>
+
+          <button
+            onClick={() => handleDelete(params.data)}
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+            title="Delete Ticket"
+          >
+            <Trash2 size={18} className="text-red-600" />
+          </button>
+        </section>
       ),
     },
   ];
-
-  return (
-    <section className="h-full">
-      <UnderContruction />
-    </section>
-  );
 
   return (
     <div>
@@ -172,6 +243,56 @@ const TicketsTable = () => {
             </h3>
 
             <form onSubmit={handleAddTicket} className="space-y-4">
+              {/* --- START: UPDATED STATION NUMBER --- */}
+              <div>
+                <Label htmlFor="stationNo" className="text-light mb-2 block">
+                  Station Number
+                </Label>
+                <TextInput
+                  id="stationNo"
+                  name="stationNo"
+                  type="number"
+                  min="1"
+                  max="178"
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    // Payagan ang empty string (para ma-clear ang field)
+                    if (value === "") {
+                      setFormData({ ...formData, stationNo: "" });
+                      return;
+                    }
+
+                    const numValue = Number(value);
+
+                    // I-check kung ang numero ay integer at nasa pagitan ng 1 at 178
+                    if (
+                      !isNaN(numValue) &&
+                      numValue >= 1 &&
+                      numValue <= 178 &&
+                      Number.isInteger(numValue)
+                    ) {
+                      setFormData({
+                        ...formData,
+                        stationNo: numValue,
+                      });
+                    } else if (numValue > 178) {
+                      // Kung lumagpas sa 178, i-set sa 178
+                      setFormData({ ...formData, stationNo: 178 });
+                    }
+                    // Kung mas mababa sa 1 (like 0) or decimal (like 1.5), huwag i-update ang state,
+                    // na epektibong pinipigilan ang pag-type.
+                  }}
+                  required
+                  className="flex-1"
+                  // Gamitin ang "|| ''" para ipakita ang placeholder kapag ang value ay ""
+                  // at hindi magpakita ng "0"
+                  value={formData.stationNo || ""}
+                  placeholder="Enter station number (1-178)"
+                />
+              </div>
+              {/* --- END: UPDATED STATION NUMBER --- */}
+
               {/* Subject */}
               <div>
                 <Label htmlFor="subject" className="text-light mb-2 block">
@@ -192,7 +313,10 @@ const TicketsTable = () => {
 
               {/* Description */}
               <div>
-                <Label htmlFor="description" className="text-light mb-2 block">
+                <Label
+                  htmlFor="description"
+                  className="text-light mb-2 block"
+                >
                   Description
                 </Label>
                 <textarea
@@ -205,6 +329,7 @@ const TicketsTable = () => {
                   className="w-full border border-light container-light rounded-lg px-3 py-2 text-light bg-transparent"
                   rows="3"
                   placeholder="Describe the issue"
+                  value={formData.description}
                 ></textarea>
               </div>
 
@@ -224,8 +349,8 @@ const TicketsTable = () => {
                         setAttachmentFile(e.target.files[0] || null)
                       }
                       className="w-full text-sm text-light file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 
-                      file:text-sm file:font-semibold file:bg-blue-600 file:text-white 
-                      hover:file:bg-blue-700 cursor-pointer"
+                        file:text-sm file:font-semibold file:bg-blue-600 file:text-white 
+                        hover:file:bg-blue-700 cursor-pointer"
                     />
                   </div>
                   {attachmentFile && (
@@ -302,10 +427,10 @@ const TicketsTable = () => {
 
                 <Button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isSubmitting}
                   gradientDuoTone="purpleToBlue"
                 >
-                  {isLoading ? "Saving..." : "Save Ticket"}
+                  {isSubmitting ? "Saving..." : "Save Ticket"}
                 </Button>
               </div>
             </form>
