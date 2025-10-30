@@ -11,6 +11,7 @@ import api from "../../utils/axios";
 import UnderContruction from "../../assets/illustrations/UnderContruction";
 import { useStore } from "../../store/useStore";
 
+// Helper function para sa pag-format ng date
 const formatDate = (dateString) => {
   if (!dateString) {
     return <span className="text-gray-500">N/A</span>;
@@ -25,8 +26,10 @@ const formatDate = (dateString) => {
   });
 };
 
+// --- START: I-define ang Bearer Token dito ---
 const bearerToken =
   "Bearer standard_077ed3b9b01c0863d40827030797f5e602b32b89fe2f3f94cc495b475802c16512013466aaf82efa0d966bff7d6cf837d00e0bfdc9e91f4f290e893ba28c4d6330310f6428f7befc9ad39cd5a55f3b3ba09822aed74a922bf1e6ca958b2f844fab5259c0d69318160bb91d4ab2bf2bec0c72f6d94bf0666a59559c3992aa8b47";
+// --- END: I-define ang Bearer Token dito ---
 
 const TicketsTable = () => {
   const user = useStore((state) => state.user);
@@ -37,6 +40,7 @@ const TicketsTable = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attachmentFile, setAttachmentFile] = useState(null);
 
+  // States para sa Details Modal
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isModalLoading, setIsModalLoading] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
@@ -54,6 +58,7 @@ const TicketsTable = () => {
 
   const [tickets, setTickets] = useState([]);
 
+  // useEffect para sa pag-fetch ng listahan ng tickets (Table)
   useEffect(() => {
     const fetchTickets = async () => {
       if (!user.email) {
@@ -87,6 +92,7 @@ const TicketsTable = () => {
     fetchTickets();
   }, [user.email]);
 
+  // useEffect para sa Details Modal
   useEffect(() => {
     const fetchTicketDetails = async () => {
       if (!isDetailsModalOpen || !selectedTicket || !user.email) {
@@ -234,8 +240,15 @@ const TicketsTable = () => {
     setTicketDetails(null);
   };
 
+  // --- START: BINAGO ANG COLUMNS ---
   const columns = [
-    { headerName: "Ticket No", field: "ticketNo", flex: 1 },
+    {
+      headerName: "Ticket No",
+      field: "ticketNo",
+      flex: 1,
+      // Idinagdag ito para i-format 'yung display
+      valueFormatter: (params) => `Ticket#${params.value}`,
+    },
     { headerName: "Subject", field: "subject", flex: 1 },
     { headerName: "Category", field: "category", flex: 1 },
     { headerName: "Severity", field: "severity", flex: 1 },
@@ -268,9 +281,11 @@ const TicketsTable = () => {
       ),
     },
   ];
+  // --- END: BINAGO ANG COLUMNS ---
 
   return (
     <div>
+      {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <div>
           <h2 className="text-xl font-semibold">Tickets</h2>
@@ -288,6 +303,7 @@ const TicketsTable = () => {
         </button>
       </div>
 
+      {/* Table */}
       <Table
         data={tickets}
         tableRef={tableRef}
@@ -295,6 +311,7 @@ const TicketsTable = () => {
         loading={isLoading}
       />
 
+      {/* Add Ticket Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
           <div className="bg-dark rounded-xl shadow-lg p-6 w-full max-w-lg relative border border-light container-light">
@@ -310,6 +327,7 @@ const TicketsTable = () => {
             </h3>
 
             <form onSubmit={handleAddTicket} className="space-y-4">
+              {/* Station Number */}
               <div>
                 <Label htmlFor="stationNo" className="text-light mb-2 block">
                   Station Number
@@ -348,6 +366,7 @@ const TicketsTable = () => {
                 />
               </div>
 
+              {/* Subject */}
               <div>
                 <Label htmlFor="subject" className="text-light mb-2 block">
                   Subject
@@ -365,6 +384,7 @@ const TicketsTable = () => {
                 />
               </div>
 
+              {/* Description */}
               <div>
                 <Label
                   htmlFor="description"
@@ -386,6 +406,7 @@ const TicketsTable = () => {
                 ></textarea>
               </div>
 
+              {/* Attachment */}
               <div>
                 <Label htmlFor="attachment" className="text-light mb-2 block">
                   Attachment
@@ -421,6 +442,7 @@ const TicketsTable = () => {
                 )}
               </div>
 
+              {/* Category + Severity */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="category" className="text-light mb-2 block">
@@ -465,6 +487,7 @@ const TicketsTable = () => {
                 </div>
               </div>
 
+              {/* Actions */}
               <div className="flex justify-end gap-3 mt-5">
                 <Button
                   type="button"
@@ -488,11 +511,12 @@ const TicketsTable = () => {
         </div>
       )}
 
+      {/* Details Modal */}
       {isDetailsModalOpen && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
           <div className="bg-dark rounded-xl shadow-lg p-6 w-full max-w-4xl relative border border-light container-light">
             <button
-              onClick={closeDetailsModal} 
+              onClick={closeDetailsModal}
               className="absolute top-3 right-3 text-light hover:text-white"
             >
               <X className="w-5 h-5" />
@@ -503,14 +527,18 @@ const TicketsTable = () => {
             </h3>
 
             {isModalLoading ? (
+              // Loading State
               <div className="flex justify-center items-center h-48">
                 <Spinner size="xl" />
                 <span className="text-light ml-3">Loading details...</span>
               </div>
             ) : ticketDetails ? (
+              // Data Loaded State
               <div className="text-light max-h-[70vh] overflow-y-auto pr-2">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* --- COLUMN 1: Main Content --- */}
                   <div className="space-y-4">
+                    {/* Subject */}
                     <div>
                       <p className="text-sm font-medium text-gray-400">
                         Subject
@@ -520,6 +548,7 @@ const TicketsTable = () => {
                       </p>
                     </div>
 
+                    {/* Description */}
                     <div>
                       <p className="text-sm font-medium text-gray-400">
                         Description
@@ -533,6 +562,7 @@ const TicketsTable = () => {
                       </p>
                     </div>
 
+                    {/* Resolution Notes */}
                     <div>
                       <p className="text-sm font-medium text-gray-400">
                         Resolution Notes
@@ -546,6 +576,7 @@ const TicketsTable = () => {
                       </p>
                     </div>
 
+                    {/* Attachment */}
                     {ticketDetails.attachment &&
                     ticketDetails.attachment.length > 0 ? (
                       <div>
@@ -564,15 +595,19 @@ const TicketsTable = () => {
                     ) : null}
                   </div>
 
+                  {/* --- COLUMN 2: Details & Timeline --- */}
                   <div className="space-y-4">
+                    {/* Ticket No & Status */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm font-medium text-gray-400">
                           Ticket No
                         </p>
+                        {/* --- START: BINAGO ANG TICKET NO --- */}
                         <p className="text-lg font-bold">
-                          {ticketDetails.ticketNo}
+                          Ticket#{ticketDetails.ticketNo}
                         </p>
+                        {/* --- END: BINAGO ANG TICKET NO --- */}
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-400">
@@ -584,6 +619,7 @@ const TicketsTable = () => {
                       </div>
                     </div>
 
+                    {/* Severity & Category */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm font-medium text-gray-400">
@@ -601,6 +637,7 @@ const TicketsTable = () => {
 
                     <hr className="border-gray-600" />
 
+                    {/* Requester Info */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm font-medium text-gray-400">
@@ -634,6 +671,7 @@ const TicketsTable = () => {
 
                     <hr className="border-gray-600" />
 
+                    {/* Timeline */}
                     <h4 className="text-md font-semibold text-gray-300">
                       Timeline
                     </h4>
@@ -674,6 +712,7 @@ const TicketsTable = () => {
 
                     <hr className="border-gray-600" />
 
+                    {/* Feedback */}
                     <h4 className="text-md font-semibold text-gray-300">
                       User Feedback
                     </h4>
@@ -702,10 +741,11 @@ const TicketsTable = () => {
                   </div>
                 </div>
 
+                {/* --- Footer --- */}
                 <div className="flex justify-end pt-6 mt-4 border-t border-gray-600">
                   <Button
                     type="button"
-                    onClick={closeDetailsModal} 
+                    onClick={closeDetailsModal}
                     color="white"
                     className="border border-light text-light"
                   >
@@ -714,6 +754,7 @@ const TicketsTable = () => {
                 </div>
               </div>
             ) : (
+              // Error State
               <div className="text-light text-center h-48 flex items-center justify-center">
                 <p>Could not load ticket details.</p>
               </div>
