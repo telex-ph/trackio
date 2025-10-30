@@ -4,9 +4,10 @@ import api from "../../utils/axios";
 
 // Import components
 import Notification from "../../components/incident-reports/Notification";
-import TLOffenseDetails from "../../components/incident-reports/TLOffenseDetails";
-import TLCasesInProgress from "../../components/incident-reports/TLCasesInProgress";
-import TLCaseHistory from "../../components/incident-reports/TLCaseHistory";
+// MODIFIED: Import the new .tsx file. No extension needed.
+import HR_OffenseDetails from "../../components/HRIncidentReport/ReportedIR/HR_OffenseDetails";
+import HR_CasesInProgress from "../../components/HRIncidentReport/ReportedIR/HR_CasesInProgress";
+import HR_CaseHistory from "../../components/HRIncidentReport/ReportedIR/HR_CaseHistory";
 
 // Define TypeScript Interfaces
 interface OffenseEvidence {
@@ -125,34 +126,88 @@ const HRReportedOffenses = () => {
     setIsViewMode(true);
     setEditingId(off._id);
     setFormData({
+      ...off, // Load all offense data
       agentName: off.agentName,
       offenseCategory: off.offenseCategory,
       offenseType: off.offenseType,
       offenseLevel: off.offenseLevel || "",
-      dateOfOffense: off.dateOfOffense,
+      dateOfOffense: off.dateOfOffense, // Keep as ISO string for the input
       status: off.status,
       actionTaken: off.actionTaken,
       remarks: off.remarks || "",
       evidence: off.evidence || [],
       isRead: off.isRead || false,
-      isReadByHR: off.isReadByHR || false, // Pass HR read status
+      isReadByHR: off.isReadByHR || false,
     });
   };
 
-  // Handle HR marking as read
-  const handleMarkAsRead = async () => {
+  // REMOVED: handleMarkAsRead function is no longer needed.
+
+  // NEW: Handle form field changes
+  const handleFormChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // NEW: Handle Update button
+  const handleUpdate = async () => {
     if (!editingId) return;
     try {
-      // Use the specific 'isReadByHR' field
-      const payload = { isReadByHR: true };
-      // Note: This API route '/offenses/hr-read/${editingId}' must exist on your backend
-      await api.put(`/offenses/${editingId}`, payload); 
-      showNotification("Marked as acknowledged successfully!", "success");
+      const payload = { ...formData, isReadByHR: true };
+      await api.put(`/offenses/${editingId}`, payload);
+      showNotification("Offense updated successfully!", "success");
       resetForm();
       fetchOffenses(); // Refresh list
     } catch (error) {
-      console.error("Error marking as read by HR:", error);
-      showNotification("Failed to mark as read. Please try again.", "error");
+      console.error("Error updating offense:", error);
+      showNotification("Failed to update. Please try again.", "error");
+    }
+  };
+
+  // NEW: Handle Escalate button
+  const handleEscalate = async () => {
+    if (!editingId) return;
+    try {
+      const payload = {
+        ...formData,
+        status: "Escalated to Compliance", // Set new status
+        isReadByHR: true,
+      };
+      await api.put(`/offenses/${editingId}`, payload);
+      showNotification("Case escalated to Compliance!", "success");
+      resetForm();
+      fetchOffenses();
+    } catch (error) {
+      console.error("Error escalating case:", error);
+      showNotification("Failed to escalate. Please try again.", "error");
+    }
+  };
+
+  // NEW: Handle Reject button
+  const handleReject = async () => {
+    if (!editingId) return;
+    try {
+      // You might want to ensure remarks are filled before rejecting
+      if (!formData.remarks) {
+        showNotification("Please add remarks before rejecting.", "warning");
+        return;
+      }
+      const payload = {
+        ...formData,
+        status: "Rejected", // Set new status
+        isReadByHR: true,
+      };
+      await api.put(`/offenses/${editingId}`, payload);
+      showNotification("Case has been rejected.", "success");
+      resetForm();
+      fetchOffenses();
+    } catch (error) {
+      console.error("Error rejecting case:", error);
+      showNotification("Failed to reject. Please try again.", "error");
     }
   };
 
@@ -171,7 +226,7 @@ const HRReportedOffenses = () => {
   // Filter for "Cases In Progress"
   const filteredOffenses = offenses.filter(
     (off) =>
-      !["Action Taken", "Escalated", "Closed"].includes(off.status) &&
+      !["Action Taken", "Escalated", "Closed", "Rejected", "Escalated to Compliance"].includes(off.status) &&
       [
         off.agentName,
         off.offenseType,
@@ -190,7 +245,7 @@ const HRReportedOffenses = () => {
 
   // Filter for "Case History"
   const resolvedOffenses = offenses.filter((off) => {
-    const isResolved = ["Action Taken", "Escalated", "Closed"].includes(
+    const isResolved = ["Action Taken", "Escalated", "Closed", "Rejected", "Escalated to Compliance"].includes(
       off.status
     );
     if (!isResolved) return false;
@@ -240,17 +295,20 @@ const HRReportedOffenses = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
         {/* Offense Details Panel */}
-        <TLOffenseDetails
+        <HR_OffenseDetails
           isViewMode={isViewMode}
-          formData={formData as Offense}
+          formData={formData as Offense} // Casting here is fine
           onClose={resetForm}
-          onMarkAsRead={handleMarkAsRead}
+          onFormChange={handleFormChange}
+          onUpdate={handleUpdate}
+          onEscalate={handleEscalate}
+          onReject={handleReject}
           formatDisplayDate={formatDisplayDate}
           base64ToBlobUrl={base64ToBlobUrl}
         />
 
         {/* Cases in Progress Panel */}
-        <TLCasesInProgress
+        <HR_CasesInProgress
           offenses={filteredOffenses}
           searchQuery={searchQuery}
           onSearchChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -264,7 +322,7 @@ const HRReportedOffenses = () => {
       </div>
 
       {/* Case History Panel */}
-      <TLCaseHistory
+      <HR_CaseHistory
         offenses={resolvedOffenses}
         filters={{
           searchQuery: historySearchQuery,
