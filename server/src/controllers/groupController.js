@@ -1,4 +1,6 @@
+import { ObjectId } from "mongodb";
 import Group from "../model/Group.js";
+import User from "../model/User.js";
 
 export const getUserGroups = async (req, res) => {
   const id = req.params.id;
@@ -61,9 +63,10 @@ export const getGroup = async (req, res) => {
 
 export const addMember = async (req, res) => {
   const id = req.params.id;
-  const { teamId } = req.body;
+  const { teamId, teamLeaderId } = req.body;
   try {
     const users = await Group.addMember(teamId, id);
+    await User.update(id, "teamLeaderId", new ObjectId(teamLeaderId));
     res.status(200).json(users);
   } catch (error) {
     console.error("Error adding user group member: ", error);
@@ -80,6 +83,7 @@ export const removeMember = async (req, res) => {
 
   try {
     const result = await Group.removeMember(groupId, id);
+    await User.update(id, "teamLeaderId", null);
     res.status(200).json(result);
   } catch (error) {
     console.error("Error removing member:", error);

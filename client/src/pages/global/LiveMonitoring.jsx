@@ -96,9 +96,9 @@ export default function LiveBreaks() {
         <ServerTime />
       </section>
 
-      <div className="flex gap-5 p-5 bg-gray-100 h-screen">
+      <div className="flex gap-5 p-5  h-screen">
         {/* LEFT PANEL: ON BREAK */}
-        <div className="flex-1 bg-white p-5 rounded-sm shadow">
+        <div className="flex-1 p-5 rounded-sm">
           <h2 className="mb-4 text-gray-700">Live On Break (max: 1hr 30min)</h2>
           <section className="space-y-3">
             <AnimatePresence mode="popLayout">
@@ -141,7 +141,7 @@ export default function LiveBreaks() {
         </div>
 
         {/* RIGHT PANEL: OVER BREAK */}
-        <div className="flex-1 bg-white p-5 rounded-sm shadow">
+        <div className="flex-1 bg-white p-5 rounded-sm">
           <h2 className="mb-4 text-gray-700">Live Over Break</h2>
           <section className="space-y-3">
             <AnimatePresence mode="popLayout">
