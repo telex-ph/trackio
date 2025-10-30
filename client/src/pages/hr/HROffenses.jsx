@@ -19,9 +19,9 @@ import { DateTime } from "luxon";
 import api from "../../utils/axios";
 import Notification from "../../components/incident-reports/Notification";
 import ConfirmationModal from "../../components/incident-reports/ConfirmationModal";
-import OffenseForm from "../../components/incident-reports/OffenseForm";
-import OffenseList from "../../components/incident-reports/OffenseList";
-import OffenseHistory from "../../components/incident-reports/OffenseHistory";
+import OffenseForm from "../../components/HRIncidentReport/ReportedIR/CreateIR/OffenseForm";
+import OffenseList from "../../components/HRIncidentReport/ReportedIR/CreateIR/OffenseList";
+import OffenseHistory from "../../components/HRIncidentReport/ReportedIR/CreateIR/OffenseHistory";
 
 const HROffenses = () => {
   const [selectedFile, setSelectedFile] = useState(null);
