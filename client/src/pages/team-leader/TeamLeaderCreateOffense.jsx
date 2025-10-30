@@ -5,7 +5,7 @@ import api from "../../utils/axios";
 // Import ALL necessary components
 import Notification from "../../components/incident-reports/Notification";
 import ConfirmationModal from "../../components/incident-reports/ConfirmationModal";
-import OffenseForm from "../../components/incident-reports/OffenseForm"; 
+import OffenseForm from "../../components/incident-reports/TLOffenseForm";
 import TLOffenseDetails from "../../components/incident-reports/TLOffenseDetails"; 
 import TLCasesInProgress from "../../components/incident-reports/TLCasesInProgress"; 
 import TLCaseHistory from "../../components/incident-reports/TLCaseHistory"; 
