@@ -15,16 +15,25 @@ class User {
     const db = await connectDB();
     const collection = db.collection(this.#collection);
 
-    const user = await collection.findOne(
-      {
-        _id: new ObjectId(id),
-        isDeleted: { $ne: true },
-      },
-      { projection: { password: 0 } }
-    );
+    let query;
+
+    // Check if id looks like a valid MongoDB ObjectId
+    if (ObjectId.isValid(id)) {
+      query = { _id: new ObjectId(id) };
+    } else {
+      query = { employeeId: id };
+    }
+
+    // Add condition to exclude deleted users
+    query.isDeleted = { $ne: true };
+
+    const user = await collection.findOne(query, {
+      projection: { password: 0 },
+    });
 
     return user;
   }
+
 
   static async addUser(data) {
     if (!data.firstName || !data.lastName || !data.email) {
