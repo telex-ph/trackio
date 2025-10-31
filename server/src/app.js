@@ -21,8 +21,9 @@ import serverRoutes from "./routes/serverRoutes.js";
 import IP from "../../client/src/constants/ip.js";
 import User from "./model/User.js";
 import Attendance from "./model/Attendance.js";
-import { addAttendance, handleBreakPause, handleBreakStart, updateBreakPause, updateBreakStart } from "./controllers/attendanceControllers.js";
+import { biometricIn, biometricBreakIn, biometricBreakOut } from "./utils/biometric.js";
 import { STATUS } from "../constants/status.js";
+import webhook from "./utils/webhook.js";
 
 const app = express();
 dotenv.config();
@@ -96,7 +97,6 @@ app.post('/events', async (req, res) => {
           // }
 
           const user = await User.getById(ac.employeeNoString);
-
           if (user) {
             const userId = user._id.toString();
 
@@ -106,35 +106,64 @@ app.post('/events', async (req, res) => {
             if (attendance) {
               const attendanceId = attendance._id.toString();
               const breaks = attendance.breaks || [];
-
               const totalBreak = attendance.totalBreak || 0;
               const status = attendance.status;
+
               if (status === STATUS.WORKING) {
-                await handleBreakStart(attendanceId, breaks, totalBreak);
+                await biometricBreakIn(attendanceId, breaks, totalBreak);
               }
               if (status === STATUS.ON_BREAK) {
-                await handleBreakPause(attendanceId, breaks, totalBreak);
+                await biometricBreakOut(attendanceId, breaks);
               }
             } else {
               console.log("No record! So, add attendance!");
-              await addAttendance(userId);
+
+              try {
+                await biometricIn(userId);
+              } catch (error) {
+                const details = error.response?.data
+                  ? JSON.stringify(error.response.data)
+                  : error.stack || error.message || String(error);
+                const message = `Bio Break In Error: \n${details}. Employee: ${ac.name}, ID: ${ac.employeeNoString}`;
+                await webhook(message);
+                console.error(error);
+              }
             }
+          } else {
+            const arrName = ac.name.split(" ");
+            const lastName = arrName[arrName.length - 1];
+            let firstName = "";
+            for (let i = 0; i < arrName.length - 1; i++) {
+              firstName += `${arrName[i]}`
+            }
+            const employeeId = ac.employeeNoString;
+            const newUser = {
+              employeeId: employeeId,
+              firstName: firstName,
+              lastName: lastName,
+              teamId: null,
+              email: null,
+              phoneNumber: null,
+              role: "agent",
+              password: "$2a$10$1jHppZ6SOnm4wnTMDg0kPOY9FHu/0L31MdP50WaeGmnVkLpeLPpau",
+              createdAt: new Date(),
+            };
 
+            try {
+              const user = await User.addUser(newUser)
+              console.log(user);
+            } catch (error) {
+              console.error(error);
 
-
-
-            // console.log(typeof id);
-            // console.log(result);
-
+            }
           }
-
         }
       }
     }
     res.status(200).send('OK');
 
   } catch (error) {
-    console.error('Error parsing event:', error.message);
+    console.error('Error parsing event:', error);
     res.status(200).send('OK');
   }
 });
