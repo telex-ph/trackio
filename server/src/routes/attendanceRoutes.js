@@ -6,8 +6,6 @@ import {
   getAttendance,
   updateAttendance,
   updateField,
-  updateBreakStart,
-  updateBreakPause,
   getAllOnBreak,
 } from "../controllers/attendanceControllers.js";
 
@@ -25,9 +23,5 @@ router.get("/get-attendance/:id", verifyJWT, getAttendance);
 router.patch("/update-attendance", verifyJWT, updateAttendance);
 
 router.patch("/update-attendance-field", verifyJWT, updateField);
-
-router.patch("/update-break-start", verifyJWT, updateBreakStart);
-
-router.patch("/update-break-pause", verifyJWT, updateBreakPause);
 
 export default router;
