@@ -1,3 +1,9 @@
+import Attendance from "../model/Attendance.js"
+import User from "../model/User.js"
+import { STATUS } from "../../constants/status.js"
+import webhook from "../utils/webhook.js"
+import { biometricIn, biometricBreakIn, biometricBreakOut } from "../utils/biometric.js"
+
 export const getEvents = async (req, res) => {
     try {
         let data = req.body;
@@ -54,14 +60,16 @@ export const getEvents = async (req, res) => {
                             }
                         } else {
                             console.log("No record! So, add attendance!");
-
                             try {
                                 await biometricIn(userId);
                             } catch (error) {
-                                const details = error.response?.data
-                                    ? JSON.stringify(error.response.data)
-                                    : error.stack || error.message || String(error);
-                                const message = `Bio Break In Error: \n${details}. Employee: ${ac.name}, ID: ${ac.employeeNoString}`;
+                                const stack = (error.stack || error.message || "").slice(0, 1500);
+                                const message =
+                                    `**Bio Break In Error:** No matching schedule found for this time-in.\n` +
+                                    `Employee: ${ac.name}, ID: ${ac.employeeNoString}\n\n` +
+                                    `**Technical details:**\n\n` +
+                                    `\`\`\`\n${stack}\n\`\`\``;
+
                                 await webhook(message);
                                 console.error(error);
                             }
@@ -91,8 +99,10 @@ export const getEvents = async (req, res) => {
                             console.log(user);
                         } catch (error) {
                             console.error(error);
-
                         }
+                        const message = `New user added: ${ac.name} (Employee ID: ${ac.employeeNoString}) has been added to the system.`;
+                        await webhook(message);
+                        console.error(error);
                     }
                 }
             }
