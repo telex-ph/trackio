@@ -3,43 +3,77 @@ import { DateTime } from "luxon";
 import Schedules from "../model/Schedule.js";
 import { STATUS } from "../../../client/src/constants/status.js";
 
-export const addAttendance = async (req, res) => {
-  const id = req.params.id;
+// TODO: remove
+// export const addAttendance = async (req, res) => {
+//   const id = req.params.id;
+//   const TARDINESS_TOLERANCE_HOURS = 2;
+//   const EARLY_GRACE_HOURS = 4;
+
+//   try {
+//     const timeIn = DateTime.now().toUTC();
+//     const minShiftStart = timeIn.minus({ hours: TARDINESS_TOLERANCE_HOURS });
+//     const maxShiftStart = timeIn.plus({ hours: EARLY_GRACE_HOURS });
+
+//     const matchingSchedule = await Schedules.get(
+//       id,
+//       minShiftStart.toJSDate(), // UTC ISO String
+//       maxShiftStart.toJSDate() // UTC ISO String
+//     );
+
+//     if (!matchingSchedule) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "No matching schedule found for this time-in.",
+//       });
+//     }
+
+//     const result = await Attendance.timeIn(
+//       id,
+//       matchingSchedule.shiftStart,
+//       matchingSchedule.shiftEnd
+//     );
+//     res.status(200).json(result);
+//   } catch (error) {
+//     console.error("Error adding user's attendance:", error);
+//     res.status(500).json({
+//       message: "Failed to add attendance",
+//       error: error.message,
+//     });
+//   }
+// };
+
+// userId must the the _id not the employeeId;
+// use employeeId only when recieving biometrics signals
+export const addAttendance = async (userId) => {
   const TARDINESS_TOLERANCE_HOURS = 2;
   const EARLY_GRACE_HOURS = 4;
 
+  const timeIn = DateTime.now().toUTC();
+  const minShiftStart = timeIn.minus({ hours: TARDINESS_TOLERANCE_HOURS });
+  const maxShiftStart = timeIn.plus({ hours: EARLY_GRACE_HOURS });
+
+  const matchingSchedule = await Schedules.get(
+    userId,
+    minShiftStart.toJSDate(),
+    maxShiftStart.toJSDate()
+  );
+
+  if (!matchingSchedule) {
+    throw new Error("No matching schedule found for this time-in.");
+  }
+
   try {
-    const timeIn = DateTime.now().toUTC();
-    const minShiftStart = timeIn.minus({ hours: TARDINESS_TOLERANCE_HOURS });
-    const maxShiftStart = timeIn.plus({ hours: EARLY_GRACE_HOURS });
-
-    const matchingSchedule = await Schedules.get(
-      id,
-      minShiftStart.toJSDate(), // UTC ISO String
-      maxShiftStart.toJSDate() // UTC ISO String
-    );
-
-    if (!matchingSchedule) {
-      return res.status(404).json({
-        success: false,
-        message: "No matching schedule found for this time-in.",
-      });
-    }
-
     const result = await Attendance.timeIn(
-      id,
+      userId,
       matchingSchedule.shiftStart,
       matchingSchedule.shiftEnd
     );
-    res.status(200).json(result);
+    return result;
   } catch (error) {
     console.error("Error adding user's attendance:", error);
-    res.status(500).json({
-      message: "Failed to add attendance",
-      error: error.message,
-    });
+    return false;
   }
-};
+}
 
 export const getAttendances = async (req, res) => {
   const params = req.query;
@@ -138,6 +172,12 @@ export const updateField = async (req, res) => {
 
 export const updateBreakStart = async (req, res) => {
   const { docId, totalBreak } = req.body;
+
+  console.log(typeof docId);
+  console.log(docId);
+  console.log(typeof totalBreak);
+  console.log(totalBreak);
+
   const breaks = (req.body.breaks || []).map((b) => ({
     ...b,
     start: b.start
@@ -171,6 +211,12 @@ export const updateBreakStart = async (req, res) => {
 
 export const updateBreakPause = async (req, res) => {
   const { docId, totalBreak } = req.body;
+
+  console.log(typeof docId);
+  console.log(docId);
+  console.log(typeof totalBreak);
+  console.log(totalBreak);
+
 
   const breaks = (req.body.breaks || []).map((b) => ({
     ...b,
@@ -217,5 +263,51 @@ export const getAllOnBreak = async (req, res) => {
       message: "Failed to fetch attendances on break",
       error: error.message,
     });
+  }
+};
+
+
+
+export const handleBreakStart = async (docId, breaks, totalBreak) => {
+  const now = DateTime.now().setZone("Asia/Manila").toJSDate();
+  const newBreak = {
+    start: now,
+  };
+  const newBreaks = [...breaks, newBreak];
+
+  try {
+    await Attendance.updateFieldById(docId, "breaks", newBreaks);
+    await Attendance.updateFieldById(docId, "totalBreak", totalBreak);
+    await Attendance.updateFieldById(docId, "status", STATUS.ON_BREAK);
+    await Attendance.updateFieldById(docId, "updatedAt", now);
+    return true;
+  } catch (error) {
+    console.error(`Error starting break in user attendance: `, error);
+    return false;
+  }
+};
+
+export const handleBreakPause = async (docId, breaks, totalBreak) => {
+  const prevBreak = breaks[breaks.length - 1];
+
+  // current end time (PH time)
+  const end = DateTime.now().setZone("Asia/Manila");
+  prevBreak.end = end.toJSDate();
+
+  const start = DateTime.fromJSDate(prevBreak.start).setZone("Asia/Manila");
+  const diffInMs = end.diff(start).milliseconds;
+  prevBreak.duration = diffInMs;
+
+  const updatedTotalBreak = breaks.reduce((sum, b) => sum + (b.duration || 0), 0);
+
+  try {
+    await Attendance.updateFieldById(docId, "breaks", breaks);
+    await Attendance.updateFieldById(docId, "totalBreak", updatedTotalBreak);
+    await Attendance.updateFieldById(docId, "status", STATUS.WORKING);
+    await Attendance.updateFieldById(docId, "updatedAt", end.toJSDate());
+    return true;
+  } catch (error) {
+    console.error(`Error ending break in user attendance:`, error);
+    return false;
   }
 };
