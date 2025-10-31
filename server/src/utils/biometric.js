@@ -34,6 +34,17 @@ export const biometricIn = async (userId) => {
     }
 }
 
+export const biometricOut = async (attendanceId) => {
+    try {
+        await Attendance.updateFieldById(attendanceId, "status", STATUS.OOF);
+        await Attendance.updateFieldById(attendanceId, "updatedAt", now);
+        return true;
+    } catch (error) {
+        console.error("Error adding user's attendance:", error);
+        return false;
+    }
+}
+
 export const biometricBreakIn = async (docId, breaks, totalBreak) => {
     const now = DateTime.now().setZone("Asia/Manila").toJSDate();
     const newBreak = {
