@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Pen, Trash2, Ticket, X } from "lucide-react";
+import { Pen, Trash2, Ticket, X, MessageSquare } from "lucide-react";
 import { Label, TextInput, Button, Spinner } from "flowbite-react";
 import Table from "../../components/Table";
 import TableAction from "../../components/TableAction";
 import toast from "react-hot-toast";
 import axios from "axios";
 import api from "../../utils/axios";
-import UnderContruction from "../../assets/illustrations/UnderContruction";
 import { useStore } from "../../store/useStore";
 
 // Helper function para sa pag-format ng date
@@ -26,10 +25,9 @@ const formatDate = (dateString) => {
   });
 };
 
-// --- START: I-define ang Bearer Token dito ---
+// I-define ang Bearer Token dito
 const bearerToken =
   "Bearer standard_077ed3b9b01c0863d40827030797f5e602b32b89fe2f3f94cc495b475802c16512013466aaf82efa0d966bff7d6cf837d00e0bfdc9e91f4f290e893ba28c4d6330310f6428f7befc9ad39cd5a55f3b3ba09822aed74a922bf1e6ca958b2f844fab5259c0d69318160bb91d4ab2bf2bec0c72f6d94bf0666a59559c3992aa8b47";
-// --- END: I-define ang Bearer Token dito ---
 
 const TicketsTable = () => {
   const user = useStore((state) => state.user);
@@ -38,13 +36,20 @@ const TicketsTable = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [attachmentFile, setAttachmentFile] = useState(null);
+  const [attachmentFile, setAttachmentFile] = useState(null); // States para sa Details Modal
 
-  // States para sa Details Modal
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isModalLoading, setIsModalLoading] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [ticketDetails, setTicketDetails] = useState(null);
+
+  // States para sa Comments Modal
+  const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
+  const [isCommentsLoading, setIsCommentsLoading] = useState(false);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [ticketComments, setTicketComments] = useState([]);
+  const [newCommentText, setNewCommentText] = useState("");
+  const [activeTab, setActiveTab] = useState("comments"); // "comments" or "history"
 
   const [formData, setFormData] = useState({
     email: user.email,
@@ -100,12 +105,12 @@ const TicketsTable = () => {
       }
 
       setIsModalLoading(true);
-      setTicketDetails(null); 
+      setTicketDetails(null);
 
       try {
         const url = `https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/overview/${user.email}/${selectedTicket.ticketNo}`;
 
-        console.log("Fetching details from:", url); 
+        console.log("Fetching details from:", url);
 
         const response = await axios.get(url, {
           headers: {
@@ -124,12 +129,10 @@ const TicketsTable = () => {
         ) {
           console.log("Data found in response.data.data.document[0]");
           setTicketDetails(responseData.document[0]);
-        }
-        else if (Array.isArray(responseData) && responseData.length > 0) {
+        } else if (Array.isArray(responseData) && responseData.length > 0) {
           console.log("Response is an array, taking first item.");
           setTicketDetails(responseData[0]);
-        }
-        else if (
+        } else if (
           responseData &&
           typeof responseData === "object" &&
           responseData !== null &&
@@ -152,6 +155,53 @@ const TicketsTable = () => {
 
     fetchTicketDetails();
   }, [isDetailsModalOpen, selectedTicket, user.email]);
+
+  // Function para sa pag-fetch ng comments
+  const fetchComments = async () => {
+    if (!selectedTicket || !user.email) return;
+
+    setIsCommentsLoading(true);
+    try {
+      const url = `https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/comments/${user.email}/${selectedTicket.ticketNo}`;
+
+      const response = await axios.get(url, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: bearerToken,
+        },
+      });
+
+      const commentsData = response.data?.data;
+      if (Array.isArray(commentsData)) {
+        setTicketComments(commentsData);
+      } else if (commentsData && Array.isArray(commentsData.documents)) {
+        setTicketComments(commentsData.documents);
+      } else if (Array.isArray(response.data)) {
+        setTicketComments(response.data);
+      } else {
+        console.warn("Unexpected comments data format", response.data);
+        setTicketComments([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch comments:", error);
+      toast.error("Could not load comments.");
+      setTicketComments([]);
+    } finally {
+      setIsCommentsLoading(false);
+    }
+  };
+
+  // useEffect para sa pag-fetch ng comments
+  useEffect(() => {
+    if (isCommentsModalOpen) {
+      fetchComments(); // I-reset ang tab sa "comments" sa tuwing magbubukas
+      setActiveTab("comments");
+    } else {
+      // Reset comments kapag nagsara ang modal
+      setTicketComments([]);
+      setNewCommentText("");
+    }
+  }, [isCommentsModalOpen]);
 
   const handleFileUpload = async () => {
     if (!attachmentFile) return null;
@@ -191,12 +241,12 @@ const TicketsTable = () => {
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: bearerToken, 
+            Authorization: bearerToken,
           },
         }
       );
 
-      setTickets((prev) => [...prev, response.data]);
+      setTickets((prev) => [response.data, ...prev]);
       toast.success("Ticket added successfully");
       setIsModalOpen(false);
 
@@ -218,10 +268,47 @@ const TicketsTable = () => {
     }
   };
 
+  const handleSubmitComment = async (e) => {
+    e.preventDefault();
+    if (!newCommentText.trim()) {
+      return toast.error("Comment cannot be empty");
+    }
+
+    setIsSubmittingComment(true);
+    try {
+      // Ito na ang TAMANG URL
+      const url =
+        "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/itTicketComment";
+
+      // Ito na ang TAMANG PAYLOAD
+      const payload = {
+        email: user.email,
+        ticketNum: selectedTicket.ticketNo,
+        commentText: newCommentText,
+      };
+
+      await axios.post(url, payload, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: bearerToken,
+        },
+      });
+
+      toast.success("Comment posted!");
+      setNewCommentText(""); // Clear input
+      await fetchComments(); // Re-fetch comments to show the new one
+    } catch (error) {
+      console.error("Failed to post comment:", error);
+      toast.error("Failed to post comment.");
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
   const handleViewDetails = (ticketData) => {
     console.log("Setting selected ticket:", ticketData);
-    setSelectedTicket(ticketData); 
-    setIsDetailsModalOpen(true); 
+    setSelectedTicket(ticketData);
+    setIsDetailsModalOpen(true);
   };
 
   const handleEdit = (ticketData) => {
@@ -238,15 +325,15 @@ const TicketsTable = () => {
     setIsDetailsModalOpen(false);
     setSelectedTicket(null);
     setTicketDetails(null);
+    // Siguraduhin na sarado rin ang comments modal
+    setIsCommentsModalOpen(false);
   };
 
-  // --- START: BINAGO ANG COLUMNS ---
   const columns = [
     {
       headerName: "Ticket No",
       field: "ticketNo",
       flex: 1,
-      // Idinagdag ito para i-format 'yung display
       valueFormatter: (params) => `Ticket#${params.value}`,
     },
     { headerName: "Subject", field: "subject", flex: 1 },
@@ -261,7 +348,6 @@ const TicketsTable = () => {
       cellRenderer: (params) => (
         <section className="flex items-center gap-2 justify-center h-full">
           <TableAction action={() => handleViewDetails(params.data)} />
-
           <button
             onClick={() => handleEdit(params.data)}
             className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
@@ -269,7 +355,6 @@ const TicketsTable = () => {
           >
             <Pen size={18} className="text-blue-600" />
           </button>
-
           <button
             onClick={() => handleDelete(params.data)}
             className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
@@ -281,7 +366,6 @@ const TicketsTable = () => {
       ),
     },
   ];
-  // --- END: BINAGO ANG COLUMNS ---
 
   return (
     <div>
@@ -293,7 +377,6 @@ const TicketsTable = () => {
             View, add, and manage your IT tickets.
           </p>
         </div>
-
         <button
           onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors cursor-pointer"
@@ -321,11 +404,9 @@ const TicketsTable = () => {
             >
               <X className="w-5 h-5" />
             </button>
-
             <h3 className="text-lg font-semibold mb-4 text-light">
               Create New Ticket
             </h3>
-
             <form onSubmit={handleAddTicket} className="space-y-4">
               {/* Station Number */}
               <div>
@@ -386,10 +467,7 @@ const TicketsTable = () => {
 
               {/* Description */}
               <div>
-                <Label
-                  htmlFor="description"
-                  className="text-light mb-2 block"
-                >
+                <Label htmlFor="description" className="text-light mb-2 block">
                   Description
                 </Label>
                 <textarea
@@ -464,7 +542,6 @@ const TicketsTable = () => {
                     <option value="EMAIL">Email</option>
                   </select>
                 </div>
-
                 <div>
                   <Label htmlFor="severity" className="text-light mb-2 block">
                     Severity
@@ -497,7 +574,6 @@ const TicketsTable = () => {
                 >
                   Cancel
                 </Button>
-
                 <Button
                   type="submit"
                   disabled={isSubmitting}
@@ -521,11 +597,9 @@ const TicketsTable = () => {
             >
               <X className="w-5 h-5" />
             </button>
-
             <h3 className="text-lg font-semibold mb-4 text-light">
               Ticket Details
             </h3>
-
             {isModalLoading ? (
               // Loading State
               <div className="flex justify-center items-center h-48">
@@ -603,11 +677,9 @@ const TicketsTable = () => {
                         <p className="text-sm font-medium text-gray-400">
                           Ticket No
                         </p>
-                        {/* --- START: BINAGO ANG TICKET NO --- */}
                         <p className="text-lg font-bold">
                           Ticket#{ticketDetails.ticketNo}
                         </p>
-                        {/* --- END: BINAGO ANG TICKET NO --- */}
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-400">
@@ -742,7 +814,16 @@ const TicketsTable = () => {
                 </div>
 
                 {/* --- Footer --- */}
-                <div className="flex justify-end pt-6 mt-4 border-t border-gray-600">
+                <div className="flex justify-between items-center pt-6 mt-4 border-t border-gray-600">
+                  <Button
+                    type="button"
+                    onClick={() => setIsCommentsModalOpen(true)}
+                    color="gray"
+                    className="flex items-center gap-2"
+                  >
+                    <MessageSquare size={16} />
+                    View Comments
+                  </Button>
                   <Button
                     type="button"
                     onClick={closeDetailsModal}
@@ -757,6 +838,170 @@ const TicketsTable = () => {
               // Error State
               <div className="text-light text-center h-48 flex items-center justify-center">
                 <p>Could not load ticket details.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Comments Modal */}
+      {isCommentsModalOpen && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60]">
+          <div className="bg-dark rounded-xl shadow-lg p-6 w-full max-w-2xl relative border border-light container-light">
+            <button
+              onClick={() => setIsCommentsModalOpen(false)}
+              className="absolute top-4 right-5 text-light hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-light">Comments & History</h3>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border-b border-gray-600 mb-4">
+              <button
+                onClick={() => setActiveTab("comments")}
+                className={`py-2 px-4 text-sm font-medium ${
+                  activeTab === "comments"
+                    ? "text-white border-b-2 border-blue-500"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Comments
+              </button>
+              <button
+                onClick={() => setActiveTab("history")}
+                className={`py-2 px-4 text-sm font-medium ${
+                  activeTab === "history"
+                    ? "text-white border-b-2 border-blue-500"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                History
+              </button>
+            </div>
+
+            {/* Tab Content */}
+            {activeTab === "comments" && (
+              <div>
+                {/* New Comment Form */}
+                <form onSubmit={handleSubmitComment} className="mb-4">
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-light font-semibold">
+                      {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+                    </div>
+                    <div className="flex-1">
+                      <textarea
+                        id="newComment"
+                        rows="3"
+                        className="w-full border border-light container-light rounded-lg px-3 py-2 text-light bg-transparent"
+                        placeholder="Add a comment..."
+                        value={newCommentText}
+                        onChange={(e) => setNewCommentText(e.target.value)}
+                        disabled={isSubmittingComment}
+                      ></textarea>
+                      <div className="flex justify-between items-center mt-2">
+                        <div className="flex gap-2">
+                          <Button
+                            size="xs"
+                            color="gray"
+                            theme={{
+                              color: {
+                                gray: "text-gray-400 bg-gray-700 border border-gray-600 enabled:hover:bg-gray-600",
+                              },
+                            }}
+                            disabled
+                          >
+                            Status update...
+                          </Button>
+                          <Button
+                            size="xs"
+                            color="gray"
+                            theme={{
+                              color: {
+                                gray: "text-gray-400 bg-gray-700 border border-gray-600 enabled:hover:bg-gray-600",
+                              },
+                            }}
+                            disabled
+                          >
+                            Thanks...
+                          </Button>
+                          <Button
+                            size="xs"
+                            color="gray"
+                            theme={{
+                              color: {
+                                gray: "text-gray-400 bg-gray-700 border border-gray-600 enabled:hover:bg-gray-600",
+                              },
+                            }}
+                            disabled
+                          >
+                            Agree...
+                          </Button>
+                        </div>
+                        <Button
+                          type="submit"
+                          disabled={isSubmittingComment}
+                          gradientDuoTone="purpleToBlue"
+                        >
+                          {isSubmittingComment ? (
+                            <>
+                              <Spinner size="sm" />
+                              <span className="pl-3">Posting...</span>
+                            </>
+                          ) : (
+                            "Post Comment"
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+
+                {/* Comments Display Area */}
+                <div className="bg-black/20 p-4 rounded-lg h-64 overflow-y-auto space-y-3">
+                  {isCommentsLoading ? (
+                    <div className="flex justify-center items-center h-full">
+                      <Spinner />
+                      <span className="text-light ml-2">
+                        Loading comments...
+                      </span>
+                    </div>
+                  ) : ticketComments.length > 0 ? (
+                    ticketComments.map((comment, index) => (
+                      <div
+                        key={comment.$id || index} // Gumamit ng unique key
+                        className="text-light p-3 rounded-lg bg-gray-700/50"
+                      >
+                        <p className="text-sm font-semibold text-blue-300">
+                          {/* Kapag naayos na ang BACKEND mo para mag-save at mag-return ng 'name'
+                            at 'email', dito na 'yon automatikong lalabas.
+                          */}
+                          {comment.commentor?.name || comment.commentor?.email || "Unknown Sender"}
+
+                          <span className="text-xs text-gray-400 ml-2">
+                            {formatDate(
+                              comment.$createdAt || comment.createdAt
+                            )}
+                          </span>
+                        </p>
+                        <p className="text-white mt-1 whitespace-pre-wrap">
+                          {comment.commentText}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex justify-center items-center h-full">
+                      <p className="text-gray-400">No comments yet.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            {activeTab === "history" && (
+              <div className="flex justify-center items-center h-64">
+                <p className="text-gray-400">No history available yet.</p>
               </div>
             )}
           </div>
