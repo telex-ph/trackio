@@ -36,7 +36,7 @@ class User {
 
 
   static async addUser(data) {
-    if (!data.firstName || !data.lastName || !data.email) {
+    if (!data.firstName || !data.lastName) {
       throw new Error("Missing required fields");
     }
 
@@ -47,8 +47,8 @@ class User {
       employeeId: data.employeeId || null,
       firstName: data.firstName,
       lastName: data.lastName,
-      groupId: new ObjectId(data.teamId),
-      email: data.email.toLowerCase(),
+      groupId: data.teamId ? new ObjectId(data.teamId) : null,
+      email: data.email || null,
       phoneNumber: data.phoneNumber || null,
       role: data.role || "agent",
       password: "$2a$10$1jHppZ6SOnm4wnTMDg0kPOY9FHu/0L31MdP50WaeGmnVkLpeLPpau",
