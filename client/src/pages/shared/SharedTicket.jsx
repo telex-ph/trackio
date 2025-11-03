@@ -366,7 +366,7 @@ const TicketsTable = () => {
       const commentPayload = {
         email: user.email,
         ticketNum: ticketDetails.ticketNo,
-        commentText: `✅ Resolution confirmed by Agent: ${user.email}. Awaiting requester confirmation to close the ticket.`,
+        commentText: `✅ Resolution confirmed by User: ${user.email}.`,
       };
 
       await axios.post(commentUrl, commentPayload, {
@@ -383,7 +383,7 @@ const TicketsTable = () => {
       if (isClosed) {
         toast.success("🎉 Ticket has been closed! Both parties have confirmed the resolution.");
       } else {
-        toast.success("✅ Resolution confirmed! Waiting for requester confirmation.");
+        toast.success("✅ Resolution confirmed!");
       }
       
       // Close confirmation modal
