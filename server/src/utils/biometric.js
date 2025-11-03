@@ -37,7 +37,7 @@ export const biometricIn = async (userId) => {
 export const biometricOut = async (attendanceId) => {
     try {
         await Attendance.updateFieldById(attendanceId, "status", STATUS.OOF);
-        await Attendance.updateFieldById(attendanceId, "updatedAt", now);
+        await Attendance.updateFieldById(attendanceId, "updatedAt", DateTime.now().toUTC());
         return true;
     } catch (error) {
         console.error("Error adding user's attendance:", error);
