@@ -1,5 +1,12 @@
-import { X, MessageSquare, Clock, FileText, CheckCircle, Lock } from "lucide-react";
+import { X, MessageSquare, Clock, FileText, CheckCircle, Lock, Edit2, Save } from "lucide-react";
 import { Spinner } from "flowbite-react";
+import { useState } from "react";
+import axios from "axios";
+import toast from "react-hot-toast";
+
+// Bearer Token
+const bearerToken =
+  "Bearer standard_077ed3b9b01c0863d40827030797f5e602b32b89fe2f3f94cc495b475802c16512013466aaf82efa0d966bff7d6cf837d00e0bfdc9e91f4f290e893ba28c4d6330310f6428f7befc9ad39cd5a55f3b3ba09822aed74a922bf1e6ca958b2f844fab5259c0d69318160bb91d4ab2bf2bec0c72f6d94bf0666a59559c3992aa8b47";
 
 const TicketDetailsModal = ({
   isOpen,
@@ -9,7 +16,12 @@ const TicketDetailsModal = ({
   onViewComments,
   onConfirmResolution,
   formatDate,
+  userEmail,
+  onTicketUpdate,
 }) => {
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [editedDescription, setEditedDescription] = useState("");
+  const [isSavingDescription, setIsSavingDescription] = useState(false);
   
   if (!isOpen) return null;
 
@@ -17,6 +29,59 @@ const TicketDetailsModal = ({
   const isResolved = ticketDetails?.status?.toLowerCase() === 'resolved';
   const isClosed = ticketDetails?.status?.toLowerCase() === 'closed';
   const canConfirm = isResolved && ticketDetails?.ticketNo && !ticketDetails?.agentConfirmed;
+
+  const handleEditDescription = () => {
+    setEditedDescription(ticketDetails.description || "");
+    setIsEditingDescription(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingDescription(false);
+    setEditedDescription("");
+  };
+
+  const handleSaveDescription = async () => {
+    if (!editedDescription.trim()) {
+      toast.error("Description cannot be empty");
+      return;
+    }
+
+    setIsSavingDescription(true);
+    try {
+      const url = "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/updateTicket";
+      const payload = {
+        email: userEmail,
+        updateTicketNo: ticketDetails.ticketNo,
+        subject: ticketDetails.subject,
+        description: editedDescription,
+        stationNo: ticketDetails.stationNo,
+      };
+
+      await axios.patch(url, payload, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: bearerToken,
+        },
+      });
+
+      toast.success("Description updated successfully!");
+      setIsEditingDescription(false);
+      
+      // Update the local ticket details
+      if (onTicketUpdate) {
+        onTicketUpdate({
+          ...ticketDetails,
+          description: editedDescription,
+        });
+      }
+
+    } catch (error) {
+      console.error("Failed to update description:", error);
+      toast.error("Failed to update description");
+    } finally {
+      setIsSavingDescription(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -102,18 +167,68 @@ const TicketDetailsModal = ({
                     </p>
                   </div>
 
-                  {/* Description */}
+                  {/* Description with Edit */}
                   <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Description</p>
-                    <div className="bg-gray-50 rounded-lg p-4 min-h-[120px]">
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                        {ticketDetails.description || (
-                          <span className="text-gray-400 italic">
-                            No description provided.
-                          </span>
-                        )}
-                      </p>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Description</p>
+                      {!isEditingDescription && !isClosed && !isResolved && (
+                        <button
+                          onClick={handleEditDescription}
+                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                          Edit
+                        </button>
+                      )}
                     </div>
+                    
+                    {isEditingDescription ? (
+                      <div className="space-y-3">
+                        <textarea
+                          value={editedDescription}
+                          onChange={(e) => setEditedDescription(e.target.value)}
+                          className="w-full min-h-[120px] p-4 text-sm text-gray-700 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                          placeholder="Enter ticket description..."
+                          disabled={isSavingDescription}
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleSaveDescription}
+                            disabled={isSavingDescription}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isSavingDescription ? (
+                              <>
+                                <Spinner size="sm" />
+                                Saving...
+                              </>
+                            ) : (
+                              <>
+                                <Save className="w-4 h-4" />
+                                Save
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={handleCancelEdit}
+                            disabled={isSavingDescription}
+                            className="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 rounded-lg p-4 min-h-[120px]">
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                          {ticketDetails.description || (
+                            <span className="text-gray-400 italic">
+                              No description provided.
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Resolution Notes */}
