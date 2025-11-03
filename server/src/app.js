@@ -19,6 +19,7 @@ import scheduleRoutes from "./routes/scheduleRoutes.js";
 import groupRoutes from "./routes/groupRoutes.js";
 import serverRoutes from "./routes/serverRoutes.js";
 import biometricRoute from "./routes/biometricRoute.js"
+import webhook from "./utils/webhook.js";
 
 const app = express();
 dotenv.config();
@@ -55,7 +56,9 @@ app.use("/api/group", groupRoutes);
 app.use("/api/server", serverRoutes);
 app.use('/api/biometric', biometricRoute);
 
-app.get("/", (req, res) => {
+app.get("/", async (req, res) => {
+  await webhook("testing");
+
   res.json({
     message: "Trackio API is running",
     status: "success",
