@@ -1,14 +1,108 @@
-import { X, CheckCircle, AlertCircle } from "lucide-react";
+import { X, CheckCircle, AlertCircle, Star } from "lucide-react";
 import { Spinner } from "flowbite-react";
+import { useState } from "react";
+
+// --- StarRating Component (for 5-star input with Half-Star selection) ---
+const StarRating = ({ rating, setRating, disabled }) => {
+  const maxRating = 5;
+  const [hoverRating, setHoverRating] = useState(0);
+
+  const getCurrentRating = () => hoverRating || rating;
+
+  const handleMouseMove = (e, index) => {
+    if (disabled) return;
+    const starNode = e.currentTarget;
+    const rect = starNode.getBoundingClientRect();
+    const x = e.clientX - rect.left; // x position within the star
+    
+    // Check if the cursor is in the left half
+    const isHalf = x < rect.width / 2;
+    
+    const newRating = index + (isHalf ? 0.5 : 1);
+    setHoverRating(newRating);
+  };
+
+  const handleClick = (index) => {
+    if (disabled) return;
+    // Set the rating to the currently hovered value (which includes .5 if applicable)
+    setRating(hoverRating);
+    setHoverRating(0); // Clear hover after click
+  };
+
+  const handleMouseLeave = () => {
+    setHoverRating(0);
+  };
+
+  return (
+    <div className="flex justify-center space-x-1">
+      {[...Array(maxRating)].map((_, index) => {
+        const value = index + 1;
+        const currentRating = getCurrentRating();
+
+        return (
+          <div
+            key={index}
+            className={`relative w-6 h-6 transition-colors ${disabled ? 'cursor-default' : 'cursor-pointer'}`}
+            onMouseMove={(e) => handleMouseMove(e, index)}
+            onClick={() => handleClick(index)}
+            onMouseLeave={handleMouseLeave}
+            title={`${currentRating.toFixed(1)} stars`}
+          >
+            {/* Background (Gray) Star */}
+            <Star className="w-6 h-6 text-gray-300 absolute top-0 left-0" />
+
+            {/* Foreground (Yellow) Star - Full or Half */}
+            {(currentRating >= value) ? (
+                // Full star
+                <Star className="w-6 h-6 fill-yellow-400 text-yellow-400 absolute top-0 left-0" />
+            ) : (currentRating > index && currentRating < value) ? (
+                // Half star
+                <Star 
+                    className="w-6 h-6 fill-yellow-400 text-yellow-400 absolute top-0 left-0"
+                    style={{ clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)' }}
+                />
+            ) : null}
+
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+// ----------------------------------------------
+
 
 const TicketConfirmationModal = ({
   isOpen,
   onClose,
   ticketDetails,
   isConfirming,
-  onConfirm,
+  onConfirm, 
 }) => {
+  // State for new inputs
+  const [feedback, setFeedback] = useState("");
+  const [rating, setRating] = useState(0); // Now supports 0.5 increments
+
+  // Reset state when modal closes
+  const handleClose = () => {
+    setFeedback("");
+    setRating(0);
+    onClose();
+  };
+
   if (!isOpen) return null;
+
+  const handleSubmit = () => {
+    if (rating === 0) {
+      toast.error("Please provide a rating (1-5 stars) to confirm resolution.");
+      return;
+    }
+    
+    // Pass the collected data to the parent component's onConfirm handler
+    onConfirm(feedback, rating); 
+  };
+
+  const isSubmitDisabled = isConfirming || rating === 0;
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -21,12 +115,12 @@ const TicketConfirmationModal = ({
               <CheckCircle className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Confirm Resolution</h2>
-              <p className="text-green-100 text-sm">Mark ticket as resolved</p>
+              <h2 className="text-xl font-bold text-white">Confirm Resolution & Feedback</h2>
+              <p className="text-green-100 text-sm">Mark ticket as resolved and provide feedback</p>
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             disabled={isConfirming}
             className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors disabled:opacity-50"
           >
@@ -50,10 +144,11 @@ const TicketConfirmationModal = ({
             </h3>
             <p className="text-sm text-gray-600 mb-4">
               Are you sure you want to confirm that this ticket has been resolved?
+              Please provide your rating and optional feedback below.
             </p>
             
-            {/* Ticket Info */}
-            <div className="bg-gray-50 rounded-lg p-4 text-left">
+            {/* Ticket Info - Keep existing layout */}
+            <div className="bg-gray-50 rounded-lg p-4 text-left mb-6">
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-semibold text-gray-500 uppercase">Ticket No</span>
@@ -73,6 +168,33 @@ const TicketConfirmationModal = ({
                 </div>
               </div>
             </div>
+
+            {/* Rating Input (Uses the new StarRating component) */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Service Rating <span className="text-red-500">*</span>
+              </label>
+              <StarRating rating={rating} setRating={setRating} disabled={isConfirming} />
+              {rating === 0 && (
+                <p className="mt-2 text-xs text-red-500">A rating is required to confirm resolution.</p>
+              )}
+            </div>
+
+            {/* Feedback Input */}
+            <div className="mb-6 text-left">
+              <label htmlFor="feedback" className="block text-sm font-medium text-gray-700 mb-2">
+                Feedback (Optional)
+              </label>
+              <textarea
+                id="feedback"
+                rows="3"
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                disabled={isConfirming}
+                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 transition-colors"
+                placeholder="Share your thoughts on the resolution..."
+              ></textarea>
+            </div>
           </div>
 
           {/* Info Note */}
@@ -86,7 +208,7 @@ const TicketConfirmationModal = ({
           <div className="flex gap-3">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={isConfirming}
               className="flex-1 px-4 py-2.5 bg-white border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -94,8 +216,8 @@ const TicketConfirmationModal = ({
             </button>
             <button
               type="button"
-              onClick={onConfirm}
-              disabled={isConfirming}
+              onClick={handleSubmit}
+              disabled={isSubmitDisabled}
               className="flex-1 px-4 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold rounded-lg hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isConfirming ? (
