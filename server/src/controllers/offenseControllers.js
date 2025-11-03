@@ -35,7 +35,7 @@ export const getOffenseById = async (req, res) => {
 export const addOffense = async (req, res) => {
   try {
     const offenseData = req.body;
-    const user = req.user; 
+    const user = req.user; // Galing sa auth middleware
 
     console.log("Backend req.user:", user); 
 
