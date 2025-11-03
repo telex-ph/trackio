@@ -3,14 +3,14 @@
 import { useState, useRef, useEffect } from "react";
 import { Pen, Trash2, Ticket } from "lucide-react";
 import { Button, Spinner } from "flowbite-react";
-import Table from "../../components/Table"; // Assuming this path is correct
-import TableAction from "../../components/TableAction"; // Assuming this path is correct
+import Table from "../../components/Table";
+import TableAction from "../../components/TableAction";
 import toast from "react-hot-toast";
 import axios from "axios";
-import api from "../../utils/axios"; // Assuming this path is correct
-import { useStore } from "../../store/useStore"; // Assuming this path is correct
+import api from "../../utils/axios";
+import { useStore } from "../../store/useStore";
 
-// Import modal components - Ensure these paths are correct
+// Import modal components
 import AddTicketModal from "../../components/tickets/AddTicketModal";
 import TicketDetailsModal from "../../components/tickets/TicketDetailsModal";
 import TicketCommentsModal from "../../components/tickets/TicketCommentsModal";
@@ -111,7 +111,7 @@ const TicketsTable = () => {
   }, [user.email]);
 
 
-  // Function to fetch detailed ticket data
+  // Function to fetch detailed ticket data (Unchanged)
   const fetchTicketDetails = async () => {
     if (!isDetailsModalOpen || !selectedTicket || !user.email) {
       return;
@@ -167,7 +167,7 @@ const TicketsTable = () => {
       // Check if there's a confirmation comment from this user
       const hasUserConfirmation = commentsList.some(comment => 
         comment.commentText && 
-        comment.commentText.includes('Resolution confirmed by User') &&
+        comment.commentText.includes('Resolution confirmed by User') && 
         comment.commentText.includes(user.email)
       );
 
@@ -234,7 +234,7 @@ const TicketsTable = () => {
     }
   }, [isCommentsModalOpen]);
 
-  // Handle file upload (attachment)
+  // Handle file upload (attachment) (Unchanged)
   const handleFileUpload = async () => {
     if (!attachmentFile) return null;
     try {
@@ -256,7 +256,7 @@ const TicketsTable = () => {
     }
   };
 
-  // Handle adding a new ticket
+  // Handle adding a new ticket (Unchanged)
   const handleAddTicket = async (e) => {
     e.preventDefault();
     try {
@@ -299,7 +299,7 @@ const TicketsTable = () => {
     }
   };
 
-  // Handle posting a new comment
+  // Handle posting a new comment (Unchanged logic, just cleanup)
   const handleSubmitComment = async (e) => {
     e.preventDefault();
     if (!newCommentText.trim()) {
@@ -325,7 +325,7 @@ const TicketsTable = () => {
 
       toast.success("Comment posted!");
       setNewCommentText("");
-      await fetchComments();
+      await fetchComments(); // Refresh comments list
     } catch (error) {
       console.error("Failed to post comment:", error);
       toast.error("Failed to post comment.");
@@ -334,7 +334,35 @@ const TicketsTable = () => {
     }
   };
 
-  // Handle confirmation of resolution
+  // NEW: Handle updating an existing comment
+  const handleUpdateComment = async (commentId, updatedText) => {
+    if (!selectedTicket || !user.email) return;
+
+    try {
+      const url = "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/updateComment";
+      
+      const payload = {
+        email: user.email,
+        ticketNum: selectedTicket.ticketNo,
+        commentId: commentId,
+        commentText: updatedText,
+      };
+
+      await axios.patch(url, payload, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: bearerToken,
+        },
+      });
+
+      await fetchComments(); // Refresh the comments list after update
+    } catch (error) {
+      console.error("Failed to update comment:", error);
+      throw new Error("API call failed to update comment."); // Throw error for modal to catch
+    }
+  };
+
+  // Handle confirmation of resolution (Unchanged)
   const handleConfirmResolution = async () => {
     if (!ticketDetails || !user.email) {
       toast.error("Missing ticket information");
@@ -417,7 +445,6 @@ const TicketsTable = () => {
 
   const handleEdit = (ticketData) => {
     toast.info(`Editing Ticket #${ticketData.ticketNo}`);
-    // Note: Actual editing logic happens within TicketDetailsModal now.
   };
 
   const handleDelete = (ticketData) => {
@@ -432,7 +459,7 @@ const TicketsTable = () => {
     setIsConfirmationModalOpen(false);
   };
 
-  // Columns configuration for the Table component
+  // Columns configuration for the Table component (Unchanged)
   const columns = [
     {
       headerName: "Ticket No",
@@ -510,7 +537,7 @@ const TicketsTable = () => {
         setAttachmentFile={setAttachmentFile}
       />
 
-      {/* Details Modal (with updated edit fields) */}
+      {/* Details Modal */}
       <TicketDetailsModal
         isOpen={isDetailsModalOpen}
         onClose={closeDetailsModal}
@@ -522,7 +549,7 @@ const TicketsTable = () => {
         userEmail={user.email}
         onTicketUpdate={(updatedTicket) => {
           setTicketDetails(updatedTicket);
-          fetchTickets(); // Refresh table data after a successful update (subject/description/stationNo)
+          fetchTickets();
         }}
       />
 
@@ -541,6 +568,7 @@ const TicketsTable = () => {
         setActiveTab={setActiveTab}
         formatDate={formatDate}
         ticketStatus={ticketDetails?.status}
+        onCommentUpdate={handleUpdateComment} // Pass the new update handler
       />
 
       {/* Confirmation Modal */}
