@@ -1,5 +1,6 @@
-import { X, MessageSquare, Clock, User } from "lucide-react";
-import { Button, Spinner } from "flowbite-react";
+import { X, MessageSquare, Clock, Bold, Italic, Underline, Image as ImageIcon } from "lucide-react";
+import { Spinner } from "flowbite-react";
+import { useState } from "react";
 
 const TicketCommentsModal = ({
   isOpen,
@@ -16,12 +17,17 @@ const TicketCommentsModal = ({
   formatDate,
 }) => {
   
+  const [showQuickResponses, setShowQuickResponses] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
+
   if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (newCommentText.trim()) {
       onSubmitComment(e);
+      setIsExpanded(false);
+      setShowQuickResponses(true);
     }
   };
 
@@ -32,6 +38,29 @@ const TicketCommentsModal = ({
       return (words[0][0] + words[words.length - 1][0]).toUpperCase();
     }
     return name.slice(0, 2).toUpperCase();
+  };
+
+  const quickResponses = [
+    "Here's a quick status update:",
+    "Thanks for your help with this!",
+    "I completely agree with your point.",
+  ];
+
+  const handleQuickResponse = (response) => {
+    setNewCommentText(response);
+    setIsExpanded(true);
+    setShowQuickResponses(false);
+  };
+
+  const handleFocus = () => {
+    setIsExpanded(true);
+    setShowQuickResponses(false);
+  };
+
+  const handleCancel = () => {
+    setNewCommentText("");
+    setIsExpanded(false);
+    setShowQuickResponses(true);
   };
 
   return (
@@ -104,33 +133,102 @@ const TicketCommentsModal = ({
                       </div>
                     </div>
                     <div className="flex-1">
-                      <textarea
-                        rows="3"
-                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#a10000] focus:border-transparent placeholder-gray-400 resize-none transition-all"
-                        placeholder="Share your thoughts..."
-                        value={newCommentText}
-                        onChange={(e) => setNewCommentText(e.target.value)}
-                        disabled={isSubmitting}
-                      />
-                      <div className="flex justify-between items-center mt-3">
-                        <span className="text-xs text-gray-500">
-                          {newCommentText.length} characters
-                        </span>
-                        <button
-                          type="submit"
-                          disabled={isSubmitting || !newCommentText.trim()}
-                          className="px-4 py-2 bg-gradient-to-r from-[#a10000] to-[#d10000] text-white text-sm font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                        >
-                          {isSubmitting ? (
-                            <span className="flex items-center gap-2">
-                              <Spinner size="sm" />
-                              Posting...
+                      {!isExpanded && showQuickResponses ? (
+                        <div className="space-y-3">
+                          <input
+                            type="text"
+                            className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#a10000] focus:border-transparent placeholder-gray-400 transition-all"
+                            placeholder="Add a comment..."
+                            onFocus={handleFocus}
+                            readOnly
+                          />
+                          <div className="flex flex-wrap gap-2">
+                            {quickResponses.map((response, index) => (
+                              <button
+                                key={index}
+                                type="button"
+                                onClick={() => handleQuickResponse(response)}
+                                className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-md transition-all"
+                              >
+                                {response.length > 30 ? response.substring(0, 30) + "..." : response}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="border-2 border-gray-200 rounded-lg bg-white focus-within:ring-2 focus-within:ring-[#a10000] focus-within:border-transparent transition-all">
+                            <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-200">
+                              <button
+                                type="button"
+                                className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                title="Bold"
+                              >
+                                <Bold className="w-4 h-4 text-gray-600" />
+                              </button>
+                              <button
+                                type="button"
+                                className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                title="Italic"
+                              >
+                                <Italic className="w-4 h-4 text-gray-600" />
+                              </button>
+                              <button
+                                type="button"
+                                className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                title="Underline"
+                              >
+                                <Underline className="w-4 h-4 text-gray-600" />
+                              </button>
+                              <div className="flex-1"></div>
+                              <button
+                                type="button"
+                                className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                title="Add image"
+                              >
+                                <ImageIcon className="w-4 h-4 text-gray-600" />
+                              </button>
+                            </div>
+                            <textarea
+                              rows="4"
+                              className="w-full px-4 py-3 text-gray-900 bg-white focus:outline-none placeholder-gray-400 resize-none"
+                              placeholder="Add a comment..."
+                              value={newCommentText}
+                              onChange={(e) => setNewCommentText(e.target.value)}
+                              disabled={isSubmitting}
+                              autoFocus
+                            />
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-gray-500">
+                              {newCommentText.length} characters
                             </span>
-                          ) : (
-                            "Post Comment"
-                          )}
-                        </button>
-                      </div>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={handleCancel}
+                                className="px-4 py-2 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-100 transition-all"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="submit"
+                                disabled={isSubmitting || !newCommentText.trim()}
+                                className="px-4 py-2 bg-gradient-to-r from-[#a10000] to-[#d10000] text-white text-sm font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                              >
+                                {isSubmitting ? (
+                                  <span className="flex items-center gap-2">
+                                    <Spinner size="sm" />
+                                    Posting...
+                                  </span>
+                                ) : (
+                                  "Save"
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </form>
