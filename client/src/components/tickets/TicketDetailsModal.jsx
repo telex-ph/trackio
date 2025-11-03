@@ -302,10 +302,13 @@ const TicketDetailsModal = ({
                       </div>
                     ) : (
                       <div className="bg-gray-50 rounded-lg p-4 min-h-[120px]">
+                        {/* FIXED LOGIC: Display actual description or the placeholder */}
                         <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                          {ticketDetails.description || (
                             <span className="text-gray-400 italic">
                               No description provided.
                             </span>
+                          )}
                         </p> 
                       </div>
                     )}
@@ -443,8 +446,8 @@ const TicketDetailsModal = ({
                               <span className="text-gray-400 italic">Not assigned</span>
                             )}
                           </p>
-                        </div>
                       </div>
+                    </div>
                     </div>
                   </div>
 
@@ -544,7 +547,7 @@ const TicketDetailsModal = ({
                   Close
                 </button>
               </div>
-            </div>
+              </div>
           ) : (
             // Error State
             <div className="flex flex-col items-center justify-center h-full">
@@ -556,9 +559,6 @@ const TicketDetailsModal = ({
           )}
         </div>
       </div>
-      {/* This element will be at the bottom of the content in the modal, 
-          but the main div is what is actually returned.
-          Removing the trailing closing tag here to keep the component structure correct. */}
     </div>
   );
 };
