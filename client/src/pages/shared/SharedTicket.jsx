@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Pen, Trash2, Ticket } from "lucide-react"; // Natanggal yung ibang icons
-import { Button, Spinner } from "flowbite-react"; // Natanggal Label at TextInput
+import { Pen, Trash2, Ticket } from "lucide-react";
+import { Button, Spinner } from "flowbite-react";
 import Table from "../../components/Table";
 import TableAction from "../../components/TableAction";
 import toast from "react-hot-toast";
@@ -10,12 +10,13 @@ import axios from "axios";
 import api from "../../utils/axios";
 import { useStore } from "../../store/useStore";
 
-// Import natin yung mga bagong modal components
+// Import modal components
 import AddTicketModal from "../../components/tickets/AddTicketModal";
 import TicketDetailsModal from "../../components/tickets/TicketDetailsModal";
 import TicketCommentsModal from "../../components/tickets/TicketCommentsModal";
+import TicketConfirmationModal from "../../components/tickets/TicketConfirmationModal";
 
-// Helper function para sa pag-format ng date
+// Helper function for date formatting
 const formatDate = (dateString) => {
   if (!dateString) {
     return <span className="text-gray-500">N/A</span>;
@@ -30,7 +31,7 @@ const formatDate = (dateString) => {
   });
 };
 
-// I-define ang Bearer Token dito
+// Bearer Token
 const bearerToken =
   "Bearer standard_077ed3b9b01c0863d40827030797f5e602b32b89fe2f3f94cc495b475802c16512013466aaf82efa0d966bff7d6cf837d00e0bfdc9e91f4f290e893ba28c4d6330310f6428f7befc9ad39cd5a55f3b3ba09822aed74a922bf1e6ca958b2f844fab5259c0d69318160bb91d4ab2bf2bec0c72f6d94bf0666a59559c3992aa8b47";
 
@@ -55,6 +56,10 @@ const TicketsTable = () => {
   const [newCommentText, setNewCommentText] = useState("");
   const [activeTab, setActiveTab] = useState("comments");
 
+  // Confirmation modal state
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
+
   const [formData, setFormData] = useState({
     email: user.email,
     stationNo: "",
@@ -67,7 +72,10 @@ const TicketsTable = () => {
 
   const [tickets, setTickets] = useState([]);
 
-  // useEffect para sa pag-fetch ng listahan ng tickets (Table)
+  // Determine user role
+  const userRole = 'agent';
+
+  // Fetch tickets list
   useEffect(() => {
     const fetchTickets = async () => {
       if (!user.email) {
@@ -101,7 +109,7 @@ const TicketsTable = () => {
     fetchTickets();
   }, [user.email]);
 
-  // useEffect para sa Details Modal
+  // Fetch ticket details and check if agent has confirmed
   useEffect(() => {
     const fetchTicketDetails = async () => {
       if (!isDetailsModalOpen || !selectedTicket || !user.email) {
@@ -122,26 +130,53 @@ const TicketsTable = () => {
 
         const responseData = response.data?.data;
 
+        let ticketData = null;
         if (
           responseData &&
           responseData.document &&
           Array.isArray(responseData.document) &&
           responseData.document.length > 0
         ) {
-          setTicketDetails(responseData.document[0]);
+          ticketData = responseData.document[0];
         } else if (Array.isArray(responseData) && responseData.length > 0) {
-          setTicketDetails(responseData[0]);
+          ticketData = responseData[0];
         } else if (
           responseData &&
           typeof responseData === "object" &&
           responseData !== null &&
           !Array.isArray(responseData)
         ) {
-          setTicketDetails(responseData);
+          ticketData = responseData;
         } else {
           console.error("Unexpected data format:", response.data);
           throw new Error("Unexpected data format from API");
         }
+
+        // Fetch comments to check if agent already confirmed
+        const commentsUrl = `https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/comments/${user.email}/${selectedTicket.ticketNo}`;
+        const commentsResponse = await axios.get(commentsUrl, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: bearerToken,
+          },
+        });
+
+        const commentsData = commentsResponse.data?.data || commentsResponse.data || [];
+        const commentsList = Array.isArray(commentsData) ? commentsData : 
+                            (commentsData.documents && Array.isArray(commentsData.documents)) ? commentsData.documents : [];
+
+        // Check if there's a confirmation comment from this agent
+        const hasAgentConfirmation = commentsList.some(comment => 
+          comment.commentText && 
+          comment.commentText.includes('✅ Resolution confirmed by Agent') &&
+          comment.commentText.includes(user.email)
+        );
+
+        // Add confirmation flag to ticket data
+        ticketData.agentConfirmed = hasAgentConfirmation;
+
+        setTicketDetails(ticketData);
+
       } catch (error) {
         console.error("Failed to fetch ticket details:", error);
         toast.error("Could not fetch ticket details.");
@@ -154,7 +189,7 @@ const TicketsTable = () => {
     fetchTicketDetails();
   }, [isDetailsModalOpen, selectedTicket, user.email]);
 
-  // Function para sa pag-fetch ng comments
+  // Fetch comments
   const fetchComments = async () => {
     if (!selectedTicket || !user.email) return;
 
@@ -180,17 +215,16 @@ const TicketsTable = () => {
         console.warn("Unexpected comments data format", response.data);
         setTicketComments([]);
       }
-  } catch (error) { // <--- IDAGDAG ANG OPENING BRACE DITO
-    console.error("Failed to fetch comments:", error);
-    toast.error("Could not load comments.");
-    setTicketComments([]);
-  } finally {
-//...
+    } catch (error) {
+      console.error("Failed to fetch comments:", error);
+      toast.error("Could not load comments.");
+      setTicketComments([]);
+    } finally {
       setIsCommentsLoading(false);
     }
   };
 
-  // useEffect para sa pag-fetch ng comments
+  // Load comments when modal opens
   useEffect(() => {
     if (isCommentsModalOpen) {
       fetchComments();
@@ -298,6 +332,114 @@ const TicketsTable = () => {
     }
   };
 
+  // Handle confirmation of resolution with automatic comment
+  const handleConfirmResolution = async () => {
+    if (!ticketDetails || !user.email) {
+      toast.error("Missing ticket information");
+      return;
+    }
+
+    // Check if already confirmed
+    if (ticketDetails.agentConfirmed) {
+      toast.error("You have already confirmed this resolution");
+      return;
+    }
+
+    setIsConfirming(true);
+    try {
+      // Step 1: Confirm the resolution via PATCH API
+      const confirmUrl = "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/confirmation";
+      const confirmPayload = {
+        email: user.email,
+        updateTicketNo: ticketDetails.ticketNo,
+      };
+
+      const confirmResponse = await axios.patch(confirmUrl, confirmPayload, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: bearerToken,
+        },
+      });
+
+      // Step 2: Automatically post a comment about the confirmation (ONLY ONCE)
+      const commentUrl = "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/itTicketComment";
+      const commentPayload = {
+        email: user.email,
+        ticketNum: ticketDetails.ticketNo,
+        commentText: `✅ Resolution confirmed by Agent: ${user.email}. Awaiting requester confirmation to close the ticket.`,
+      };
+
+      await axios.post(commentUrl, commentPayload, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: bearerToken,
+        },
+      });
+
+      // Check if ticket was automatically closed
+      const newStatus = confirmResponse.data?.status || confirmResponse.data?.data?.status;
+      const isClosed = newStatus?.toLowerCase() === 'closed';
+
+      if (isClosed) {
+        toast.success("🎉 Ticket has been closed! Both parties have confirmed the resolution.");
+      } else {
+        toast.success("✅ Resolution confirmed! Waiting for requester confirmation.");
+      }
+      
+      // Close confirmation modal
+      setIsConfirmationModalOpen(false);
+      
+      // Step 3: Refresh ticket details
+      const detailsUrl = `https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/overview/${user.email}/${ticketDetails.ticketNo}`;
+      const response = await axios.get(detailsUrl, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: bearerToken,
+        },
+      });
+
+      const responseData = response.data?.data;
+      let newTicketData = null;
+      if (
+        responseData &&
+        responseData.document &&
+        Array.isArray(responseData.document) &&
+        responseData.document.length > 0
+      ) {
+        newTicketData = responseData.document[0];
+      } else if (Array.isArray(responseData) && responseData.length > 0) {
+        newTicketData = responseData[0];
+      }
+
+      // Mark as confirmed
+      if (newTicketData) {
+        newTicketData.agentConfirmed = true;
+        setTicketDetails(newTicketData);
+      }
+
+      // Step 4: Refresh tickets list
+      const ticketsUrl = `https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/${user.email}`;
+      const ticketsResponse = await axios.get(ticketsUrl, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: bearerToken,
+        },
+      });
+      setTickets(ticketsResponse.data.data.documents || []);
+
+      // Step 5: Refresh comments if comments modal is open
+      if (isCommentsModalOpen) {
+        await fetchComments();
+      }
+
+    } catch (error) {
+      console.error("Failed to confirm resolution:", error);
+      toast.error("Failed to confirm ticket resolution");
+    } finally {
+      setIsConfirming(false);
+    }
+  };
+
   const handleViewDetails = (ticketData) => {
     console.log("Setting selected ticket:", ticketData);
     setSelectedTicket(ticketData);
@@ -319,10 +461,10 @@ const TicketsTable = () => {
     setSelectedTicket(null);
     setTicketDetails(null);
     setIsCommentsModalOpen(false);
+    setIsConfirmationModalOpen(false);
   };
 
   const columns = [
-    // ... (Walang pagbabago dito, same columns definition)
     {
       headerName: "Ticket No",
       field: "ticketNo",
@@ -387,8 +529,6 @@ const TicketsTable = () => {
         loading={isLoading}
       />
 
-      {/* --- ITO ANG MGA PAGBABAGO --- */}
-
       {/* Add Ticket Modal */}
       <AddTicketModal
         isOpen={isModalOpen}
@@ -408,7 +548,9 @@ const TicketsTable = () => {
         ticketDetails={ticketDetails}
         isLoading={isModalLoading}
         onViewComments={() => setIsCommentsModalOpen(true)}
+        onConfirmResolution={() => setIsConfirmationModalOpen(true)}
         formatDate={formatDate}
+        userRole={userRole}
       />
 
       {/* Comments Modal */}
@@ -418,13 +560,22 @@ const TicketsTable = () => {
         user={user}
         comments={ticketComments}
         isLoading={isCommentsLoading}
-sSubmitting={isSubmittingComment}
+        isSubmitting={isSubmittingComment}
         newCommentText={newCommentText}
         setNewCommentText={setNewCommentText}
         onSubmitComment={handleSubmitComment}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         formatDate={formatDate}
+      />
+
+      {/* Confirmation Modal */}
+      <TicketConfirmationModal
+        isOpen={isConfirmationModalOpen}
+        onClose={() => setIsConfirmationModalOpen(false)}
+        ticketDetails={ticketDetails}
+        isConfirming={isConfirming}
+        onConfirm={handleConfirmResolution}
       />
     </div>
   );
