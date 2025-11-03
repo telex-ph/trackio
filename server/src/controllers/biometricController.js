@@ -26,12 +26,10 @@ export const getEvents = async (req, res) => {
                 if (ac.employeeNoString || (ac.name && ac.name !== 'Unknown')) {
                     const ipAddress = event.ipAddress;
 
-
-
                     if (ipAddress === BIO_IP.ADMINDOOR) return res.status(200).send('OK');
 
-                    console.log(event.dateTime);
-                    
+                    // TODO: remove
+                    await webhook(`${event.dateTime}`);
 
                     const user = await User.getById(ac.employeeNoString);
                     if (user) {
