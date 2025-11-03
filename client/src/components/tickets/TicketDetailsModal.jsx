@@ -1,4 +1,4 @@
-import { X, MessageSquare, Clock, FileText, CheckCircle } from "lucide-react";
+import { X, MessageSquare, Clock, FileText, CheckCircle, Lock } from "lucide-react";
 import { Spinner } from "flowbite-react";
 
 const TicketDetailsModal = ({
@@ -13,9 +13,10 @@ const TicketDetailsModal = ({
   
   if (!isOpen) return null;
 
-  // Check if ticket status is "Resolved" (case-insensitive)
+  // Check ticket status
   const isResolved = ticketDetails?.status?.toLowerCase() === 'resolved';
-  const canConfirm = isResolved && ticketDetails?.ticketNo;
+  const isClosed = ticketDetails?.status?.toLowerCase() === 'closed';
+  const canConfirm = isResolved && ticketDetails?.ticketNo && !ticketDetails?.agentConfirmed;
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -66,6 +67,23 @@ const TicketDetailsModal = ({
                     </h3>
                     <p className="text-xs text-green-700">
                       This ticket has been resolved. Please confirm the resolution to close the ticket.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Closed Alert - Show only if status is Closed */}
+              {isClosed && (
+                <div className="mb-6 bg-red-50 border-2 border-red-300 rounded-xl p-4 flex items-start gap-3">
+                  <div className="w-8 h-8 bg-red-200 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Lock className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-bold text-red-900 mb-1">
+                      Ticket Closed
+                    </h3>
+                    <p className="text-xs text-red-700">
+                      This ticket has been closed. Both parties have confirmed the resolution.
                     </p>
                   </div>
                 </div>
@@ -283,7 +301,7 @@ const TicketDetailsModal = ({
                     View Comments
                   </button>
                   
-                  {/* Confirm Resolution Button - Only show if status is Resolved */}
+                  {/* Confirm Resolution Button - Only show if status is Resolved and not yet confirmed */}
                   {canConfirm && (
                     <button
                       type="button"
