@@ -2,7 +2,6 @@ import { X, CheckCircle, AlertCircle, Star } from "lucide-react";
 import { Spinner } from "flowbite-react";
 import { useState } from "react";
 
-// --- StarRating Component (for 5-star input with Half-Star selection) ---
 const StarRating = ({ rating, setRating, disabled }) => {
   const maxRating = 5;
   const [hoverRating, setHoverRating] = useState(0);
@@ -13,9 +12,8 @@ const StarRating = ({ rating, setRating, disabled }) => {
     if (disabled) return;
     const starNode = e.currentTarget;
     const rect = starNode.getBoundingClientRect();
-    const x = e.clientX - rect.left; // x position within the star
+    const x = e.clientX - rect.left; 
     
-    // Check if the cursor is in the left half
     const isHalf = x < rect.width / 2;
     
     const newRating = index + (isHalf ? 0.5 : 1);
@@ -24,9 +22,8 @@ const StarRating = ({ rating, setRating, disabled }) => {
 
   const handleClick = (index) => {
     if (disabled) return;
-    // Set the rating to the currently hovered value (which includes .5 if applicable)
     setRating(hoverRating);
-    setHoverRating(0); // Clear hover after click
+    setHoverRating(0); 
   };
 
   const handleMouseLeave = () => {
@@ -48,15 +45,11 @@ const StarRating = ({ rating, setRating, disabled }) => {
             onMouseLeave={handleMouseLeave}
             title={`${currentRating.toFixed(1)} stars`}
           >
-            {/* Background (Gray) Star */}
             <Star className="w-6 h-6 text-gray-300 absolute top-0 left-0" />
 
-            {/* Foreground (Yellow) Star - Full or Half */}
             {(currentRating >= value) ? (
-                // Full star
                 <Star className="w-6 h-6 fill-yellow-400 text-yellow-400 absolute top-0 left-0" />
             ) : (currentRating > index && currentRating < value) ? (
-                // Half star
                 <Star 
                     className="w-6 h-6 fill-yellow-400 text-yellow-400 absolute top-0 left-0"
                     style={{ clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)' }}
@@ -69,7 +62,6 @@ const StarRating = ({ rating, setRating, disabled }) => {
     </div>
   );
 };
-// ----------------------------------------------
 
 
 const TicketConfirmationModal = ({
@@ -79,11 +71,9 @@ const TicketConfirmationModal = ({
   isConfirming,
   onConfirm, 
 }) => {
-  // State for new inputs
   const [feedback, setFeedback] = useState("");
-  const [rating, setRating] = useState(0); // Now supports 0.5 increments
+  const [rating, setRating] = useState(0); 
 
-  // Reset state when modal closes
   const handleClose = () => {
     setFeedback("");
     setRating(0);
@@ -98,7 +88,6 @@ const TicketConfirmationModal = ({
       return;
     }
     
-    // Pass the collected data to the parent component's onConfirm handler
     onConfirm(feedback, rating); 
   };
 

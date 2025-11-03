@@ -3,7 +3,6 @@ import { Spinner } from "flowbite-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-// --- Star Rating Display Component (Handles Half-Star Display) ---
 const StarRatingDisplay = ({ rating }) => {
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 !== 0;
@@ -15,7 +14,6 @@ const StarRatingDisplay = ({ rating }) => {
         <Star key={`full-${i}`} className="w-5 h-5 fill-yellow-400" />
       ))}
       {hasHalfStar && (
-        // Renders a half-filled star using clipping
         <div className="relative w-5 h-5">
           <Star className="absolute top-0 left-0 w-5 h-5 text-gray-300" />
           <Star 
@@ -33,9 +31,6 @@ const StarRatingDisplay = ({ rating }) => {
     </div>
   );
 };
-// ------------------------------------
-
-// --- Helper function to parse special comments (Unchanged) ---
 const parseConfirmationComment = (commentText) => {
   const confirmationPattern = /✅ Resolution confirmed by User: (.*?)\. Rating: ([\d\.]+)\/5\. Feedback: (.*)/;
   const match = commentText.match(confirmationPattern);
@@ -50,7 +45,6 @@ const parseConfirmationComment = (commentText) => {
   }
   return { isConfirmation: false };
 };
-// -----------------------------------------------
 
 const TicketCommentsModal = ({
   isOpen,
@@ -72,14 +66,12 @@ const TicketCommentsModal = ({
   const [showQuickResponses, setShowQuickResponses] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
   
-  // State for editing
   const [isEditing, setIsEditing] = useState(null); 
   const [editedCommentText, setEditedCommentText] = useState("");
   const [isUpdatingComment, setIsUpdatingComment] = useState(false);
 
   if (!isOpen) return null;
 
-  // Check if ticket is resolved or closed
   const isResolved = ticketStatus?.toLowerCase() === 'resolved';
   const isClosed = ticketStatus?.toLowerCase() === 'closed';
   const canComment = !isResolved && !isClosed;
@@ -95,7 +87,6 @@ const TicketCommentsModal = ({
     }
   };
 
-  // Handlers for editing (Unchanged)
   const handleStartEdit = (comment) => {
     if (!canEdit) return;
     setIsEditing(comment.$id);
@@ -113,7 +104,6 @@ const TicketCommentsModal = ({
       return;
     }
     
-    // Prevent editing confirmation comments
     if (parseConfirmationComment(comments.find(c => c.$id === commentId)?.commentText || "").isConfirmation) {
         toast.error("Cannot edit a Resolution Confirmation comment.");
         handleCancelEdit();
@@ -122,7 +112,6 @@ const TicketCommentsModal = ({
 
     setIsUpdatingComment(true);
     try {
-      // Call the passed down update function (which should contain the API call)
       await onCommentUpdate(commentId, editedCommentText);
 
       toast.success("Comment updated successfully!");
@@ -136,7 +125,6 @@ const TicketCommentsModal = ({
     }
   };
 
-  // Utility functions (Unchanged)
   const getInitials = (name) => {
     if (!name) return "U";
     const words = name.trim().split(' ');
@@ -320,7 +308,6 @@ const TicketCommentsModal = ({
                   </form>
                 </div>
               ) : (
-                // Disabled comment section for resolved/closed tickets
                 <div className="bg-gray-100 rounded-xl shadow-sm border-2 border-gray-300 p-5 sticky top-0 z-10">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
@@ -348,7 +335,7 @@ const TicketCommentsModal = ({
                 ) : comments.length > 0 ? (
                   comments.map((comment, index) => {
                     const isNewest = index === 0;
-                    const isCurrentUser = comment.commentor?.email === user.email; // Use email for reliable comparison
+                    const isCurrentUser = comment.commentor?.email === user.email; 
                     const isCurrentCommentEditing = isEditing === comment.$id;
                     const confirmationData = parseConfirmationComment(comment.commentText);
                     const isConfirmation = confirmationData.isConfirmation;
@@ -357,10 +344,8 @@ const TicketCommentsModal = ({
                       <div
                         key={comment.$id || index}
                         className={`rounded-xl shadow-sm border-2 transition-all hover:shadow-md ${
-                          // Special styling for confirmation comments
                           isConfirmation
                             ? 'bg-yellow-50 border-yellow-300'
-                          // Regular comment styling
                           : isNewest && !isCurrentUser
                             ? 'border-[#a10000]/30 bg-red-50/30'
                             : isCurrentUser
@@ -372,7 +357,7 @@ const TicketCommentsModal = ({
                           <div className="flex gap-4">
                             <div className="flex-shrink-0">
                               <div className={`w-11 h-11 rounded-full flex items-center justify-center text-white font-bold shadow-md ${
-                                isCurrentUser || isConfirmation // Highlight confirmation initiator too
+                                isCurrentUser || isConfirmation 
                                   ? 'bg-gradient-to-br from-green-500 to-emerald-600'
                                   : 'bg-gradient-to-br from-gray-500 to-gray-600'
                               }`}>
@@ -459,7 +444,6 @@ const TicketCommentsModal = ({
                                   </div>
                                 </div>
                               ) : isConfirmation ? (
-                                // Special display for confirmation comments
                                 <div className="pt-2 p-3 bg-white border border-yellow-200 rounded-lg shadow-inner space-y-3">
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between">
                                         <span className="text-sm font-semibold text-gray-700">Customer Rating:</span>
@@ -474,7 +458,6 @@ const TicketCommentsModal = ({
                                     </div>
                                 </div>
                               ) : (
-                                // Original comment display
                                 <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
                                   {comment.commentText}
                                 </p>

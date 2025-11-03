@@ -10,13 +10,11 @@ import axios from "axios";
 import api from "../../utils/axios";
 import { useStore } from "../../store/useStore";
 
-// Import modal components
 import AddTicketModal from "../../components/tickets/AddTicketModal";
 import TicketDetailsModal from "../../components/tickets/TicketDetailsModal";
 import TicketCommentsModal from "../../components/tickets/TicketCommentsModal";
 import TicketConfirmationModal from "../../components/tickets/TicketConfirmationModal";
 
-// Helper function for date formatting
 const formatDate = (dateString) => {
   if (!dateString) {
     return <span className="text-gray-500">N/A</span>;
@@ -31,7 +29,6 @@ const formatDate = (dateString) => {
   });
 };
 
-// Bearer Token - IMPORTANT: Store this securely, not hardcoded in production code!
 const bearerToken =
   "Bearer standard_077ed3b9b01c0863d40827030797f5e602b32b89fe2f3f94cc495b475802c16512013466aaf82efa0d966bff7d6cf837d00e0bfdc9e91f4f290e893ba28c4d6330310f6428f7befc9ad39cd5a55f3b3ba09822aed74a922bf1e6ca958b2f844fab5259c0d69318160bb91d4ab2bf2bec0c72f6d94bf0666a59559c3992aa8b47";
 
@@ -56,7 +53,6 @@ const TicketsTable = () => {
   const [newCommentText, setNewCommentText] = useState("");
   const [activeTab, setActiveTab] = useState("comments");
 
-  // Confirmation modal state
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
 
@@ -72,7 +68,6 @@ const TicketsTable = () => {
 
   const [tickets, setTickets] = useState([]);
 
-  // Function to fetch the list of tickets
   const fetchTickets = async () => {
     if (!user.email) {
       setIsLoading(false);
@@ -102,13 +97,11 @@ const TicketsTable = () => {
     }
   };
 
-  // Initial fetch of tickets
   useEffect(() => {
     fetchTickets();
   }, [user.email]);
 
 
-  // Function to fetch detailed ticket data
   const fetchTicketDetails = async () => {
     if (!isDetailsModalOpen || !selectedTicket || !user.email) {
       return;
@@ -148,7 +141,6 @@ const TicketsTable = () => {
         throw new Error("Unexpected data format from API");
       }
 
-      // Fetch comments to check if agent already confirmed
       const commentsUrl = `https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/comments/${user.email}/${selectedTicket.ticketNo}`;
       const commentsResponse = await axios.get(commentsUrl, {
         headers: {
@@ -161,14 +153,12 @@ const TicketsTable = () => {
       const commentsList = Array.isArray(commentsData) ? commentsData : 
               (commentsData.documents && Array.isArray(commentsData.documents)) ? commentsData.documents : [];
 
-      // Check if there's a confirmation comment from this user
       const hasUserConfirmation = commentsList.some(comment => 
         comment.commentText && 
         comment.commentText.includes('Resolution confirmed by User') && 
         comment.commentText.includes(user.email)
       );
 
-      // Add confirmation flag to ticket data
       ticketData.agentConfirmed = hasUserConfirmation;
       setTicketDetails(ticketData);
 
@@ -181,12 +171,10 @@ const TicketsTable = () => {
     }
   };
 
-  // Load details when modal opens
   useEffect(() => {
     fetchTicketDetails();
   }, [isDetailsModalOpen, selectedTicket, user.email]);
 
-  // Function to fetch comments
   const fetchComments = async () => {
     if (!selectedTicket || !user.email) return;
 
@@ -220,7 +208,6 @@ const TicketsTable = () => {
     }
   };
 
-  // Load comments when modal opens
   useEffect(() => {
     if (isCommentsModalOpen) {
       fetchComments();
@@ -231,7 +218,6 @@ const TicketsTable = () => {
     }
   }, [isCommentsModalOpen]);
 
-  // Handle file upload (attachment) 
   const handleFileUpload = async () => {
     if (!attachmentFile) return null;
     try {
@@ -252,8 +238,6 @@ const TicketsTable = () => {
       return null;
     }
   };
-
-  // Handle adding a new ticket
   const handleAddTicket = async (e) => {
     e.preventDefault();
     try {
@@ -296,7 +280,6 @@ const TicketsTable = () => {
     }
   };
 
-  // Handle posting a new comment
   const handleSubmitComment = async (e) => {
     e.preventDefault();
     if (!newCommentText.trim()) {
@@ -322,7 +305,7 @@ const TicketsTable = () => {
 
       toast.success("Comment posted!");
       setNewCommentText("");
-      await fetchComments(); // Refresh comments list
+      await fetchComments(); 
     } catch (error) {
       console.error("Failed to post comment:", error);
       toast.error("Failed to post comment.");
@@ -331,7 +314,6 @@ const TicketsTable = () => {
     }
   };
 
-  // Handle updating an existing comment
   const handleUpdateComment = async (commentId, updatedText) => {
     if (!selectedTicket || !user.email) return;
 
@@ -352,14 +334,13 @@ const TicketsTable = () => {
         },
       });
 
-      await fetchComments(); // Refresh the comments list after update
+      await fetchComments(); 
     } catch (error) {
       console.error("Failed to update comment:", error);
-      throw new Error("API call failed to update comment."); // Throw error for modal to catch
+      throw new Error("API call failed to update comment."); 
     }
   };
 
-  // UPDATED: Handle confirmation of resolution (receives feedback and rating)
   const handleConfirmResolution = async (feedback, rating) => { 
     if (!ticketDetails || !user.email) {
       toast.error("Missing ticket information");
@@ -378,13 +359,12 @@ const TicketsTable = () => {
 
     setIsConfirming(true);
     try {
-      // Step 1: Confirm the resolution via PATCH API 
       const confirmUrl = "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/confirmation";
       const confirmPayload = {
         email: user.email,
         updateTicketNo: ticketDetails.ticketNo,
-        feedback: feedback || "No feedback provided.", // Use optional feedback
-        rating: rating, // Use required rating (now supports .5 increments)
+        feedback: feedback || "No feedback provided.", 
+        rating: rating, 
       };
 
       const confirmResponse = await axios.patch(confirmUrl, confirmPayload, {
@@ -394,12 +374,10 @@ const TicketsTable = () => {
         },
       });
 
-      // Step 2: Automatically post a comment about the confirmation 
       const commentUrl = "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/itTicketComment";
       const commentPayload = {
         email: user.email,
         ticketNum: ticketDetails.ticketNo,
-        // Ensure rating is displayed with one decimal place for half-stars
         commentText: `✅ Resolution confirmed by User: ${user.email}. Rating: ${rating.toFixed(1)}/5. Feedback: ${feedback || 'N/A'}`, 
       };
 
@@ -410,7 +388,6 @@ const TicketsTable = () => {
         },
       });
 
-      // Check if ticket was automatically closed
       const newStatus = confirmResponse.data?.status || confirmResponse.data?.data?.status;
       const isClosed = newStatus?.toLowerCase() === 'closed';
 
@@ -420,10 +397,8 @@ const TicketsTable = () => {
         toast.success("✅ Resolution confirmed!");
       }
       
-      // Close confirmation modal
       setIsConfirmationModalOpen(false);
       
-      // Step 3-5: Refresh data
       await fetchTicketDetails();
       await fetchTickets();
       if (isCommentsModalOpen) {
@@ -463,7 +438,6 @@ const TicketsTable = () => {
     setIsConfirmationModalOpen(false);
   };
 
-  // Columns configuration for the Table component
   const columns = [
     {
       headerName: "Ticket No",
