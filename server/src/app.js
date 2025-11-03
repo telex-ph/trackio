@@ -55,5 +55,12 @@ app.use("/api/group", groupRoutes);
 app.use("/api/server", serverRoutes);
 app.use('/api/biometric', biometricRoute);
 
+app.get("/", (req, res) => {
+  res.json({
+    message: "Trackio API is running",
+    status: "success",
+    timestamp: new Date().toISOString(),
+  });
+});
 
 export default app;
