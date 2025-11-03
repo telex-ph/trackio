@@ -551,6 +551,10 @@ const TicketsTable = () => {
         onConfirmResolution={() => setIsConfirmationModalOpen(true)}
         formatDate={formatDate}
         userRole={userRole}
+        userEmail={user.email}
+        onTicketUpdate={(updatedTicket) => {
+          setTicketDetails(updatedTicket);
+        }}
       />
 
       {/* Comments Modal */}
@@ -567,6 +571,7 @@ const TicketsTable = () => {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         formatDate={formatDate}
+        ticketStatus={ticketDetails?.status}
       />
 
       {/* Confirmation Modal */}

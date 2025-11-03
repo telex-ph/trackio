@@ -1,4 +1,4 @@
-import { X, MessageSquare, Clock, Bold, Italic, Underline, Image as ImageIcon } from "lucide-react";
+import { X, MessageSquare, Clock, Bold, Italic, Underline, Image as ImageIcon, Lock } from "lucide-react";
 import { Spinner } from "flowbite-react";
 import { useState } from "react";
 
@@ -15,6 +15,7 @@ const TicketCommentsModal = ({
   activeTab,
   setActiveTab,
   formatDate,
+  ticketStatus, // Add this prop
 }) => {
   
   const [showQuickResponses, setShowQuickResponses] = useState(true);
@@ -22,9 +23,14 @@ const TicketCommentsModal = ({
 
   if (!isOpen) return null;
 
+  // Check if ticket is resolved or closed
+  const isResolved = ticketStatus?.toLowerCase() === 'resolved';
+  const isClosed = ticketStatus?.toLowerCase() === 'closed';
+  const canComment = !isResolved && !isClosed;
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (newCommentText.trim()) {
+    if (newCommentText.trim() && canComment) {
       onSubmitComment(e);
       setIsExpanded(false);
       setShowQuickResponses(true);
@@ -47,12 +53,14 @@ const TicketCommentsModal = ({
   ];
 
   const handleQuickResponse = (response) => {
+    if (!canComment) return;
     setNewCommentText(response);
     setIsExpanded(true);
     setShowQuickResponses(false);
   };
 
   const handleFocus = () => {
+    if (!canComment) return;
     setIsExpanded(true);
     setShowQuickResponses(false);
   };
@@ -124,115 +132,134 @@ const TicketCommentsModal = ({
             <div className="p-6 space-y-6">
               
               {/* New Comment Section - Sticky at top */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 sticky top-0 z-10">
-                <form onSubmit={handleSubmit}>
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0">
-                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#a10000] to-[#a10000] flex items-center justify-center text-white font-bold shadow-md">
-                        {getInitials(user.name)}
+              {canComment ? (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 sticky top-0 z-10">
+                  <form onSubmit={handleSubmit}>
+                    <div className="flex gap-4">
+                      <div className="flex-shrink-0">
+                        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#a10000] to-[#a10000] flex items-center justify-center text-white font-bold shadow-md">
+                          {getInitials(user.name)}
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        {!isExpanded && showQuickResponses ? (
+                          <div className="space-y-3">
+                            <input
+                              type="text"
+                              className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#a10000] focus:border-transparent placeholder-gray-400 transition-all"
+                              placeholder="Add a comment..."
+                              onFocus={handleFocus}
+                              readOnly
+                            />
+                            <div className="flex flex-wrap gap-2">
+                              {quickResponses.map((response, index) => (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  onClick={() => handleQuickResponse(response)}
+                                  className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-md transition-all"
+                                >
+                                  {response.length > 30 ? response.substring(0, 30) + "..." : response}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <div className="border-2 border-gray-200 rounded-lg bg-white focus-within:ring-2 focus-within:ring-[#a10000] focus-within:border-transparent transition-all">
+                              <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-200">
+                                <button
+                                  type="button"
+                                  className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                  title="Bold"
+                                >
+                                  <Bold className="w-4 h-4 text-gray-600" />
+                                </button>
+                                <button
+                                  type="button"
+                                  className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                  title="Italic"
+                                >
+                                  <Italic className="w-4 h-4 text-gray-600" />
+                                </button>
+                                <button
+                                  type="button"
+                                  className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                  title="Underline"
+                                >
+                                  <Underline className="w-4 h-4 text-gray-600" />
+                                </button>
+                                <div className="flex-1"></div>
+                                <button
+                                  type="button"
+                                  className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                  title="Add image"
+                                >
+                                  <ImageIcon className="w-4 h-4 text-gray-600" />
+                                </button>
+                              </div>
+                              <textarea
+                                rows="4"
+                                className="w-full px-4 py-3 text-gray-900 bg-white focus:outline-none placeholder-gray-400 resize-none"
+                                placeholder="Add a comment..."
+                                value={newCommentText}
+                                onChange={(e) => setNewCommentText(e.target.value)}
+                                disabled={isSubmitting}
+                                autoFocus
+                              />
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-gray-500">
+                                {newCommentText.length} characters
+                              </span>
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={handleCancel}
+                                  className="px-4 py-2 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-100 transition-all"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  type="submit"
+                                  disabled={isSubmitting || !newCommentText.trim()}
+                                  className="px-4 py-2 bg-gradient-to-r from-[#a10000] to-[#a10000] text-white text-sm font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                >
+                                  {isSubmitting ? (
+                                    <span className="flex items-center gap-2">
+                                      <Spinner size="sm" />
+                                      Posting...
+                                    </span>
+                                  ) : (
+                                    "Save"
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
+                  </form>
+                </div>
+              ) : (
+                // Disabled comment section for resolved/closed tickets
+                <div className="bg-gray-100 rounded-xl shadow-sm border-2 border-gray-300 p-5 sticky top-0 z-10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                      <Lock className="w-5 h-5 text-gray-600" />
+                    </div>
                     <div className="flex-1">
-                      {!isExpanded && showQuickResponses ? (
-                        <div className="space-y-3">
-                          <input
-                            type="text"
-                            className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#a10000] focus:border-transparent placeholder-gray-400 transition-all"
-                            placeholder="Add a comment..."
-                            onFocus={handleFocus}
-                            readOnly
-                          />
-                          <div className="flex flex-wrap gap-2">
-                            {quickResponses.map((response, index) => (
-                              <button
-                                key={index}
-                                type="button"
-                                onClick={() => handleQuickResponse(response)}
-                                className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-md transition-all"
-                              >
-                                {response.length > 30 ? response.substring(0, 30) + "..." : response}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          <div className="border-2 border-gray-200 rounded-lg bg-white focus-within:ring-2 focus-within:ring-[#a10000] focus-within:border-transparent transition-all">
-                            <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-200">
-                              <button
-                                type="button"
-                                className="p-1 hover:bg-gray-100 rounded transition-colors"
-                                title="Bold"
-                              >
-                                <Bold className="w-4 h-4 text-gray-600" />
-                              </button>
-                              <button
-                                type="button"
-                                className="p-1 hover:bg-gray-100 rounded transition-colors"
-                                title="Italic"
-                              >
-                                <Italic className="w-4 h-4 text-gray-600" />
-                              </button>
-                              <button
-                                type="button"
-                                className="p-1 hover:bg-gray-100 rounded transition-colors"
-                                title="Underline"
-                              >
-                                <Underline className="w-4 h-4 text-gray-600" />
-                              </button>
-                              <div className="flex-1"></div>
-                              <button
-                                type="button"
-                                className="p-1 hover:bg-gray-100 rounded transition-colors"
-                                title="Add image"
-                              >
-                                <ImageIcon className="w-4 h-4 text-gray-600" />
-                              </button>
-                            </div>
-                            <textarea
-                              rows="4"
-                              className="w-full px-4 py-3 text-gray-900 bg-white focus:outline-none placeholder-gray-400 resize-none"
-                              placeholder="Add a comment..."
-                              value={newCommentText}
-                              onChange={(e) => setNewCommentText(e.target.value)}
-                              disabled={isSubmitting}
-                              autoFocus
-                            />
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-500">
-                              {newCommentText.length} characters
-                            </span>
-                            <div className="flex gap-2">
-                              <button
-                                type="button"
-                                onClick={handleCancel}
-                                className="px-4 py-2 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-100 transition-all"
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                type="submit"
-                                disabled={isSubmitting || !newCommentText.trim()}
-                                className="px-4 py-2 bg-gradient-to-r from-[#a10000] to-[#a10000] text-white text-sm font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                              >
-                                {isSubmitting ? (
-                                  <span className="flex items-center gap-2">
-                                    <Spinner size="sm" />
-                                    Posting...
-                                  </span>
-                                ) : (
-                                  "Save"
-                                )}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                      <h3 className="text-sm font-bold text-gray-900">Comments Disabled</h3>
+                      <p className="text-xs text-gray-600">
+                        {isClosed 
+                          ? "This ticket is closed. No more comments can be added."
+                          : "This ticket is resolved. No more comments can be added."}
+                      </p>
                     </div>
                   </div>
-                </form>
-              </div>
+                </div>
+              )}
 
               {/* Comments List - Scrollable */}
               <div className="space-y-4 pb-4">
@@ -314,7 +341,9 @@ const TicketCommentsModal = ({
                       </div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-2">No comments yet</h3>
                       <p className="text-sm text-gray-500 max-w-sm">
-                        Be the first to start the conversation. Share your thoughts above!
+                        {canComment 
+                          ? "Be the first to start the conversation. Share your thoughts above!"
+                          : "No comments have been added to this ticket."}
                       </p>
                     </div>
                   </div>
