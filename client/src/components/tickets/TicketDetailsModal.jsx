@@ -68,16 +68,25 @@ const TicketDetailsModal = ({
       toast.error("Subject cannot be empty");
       return;
     }
-    if (isEditingStationNo && !newStationNo) {
-      toast.error("Station Number cannot be empty");
-      return;
+    if (isEditingStationNo) {
+      const stationNoValue = Number(newStationNo);
+      if (!newStationNo) {
+        toast.error("Station Number cannot be empty");
+        return;
+      }
+      if (isNaN(stationNoValue) || stationNoValue < 0) {
+        toast.error("Station Number must be a valid positive number");
+        return;
+      }
+      // NEW VALIDATION: Limit to 178
+      if (stationNoValue > 178) {
+        toast.error("Station Number cannot exceed 178");
+        return;
+      }
     }
+
     if (isEditingDescription && !newDescription) {
       toast.error("Description cannot be empty");
-      return;
-    }
-    if (isEditingStationNo && isNaN(Number(newStationNo))) {
-      toast.error("Station Number must be a number");
       return;
     }
 
@@ -294,12 +303,10 @@ const TicketDetailsModal = ({
                     ) : (
                       <div className="bg-gray-50 rounded-lg p-4 min-h-[120px]">
                         <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                          {ticketDetails.description || (
                             <span className="text-gray-400 italic">
                               No description provided.
                             </span>
-                          )}
-                        </p>
+                        </p> 
                       </div>
                     )}
                   </div>
@@ -418,7 +425,10 @@ const TicketDetailsModal = ({
                                 value={editedStationNo}
                                 onChange={(e) => setEditedStationNo(e.target.value)}
                                 className="w-full p-2.5 text-sm font-semibold text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Enter station no. (max 178)"
                                 disabled={isSaving}
+                                min="1"
+                                max="178" // Added max attribute
                               />
                               <EditingControls onSave={handleSaveTicketDetails} onCancel={handleCancelEdit} isSaving={isSaving} />
                             </div>
@@ -546,6 +556,9 @@ const TicketDetailsModal = ({
           )}
         </div>
       </div>
+      {/* This element will be at the bottom of the content in the modal, 
+          but the main div is what is actually returned.
+          Removing the trailing closing tag here to keep the component structure correct. */}
     </div>
   );
 };
