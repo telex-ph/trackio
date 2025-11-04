@@ -1,10 +1,23 @@
-import Attendance from "../model/Attendance.js"
-import User from "../model/User.js"
-import { STATUS } from "../../constants/status.js"
-import webhook from "../utils/webhook.js"
-import { biometricIn, biometricOut, biometricBreakIn, biometricBreakOut } from "../utils/biometric.js"
+import Attendance from "../model/Attendance.js";
+import User from "../model/User.js";
+import { STATUS } from "../../constants/status.js";
+import webhook from "../utils/webhook.js";
+import { biometricIn, biometricOut, biometricBreakIn, biometricBreakOut } from "../utils/biometric.js";
 import { DateTime } from "luxon";
-import { BIO_IP } from "../../constants/biometricsIp.js"
+import { BIO_IP } from "../../constants/biometricsIp.js";
+
+const lastEventMap = new Map();
+const THROTTLE_MS = 5000;
+const CLEANUP_MS = 60 * 60 * 1000; // 1 hour
+
+setInterval(() => {
+    const now = Date.now();
+    for (const [employeeId, timestamp] of lastEventMap.entries()) {
+        if (now - timestamp > CLEANUP_MS) {
+            lastEventMap.delete(employeeId);
+        }
+    }
+}, CLEANUP_MS);
 
 export const getEvents = async (req, res) => {
     try {
@@ -26,17 +39,22 @@ export const getEvents = async (req, res) => {
                 if (ac.employeeNoString || (ac.name && ac.name !== 'Unknown')) {
                     const ipAddress = event.ipAddress;
 
+                    // Throttle check
+                    const now = Date.now();
+                    const lastTime = lastEventMap.get(ac.employeeNoString) || 0;
+                    if (now - lastTime < THROTTLE_MS) {
+                        console.log(`Event for ${ac.employeeNoString} ignored due to throttle`);
+                        return res.status(200).send('OK');
+                    }
+                    lastEventMap.set(ac.employeeNoString, now);
 
                     console.log(ac.name);
 
-
-                    // if (ipAddress === BIO_IP.ADMINDOOR) return res.status(200).send('OK');
+                    if (ipAddress === BIO_IP.ADMINDOOR) return res.status(200).send('OK');
 
                     const user = await User.getById(ac.employeeNoString);
                     if (user) {
                         const userId = user._id.toString();
-                        // Get the attendance first, then determine if 
-                        // there is already record
                         const [attendance] = await Attendance.getById(userId);
                         if (attendance) {
                             const attendanceId = attendance._id.toString();
