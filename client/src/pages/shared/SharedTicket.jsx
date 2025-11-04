@@ -92,7 +92,18 @@ const TicketsTable = () => {
           Authorization: bearerToken,
         },
       });
-      setTickets(response.data.data.documents || []);
+
+      // +++ BINAGO DITO +++
+      // Kunin ang documents
+      const documents = response.data.data.documents || [];
+
+      // I-sort ang documents based sa ticketNo (descending order)
+      // Gagawin nating Number para sigurado tayo sa tamang sorting
+      documents.sort((a, b) => Number(b.ticketNo) - Number(a.ticketNo));
+
+      // Ilagay ang sorted data sa state
+      setTickets(documents);
+      // +++ END NG PAGBABAGO +++
     } catch (error) {
       console.error("Failed to fetch tickets:", error);
       toast.error("Failed to load tickets");
@@ -106,7 +117,6 @@ const TicketsTable = () => {
   useEffect(() => {
     fetchTickets();
   }, [user.email]);
-
 
   // Function to fetch detailed ticket data
   const fetchTicketDetails = async () => {
@@ -157,21 +167,25 @@ const TicketsTable = () => {
         },
       });
 
-      const commentsData = commentsResponse.data?.data || commentsResponse.data || [];
-      const commentsList = Array.isArray(commentsData) ? commentsData : 
-              (commentsData.documents && Array.isArray(commentsData.documents)) ? commentsData.documents : [];
+      const commentsData =
+        commentsResponse.data?.data || commentsResponse.data || [];
+      const commentsList = Array.isArray(commentsData)
+        ? commentsData
+        : commentsData.documents && Array.isArray(commentsData.documents)
+        ? commentsData.documents
+        : [];
 
       // Check if there's a confirmation comment from this user
-      const hasUserConfirmation = commentsList.some(comment => 
-        comment.commentText && 
-        comment.commentText.includes('Resolution confirmed by User') && 
-        comment.commentText.includes(user.email)
+      const hasUserConfirmation = commentsList.some(
+        (comment) =>
+          comment.commentText &&
+          comment.commentText.includes("Resolution confirmed by User") &&
+          comment.commentText.includes(user.email)
       );
 
       // Add confirmation flag to ticket data
       ticketData.agentConfirmed = hasUserConfirmation;
       setTicketDetails(ticketData);
-
     } catch (error) {
       console.error("Failed to fetch ticket details:", error);
       toast.error("Could not fetch ticket details.");
@@ -242,7 +256,7 @@ const TicketsTable = () => {
       console.log("Starting file upload...", {
         fileName: attachmentFile.name,
         fileSize: attachmentFile.size,
-        fileType: attachmentFile.type
+        fileType: attachmentFile.type,
       });
 
       const formData = new FormData();
@@ -259,14 +273,21 @@ const TicketsTable = () => {
 
       // Try multiple possible response structures
       let uploadedUrl = null;
-      
+
       // Check if response.data is an array (multiple files)
       if (Array.isArray(res.data) && res.data.length > 0) {
         uploadedUrl = res.data[0].url || res.data[0].secure_url;
       }
       // Check if response.data has files array
-      else if (res.data?.files && Array.isArray(res.data.files) && res.data.files.length > 0) {
-        uploadedUrl = res.data.files[0].url || res.data.files[0].secure_url || res.data.files[0].path;
+      else if (
+        res.data?.files &&
+        Array.isArray(res.data.files) &&
+        res.data.files.length > 0
+      ) {
+        uploadedUrl =
+          res.data.files[0].url ||
+          res.data.files[0].secure_url ||
+          res.data.files[0].path;
       }
       // Check direct properties on res.data (Cloudinary direct response)
       else if (res.data?.url) {
@@ -301,25 +322,31 @@ const TicketsTable = () => {
   // FIXED: Handle adding a new ticket with better error handling
   const handleAddTicket = async (e) => {
     e.preventDefault();
-    
+
     // Validate form data
-    if (!formData.stationNo || !formData.subject || !formData.description || !formData.category || !formData.severity) {
+    if (
+      !formData.stationNo ||
+      !formData.subject ||
+      !formData.description ||
+      !formData.category ||
+      !formData.severity
+    ) {
       toast.error("Please fill in all required fields");
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       console.log("Starting ticket creation...");
-      
+
       // Upload attachment first if exists
       let uploadedUrl = null;
       if (attachmentFile) {
         console.log("Uploading attachment...");
         uploadedUrl = await handleFileUpload();
         console.log("Attachment upload result:", uploadedUrl);
-        
+
         // Don't proceed if upload failed but file was selected
         if (!uploadedUrl) {
           toast.error("Attachment upload failed. Please try again.");
@@ -359,7 +386,7 @@ const TicketsTable = () => {
       // Add to tickets list
       setTickets((prev) => [response.data, ...prev]);
       toast.success("Ticket added successfully!");
-      
+
       // Close modal and reset form
       setIsModalOpen(false);
       setFormData({
@@ -375,14 +402,14 @@ const TicketsTable = () => {
 
       // Refresh tickets list
       await fetchTickets();
-
     } catch (error) {
       console.error("Ticket creation error:", error);
       console.error("Error response:", error.response?.data);
-      
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.error || 
-                          "Failed to add ticket";
+
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Failed to add ticket";
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -429,8 +456,9 @@ const TicketsTable = () => {
     if (!selectedTicket || !user.email) return;
 
     try {
-      const url = "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/updateComment";
-      
+      const url =
+        "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/updateComment";
+
       const payload = {
         email: user.email,
         ticketNum: selectedTicket.ticketNo,
@@ -453,7 +481,7 @@ const TicketsTable = () => {
   };
 
   // Handle confirmation of resolution (receives feedback and rating)
-  const handleConfirmResolution = async (feedback, rating) => { 
+  const handleConfirmResolution = async (feedback, rating) => {
     if (!ticketDetails || !user.email) {
       toast.error("Missing ticket information");
       return;
@@ -463,7 +491,7 @@ const TicketsTable = () => {
       toast.error("You have already confirmed this resolution");
       return;
     }
-    
+
     if (rating === 0) {
       toast.error("Rating is required.");
       return;
@@ -471,8 +499,9 @@ const TicketsTable = () => {
 
     setIsConfirming(true);
     try {
-      // Step 1: Confirm the resolution via PATCH API 
-      const confirmUrl = "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/confirmation";
+      // Step 1: Confirm the resolution via PATCH API
+      const confirmUrl =
+        "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/confirmation";
       const confirmPayload = {
         email: user.email,
         updateTicketNo: ticketDetails.ticketNo,
@@ -487,12 +516,15 @@ const TicketsTable = () => {
         },
       });
 
-      // Step 2: Automatically post a comment about the confirmation 
-      const commentUrl = "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/itTicketComment";
+      // Step 2: Automatically post a comment about the confirmation
+      const commentUrl =
+        "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/itTicketComment";
       const commentPayload = {
         email: user.email,
         ticketNum: ticketDetails.ticketNo,
-        commentText: `✅ Resolution confirmed by User: ${user.email}. Rating: ${rating.toFixed(1)}/5. Feedback: ${feedback || 'N/A'}`, 
+        commentText: `✅ Resolution confirmed by User: ${
+          user.email
+        }. Rating: ${rating.toFixed(1)}/5. Feedback: ${feedback || "N/A"}`,
       };
 
       await axios.post(commentUrl, commentPayload, {
@@ -503,25 +535,27 @@ const TicketsTable = () => {
       });
 
       // Check if ticket was automatically closed
-      const newStatus = confirmResponse.data?.status || confirmResponse.data?.data?.status;
-      const isClosed = newStatus?.toLowerCase() === 'closed';
+      const newStatus =
+        confirmResponse.data?.status || confirmResponse.data?.data?.status;
+      const isClosed = newStatus?.toLowerCase() === "closed";
 
       if (isClosed) {
-        toast.success("🎉 Ticket has been closed! Both parties have confirmed the resolution.");
+        toast.success(
+          "🎉 Ticket has been closed! Both parties have confirmed the resolution."
+        );
       } else {
         toast.success("✅ Resolution confirmed!");
       }
-      
+
       // Close confirmation modal
       setIsConfirmationModalOpen(false);
-      
+
       // Refresh data
       await fetchTicketDetails();
       await fetchTickets();
       if (isCommentsModalOpen) {
         await fetchComments();
       }
-
     } catch (error) {
       console.error("Failed to confirm resolution:", error);
       toast.error("Failed to confirm ticket resolution");
@@ -667,7 +701,7 @@ const TicketsTable = () => {
         setActiveTab={setActiveTab}
         formatDate={formatDate}
         ticketStatus={ticketDetails?.status}
-        onCommentUpdate={handleUpdateComment} 
+        onCommentUpdate={handleUpdateComment}
       />
 
       {/* Confirmation Modal */}
