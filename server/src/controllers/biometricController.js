@@ -8,7 +8,7 @@ import { BIO_IP } from "../../constants/biometricsIp.js";
 
 const lastEventMap = new Map();
 const THROTTLE_MS = 5000;
-const CLEANUP_MS = 60 * 60 * 1000; // 1 hour
+const CLEANUP_MS = 60 * 60 * 1000;
 
 setInterval(() => {
     const now = Date.now();
@@ -39,11 +39,10 @@ export const getEvents = async (req, res) => {
                 if (ac.employeeNoString || (ac.name && ac.name !== 'Unknown')) {
                     const ipAddress = event.ipAddress;
 
-                    // Throttle check
                     const now = Date.now();
                     const lastTime = lastEventMap.get(ac.employeeNoString) || 0;
                     if (now - lastTime < THROTTLE_MS) {
-                        console.log(`Event for ${ac.employeeNoString} ignored due to throttle`);
+                        console.log(`Event for ${ac.name} ignored due to throttle`);
                         return res.status(200).send('OK');
                     }
                     lastEventMap.set(ac.employeeNoString, now);
