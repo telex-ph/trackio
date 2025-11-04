@@ -6,6 +6,7 @@ import ServerTime from "../../components/ServerTime";
 import trackio from "../../assets/logos/trackio.svg";
 import Happy from "../../assets/illustrations/Happy";
 import { STATUS } from "../../constants/status";
+import liveMonitoring from "../../assets/background/live-monitoring.png";
 
 const SOCKET_URL =
   import.meta.env.VITE_API_RENDER_BASE_URL || "http://localhost:3000";
@@ -91,15 +92,19 @@ export default function LiveBreaks() {
     .sort((a, b) => b.percentage - a.percentage);
 
   return (
-    <section>
-      <section>
+    <section style={{
+      backgroundImage: `url(${liveMonitoring})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+    }}>
+      {/* <section>
         <ServerTime />
-      </section>
+      </section> */}
 
       <div className="flex gap-5 p-5  h-screen">
         {/* LEFT PANEL: ON BREAK */}
         <div className="flex-1 p-5 rounded-sm">
-          <h2 className="mb-4 text-gray-700">Live On Break (max: 1hr 30min)</h2>
+          <h2 className="mb-4 text-gray-700 border p-2 border-light bg-gray-50 rounded-md">Live On Break (max: 1hr 30min)</h2>
           <section className="space-y-3">
             <AnimatePresence mode="popLayout">
               {onBreakStatuses.map((status, key) => (
@@ -109,7 +114,7 @@ export default function LiveBreaks() {
                   initial={{ x: -100, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   exit={{ x: 100, opacity: 0 }}
-                  className="h-20 relative border-blue-800 border-2 flex items-center justify-center rounded-lg text-gray-700"
+                  className="h-20 relative flex items-center justify-center text-gray-700 border p-2 border-light bg-gray-50 rounded-md"
                 >
                   <div
                     className="absolute left-0 top-0 h-full bg-blue-500 rounded-r-sm"
@@ -117,7 +122,7 @@ export default function LiveBreaks() {
                   ></div>
                   <div className="w-full flex items-center gap-2 px-7 relative z-10">
                     <div className="flex gap-3">
-                      <h2>{key + 1})</h2>
+                      <h2>{key + 1}</h2>
                       <h2 className="flex-1 text-center">
                         {status.firstName} {status.lastName}
                       </h2>
@@ -135,14 +140,14 @@ export default function LiveBreaks() {
                   </div>
                 </motion.div>
               ))}
-              {onBreakStatuses.length === 0 && <Happy />}
+              {/* {onBreakStatuses.length === 0 && <Happy />} */}
             </AnimatePresence>
           </section>
         </div>
 
         {/* RIGHT PANEL: OVER BREAK */}
-        <div className="flex-1 bg-white p-5 rounded-sm">
-          <h2 className="mb-4 text-gray-700">Live Over Break</h2>
+        <div className="flex-1 p-5 rounded-sm">
+          <h2 className="mb-4 text-gray-700 border p-2 border-light bg-gray-50 rounded-md">Live Over Break</h2>
           <section className="space-y-3">
             <AnimatePresence mode="popLayout">
               {overBreakStatuses.map((status, key) => (
@@ -152,7 +157,7 @@ export default function LiveBreaks() {
                   initial={{ x: -100, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   exit={{ x: 100, opacity: 0 }}
-                  className="h-20 relative bg-green-400 border-2 flex items-center justify-center rounded-lg text-gray-700"
+                  className="h-20 relative flex items-center justify-center text-gray-700 border p-2 border-light bg-gray-50 rounded-md"
                 >
                   <div className="w-full flex items-center gap-2 px-7 relative z-10">
                     <div className="flex gap-3">
@@ -168,7 +173,7 @@ export default function LiveBreaks() {
                   </div>
                 </motion.div>
               ))}
-              {overBreakStatuses.length === 0 && <Happy />}
+              {/* {overBreakStatuses.length === 0 && <Happy />} */}
             </AnimatePresence>
           </section>
         </div>
