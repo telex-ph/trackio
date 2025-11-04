@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 // --- Helper function to parse special comments (Unchanged) ---
 const parseConfirmationComment = (commentText) => {
   const confirmationPattern = /✅ Resolution confirmed by User:/;
+  
   const match = commentText.match(confirmationPattern);
 
   if (match) {
@@ -70,7 +71,6 @@ const TicketCommentsModal = ({
     setEditedCommentText("");
   };
 
-  // +++ BINAGO DITO: `handleSaveEdit` +++
   const handleSaveEdit = async (commentId) => {
     if (!editedCommentText.trim()) {
       toast.error("Comment cannot be empty");
@@ -88,15 +88,12 @@ const TicketCommentsModal = ({
       return;
     }
 
-    // +++ BAGONG CHECK +++
     // Check kung ito ang pinakabagong comment
-    // Ang `comments` array ay dapat laging sorted newest-first
     if (comments.length > 0 && comments[0].$id !== commentId) {
       toast.error("You can only edit the newest comment.");
       handleCancelEdit();
       return;
     }
-    // +++ END NG BAGONG CHECK +++
 
     setIsUpdatingComment(true);
     try {
@@ -111,7 +108,6 @@ const TicketCommentsModal = ({
       setIsUpdatingComment(false);
     }
   };
-  // +++ END NG PAGBABAGO +++
 
   // Utility functions
   const getInitials = (name) => {
@@ -424,11 +420,9 @@ const TicketCommentsModal = ({
                                 </div>
 
                                 <div className="flex items-center gap-2">
-                                  {/* +++ BINAGO DITO: Display logic ng Edit Button +++ */}
-                                  {/* Idinagdag ang 'isNewest' sa condition */}
                                   {isCurrentUser &&
                                     canEdit &&
-                                    isNewest && 
+                                    isNewest &&
                                     !isCurrentCommentEditing &&
                                     !isConfirmation && (
                                       <button
@@ -440,8 +434,7 @@ const TicketCommentsModal = ({
                                         <Edit2 className="w-4 h-4" />
                                       </button>
                                     )}
-                                  {/* +++ END NG PAGBABAGO +++ */}
-                                  
+
                                   <div className="flex items-center gap-1.5 text-gray-500">
                                     <Clock className="w-3.5 h-3.5" />
                                     <span className="text-xs font-medium whitespace-nowrap">

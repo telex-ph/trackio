@@ -497,17 +497,14 @@ const TicketsTable = () => {
       });
 
       // +++ BINAGO DITO +++
-      // Step 2: Automatically post a comment about the confirmation (Use ticketDetails.requestee.name)
+      // Step 2: Automatically post a comment about the confirmation (Use new text)
       const commentUrl =
         "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/itTicketComment";
-      
-      // Gumamit ng fallback chain: ticketDetails.requestee.name -> user.name -> user.email
-      const name = ticketDetails.requestee?.name || user.name || user.name;
 
       const commentPayload = {
-        email: user.name,
+        email: user.email,
         ticketNum: ticketDetails.ticketNo,
-        commentText: `✅ Resolution confirmed by User: ${name}.`,
+        commentText: `✅ Resolution confirmed by User: The user has verified that the reported issue has been successfully resolved and no further assistance is required.`,
       };
       // +++ END NG PAGBABAGO +++
 
