@@ -26,7 +26,7 @@ export const getEvents = async (req, res) => {
                 if (ac.employeeNoString || (ac.name && ac.name !== 'Unknown')) {
                     const ipAddress = event.ipAddress;
 
-                    // if (ipAddress === BIO_IP.ADMINDOOR) return res.status(200).send('OK');
+                    if (ipAddress === BIO_IP.ADMINDOOR) return res.status(200).send('OK');
 
                     const user = await User.getById(ac.employeeNoString);
                     if (user) {
