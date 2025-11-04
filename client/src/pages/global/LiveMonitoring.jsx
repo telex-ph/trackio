@@ -18,12 +18,15 @@ export default function LiveBreaks() {
 
   // Calculate percentage of break completed
   const calculatePercentage = (totalBreakTime = 0, currentBreakStart) => {
-    if (!currentBreakStart) return 0;
     const currentBreak = DateTime.fromISO(currentBreakStart, {
       zone: "Asia/Manila",
     });
-    const currentBreakTime = now.diff(currentBreak, "milliseconds").milliseconds;
+    const currentBreakTime = now.diff(
+      currentBreak,
+      "milliseconds"
+    ).milliseconds;
     const totalBreakDuration = currentBreakTime + totalBreakTime;
+
     return Math.min((totalBreakDuration / maxBreakTime) * 100, 100);
   };
 
@@ -34,7 +37,6 @@ export default function LiveBreaks() {
     });
 
     socket.on("statuses", (statuses) => {
-      console.log(statuses);
       setStatuses(statuses);
     });
 
@@ -52,22 +54,22 @@ export default function LiveBreaks() {
 
   const processedStatuses = statuses
     .map((status) => {
-      if (!status.breaks || status.breaks.length === 0) return null;
+      const breaksCount = status.breaks?.length - 1;
+      // if (!breaksCount) return null;
+      const lastBreakStart = status.breaks[breaksCount]?.start;
+      // if (!lastBreakStart) return null;
 
-      const lastBreak = status.breaks[status.breaks.length - 1];
-      const lastBreakStart = lastBreak?.start;
-      const isOnBreak = status.status === STATUS.ON_BREAK;
+      const percentage = calculatePercentage(
+        status.totalBreakTime,
+        lastBreakStart
+      );
 
-      let percentage = 0;
-      let breakDurationMs = status.totalBreakTime;
+      const breakDurationMs =
+        status.totalBreakTime +
+        now.toMillis() -
+        DateTime.fromISO(lastBreakStart).toMillis();
 
-      if (isOnBreak && lastBreakStart) {
-        percentage = calculatePercentage(status.totalBreakTime, lastBreakStart);
-        breakDurationMs =
-          status.totalBreakTime +
-          now.toMillis() -
-          DateTime.fromISO(lastBreakStart).toMillis();
-      }
+      if (isNaN(breakDurationMs)) return null;
 
       const duration = Duration.fromMillis(breakDurationMs).shiftTo(
         "hours",
@@ -81,35 +83,33 @@ export default function LiveBreaks() {
     })
     .filter(Boolean);
 
-  // Employees currently on break
   const onBreakStatuses = processedStatuses
-    .filter((s) => s.status === STATUS.ON_BREAK && s.percentage < 100)
+    .filter((s) => s.percentage < 100 && s.status == STATUS.ON_BREAK)
     .sort((a, b) => b.percentage - a.percentage);
 
-  // Employees over break limit
   const overBreakStatuses = processedStatuses
-    .filter((s) => s.status === STATUS.ON_BREAK && s.percentage >= 100)
+    .filter((s) => s.percentage >= 100)
     .sort((a, b) => b.percentage - a.percentage);
 
   return (
-    <section
-      style={{
-        backgroundImage: `url(${liveMonitoring})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
-      <div className="flex gap-5 p-5 h-screen">
+    <section style={{
+      backgroundImage: `url(${liveMonitoring})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+    }}>
+      {/* <section>
+        <ServerTime />
+      </section> */}
+
+      <div className="flex gap-5 p-5  h-screen">
         {/* LEFT PANEL: ON BREAK */}
         <div className="flex-1 p-5 rounded-sm">
-          <h2 className="mb-4 text-gray-700 border p-2 border-light bg-gray-50 rounded-md">
-            Live On Break (max: 1hr 30min)
-          </h2>
+          <h2 className="mb-4 text-gray-700 border p-2 border-light bg-gray-50 rounded-md">Live On Break (max: 1hr 30min)</h2>
           <section className="space-y-3">
             <AnimatePresence mode="popLayout">
               {onBreakStatuses.map((status, key) => (
                 <motion.div
-                  key={status._id + "on-break"}
+                  key={status._id + "on break"}
                   layout
                   initial={{ x: -100, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
@@ -127,23 +127,26 @@ export default function LiveBreaks() {
                         {status.firstName} {status.lastName}
                       </h2>
                     </div>
-                    <h3 className="text-center flex-1">
+                    {/* <h3 className="text-center flex-1">
                       {status.percentage.toFixed(1)}%
+                    </h3> */}
+                    <h3 className="text-center flex-1">
+                      {status?.percentage <= 0
+                        ? 0.0
+                        : status?.percentage.toFixed(1)}
+                      %
                     </h3>
                     <h3>{status.formattedTime}</h3>
                   </div>
                 </motion.div>
               ))}
-              {onBreakStatuses.length === 0 && <Happy />}
             </AnimatePresence>
           </section>
         </div>
 
         {/* RIGHT PANEL: OVER BREAK */}
         <div className="flex-1 p-5 rounded-sm">
-          <h2 className="mb-4 text-gray-700 border p-2 border-light bg-gray-50 rounded-md">
-            Live Over Break
-          </h2>
+          <h2 className="mb-4 text-gray-700 border p-2 border-light bg-gray-50 rounded-md">Live Over Break</h2>
           <section className="space-y-3">
             <AnimatePresence mode="popLayout">
               {overBreakStatuses.map((status, key) => (
@@ -153,7 +156,7 @@ export default function LiveBreaks() {
                   initial={{ x: -100, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   exit={{ x: 100, opacity: 0 }}
-                  className="h-20 relative flex items-center justify-center text-gray-700 border p-2 border-light bg-gray-50 rounded-md"
+                  className="h-20 relative bg-green-400 border-2 flex items-center justify-center rounded-lg text-gray-700"
                 >
                   <div className="w-full flex items-center gap-2 px-7 relative z-10">
                     <div className="flex gap-3">
@@ -169,7 +172,6 @@ export default function LiveBreaks() {
                   </div>
                 </motion.div>
               ))}
-              {overBreakStatuses.length === 0 && <Happy />}
             </AnimatePresence>
           </section>
         </div>
