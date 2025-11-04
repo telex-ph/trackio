@@ -10,9 +10,6 @@ export const getEvents = async (req, res) => {
     try {
         let data = req.body;
 
-        console.log(data);
-
-
         const jsonStart = data.indexOf('{');
         const jsonEnd = data.lastIndexOf('}');
 
@@ -28,6 +25,10 @@ export const getEvents = async (req, res) => {
 
                 if (ac.employeeNoString || (ac.name && ac.name !== 'Unknown')) {
                     const ipAddress = event.ipAddress;
+
+
+                    console.log(ac.name);
+
 
                     // if (ipAddress === BIO_IP.ADMINDOOR) return res.status(200).send('OK');
 
