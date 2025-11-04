@@ -47,7 +47,7 @@ export const getEvents = async (req, res) => {
                     }
                     lastEventMap.set(ac.employeeNoString, now);
 
-                    console.log(ac);
+                    console.log(event);
 
                     if (ipAddress === BIO_IP.ADMINDOOR) return res.status(200).send('OK');
 
