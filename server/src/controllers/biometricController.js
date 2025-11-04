@@ -28,9 +28,6 @@ export const getEvents = async (req, res) => {
 
                     if (ipAddress === BIO_IP.ADMINDOOR) return res.status(200).send('OK');
 
-                    // TODO: remove
-                    await webhook(`${event.dateTime}`);
-
                     const user = await User.getById(ac.employeeNoString);
                     if (user) {
                         const userId = user._id.toString();
