@@ -93,17 +93,14 @@ const TicketsTable = () => {
         },
       });
 
-      // +++ BINAGO DITO +++
       // Kunin ang documents
       const documents = response.data.data.documents || [];
 
       // I-sort ang documents based sa ticketNo (descending order)
-      // Gagawin nating Number para sigurado tayo sa tamang sorting
       documents.sort((a, b) => Number(b.ticketNo) - Number(a.ticketNo));
 
       // Ilagay ang sorted data sa state
       setTickets(documents);
-      // +++ END NG PAGBABAGO +++
     } catch (error) {
       console.error("Failed to fetch tickets:", error);
       toast.error("Failed to load tickets");
@@ -179,8 +176,7 @@ const TicketsTable = () => {
       const hasUserConfirmation = commentsList.some(
         (comment) =>
           comment.commentText &&
-          comment.commentText.includes("Resolution confirmed by User") &&
-          comment.commentText.includes(user.email)
+          comment.commentText.includes("Resolution confirmed by User:")
       );
 
       // Add confirmation flag to ticket data
@@ -245,7 +241,7 @@ const TicketsTable = () => {
     }
   }, [isCommentsModalOpen]);
 
-  // FIXED: Handle file upload (attachment) with better error handling and logging
+  // Handle file upload (attachment)
   const handleFileUpload = async () => {
     if (!attachmentFile) {
       console.log("No attachment file selected");
@@ -271,15 +267,11 @@ const TicketsTable = () => {
 
       console.log("Upload response:", res.data);
 
-      // Try multiple possible response structures
       let uploadedUrl = null;
 
-      // Check if response.data is an array (multiple files)
       if (Array.isArray(res.data) && res.data.length > 0) {
         uploadedUrl = res.data[0].url || res.data[0].secure_url;
-      }
-      // Check if response.data has files array
-      else if (
+      } else if (
         res.data?.files &&
         Array.isArray(res.data.files) &&
         res.data.files.length > 0
@@ -288,15 +280,11 @@ const TicketsTable = () => {
           res.data.files[0].url ||
           res.data.files[0].secure_url ||
           res.data.files[0].path;
-      }
-      // Check direct properties on res.data (Cloudinary direct response)
-      else if (res.data?.url) {
+      } else if (res.data?.url) {
         uploadedUrl = res.data.url;
       } else if (res.data?.secure_url) {
         uploadedUrl = res.data.secure_url;
-      }
-      // Check nested data object
-      else if (res.data?.data?.url) {
+      } else if (res.data?.data?.url) {
         uploadedUrl = res.data.data.url;
       } else if (res.data?.data?.secure_url) {
         uploadedUrl = res.data.data.secure_url;
@@ -319,11 +307,10 @@ const TicketsTable = () => {
     }
   };
 
-  // FIXED: Handle adding a new ticket with better error handling
+  // Handle adding a new ticket
   const handleAddTicket = async (e) => {
     e.preventDefault();
 
-    // Validate form data
     if (
       !formData.stationNo ||
       !formData.subject ||
@@ -340,14 +327,12 @@ const TicketsTable = () => {
     try {
       console.log("Starting ticket creation...");
 
-      // Upload attachment first if exists
       let uploadedUrl = null;
       if (attachmentFile) {
         console.log("Uploading attachment...");
         uploadedUrl = await handleFileUpload();
         console.log("Attachment upload result:", uploadedUrl);
 
-        // Don't proceed if upload failed but file was selected
         if (!uploadedUrl) {
           toast.error("Attachment upload failed. Please try again.");
           setIsSubmitting(false);
@@ -355,7 +340,6 @@ const TicketsTable = () => {
         }
       }
 
-      // Prepare ticket data
       const ticketData = {
         email: formData.email,
         stationNo: Number(formData.stationNo),
@@ -369,7 +353,6 @@ const TicketsTable = () => {
 
       console.log("Sending ticket data:", ticketData);
 
-      // Create ticket
       const response = await axios.post(
         "https://ticketing-system-eight-kappa.vercel.app/api/ittickets",
         ticketData,
@@ -383,11 +366,9 @@ const TicketsTable = () => {
 
       console.log("Ticket creation response:", response.data);
 
-      // Add to tickets list
       setTickets((prev) => [response.data, ...prev]);
       toast.success("Ticket added successfully!");
 
-      // Close modal and reset form
       setIsModalOpen(false);
       setFormData({
         email: user.email,
@@ -400,7 +381,6 @@ const TicketsTable = () => {
       });
       setAttachmentFile(null);
 
-      // Refresh tickets list
       await fetchTickets();
     } catch (error) {
       console.error("Ticket creation error:", error);
@@ -442,7 +422,7 @@ const TicketsTable = () => {
 
       toast.success("Comment posted!");
       setNewCommentText("");
-      await fetchComments(); // Refresh comments list
+      await fetchComments();
     } catch (error) {
       console.error("Failed to post comment:", error);
       toast.error("Failed to post comment.");
@@ -473,10 +453,10 @@ const TicketsTable = () => {
         },
       });
 
-      await fetchComments(); // Refresh the comments list after update
+      await fetchComments();
     } catch (error) {
       console.error("Failed to update comment:", error);
-      throw new Error("API call failed to update comment."); // Throw error for modal to catch
+      throw new Error("API call failed to update comment.");
     }
   };
 
@@ -499,7 +479,7 @@ const TicketsTable = () => {
 
     setIsConfirming(true);
     try {
-      // Step 1: Confirm the resolution via PATCH API
+      // Step 1: Confirm the resolution via PATCH API (Still send rating/feedback)
       const confirmUrl =
         "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/confirmation";
       const confirmPayload = {
@@ -516,16 +496,20 @@ const TicketsTable = () => {
         },
       });
 
-      // Step 2: Automatically post a comment about the confirmation
+      // +++ BINAGO DITO +++
+      // Step 2: Automatically post a comment about the confirmation (Use ticketDetails.requestee.name)
       const commentUrl =
         "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/itTicketComment";
+      
+      // Gumamit ng fallback chain: ticketDetails.requestee.name -> user.name -> user.email
+      const name = ticketDetails.requestee?.name || user.name || user.name;
+
       const commentPayload = {
-        email: user.email,
+        email: user.name,
         ticketNum: ticketDetails.ticketNo,
-        commentText: `✅ Resolution confirmed by User: ${
-          user.email
-        }. Rating: ${rating.toFixed(1)}/5. Feedback: ${feedback || "N/A"}`,
+        commentText: `✅ Resolution confirmed by User: ${name}.`,
       };
+      // +++ END NG PAGBABAGO +++
 
       await axios.post(commentUrl, commentPayload, {
         headers: {
