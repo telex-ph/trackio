@@ -10,11 +10,13 @@ import axios from "axios";
 import api from "../../utils/axios";
 import { useStore } from "../../store/useStore";
 
+// Import modal components
 import AddTicketModal from "../../components/tickets/AddTicketModal";
 import TicketDetailsModal from "../../components/tickets/TicketDetailsModal";
 import TicketCommentsModal from "../../components/tickets/TicketCommentsModal";
 import TicketConfirmationModal from "../../components/tickets/TicketConfirmationModal";
 
+// Helper function for date formatting
 const formatDate = (dateString) => {
   if (!dateString) {
     return <span className="text-gray-500">N/A</span>;
@@ -29,6 +31,7 @@ const formatDate = (dateString) => {
   });
 };
 
+// Bearer Token - IMPORTANT: Store this securely, not hardcoded in production code!
 const bearerToken =
   "Bearer standard_077ed3b9b01c0863d40827030797f5e602b32b89fe2f3f94cc495b475802c16512013466aaf82efa0d966bff7d6cf837d00e0bfdc9e91f4f290e893ba28c4d6330310f6428f7befc9ad39cd5a55f3b3ba09822aed74a922bf1e6ca958b2f844fab5259c0d69318160bb91d4ab2bf2bec0c72f6d94bf0666a59559c3992aa8b47";
 
@@ -53,6 +56,7 @@ const TicketsTable = () => {
   const [newCommentText, setNewCommentText] = useState("");
   const [activeTab, setActiveTab] = useState("comments");
 
+  // Confirmation modal state
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
 
@@ -68,6 +72,7 @@ const TicketsTable = () => {
 
   const [tickets, setTickets] = useState([]);
 
+  // Function to fetch the list of tickets
   const fetchTickets = async () => {
     if (!user.email) {
       setIsLoading(false);
@@ -97,11 +102,13 @@ const TicketsTable = () => {
     }
   };
 
+  // Initial fetch of tickets
   useEffect(() => {
     fetchTickets();
   }, [user.email]);
 
 
+  // Function to fetch detailed ticket data
   const fetchTicketDetails = async () => {
     if (!isDetailsModalOpen || !selectedTicket || !user.email) {
       return;
@@ -141,6 +148,7 @@ const TicketsTable = () => {
         throw new Error("Unexpected data format from API");
       }
 
+      // Fetch comments to check if agent already confirmed
       const commentsUrl = `https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/comments/${user.email}/${selectedTicket.ticketNo}`;
       const commentsResponse = await axios.get(commentsUrl, {
         headers: {
@@ -153,12 +161,14 @@ const TicketsTable = () => {
       const commentsList = Array.isArray(commentsData) ? commentsData : 
               (commentsData.documents && Array.isArray(commentsData.documents)) ? commentsData.documents : [];
 
+      // Check if there's a confirmation comment from this user
       const hasUserConfirmation = commentsList.some(comment => 
         comment.commentText && 
         comment.commentText.includes('Resolution confirmed by User') && 
         comment.commentText.includes(user.email)
       );
 
+      // Add confirmation flag to ticket data
       ticketData.agentConfirmed = hasUserConfirmation;
       setTicketDetails(ticketData);
 
@@ -171,10 +181,12 @@ const TicketsTable = () => {
     }
   };
 
+  // Load details when modal opens
   useEffect(() => {
     fetchTicketDetails();
   }, [isDetailsModalOpen, selectedTicket, user.email]);
 
+  // Function to fetch comments
   const fetchComments = async () => {
     if (!selectedTicket || !user.email) return;
 
@@ -208,6 +220,7 @@ const TicketsTable = () => {
     }
   };
 
+  // Load comments when modal opens
   useEffect(() => {
     if (isCommentsModalOpen) {
       fetchComments();
@@ -218,38 +231,121 @@ const TicketsTable = () => {
     }
   }, [isCommentsModalOpen]);
 
+  // FIXED: Handle file upload (attachment) with better error handling and logging
   const handleFileUpload = async () => {
-    if (!attachmentFile) return null;
+    if (!attachmentFile) {
+      console.log("No attachment file selected");
+      return null;
+    }
+
     try {
+      console.log("Starting file upload...", {
+        fileName: attachmentFile.name,
+        fileSize: attachmentFile.size,
+        fileType: attachmentFile.type
+      });
+
       const formData = new FormData();
       formData.append("files", attachmentFile);
       formData.append("folder", "tickets");
+
       const res = await api.post(`/media/upload-media`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
 
-      toast.success("Attachment uploaded!");
-      return res.data?.files?.[0]?.url || res.data?.url;
+      console.log("Upload response:", res.data);
+
+      // Try multiple possible response structures
+      let uploadedUrl = null;
+      
+      // Check if response.data is an array (multiple files)
+      if (Array.isArray(res.data) && res.data.length > 0) {
+        uploadedUrl = res.data[0].url || res.data[0].secure_url;
+      }
+      // Check if response.data has files array
+      else if (res.data?.files && Array.isArray(res.data.files) && res.data.files.length > 0) {
+        uploadedUrl = res.data.files[0].url || res.data.files[0].secure_url || res.data.files[0].path;
+      }
+      // Check direct properties on res.data (Cloudinary direct response)
+      else if (res.data?.url) {
+        uploadedUrl = res.data.url;
+      } else if (res.data?.secure_url) {
+        uploadedUrl = res.data.secure_url;
+      }
+      // Check nested data object
+      else if (res.data?.data?.url) {
+        uploadedUrl = res.data.data.url;
+      } else if (res.data?.data?.secure_url) {
+        uploadedUrl = res.data.data.secure_url;
+      }
+
+      if (uploadedUrl) {
+        console.log("File uploaded successfully:", uploadedUrl);
+        toast.success("Attachment uploaded!");
+        return uploadedUrl;
+      } else {
+        console.error("Upload succeeded but no URL found in response:", res.data);
+        toast.error("Upload succeeded but no file URL returned");
+        return null;
+      }
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to upload attachment");
+      console.error("File upload error:", err);
+      console.error("Error response:", err.response?.data);
+      toast.error(err.response?.data?.message || "Failed to upload attachment");
       return null;
     }
   };
+
+  // FIXED: Handle adding a new ticket with better error handling
   const handleAddTicket = async (e) => {
     e.preventDefault();
+    
+    // Validate form data
+    if (!formData.stationNo || !formData.subject || !formData.description || !formData.category || !formData.severity) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setIsSubmitting(true);
+    
     try {
-      setIsSubmitting(true);
-      const uploadedUrl = await handleFileUpload();
+      console.log("Starting ticket creation...");
+      
+      // Upload attachment first if exists
+      let uploadedUrl = null;
+      if (attachmentFile) {
+        console.log("Uploading attachment...");
+        uploadedUrl = await handleFileUpload();
+        console.log("Attachment upload result:", uploadedUrl);
+        
+        // Don't proceed if upload failed but file was selected
+        if (!uploadedUrl) {
+          toast.error("Attachment upload failed. Please try again.");
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // Prepare ticket data
+      const ticketData = {
+        email: formData.email,
+        stationNo: Number(formData.stationNo),
+        subject: formData.subject,
+        description: formData.description,
+        category: formData.category,
+        severity: formData.severity,
+        status: formData.status,
+        attachment: uploadedUrl || "",
+      };
+
+      console.log("Sending ticket data:", ticketData);
+
+      // Create ticket
       const response = await axios.post(
         "https://ticketing-system-eight-kappa.vercel.app/api/ittickets",
-        {
-          ...formData,
-          stationNo: Number(formData.stationNo),
-          attachment: uploadedUrl || "",
-        },
+        ticketData,
         {
           headers: {
             "Content-Type": "application/json",
@@ -258,10 +354,14 @@ const TicketsTable = () => {
         }
       );
 
-      setTickets((prev) => [response.data, ...prev]);
-      toast.success("Ticket added successfully");
-      setIsModalOpen(false);
+      console.log("Ticket creation response:", response.data);
 
+      // Add to tickets list
+      setTickets((prev) => [response.data, ...prev]);
+      toast.success("Ticket added successfully!");
+      
+      // Close modal and reset form
+      setIsModalOpen(false);
       setFormData({
         email: user.email,
         stationNo: "",
@@ -272,14 +372,24 @@ const TicketsTable = () => {
         status: "OPEN",
       });
       setAttachmentFile(null);
+
+      // Refresh tickets list
+      await fetchTickets();
+
     } catch (error) {
-      console.error(error);
-      toast.error("Failed to add ticket");
+      console.error("Ticket creation error:", error);
+      console.error("Error response:", error.response?.data);
+      
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          "Failed to add ticket";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Handle posting a new comment
   const handleSubmitComment = async (e) => {
     e.preventDefault();
     if (!newCommentText.trim()) {
@@ -305,7 +415,7 @@ const TicketsTable = () => {
 
       toast.success("Comment posted!");
       setNewCommentText("");
-      await fetchComments(); 
+      await fetchComments(); // Refresh comments list
     } catch (error) {
       console.error("Failed to post comment:", error);
       toast.error("Failed to post comment.");
@@ -314,6 +424,7 @@ const TicketsTable = () => {
     }
   };
 
+  // Handle updating an existing comment
   const handleUpdateComment = async (commentId, updatedText) => {
     if (!selectedTicket || !user.email) return;
 
@@ -334,13 +445,14 @@ const TicketsTable = () => {
         },
       });
 
-      await fetchComments(); 
+      await fetchComments(); // Refresh the comments list after update
     } catch (error) {
       console.error("Failed to update comment:", error);
-      throw new Error("API call failed to update comment."); 
+      throw new Error("API call failed to update comment."); // Throw error for modal to catch
     }
   };
 
+  // Handle confirmation of resolution (receives feedback and rating)
   const handleConfirmResolution = async (feedback, rating) => { 
     if (!ticketDetails || !user.email) {
       toast.error("Missing ticket information");
@@ -359,12 +471,13 @@ const TicketsTable = () => {
 
     setIsConfirming(true);
     try {
+      // Step 1: Confirm the resolution via PATCH API 
       const confirmUrl = "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/confirmation";
       const confirmPayload = {
         email: user.email,
         updateTicketNo: ticketDetails.ticketNo,
-        feedback: feedback || "No feedback provided.", 
-        rating: rating, 
+        feedback: feedback || "No feedback provided.",
+        rating: rating,
       };
 
       const confirmResponse = await axios.patch(confirmUrl, confirmPayload, {
@@ -374,6 +487,7 @@ const TicketsTable = () => {
         },
       });
 
+      // Step 2: Automatically post a comment about the confirmation 
       const commentUrl = "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/itTicketComment";
       const commentPayload = {
         email: user.email,
@@ -388,6 +502,7 @@ const TicketsTable = () => {
         },
       });
 
+      // Check if ticket was automatically closed
       const newStatus = confirmResponse.data?.status || confirmResponse.data?.data?.status;
       const isClosed = newStatus?.toLowerCase() === 'closed';
 
@@ -397,8 +512,10 @@ const TicketsTable = () => {
         toast.success("✅ Resolution confirmed!");
       }
       
+      // Close confirmation modal
       setIsConfirmationModalOpen(false);
       
+      // Refresh data
       await fetchTicketDetails();
       await fetchTickets();
       if (isCommentsModalOpen) {
@@ -438,6 +555,7 @@ const TicketsTable = () => {
     setIsConfirmationModalOpen(false);
   };
 
+  // Columns configuration for the Table component
   const columns = [
     {
       headerName: "Ticket No",
@@ -506,7 +624,10 @@ const TicketsTable = () => {
       {/* Add Ticket Modal */}
       <AddTicketModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setAttachmentFile(null);
+        }}
         onSubmit={handleAddTicket}
         formData={formData}
         setFormData={setFormData}

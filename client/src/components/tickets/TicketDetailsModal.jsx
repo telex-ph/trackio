@@ -4,6 +4,7 @@ import { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 
+// Bearer Token
 const bearerToken =
   "Bearer standard_077ed3b9b01c0863d40827030797f5e602b32b89fe2f3f94cc495b475802c16512013466aaf82efa0d966bff7d6cf837d00e0bfdc9e91f4f290e893ba28c4d6330310f6428f7befc9ad39cd5a55f3b3ba09822aed74a922bf1e6ca958b2f844fab5259c0d69318160bb91d4ab2bf2bec0c72f6d94bf0666a59559c3992aa8b47";
 
@@ -24,15 +25,17 @@ const TicketDetailsModal = ({
   const [editedStationNo, setEditedStationNo] = useState("");
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState("");
-  const [isSaving, setIsSaving] = useState(false); 
+  const [isSaving, setIsSaving] = useState(false); // Combined saving state for all editable fields
   
   if (!isOpen) return null;
 
+  // Check ticket status and if it's editable
   const isResolved = ticketDetails?.status?.toLowerCase() === 'resolved';
   const isClosed = ticketDetails?.status?.toLowerCase() === 'closed';
   const isTicketEditable = !isResolved && !isClosed;
   const canConfirm = isResolved && ticketDetails?.ticketNo && !ticketDetails?.agentConfirmed;
 
+  // Handlers for editing
   const handleEdit = (field) => {
     if (field === 'subject') {
       setEditedSubject(ticketDetails.subject || "");
@@ -60,6 +63,7 @@ const TicketDetailsModal = ({
     const newStationNo = isEditingStationNo ? editedStationNo.trim() : ticketDetails.stationNo;
     const newDescription = isEditingDescription ? editedDescription.trim() : ticketDetails.description;
 
+    // Validation checks
     if (isEditingSubject && !newSubject) {
       toast.error("Subject cannot be empty");
       return;
@@ -74,6 +78,7 @@ const TicketDetailsModal = ({
         toast.error("Station Number must be a valid positive number");
         return;
       }
+      // NEW VALIDATION: Limit to 178
       if (stationNoValue > 178) {
         toast.error("Station Number cannot exceed 178");
         return;
@@ -92,6 +97,7 @@ const TicketDetailsModal = ({
       const payload = {
         email: userEmail,
         updateTicketNo: ticketDetails.ticketNo,
+        // Only send the potentially updated values
         subject: newSubject,
         description: newDescription,
         stationNo: Number(newStationNo),
@@ -105,14 +111,15 @@ const TicketDetailsModal = ({
       });
 
       toast.success("Ticket details updated successfully!");
-      handleCancelEdit(); 
+      handleCancelEdit(); // Close all editing modes
       
+      // Update the local ticket details
       if (onTicketUpdate) {
         onTicketUpdate({
           ...ticketDetails,
           subject: newSubject,
           description: newDescription,
-          stationNo: newStationNo, 
+          stationNo: newStationNo, // Keep as string for display if API sends it that way, but convert to Number for API payload
         });
       }
 
@@ -124,8 +131,10 @@ const TicketDetailsModal = ({
     }
   };
 
+  // Determine if any field is currently being edited
   const isEditingAnyField = isEditingSubject || isEditingStationNo || isEditingDescription;
 
+  // Content to display inside the subject/stationNo/description card when editing is active
   const EditingControls = ({ onSave, onCancel, isSaving }) => (
     <div className="flex gap-2 mt-3">
       <button
@@ -184,11 +193,13 @@ const TicketDetailsModal = ({
         {/* Content Area - SCROLLABLE */}
         <div className="flex-1 min-h-0 overflow-y-auto bg-gray-50 rounded-b-2xl">
           {isLoading ? (
+            // Loading State
             <div className="flex flex-col justify-center items-center h-full">
               <Spinner size="xl" />
               <span className="text-gray-600 mt-4 font-medium">Loading details...</span>
             </div>
           ) : ticketDetails ? (
+            // Data Loaded State
             <div className="p-6">
               {/* Resolution Alert - Show only if status is Resolved */}
               {isResolved && (
@@ -420,7 +431,7 @@ const TicketDetailsModal = ({
                                 placeholder="Enter station no. (max 178)"
                                 disabled={isSaving}
                                 min="1"
-                                max="178" 
+                                max="178" // Added max attribute
                               />
                               <EditingControls onSave={handleSaveTicketDetails} onCancel={handleCancelEdit} isSaving={isSaving} />
                             </div>
@@ -538,6 +549,7 @@ const TicketDetailsModal = ({
               </div>
               </div>
           ) : (
+            // Error State
             <div className="flex flex-col items-center justify-center h-full">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                 <X className="w-8 h-8 text-gray-400" />

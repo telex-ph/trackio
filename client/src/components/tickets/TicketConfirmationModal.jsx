@@ -1,7 +1,9 @@
 import { X, CheckCircle, AlertCircle, Star } from "lucide-react";
 import { Spinner } from "flowbite-react";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
+// --- StarRating Component (FIXED - No more clip-path error) ---
 const StarRating = ({ rating, setRating, disabled }) => {
   const maxRating = 5;
   const [hoverRating, setHoverRating] = useState(0);
@@ -12,10 +14,8 @@ const StarRating = ({ rating, setRating, disabled }) => {
     if (disabled) return;
     const starNode = e.currentTarget;
     const rect = starNode.getBoundingClientRect();
-    const x = e.clientX - rect.left; 
-    
+    const x = e.clientX - rect.left;
     const isHalf = x < rect.width / 2;
-    
     const newRating = index + (isHalf ? 0.5 : 1);
     setHoverRating(newRating);
   };
@@ -23,7 +23,7 @@ const StarRating = ({ rating, setRating, disabled }) => {
   const handleClick = (index) => {
     if (disabled) return;
     setRating(hoverRating);
-    setHoverRating(0); 
+    setHoverRating(0);
   };
 
   const handleMouseLeave = () => {
@@ -31,7 +31,7 @@ const StarRating = ({ rating, setRating, disabled }) => {
   };
 
   return (
-    <div className="flex justify-center space-x-1">
+    <div className="flex justify-center space-x-1" onMouseLeave={handleMouseLeave}>
       {[...Array(maxRating)].map((_, index) => {
         const value = index + 1;
         const currentRating = getCurrentRating();
@@ -42,27 +42,26 @@ const StarRating = ({ rating, setRating, disabled }) => {
             className={`relative w-6 h-6 transition-colors ${disabled ? 'cursor-default' : 'cursor-pointer'}`}
             onMouseMove={(e) => handleMouseMove(e, index)}
             onClick={() => handleClick(index)}
-            onMouseLeave={handleMouseLeave}
             title={`${currentRating.toFixed(1)} stars`}
           >
+            {/* Background (Gray) Star */}
             <Star className="w-6 h-6 text-gray-300 absolute top-0 left-0" />
 
+            {/* Foreground (Yellow) Star - Full or Half */}
             {(currentRating >= value) ? (
                 <Star className="w-6 h-6 fill-yellow-400 text-yellow-400 absolute top-0 left-0" />
             ) : (currentRating > index && currentRating < value) ? (
-                <Star 
-                    className="w-6 h-6 fill-yellow-400 text-yellow-400 absolute top-0 left-0"
-                    style={{ clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)' }}
-                />
+                <div className="absolute top-0 left-0 overflow-hidden" style={{ width: '50%', height: '100%' }}>
+                  <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
+                </div>
             ) : null}
-
           </div>
         );
       })}
     </div>
   );
 };
-
+// ----------------------------------------------
 
 const TicketConfirmationModal = ({
   isOpen,
@@ -72,7 +71,7 @@ const TicketConfirmationModal = ({
   onConfirm, 
 }) => {
   const [feedback, setFeedback] = useState("");
-  const [rating, setRating] = useState(0); 
+  const [rating, setRating] = useState(0);
 
   const handleClose = () => {
     setFeedback("");
@@ -119,14 +118,12 @@ const TicketConfirmationModal = ({
 
         {/* Content */}
         <div className="p-6">
-          {/* Warning Icon */}
           <div className="flex justify-center mb-4">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
               <AlertCircle className="w-8 h-8 text-green-600" />
             </div>
           </div>
 
-          {/* Message */}
           <div className="text-center mb-6">
             <h3 className="text-lg font-bold text-gray-900 mb-2">
               Confirm Ticket Resolution
@@ -136,7 +133,6 @@ const TicketConfirmationModal = ({
               Please provide your rating and optional feedback below.
             </p>
             
-            {/* Ticket Info - Keep existing layout */}
             <div className="bg-gray-50 rounded-lg p-4 text-left mb-6">
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
@@ -158,7 +154,7 @@ const TicketConfirmationModal = ({
               </div>
             </div>
 
-            {/* Rating Input (Uses the new StarRating component) */}
+            {/* Rating Input */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Service Rating <span className="text-red-500">*</span>
@@ -186,14 +182,12 @@ const TicketConfirmationModal = ({
             </div>
           </div>
 
-          {/* Info Note */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
             <p className="text-xs text-blue-800">
               <strong>Note:</strong> Once confirmed, the ticket status will be updated to "Resolved" and the user will be notified.
             </p>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex gap-3">
             <button
               type="button"

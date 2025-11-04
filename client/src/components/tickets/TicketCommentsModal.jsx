@@ -3,6 +3,7 @@ import { Spinner } from "flowbite-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
+// --- Star Rating Display Component (FIXED - No more clip-path error) ---
 const StarRatingDisplay = ({ rating }) => {
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 !== 0;
@@ -16,10 +17,9 @@ const StarRatingDisplay = ({ rating }) => {
       {hasHalfStar && (
         <div className="relative w-5 h-5">
           <Star className="absolute top-0 left-0 w-5 h-5 text-gray-300" />
-          <Star 
-             className="absolute top-0 left-0 w-5 h-5 fill-yellow-400" 
-             style={{ clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)' }} 
-          />
+          <div className="absolute top-0 left-0 overflow-hidden" style={{ width: '50%', height: '100%' }}>
+            <Star className="w-5 h-5 fill-yellow-400" />
+          </div>
         </div>
       )}
       {[...Array(emptyStars)].map((_, i) => (
@@ -31,6 +31,9 @@ const StarRatingDisplay = ({ rating }) => {
     </div>
   );
 };
+// ------------------------------------
+
+// --- Helper function to parse special comments (Unchanged) ---
 const parseConfirmationComment = (commentText) => {
   const confirmationPattern = /✅ Resolution confirmed by User: (.*?)\. Rating: ([\d\.]+)\/5\. Feedback: (.*)/;
   const match = commentText.match(confirmationPattern);
@@ -45,6 +48,7 @@ const parseConfirmationComment = (commentText) => {
   }
   return { isConfirmation: false };
 };
+// -----------------------------------------------
 
 const TicketCommentsModal = ({
   isOpen,
@@ -66,17 +70,18 @@ const TicketCommentsModal = ({
   const [showQuickResponses, setShowQuickResponses] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
   
+  // State for editing
   const [isEditing, setIsEditing] = useState(null); 
   const [editedCommentText, setEditedCommentText] = useState("");
   const [isUpdatingComment, setIsUpdatingComment] = useState(false);
 
   if (!isOpen) return null;
 
+  // Check if ticket is resolved or closed
   const isResolved = ticketStatus?.toLowerCase() === 'resolved';
   const isClosed = ticketStatus?.toLowerCase() === 'closed';
   const canComment = !isResolved && !isClosed;
   const canEdit = !isResolved && !isClosed;
-
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -87,6 +92,7 @@ const TicketCommentsModal = ({
     }
   };
 
+  // Handlers for editing
   const handleStartEdit = (comment) => {
     if (!canEdit) return;
     setIsEditing(comment.$id);
@@ -104,6 +110,7 @@ const TicketCommentsModal = ({
       return;
     }
     
+    // Prevent editing confirmation comments
     if (parseConfirmationComment(comments.find(c => c.$id === commentId)?.commentText || "").isConfirmation) {
         toast.error("Cannot edit a Resolution Confirmation comment.");
         handleCancelEdit();
@@ -113,7 +120,6 @@ const TicketCommentsModal = ({
     setIsUpdatingComment(true);
     try {
       await onCommentUpdate(commentId, editedCommentText);
-
       toast.success("Comment updated successfully!");
       setIsEditing(null);
       setEditedCommentText("");
@@ -125,6 +131,7 @@ const TicketCommentsModal = ({
     }
   };
 
+  // Utility functions
   const getInitials = (name) => {
     if (!name) return "U";
     const words = name.trim().split(' ');
@@ -256,7 +263,6 @@ const TicketCommentsModal = ({
                           <div className="space-y-3">
                             <div className="border-2 border-gray-200 rounded-lg bg-white focus-within:ring-2 focus-within:ring-[#a10000] focus-within:border-transparent transition-all">
                               <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-200">
-                                {/* Toolbar buttons - currently non-functional */}
                                 <button type="button" className="p-1 hover:bg-gray-100 rounded transition-colors" title="Bold"><Bold className="w-4 h-4 text-gray-600" /></button>
                                 <button type="button" className="p-1 hover:bg-gray-100 rounded transition-colors" title="Italic"><Italic className="w-4 h-4 text-gray-600" /></button>
                                 <button type="button" className="p-1 hover:bg-gray-100 rounded transition-colors" title="Underline"><Underline className="w-4 h-4 text-gray-600" /></button>
@@ -335,7 +341,7 @@ const TicketCommentsModal = ({
                 ) : comments.length > 0 ? (
                   comments.map((comment, index) => {
                     const isNewest = index === 0;
-                    const isCurrentUser = comment.commentor?.email === user.email; 
+                    const isCurrentUser = comment.commentor?.email === user.email;
                     const isCurrentCommentEditing = isEditing === comment.$id;
                     const confirmationData = parseConfirmationComment(comment.commentText);
                     const isConfirmation = confirmationData.isConfirmation;
@@ -357,7 +363,7 @@ const TicketCommentsModal = ({
                           <div className="flex gap-4">
                             <div className="flex-shrink-0">
                               <div className={`w-11 h-11 rounded-full flex items-center justify-center text-white font-bold shadow-md ${
-                                isCurrentUser || isConfirmation 
+                                isCurrentUser || isConfirmation
                                   ? 'bg-gradient-to-br from-green-500 to-emerald-600'
                                   : 'bg-gradient-to-br from-gray-500 to-gray-600'
                               }`}>
@@ -392,7 +398,6 @@ const TicketCommentsModal = ({
                                   )}
                                 </div>
                                 
-                                {/* Edit Button for Current User's Comment */}
                                 <div className="flex items-center gap-2">
                                   {isCurrentUser && canEdit && !isCurrentCommentEditing && !isConfirmation && (
                                     <button
@@ -413,7 +418,6 @@ const TicketCommentsModal = ({
                                 </div>
                               </div>
 
-                              {/* Comment Text / Edit Form */}
                               {isCurrentCommentEditing ? (
                                 <div className="pt-2 space-y-3">
                                   <textarea
