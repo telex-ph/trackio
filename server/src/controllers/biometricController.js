@@ -57,7 +57,7 @@ export const getEvents = async (req, res) => {
                     // }
                     // lastEventMap.set(ac.employeeNoString, now);
 
-                    console.log(event);
+                    console.log(`${ac.name} (Employee ID: ${ac.employeeNoString})`);
 
                     // Ignore events from specific devices
                     if (ipAddress === BIO_IP.ADMINDOOR) {
