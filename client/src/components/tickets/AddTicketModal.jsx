@@ -1,5 +1,6 @@
-import { X, FileText, Plus } from "lucide-react";
+import { X, FileText, Plus, Clipboard } from "lucide-react";
 import { Spinner } from "flowbite-react";
+import { useEffect, useRef } from "react";
 
 const AddTicketModal = ({
   isOpen,
@@ -11,6 +12,62 @@ const AddTicketModal = ({
   attachmentFile,
   setAttachmentFile,
 }) => {
+  const pasteAreaRef = useRef(null);
+  
+  // Handle paste event for screenshots
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handlePaste = (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        
+        // Check if the pasted item is an image
+        if (item.type.indexOf('image') !== -1) {
+          e.preventDefault();
+          const blob = item.getAsFile();
+          
+          if (blob) {
+            // Create a filename with timestamp
+            const timestamp = new Date().getTime();
+            const file = new File([blob], `screenshot-${timestamp}.png`, {
+              type: blob.type,
+            });
+            
+            setAttachmentFile(file);
+          }
+          break;
+        }
+      }
+    };
+
+    // Add paste event listener to the document
+    document.addEventListener('paste', handlePaste);
+
+    return () => {
+      document.removeEventListener('paste', handlePaste);
+    };
+  }, [isOpen, setAttachmentFile]);
+
+  // Handle file drop
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      // Check if it's an image or PDF
+      if (file.type.startsWith('image/') || file.type === 'application/pdf') {
+        setAttachmentFile(file);
+      }
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
   
   if (!isOpen) return null;
 
@@ -121,41 +178,81 @@ const AddTicketModal = ({
               />
             </div>
 
-            {/* Attachment */}
+            {/* Attachment with Paste & Drag-Drop Support */}
             <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
               <label htmlFor="attachment" className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 block">
                 Attachment (Optional)
               </label>
+              
+              {/* Info Banner */}
+              <div className="mb-3 bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
+                <Clipboard className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-blue-700">
+                  <strong>Tip:</strong> You can paste screenshots (Ctrl/Cmd+V), drag & drop files, or browse to upload
+                </p>
+              </div>
+
               <div className="space-y-3">
-                <div className="relative">
-                  <input
-                    id="attachment"
-                    name="attachment"
-                    type="file"
-                    accept="image/*,application/pdf"
-                    onChange={(e) =>
-                      setAttachmentFile(e.target.files[0] || null)
-                    }
-                    className="w-full text-sm text-gray-700 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 
-                      file:text-sm file:font-semibold file:bg-gradient-to-r file:from-[#a10000] file:to-[#a10000] file:text-white 
-                      hover:file:opacity-90 cursor-pointer border-2 border-gray-200 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#a10000] focus:border-transparent transition-all"
-                  />
-                </div>
-                {attachmentFile && (
-                  <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3 border border-gray-200">
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm text-gray-700 font-medium">
-                        {attachmentFile.name}
-                      </span>
+                {/* Show Drag & Drop Area ONLY if walang attachment */}
+                {!attachmentFile ? (
+                  <div
+                    ref={pasteAreaRef}
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    className="relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#a10000] transition-colors bg-gray-50"
+                  >
+                    <input
+                      id="attachment"
+                      name="attachment"
+                      type="file"
+                      accept="image/*,application/pdf"
+                      onChange={(e) =>
+                        setAttachmentFile(e.target.files[0] || null)
+                      }
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <div className="pointer-events-none">
+                      <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600 font-medium">
+                        Click to browse or drag & drop
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Images and PDF files supported
+                      </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setAttachmentFile(null)}
-                      className="w-6 h-6 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center transition-colors"
-                    >
-                      <X className="w-4 h-4 text-red-600" />
-                    </button>
+                  </div>
+                ) : (
+                  /* Preview Selected File - Show ONLY if may attachment */
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-3 border-2 border-green-200">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-green-800 font-medium">
+                          {attachmentFile.name}
+                        </span>
+                        <span className="text-xs text-green-600 bg-green-200 px-2 py-0.5 rounded">
+                          {(attachmentFile.size / 1024).toFixed(1)} KB
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setAttachmentFile(null)}
+                        className="w-6 h-6 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center transition-colors"
+                      >
+                        <X className="w-4 h-4 text-red-600" />
+                      </button>
+                    </div>
+
+                    {/* Image Preview */}
+                    {attachmentFile.type.startsWith('image/') && (
+                      <div className="rounded-lg overflow-hidden border-2 border-gray-200">
+                        <img
+                          src={URL.createObjectURL(attachmentFile)}
+                          alt="Preview"
+                          className="w-full h-auto max-h-64 object-contain bg-gray-100"
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -242,4 +339,4 @@ const AddTicketModal = ({
   );
 };
 
-export default AddTicketModal
+export default AddTicketModal;
