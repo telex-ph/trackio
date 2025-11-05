@@ -278,7 +278,7 @@ const TicketsTable = () => {
     }
   }, [isCommentsModalOpen]);
 
-  // Handle file upload (attachment)
+    // FIXED: Handle file upload (attachment) with better error handling and logging
   const handleFileUpload = async () => {
     if (!attachmentFile) {
       console.log("No attachment file selected");
@@ -289,46 +289,43 @@ const TicketsTable = () => {
       console.log("Starting file upload...", {
         fileName: attachmentFile.name,
         fileSize: attachmentFile.size,
-        fileType: attachmentFile.type,
+        fileType: attachmentFile.type
       });
 
-      const uploadFormData = new FormData();
-      uploadFormData.append("files", attachmentFile);
-      uploadFormData.append("folder", "tickets");
+      const formData = new FormData();
+      formData.append("files", attachmentFile);
+      formData.append("folder", "tickets");
 
-      const res = await api.post(`/media/upload-media`, uploadFormData, {
+      const res = await api.post(`/media/upload-media`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-        timeout: 30000, // 30 second timeout
       });
 
       console.log("Upload response:", res.data);
 
+      // Try multiple possible response structures
       let uploadedUrl = null;
-
-      // Try different possible response structures
+      
+      // Check if response.data is an array (multiple files)
       if (Array.isArray(res.data) && res.data.length > 0) {
         uploadedUrl = res.data[0].url || res.data[0].secure_url;
-      } else if (
-        res.data?.files &&
-        Array.isArray(res.data.files) &&
-        res.data.files.length > 0
-      ) {
-        uploadedUrl =
-          res.data.files[0].url ||
-          res.data.files[0].secure_url ||
-          res.data.files[0].path;
-      } else if (res.data?.url) {
+      }
+      // Check if response.data has files array
+      else if (res.data?.files && Array.isArray(res.data.files) && res.data.files.length > 0) {
+        uploadedUrl = res.data.files[0].url || res.data.files[0].secure_url || res.data.files[0].path;
+      }
+      // Check direct properties on res.data (Cloudinary direct response)
+      else if (res.data?.url) {
         uploadedUrl = res.data.url;
       } else if (res.data?.secure_url) {
         uploadedUrl = res.data.secure_url;
-      } else if (res.data?.data?.url) {
+      }
+      // Check nested data object
+      else if (res.data?.data?.url) {
         uploadedUrl = res.data.data.url;
       } else if (res.data?.data?.secure_url) {
         uploadedUrl = res.data.data.secure_url;
-      } else if (res.data?.path) {
-        uploadedUrl = res.data.path;
       }
 
       if (uploadedUrl) {
@@ -343,13 +340,7 @@ const TicketsTable = () => {
     } catch (err) {
       console.error("File upload error:", err);
       console.error("Error response:", err.response?.data);
-      
-      const errorMsg = err.response?.data?.message || 
-                       err.response?.data?.error || 
-                       err.message || 
-                       "Failed to upload attachment";
-      
-      toast.error(errorMsg);
+      toast.error(err.response?.data?.message || "Failed to upload attachment");
       return null;
     }
   };
