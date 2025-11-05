@@ -47,12 +47,17 @@ export const getEvents = async (req, res) => {
                     }
                     lastEventMap.set(ac.employeeNoString, now);
 
+
                     console.log(event);
 
                     if (ipAddress === BIO_IP.ADMINDOOR) return res.status(200).send('OK');
 
                     const user = await User.getById(ac.employeeNoString);
                     if (user) {
+                        // dateTime: '2025-11-04T17:30:15+08:00',
+                        // console.log(event.dateTime);
+                        // const eventDateTime = event.dateTime;
+
                         const userId = user._id.toString();
                         const [attendance] = await Attendance.getById(userId);
                         if (attendance) {
@@ -62,6 +67,7 @@ export const getEvents = async (req, res) => {
                             const status = attendance.status;
                             const shiftEnd = DateTime.fromJSDate(attendance.shiftEnd);
 
+                            ;
                             if (shiftEnd < DateTime.utc()) {
                                 await biometricOut(attendanceId);
                                 if (status === STATUS.ON_BREAK) {
@@ -69,7 +75,7 @@ export const getEvents = async (req, res) => {
                                 }
                             } else {
                                 if (status === STATUS.WORKING) {
-                                    await biometricBreakIn(attendanceId, breaks, totalBreak);
+                                    await biometricBreakIn(attendanceId, breaks, totalBreak,);
                                 }
                                 if (status === STATUS.ON_BREAK) {
                                     await biometricBreakOut(attendanceId, breaks);

@@ -43,10 +43,7 @@ app.use(
 );
 // Routes
 app.use("/api/auth", authRoutes);
-
-// === ITO ANG BINAGO ===
-app.use("/api", userRoutes); // Pinalitan mula sa "/api/user"
-
+app.use("/api/user", userRoutes);
 app.use("/api/accounts", accountRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/announcements", announcementRoutes);
