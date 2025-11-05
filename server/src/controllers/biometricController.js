@@ -48,14 +48,14 @@ export const getEvents = async (req, res) => {
                 if (ac.employeeNoString && ac.name && ac.name !== "Unknown") {
                     const ipAddress = event.ipAddress;
                     const now = Date.now();
-                    const lastTime = lastEventMap.get(ac.employeeNoString) || 0;
+                    // const lastTime = lastEventMap.get(ac.employeeNoString) || 0;
 
-                    // Throttle duplicate events within a short time window
-                    if (now - lastTime < THROTTLE_MS) {
-                        console.log(`Event for ${ac.name} ignored due to throttle`);
-                        return res.status(200).send("OK");
-                    }
-                    lastEventMap.set(ac.employeeNoString, now);
+                    // // Throttle duplicate events within a short time window
+                    // if (now - lastTime < THROTTLE_MS) {
+                    //     console.log(`Event for ${ac.name} ignored due to throttle`);
+                    //     return res.status(200).send("OK");
+                    // }
+                    // lastEventMap.set(ac.employeeNoString, now);
 
                     console.log(event);
 
