@@ -83,7 +83,7 @@ export const getEvents = async (req, res) => {
                             }
                         } else {
                             try {
-                                await biometricIn(userId);
+                                await biometricIn(userId, ac.employeeNoString);
                             } catch (error) {
                                 const stack = (error.stack || error.message || "").slice(0, 1500);
                                 const message =

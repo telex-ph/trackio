@@ -3,7 +3,7 @@ import Attendance from "../model/Attendance.js";
 import { STATUS } from "../../constants/status.js";
 import Schedules from "../model/Schedule.js";
 
-export const biometricIn = async (userId) => {
+export const biometricIn = async (userId, employeeId) => {
     const TARDINESS_TOLERANCE_HOURS = 2;
     const EARLY_GRACE_HOURS = 4;
 
@@ -24,6 +24,7 @@ export const biometricIn = async (userId) => {
     try {
         const result = await Attendance.timeIn(
             userId,
+            employeeId,
             matchingSchedule.shiftStart,
             matchingSchedule.shiftEnd
         );

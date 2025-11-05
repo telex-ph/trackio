@@ -247,7 +247,7 @@ class Attendance {
    * @throws {Error} If no ID is provided or if a record already exists for today.
    * @returns {Promise<Object>} The result of the insert operation (new record info).
    */
-  static async timeIn(id, shiftStart, shiftEnd) {
+  static async timeIn(id, employeeId, shiftStart, shiftEnd) {
     if (!id) {
       throw new Error("ID is required");
     }
@@ -273,6 +273,7 @@ class Attendance {
 
     const result = await collection.insertOne({
       userId: new ObjectId(id),
+      employeeId,
       shiftDate: now.toJSDate(),
       shiftStart,
       shiftEnd,
