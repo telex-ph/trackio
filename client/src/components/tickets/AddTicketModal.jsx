@@ -278,7 +278,6 @@ const AddTicketModal = ({
                   <option value="NETWORK">Network</option>
                   <option value="HARDWARE">Hardware</option>
                   <option value="SOFTWARE">Software</option>
-                  <option value="EMAIL">Email</option>
                 </select>
               </div>
 
