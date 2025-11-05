@@ -135,6 +135,25 @@ const TicketsGrid = ({ data, isLoading, tableRef, onViewDetails, onEdit, onDelet
       flex: 1,
       valueFormatter: (params) => `Ticket#${params.value}`,
     },
+    {
+      headerName: "Station No",
+      field: "stationNo",
+      flex: 1,
+      cellRenderer: (params) => {
+        if (!params.value) {
+          return (
+            <div className="flex items-center justify-start h-full">
+              <span className="text-gray-500">N/A</span>
+            </div>
+          );
+        }
+        return (
+          <div className="flex items-center justify-start h-full">
+            <span className="text-gray-700 font-medium">Station {params.value}</span>
+          </div>
+        );
+      },
+    },
     { headerName: "Subject", field: "subject", flex: 1.5 },
     { headerName: "Category", field: "category", flex: 1 },
     { headerName: "Severity", field: "severity", flex: 1 },
