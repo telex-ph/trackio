@@ -148,7 +148,7 @@ export default function LiveBreaks() {
         <div className="flex-1 p-5 rounded-sm">
           <h2 className="mb-4 text-gray-700 border p-2 border-light bg-gray-50 rounded-md">Live Over Break</h2>
           <section className="space-y-3">
-            {/* <AnimatePresence mode="popLayout">
+            <AnimatePresence mode="popLayout">
               {overBreakStatuses.map((status, key) => (
                 <motion.div
                   key={status._id}
@@ -172,7 +172,7 @@ export default function LiveBreaks() {
                   </div>
                 </motion.div>
               ))}
-            </AnimatePresence> */}
+            </AnimatePresence>
           </section>
         </div>
       </div>

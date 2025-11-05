@@ -49,11 +49,16 @@ const SharedOnBreak = () => {
       headerName: "Start of Break",
       filter: false,
       flex: 1,
+
       cellRenderer: (params) => {
         const item = params.data;
+        if (!item.breaks || item.breaks.length === 0) {
+          return "—"; 
+        }
+
         const latest = item.breaks[item.breaks.length - 1].start;
         const formattedStartBreak = formatTime(latest);
-        return `${formattedStartBreak}`;
+        return formattedStartBreak;
       },
     },
     {
