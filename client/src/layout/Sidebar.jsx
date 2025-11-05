@@ -22,7 +22,6 @@ import { useStore } from "../store/useStore";
 import Role from "../constants/roles";
 import { useState } from "react";
 
-// Custom Collapse (controlled from parent)
 const CustomCollapse = ({
   icon,
   label,
@@ -46,7 +45,6 @@ const CustomCollapse = ({
           {!isCollapsed && <span className="font-medium">{label}</span>}
         </div>
 
-        {/* Arrow always visible */}
         {!isCollapsed && (
           <ChevronDown
             className={`w-4 h-4 transition-transform duration-300 ${
@@ -87,7 +85,8 @@ const SidebarLink = ({ to, icon: Icon, label, isCollapsed }) => (
 );
 
 // Agent Sidebar
-const AgentSidebar = ({ isCollapsed }) => (
+// --- FIX 1: Idinagdag ang activeDropdown at setActiveDropdown sa props ---
+const AgentSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
   <div className="space-y-1">
     <SidebarLink
       to="/agent/dashboard"
@@ -107,12 +106,28 @@ const AgentSidebar = ({ isCollapsed }) => (
       label="Coaching"
       isCollapsed={isCollapsed}
     />
-    <SidebarLink
-      to="/agent/offences"
-      icon={Calendar}
-      label="Incident Reports"
+    <CustomCollapse
+      icon={<Clock className="w-5 h-5" />}
+      label="Offenses"
       isCollapsed={isCollapsed}
-    />
+      open={activeDropdown === "offenses"}
+      onToggle={() =>
+        setActiveDropdown(activeDropdown === "offenses" ? null : "offenses")
+      }
+    >
+      <SidebarLink
+        to={`agent/createoffense`}
+        icon={List}
+        label="Create Offense"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to={`/agent/offenses`}
+        icon={GalleryVerticalEnd}
+        label="My Offenses"
+        isCollapsed={isCollapsed}
+      />
+    </CustomCollapse>
     <SidebarLink
       to="/agent/ticket"
       icon={Ticket}
@@ -201,6 +216,28 @@ const TeamLeaderSidebar = ({
       label="Agent Request"
       isCollapsed={isCollapsed}
     />
+    <CustomCollapse
+      icon={<Clock className="w-5 h-5" />}
+      label="Offenses"
+      isCollapsed={isCollapsed}
+      open={activeDropdown === "offenses"}
+      onToggle={() =>
+        setActiveDropdown(activeDropdown === "offenses" ? null : "offenses")
+      }
+    >
+      <SidebarLink
+        to={`/team-leader/createoffense`}
+        icon={List}
+        label="Create Offense"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to={`/team-leader/offenses`}
+        icon={GalleryVerticalEnd}
+        label="My Offenses"
+        isCollapsed={isCollapsed}
+      />
+    </CustomCollapse>
   </div>
 );
 
@@ -303,6 +340,28 @@ const HRSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       label="Monitoring"
       isCollapsed={isCollapsed}
     />
+    <CustomCollapse
+      icon={<Clock className="w-5 h-5" />}
+      label="Offenses"
+      isCollapsed={isCollapsed}
+      open={activeDropdown === "offenses"}
+      onToggle={() =>
+        setActiveDropdown(activeDropdown === "offenses" ? null : "offenses")
+      }
+    >
+      <SidebarLink
+        to="/human-resources/offenses"
+        icon={Calendar}
+        label="Create Offense"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to={`/human-resources/reported-ir`}
+        icon={GalleryVerticalEnd}
+        label="Reported IR"
+        isCollapsed={isCollapsed}
+      />
+    </CustomCollapse>
   </div>
 );
 
@@ -392,7 +451,14 @@ export const Sidebar = ({ isCollapsed }) => {
   const renderSidebar = () => {
     switch (user.role) {
       case Role.AGENT:
-        return <AgentSidebar isCollapsed={isCollapsed} />;
+        // --- FIX 2: Ipinasa ang state pababa sa AgentSidebar ---
+        return (
+          <AgentSidebar
+            isCollapsed={isCollapsed}
+            activeDropdown={activeDropdown}
+            setActiveDropdown={setActiveDropdown}
+          />
+        );
       case Role.TEAM_LEADER:
         return (
           <TeamLeaderSidebar

@@ -11,12 +11,45 @@ import {
   Bell,
   Search,
   Eye,
+  Hash,
+  Download,
+  X as ClearIcon, // Added ClearIcon for reset
 } from "lucide-react";
-import { DateTime } from "luxon";
+import { DateTime } from "luxon"; // Import DateTime
 import api from "../../utils/axios";
-import UnderContruction from "../../assets/illustrations/UnderContruction";
 
-// =================== Notification ===================
+// --- HELPER FUNCTION ---
+// Converts Base64 data URL to a browser-readable Blob URL
+// This fixes the "blank screen" issue when viewing PDFs
+const base64ToBlobUrl = (base64, type) => {
+  try {
+    const base64Data = base64.split(",")[1];
+    if (!base64Data) {
+      console.error("Invalid Base64 string");
+      return base64; // Fallback
+    }
+
+    const binaryString = atob(base64Data);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], { type: type });
+    // Create and return the Object URL
+    const url = URL.createObjectURL(blob);
+    // Optional: Revoke the URL when it's no longer needed (e.g., in useEffect cleanup or when component unmounts)
+    // This helps free up memory, but be careful not to revoke too early if the URL is still needed.
+    // setTimeout(() => URL.revokeObjectURL(url), 60000); // Example: Revoke after 1 minute
+    return url;
+  } catch (e) {
+    console.error("Failed to convert Base64 to Blob URL:", e);
+    return base64; // Fallback
+  }
+};
+// --- END OF HELPER FUNCTION ---
+
 const Notification = ({ message, type, onClose }) => {
   const [isVisible, setIsVisible] = useState(true);
 
@@ -60,7 +93,6 @@ const Notification = ({ message, type, onClose }) => {
   );
 };
 
-// =================== Confirmation Modal ===================
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, message }) => {
   if (!isOpen) return null;
 
@@ -96,13 +128,21 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, message }) => {
   );
 };
 
-// =================== Main Component ===================
 const AgentOffences = () => {
   const [isViewMode, setIsViewMode] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [offenses, setOffenses] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(""); // For Cases in Progress
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // States for History Filters
+  const [historySearchQuery, setHistorySearchQuery] = useState("");
+  const [historyStartDate, setHistoryStartDate] = useState("");
+  const [historyEndDate, setHistoryEndDate] = useState("");
+
+   // Get today's date in YYYY-MM-DD format for max attribute
+  const today = DateTime.now().toISODate();
 
   const [notification, setNotification] = useState({
     message: "",
@@ -111,13 +151,13 @@ const AgentOffences = () => {
   });
 
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState(null);
+  const [itemToDelete, setItemToDelete] = useState(null); // Although not used here, keep for consistency if needed later
 
   const [formData, setFormData] = useState({
     agentName: "",
     offenseCategory: "",
     offenseType: "",
-    offenseSeverity: "",
+    offenseLevel: "",
     dateOfOffense: "",
     status: "",
     actionTaken: "",
@@ -126,10 +166,23 @@ const AgentOffences = () => {
     isRead: false,
   });
 
-  const currentAgent = "Current Agent"; // Replace with actual agent name from auth or context
-
   const showNotification = (message, type) => {
     setNotification({ message, type, isVisible: true });
+  };
+
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await api.get("/auth/get-auth-user");
+      setCurrentUser(response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching current user:", error);
+      showNotification(
+        "Failed to load user data. Please log in again.",
+        "error"
+      );
+      return null;
+    }
   };
 
   const fetchOffenses = async () => {
@@ -137,25 +190,30 @@ const AgentOffences = () => {
       setIsLoading(true);
       const response = await api.get("/offenses");
       setOffenses(response.data);
+      return response.data;
     } catch (error) {
       console.error("Error fetching offenses:", error);
       showNotification("Failed to load offenses. Please try again.", "error");
+      return [];
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchOffenses();
+    const loadData = async () => {
+      await fetchCurrentUser();
+      await fetchOffenses();
+    };
+    loadData();
   }, []);
 
-  // =================== Reset Form ===================
   const resetForm = () => {
     setFormData({
       agentName: "",
       offenseCategory: "",
       offenseType: "",
-      offenseSeverity: "",
+      offenseLevel: "",
       dateOfOffense: "",
       status: "",
       actionTaken: "",
@@ -167,7 +225,6 @@ const AgentOffences = () => {
     setEditingId(null);
   };
 
-  // =================== View ===================
   const handleView = (off) => {
     setIsViewMode(true);
     setEditingId(off._id);
@@ -175,7 +232,7 @@ const AgentOffences = () => {
       agentName: off.agentName,
       offenseCategory: off.offenseCategory,
       offenseType: off.offenseType,
-      offenseSeverity: off.offenseSeverity,
+      offenseLevel: off.offenseLevel || "",
       dateOfOffense: off.dateOfOffense,
       status: off.status,
       actionTaken: off.actionTaken,
@@ -186,76 +243,82 @@ const AgentOffences = () => {
   };
 
   const handleMarkAsRead = async () => {
+    if (!editingId) return;
     try {
       const payload = { isRead: true };
       await api.put(`/offenses/${editingId}`, payload);
       showNotification("Marked as read successfully!", "success");
       resetForm();
-      fetchOffenses();
+      fetchOffenses(); // Re-fetch to update the list immediately
     } catch (error) {
       console.error("Error marking as read:", error);
       showNotification("Failed to mark as read. Please try again.", "error");
     }
   };
 
-  const handleDeleteClick = (id) => {
-    setItemToDelete(id);
-    setIsConfirmationModalOpen(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!itemToDelete) return;
-
-    try {
-      await api.delete(`/offenses/${itemToDelete}`);
-      showNotification("Offense deleted successfully!", "success");
-      fetchOffenses();
-    } catch (error) {
-      console.error("Error deleting offense:", error);
-      showNotification("Failed to delete offense. Please try again.", "error");
-    } finally {
-      setIsConfirmationModalOpen(false);
-      setItemToDelete(null);
-    }
-  };
-
-  // =================== Formatting ===================
   const formatDisplayDate = (dateStr) =>
     dateStr
       ? DateTime.fromISO(dateStr).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)
       : "";
 
-  // Filter offenses based on search query and exclude resolved statuses, only for current agent
+  const handleHistoryDateReset = () => {
+      setHistoryStartDate("");
+      setHistoryEndDate("");
+  };
+
+  // Filter for "Cases In Progress"
   const filteredOffenses = offenses.filter(
     (off) =>
-      off.agentName === currentAgent &&
+      currentUser &&
+      off.employeeId === currentUser.employeeId &&
       !["Action Taken", "Escalated", "Closed"].includes(off.status) &&
       [
-        off.agentName,
         off.offenseType,
         off.offenseCategory,
-        off.offenseSeverity,
+        off.offenseLevel || "",
         off.status,
         off.actionTaken,
         off.remarks || "",
+        formatDisplayDate(off.dateOfOffense),
       ]
         .join(" ")
         .toLowerCase()
-        .includes(searchQuery.toLowerCase())
+        .includes(searchQuery.toLowerCase()) // Uses the main searchQuery
   );
 
-  const resolvedOffenses = offenses.filter(
-    (off) =>
-      off.agentName === currentAgent &&
-      ["Action Taken", "Escalated", "Closed"].includes(off.status)
-  );
+  // Filter for "Case History"
+  const resolvedOffenses = offenses.filter((off) => {
+    // Basic status & user filter
+    const isResolved =
+      currentUser &&
+      off.employeeId === currentUser.employeeId &&
+      ["Action Taken", "Escalated", "Closed"].includes(off.status);
+    if (!isResolved) return false;
 
-  return (
-    <section className="h-full">
-      <UnderContruction />
-    </section>
-  );
+    // Text search filter
+    const textMatch = [
+      off.offenseType,
+      off.offenseLevel || "",
+      off.status,
+      off.actionTaken,
+      off.remarks || "",
+      formatDisplayDate(off.dateOfOffense),
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(historySearchQuery.toLowerCase());
+    if (!textMatch) return false;
 
+    // Date range filter using Luxon
+    const offenseDate = DateTime.fromISO(off.dateOfOffense).startOf("day");
+    const start = historyStartDate ? DateTime.fromISO(historyStartDate).startOf("day") : null;
+    const end = historyEndDate ? DateTime.fromISO(historyEndDate).startOf("day") : null;
+
+    const isAfterStartDate = start ? offenseDate >= start : true;
+    const isBeforeEndDate = end ? offenseDate <= end : true;
+
+    return isAfterStartDate && isBeforeEndDate; // Return true only if all filters pass
+  });
 
   return (
     <div>
@@ -266,26 +329,15 @@ const AgentOffences = () => {
           onClose={() => setNotification({ ...notification, isVisible: false })}
         />
       )}
-
-      <ConfirmationModal
-        isOpen={isConfirmationModalOpen}
-        onClose={() => setIsConfirmationModalOpen(false)}
-        onConfirm={handleConfirmDelete}
-        message="Are you sure you want to delete this offense?"
-      />
-
       <section className="flex flex-col mb-2">
         <div className="flex items-center gap-1">
           <h2>Offense Management</h2>
         </div>
-        <p className="text-gray-600">
-          View your disciplinary offenses.
-        </p>
+        <p className="text-gray-600">View your disciplinary offenses.</p>
       </section>
 
-      {/* Two-Column Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
-        {/* View Offense */}
+        {/* --- OFFENSE DETAILS --- */}
         <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -317,10 +369,8 @@ const AgentOffences = () => {
                   {formData.agentName}
                 </p>
               </div>
-
-              {/* Offense Category & Type - Single Row */}
+              {/* Category & Type */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                {/* Category */}
                 <div className="space-y-2">
                   <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                     Offense Category
@@ -329,8 +379,6 @@ const AgentOffences = () => {
                     {formData.offenseCategory || "N/A"}
                   </p>
                 </div>
-
-                {/* Type */}
                 <div className="space-y-2">
                   <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                     Offense Type
@@ -340,15 +388,14 @@ const AgentOffences = () => {
                   </p>
                 </div>
               </div>
-
-              {/* Severity & Date */}
+              {/* Level & Date */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-2">
                   <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                    Offense Severity
+                    Offense Level
                   </label>
                   <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
-                    {formData.offenseSeverity || "N/A"}
+                    {formData.offenseLevel || "N/A"}
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -363,7 +410,6 @@ const AgentOffences = () => {
                   </div>
                 </div>
               </div>
-
               {/* Status */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -373,7 +419,6 @@ const AgentOffences = () => {
                   {formData.status || "N/A"}
                 </p>
               </div>
-
               {/* Action Taken */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -383,7 +428,6 @@ const AgentOffences = () => {
                   {formData.actionTaken || "N/A"}
                 </p>
               </div>
-
               {/* Remarks */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -394,28 +438,55 @@ const AgentOffences = () => {
                 </p>
               </div>
 
-              {/* Evidence */}
+              {/* Evidence Section (Styled like HR Form) */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Evidence
                 </label>
                 {formData.evidence.length > 0 ? (
-                  <div className="space-y-2">
-                    {formData.evidence.map((ev, idx) => (
-                      <p
-                        key={idx}
-                        className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base underline cursor-pointer"
-                      >
-                        {ev.fileName}
-                      </p>
-                    ))}
+                  <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
+                    {formData.evidence.slice(0, 1).map((ev, idx) => {
+                      const viewUrl = base64ToBlobUrl(ev.data, ev.type);
+                      return (
+                        <div key={idx} className="flex flex-col gap-3">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                            <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
+                              {ev.fileName}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={viewUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                            >
+                              <Eye className="w-4 h-4" />
+                              View
+                            </a>
+                            <a
+                              href={ev.data}
+                              download={ev.fileName}
+                              className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                            >
+                              <Download className="w-4 h-4" />
+                              Download
+                            </a>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
-                  <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
-                    No evidence
-                  </p>
+                  <div className="border-2 border-dashed rounded-2xl p-4 border-gray-300 bg-gray-50/30">
+                    <p className="text-center text-gray-500 text-sm italic">
+                      No evidence attached.
+                    </p>
+                  </div>
                 )}
               </div>
+              {/* End of Evidence Section */}
 
               {/* Buttons */}
               <div className="flex gap-4">
@@ -441,7 +512,8 @@ const AgentOffences = () => {
             </div>
           )}
         </div>
-        {/* Offense Records */}
+        
+        {/* --- CASES IN PROGRESS --- */}
         <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -456,8 +528,6 @@ const AgentOffences = () => {
               {filteredOffenses.length} Records
             </span>
           </div>
-
-          {/* Search Bar */}
           <div className="mb-6">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -465,7 +535,7 @@ const AgentOffences = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by offense type, category..."
+                placeholder="Search by level, type, category..."
                 className="w-full pl-10 pr-4 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
               />
             </div>
@@ -478,9 +548,9 @@ const AgentOffences = () => {
                   key={off._id}
                   className="group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border border-gray-100"
                 >
-                  {/* Header */}
                   <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
-                    <div className="flex items-start gap-3 sm:gap-4">
+                     {/* Card Header Content */}
+                     <div className="flex items-start gap-3 sm:gap-4">
                       <div className="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors">
                         <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
                       </div>
@@ -503,28 +573,33 @@ const AgentOffences = () => {
                           >
                             {off.status}
                           </span>
-                          {off.isRead && <CheckCircle className="w-4 h-4 text-green-500" />}
+                          {off.isRead ? (
+                            <span className="flex items-center gap-1 text-green-600 text-xs">
+                              <CheckCircle className="w-4 h-4" /> Read
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-red-600 text-xs font-bold">
+                              <Bell className="w-4 h-4" /> Unread
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Details */}
                   <div className="space-y-3 mb-4">
-                    <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                      <User className="w-3 h-3 sm:w-4 sm:h-4" />
-                      Agent:{" "}
-                      <span className="font-medium">{off.agentName}</span>
-                    </p>
-                    <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
+                     {/* Card Body Content */}
+                     <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
                       <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
                       Category:{" "}
                       <span className="font-medium">{off.offenseCategory}</span>
                     </p>
                     <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                      <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
-                      Severity:{" "}
-                      <span className="font-medium">{off.offenseSeverity}</span>
+                      <Hash className="w-3 h-3 sm:w-4 sm:h-4" />
+                      Level:{" "}
+                      <span className="font-medium">
+                        {off.offenseLevel || "N/A"}
+                      </span>
                     </p>
 
                     <div className="bg-red-50 rounded-xl p-3 sm:p-4 border-l-4 border-red-500">
@@ -549,27 +624,48 @@ const AgentOffences = () => {
 
                     {off.evidence && off.evidence.length > 0 && (
                       <div className="bg-purple-50 rounded-xl p-3 sm:p-4 border-l-4 border-purple-500">
-                        <p className="text-xs sm:text-sm text-gray-700 flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-purple-600" />
-                          <span className="font-semibold text-gray-800">
-                            Evidence:
-                          </span>
-                          <span className="text-purple-700">
-                            {off.evidence.map((ev, idx) => (
-                              <span
+                        <div className="text-xs sm:text-sm text-gray-700">
+                          <div className="flex items-center gap-2 mb-2">
+                            <FileText className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                            <span className="font-semibold text-gray-800">
+                              Evidence:
+                            </span>
+                          </div>
+                          {off.evidence.map((ev, idx) => {
+                            const viewUrl = base64ToBlobUrl(ev.data, ev.type);
+                            return (
+                              <div
                                 key={idx}
-                                className="ml-1 underline cursor-pointer"
+                                className="flex items-center justify-between gap-2 w-full p-2 bg-white border border-purple-100 rounded-lg mt-1"
                               >
-                                {ev.fileName}
-                              </span>
-                            ))}
-                          </span>
-                        </p>
+                                <span className="text-purple-700 truncate text-xs font-medium">
+                                  {ev.fileName}
+                                </span>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <a
+                                    href={viewUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-1 text-gray-500 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
+                                  >
+                                    <Eye className="w-3.5 h-3.5" />
+                                  </a>
+                                  <a
+                                    href={ev.data}
+                                    download={ev.fileName}
+                                    className="p-1 text-gray-500 hover:text-green-600 rounded-md hover:bg-green-50 transition-colors"
+                                  >
+                                    <Download className="w-3.5 h-3.5" />
+                                  </a>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
                   </div>
 
-                  {/* Buttons */}
                   <div className="flex gap-3">
                     <button
                       onClick={() => handleView(off)}
@@ -592,7 +688,8 @@ const AgentOffences = () => {
           )}
         </div>
       </div>
-      {/* Request History */}
+      
+      {/* --- CASE HISTORY --- */}
       <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -608,17 +705,63 @@ const AgentOffences = () => {
           </span>
         </div>
 
+        {/* Filters for History */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {/* Search Bar */}
+          <div className="md:col-span-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                value={historySearchQuery}
+                onChange={(e) => setHistorySearchQuery(e.target.value)}
+                placeholder="Search history..."
+                className="w-full pl-10 pr-4 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-green-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
+              />
+            </div>
+          </div>
+
+          {/* Date Filters */}
+          <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <input
+              type="date"
+              value={historyStartDate}
+              onChange={(e) => setHistoryStartDate(e.target.value)}
+              max={historyEndDate || today} // Cannot be after end date or today
+              className="w-full px-4 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-green-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
+              title="Start Date"
+            />
+            <input
+              type="date"
+              value={historyEndDate}
+              onChange={(e) => setHistoryEndDate(e.target.value)}
+              min={historyStartDate} // Cannot be before start date
+              max={today}       // Cannot be in the future
+              className="w-full px-4 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-green-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
+              title="End Date"
+            />
+            <button
+              onClick={handleHistoryDateReset}
+              className="flex items-center justify-center gap-1 sm:col-start-3 p-3 bg-gray-100 text-gray-600 rounded-2xl hover:bg-gray-200 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!historyStartDate && !historyEndDate}
+              title="Clear Dates"
+            >
+              <ClearIcon className="w-4 h-4" /> Clear Dates
+            </button>
+          </div>
+        </div>
+
         {resolvedOffenses.length > 0 ? (
           <div className="w-full overflow-x-auto overflow-y-auto max-h-200">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-gray-200 text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wider">
                   <th className="p-4 whitespace-nowrap">Date</th>
-                  <th className="p-4 whitespace-nowrap">Agent</th>
                   <th className="p-4 whitespace-nowrap">Offense Type</th>
-                  <th className="p-4 whitespace-nowrap">Severity</th>
+                  <th className="p-4 whitespace-nowrap">Level</th>
                   <th className="p-4 whitespace-nowrap">Status</th>
                   <th className="p-4 whitespace-nowrap">Action Taken</th>
+                  <th className="p-4 whitespace-nowrap">Evidence</th>
                   <th className="p-4 whitespace-nowrap">Remarks</th>
                 </tr>
               </thead>
@@ -631,14 +774,11 @@ const AgentOffences = () => {
                     <td className="p-4 text-sm text-gray-600">
                       {formatDisplayDate(off.dateOfOffense)}
                     </td>
-                    <td className="p-4 text-sm text-gray-800 font-medium">
-                      {off.agentName}
-                    </td>
                     <td className="p-4 text-sm text-gray-600">
                       {off.offenseType}
                     </td>
                     <td className="p-4 text-sm text-gray-600">
-                      {off.offenseSeverity}
+                      {off.offenseLevel || "N/A"}
                     </td>
                     <td className="p-4">
                       <span
@@ -654,6 +794,48 @@ const AgentOffences = () => {
                     <td className="p-4 text-sm text-gray-600">
                       {off.actionTaken}
                     </td>
+
+                    {/* Evidence Column with icons */}
+                    <td className="p-4 text-sm text-gray-600">
+                      {off.evidence && off.evidence.length > 0 ? (
+                        <div className="flex flex-col items-start gap-2">
+                          {off.evidence.map((ev, idx) => {
+                            const viewUrl = base64ToBlobUrl(ev.data, ev.type);
+                            return (
+                              <div
+                                key={idx}
+                                className="flex items-center gap-2"
+                              >
+                                <span className="truncate" title={ev.fileName}>
+                                  {ev.fileName}
+                                </span>
+                                <a
+                                  href={viewUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-1 text-gray-500 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
+                                  title="View"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </a>
+                                <a
+                                  href={ev.data}
+                                  download={ev.fileName}
+                                  className="p-1 text-gray-500 hover:text-green-600 rounded-md hover:bg-green-50 transition-colors"
+                                  title="Download"
+                                >
+                                  <Download className="w-4 h-4" />
+                                </a>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    {/* End of Evidence Column */}
+
                     <td className="p-4 text-sm text-gray-600">
                       {off.remarks || "—"}
                     </td>
@@ -666,6 +848,8 @@ const AgentOffences = () => {
           <div className="flex items-center justify-center py-10 text-gray-500 italic">
             {isLoading
               ? "Loading history..."
+              : historySearchQuery || historyStartDate || historyEndDate // Check if any filter is active
+              ? "No matching history records found for the selected filters."
               : "No resolved offense records found."}
           </div>
         )}

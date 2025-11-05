@@ -8,9 +8,26 @@ import {
   updateDetails,
   updateUser,
 } from "../controllers/userControllers.js";
+
+import User from "../model/User.js"; 
+
 const router = express.Router();
 
 router.get("/get-users", getUsers);
+
+router.get("/users", async (req, res) => {
+  try {
+    const searchQuery = req.query.search || "";
+
+    const users = await User.getAll(searchQuery, null); 
+
+    res.json(users);
+  } catch (error) { 
+    console.error("Error fetching users for search:", error);
+    res.status(500).send("Server error");
+  }
+});
+// =========================================
 
 router.post("/add-user", addUser);
 
