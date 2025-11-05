@@ -2,6 +2,7 @@ import connectDB from "../config/db.js";
 import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 import Roles from "../../../client/src/constants/roles.js";
+import webhook from "../utils/webhook.js";
 
 class Attendance {
   static #collection = "attendances";
@@ -271,19 +272,46 @@ class Attendance {
       throw new Error("Attendance already recorded for today.");
     }
 
-    const result = await collection.insertOne({
-      userId: new ObjectId(id),
-      employeeId,
-      shiftDate: now.toJSDate(),
-      shiftStart,
-      shiftEnd,
-      timeIn: now.toJSDate(),
-      status: "Working",
-      createdAt: now.toJSDate(),
-      updatedAt: now.toJSDate(),
-    });
+    try {
+      const result = await collection.insertOne({
+        userId: new ObjectId(id),
+        employeeId,
+        shiftDate: now.toJSDate(),
+        shiftStart,
+        shiftEnd,
+        timeIn: now.toJSDate(),
+        status: "Working",
+        createdAt: now.toJSDate(),
+        updatedAt: now.toJSDate(),
+      });
+      return result;
+    } catch (err) {
+      // If it’s a duplicate key error (code 11000)
+      if (err.code === 11000) {
+        console.warn(`Duplicate attendance prevented for user ${id}`);
 
-    return result;
+        // Optional: send a webhook notification with details
+        await webhook(
+          `**Duplicate attendance prevented**\nUser ID: ${id}\n` +
+          `Reason: Attempted to record attendance for the same shift or day.\n\n` +
+          `**Error Details:**\n\`\`\`${err.message}\`\`\``
+        );
+
+        // Return the existing attendance so the app can continue smoothly
+        return await collection.findOne({
+          userId: new ObjectId(id),
+          shiftDate: { $gte: startOfDay, $lte: endOfDay },
+        });
+      }
+
+      // For all other errors, also send a webhook
+      await webhook(
+        `**Attendance Error:**\nUser ID: ${id}\n\n\`\`\`${err.stack || err.message}\`\`\``
+      );
+
+      // Then rethrow to be handled upstream if needed
+      throw err;
+    }
   }
 
   /**
