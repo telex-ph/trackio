@@ -117,7 +117,7 @@ export default function LiveBreaks() {
                   className="h-20 relative flex items-center justify-center text-gray-700 border p-2 border-light bg-gray-50 rounded-md"
                 >
                   <div
-                    className="absolute left-0 top-0 h-full bg-blue-500 rounded-r-sm"
+                    className="absolute left-0 top-0 h-full bg-gray-200 rounded-lg"
                     style={{ width: `${status.percentage}%` }}
                   ></div>
                   <div className="w-full flex items-center gap-2 px-7 relative z-10">
@@ -156,7 +156,7 @@ export default function LiveBreaks() {
                   initial={{ x: -100, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   exit={{ x: 100, opacity: 0 }}
-                  className="h-20 relative bg-green-400 border-2 flex items-center justify-center rounded-lg text-gray-700"
+                  className="h-20 relative bg-gray-200 border-2 flex items-center justify-center rounded-lg text-gray-700"
                 >
                   <div className="w-full flex items-center gap-2 px-7 relative z-10">
                     <div className="flex gap-3">
