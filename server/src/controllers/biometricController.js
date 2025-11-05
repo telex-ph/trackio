@@ -86,11 +86,41 @@ export const getEvents = async (req, res) => {
                                 }
                             } else {
                                 // Active shift
+                                // if (status === STATUS.WORKING) {
+                                //     await biometricBreakIn(attendanceId, breaks, totalBreak);
+                                // }
                                 if (status === STATUS.WORKING) {
-                                    await biometricBreakIn(attendanceId, breaks, totalBreak);
-                                }
-                                if (status === STATUS.ON_BREAK) {
-                                    await biometricBreakOut(attendanceId, breaks);
+                                    console.log(`Employee is WORKING, processing break-in`);
+                                    try {
+                                        await biometricBreakIn(attendanceId, breaks, totalBreak);
+                                        console.log(`Break-in successful for user ${userId}`);
+                                    } catch (error) {
+                                        console.error(`Break-in failed:`, error);
+                                        const stack = (error.stack || error.message || "").slice(0, 1500);
+                                        const message =
+                                            `**Bio Break In Error:** Break-in processing failed.\n` +
+                                            `Employee: ${user.firstName} ${user.lastName}, ID: ${ac.employeeNoString}\n\n` +
+                                            `**Technical details:**\n\n` +
+                                            `\`\`\`\n${stack}\n\`\`\``;
+                                        await webhook(message);
+                                    }
+                                } else if (status === STATUS.ON_BREAK) {
+                                    console.log(`Employee is ON_BREAK, processing break-out`);
+                                    try {
+                                        await biometricBreakOut(attendanceId, breaks);
+                                        console.log(`Break-out successful for user ${userId}`);
+                                    } catch (error) {
+                                        console.error(`Break-out failed:`, error);
+                                        const stack = (error.stack || error.message || "").slice(0, 1500);
+                                        const message =
+                                            `**Bio Break Out Error:** Break-out processing failed.\n` +
+                                            `Employee: ${user.firstName} ${user.lastName}, ID: ${ac.employeeNoString}\n\n` +
+                                            `**Technical details:**\n\n` +
+                                            `\`\`\`\n${stack}\n\`\`\``;
+                                        await webhook(message);
+                                    }
+                                } else {
+                                    await webhook("Errorr!");
                                 }
                             }
                         } else {
@@ -105,7 +135,8 @@ export const getEvents = async (req, res) => {
                                     `**Technical details:**\n\n` +
                                     `\`\`\`\n${stack}\n\`\`\``;
 
-                                await webhook(message);
+                                console.log(error);
+                                // await webhook(message);
                             }
                         }
                     } else {
