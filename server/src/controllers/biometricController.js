@@ -89,7 +89,7 @@ export const getEvents = async (req, res) => {
                                 // if (status === STATUS.WORKING) {
                                 //     await biometricBreakIn(attendanceId, breaks, totalBreak);
                                 // }
-                                if (ipAddress === BIO_IP.INDOOR) {
+                                if (status === STATUS.WORKING) {
                                     console.log(`Employee is WORKING, processing break-in`);
                                     try {
                                         await biometricBreakIn(attendanceId, breaks, totalBreak);
@@ -104,7 +104,7 @@ export const getEvents = async (req, res) => {
                                             `\`\`\`\n${stack}\n\`\`\``;
                                         await webhook(message);
                                     }
-                                } else if (ipAddress === BIO_IP.OUTDOOR) {
+                                } else if (status === STATUS.ON_BREAK) {
                                     console.log(`Employee is ON_BREAK, processing break-out`);
                                     try {
                                         await biometricBreakOut(attendanceId, breaks);
