@@ -18,7 +18,7 @@ const HR_CaseHistory = ({
   today,
 }) => {
   return (
-    <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
+    <div className="rounded-md p-6 sm:p-8 border border-light">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-green-100 rounded-lg">
@@ -110,11 +110,10 @@ const HR_CaseHistory = ({
                   </td>
                   <td className="p-4">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        off.status === "Closed"
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${off.status === "Closed"
                           ? "bg-green-100 text-green-700"
                           : "bg-gray-200 text-gray-600"
-                      }`}
+                        }`}
                     >
                       {off.status}
                     </span>
@@ -177,8 +176,8 @@ const HR_CaseHistory = ({
           {isLoading
             ? "Loading history..."
             : filters.searchQuery || filters.startDate || filters.endDate // Check if any filter is active
-            ? "No matching history records found for the selected filters."
-            : "No resolved offense records found."}
+              ? "No matching history records found for the selected filters."
+              : "No resolved offense records found."}
         </div>
       )}
     </div>

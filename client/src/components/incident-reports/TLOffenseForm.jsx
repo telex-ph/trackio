@@ -204,13 +204,12 @@ const OffenseForm = ({
   // --- END OF MODIFICATION ---
 
   return (
-    <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
+    <div className="backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div
-            className={`p-2 ${
-              isEditMode ? "bg-red-100" : "bg-indigo-100"
-            } rounded-lg`}
+            className={`p-2 ${isEditMode ? "bg-red-100" : "bg-indigo-100"
+              } rounded-lg`}
           >
             {isEditMode ? (
               <Edit className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
@@ -266,7 +265,7 @@ const OffenseForm = ({
                 )}
                 {suggestions.length > 0 &&
                   suggestions.filter(isValidSuggestion).length !==
-                    suggestions.length && (
+                  suggestions.length && (
                     <li className="p-3 text-gray-400 text-xs italic">
                       Some results might be hidden due to incomplete data.
                     </li>
@@ -514,11 +513,10 @@ const OffenseForm = ({
             </div>
           ) : (
             <div
-              className={`relative border-2 border-dashed rounded-2xl p-4 transition-all duration-300 ${
-                isDragOver
+              className={`relative border-2 border-dashed rounded-2xl p-4 transition-all duration-300 ${isDragOver
                   ? "border-red-400 bg-red-50"
                   : "border-gray-300 bg-gray-50/30"
-              }`}
+                }`}
               onDrop={handleDrop}
               onDragOver={(e) => {
                 e.preventDefault();

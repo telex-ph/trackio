@@ -286,7 +286,7 @@ const HROffenses = () => {
           Record and manage disciplinary offenses for agents.
         </p>
       </section>
-      <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 p-2 gap-6 mb-12 max-w-9xl mx-auto">
         <OffenseForm
           formData={formData}
           setFormData={setFormData}

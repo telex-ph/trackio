@@ -73,7 +73,7 @@ const OffenseHistory = ({ offenses, isLoading }) => {
   });
 
   return (
-    <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
+    <div className="rounded-md p-6 sm:p-8 border border-light">
       <div className="flex items-center justify-between mb-6">
         {/* Header (no changes) */}
         <div className="flex items-center gap-3">
@@ -124,14 +124,14 @@ const OffenseHistory = ({ offenses, isLoading }) => {
             className="w-full px-4 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-green-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
             title="End Date"
           />
-           <button
-             onClick={handleDateReset}
-             className="flex items-center justify-center gap-1 sm:col-start-3 p-3 bg-gray-100 text-gray-600 rounded-2xl hover:bg-gray-200 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-             disabled={!startDate && !endDate}
-             title="Clear Dates"
-           >
-             <ClearIcon className="w-4 h-4" /> Clear Dates
-           </button>
+          <button
+            onClick={handleDateReset}
+            className="flex items-center justify-center gap-1 sm:col-start-3 p-3 bg-gray-100 text-gray-600 rounded-2xl hover:bg-gray-200 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!startDate && !endDate}
+            title="Clear Dates"
+          >
+            <ClearIcon className="w-4 h-4" /> Clear Dates
+          </button>
         </div>
       </div>
       {/* --- END OF FILTERS ROW --- */}
@@ -177,11 +177,10 @@ const OffenseHistory = ({ offenses, isLoading }) => {
                   </td>
                   <td className="p-4">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        off.status === "Closed"
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${off.status === "Closed"
                           ? "bg-green-100 text-green-700"
                           : "bg-gray-200 text-gray-600"
-                      }`}
+                        }`}
                     >
                       {off.status}
                     </span>
@@ -240,8 +239,8 @@ const OffenseHistory = ({ offenses, isLoading }) => {
           {isLoading
             ? "Loading history..."
             : searchQuery || startDate || endDate // Check if any filter is active
-            ? "No matching history records found for the selected filters."
-            : "No resolved offense records found."}
+              ? "No matching history records found for the selected filters."
+              : "No resolved offense records found."}
         </div>
       )}
     </div>

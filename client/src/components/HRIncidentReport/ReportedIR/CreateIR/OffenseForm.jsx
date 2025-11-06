@@ -197,7 +197,7 @@ const OffenseForm = ({
   const today = `${year}-${month}-${day}`;
 
   return (
-    <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
+    <div className="rounded-md p-6 sm:p-8 border border-light">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div

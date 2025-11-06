@@ -21,7 +21,7 @@ const HR_CasesInProgress = ({
   base64ToBlobUrl,
 }) => {
   return (
-    <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
+    <div className="rounded-md p-6 sm:p-8 border border-light">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-red-100 rounded-lg">
@@ -70,13 +70,12 @@ const HR_CasesInProgress = ({
                         Date: {formatDisplayDate(off.dateOfOffense)}
                       </span>
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          off.status === "Pending Review"
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${off.status === "Pending Review"
                             ? "bg-yellow-100 text-yellow-700"
                             : off.status === "Under Investigation"
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-gray-200 text-gray-600"
-                        }`}
+                              ? "bg-blue-100 text-blue-700"
+                              : "bg-gray-200 text-gray-600"
+                          }`}
                       >
                         {off.status}
                       </span>
@@ -189,8 +188,8 @@ const HR_CasesInProgress = ({
           {isLoading
             ? "Loading offenses..."
             : searchQuery
-            ? "No matching offense records found."
-            : "No offense records found."}
+              ? "No matching offense records found."
+              : "No offense records found."}
         </div>
       )}
     </div>
