@@ -3,6 +3,9 @@ import cloudUpload from "../config/cloudinary.js";
 export const uploadMedia = async (req, res) => {
   const folder = req.body.folder;
 
+  console.log("Files received:", req.files);
+  console.log("Body:", req.body);
+
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: "No files uploaded" });

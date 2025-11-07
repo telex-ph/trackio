@@ -125,7 +125,7 @@ const OffenseForm = ({
   const fetchEmployees = async (query) => {
     setIsSearching(true);
     try {
-      const response = await api.get(`/users?search=${query}`);
+      const response = await api.get(`/user/users?search=${query}`);
       setSuggestions(response.data || []);
       setShowSuggestions(response.data && response.data.length > 0);
     } catch (error) {
