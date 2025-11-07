@@ -34,9 +34,8 @@ const CustomCollapse = ({
     <div className="flex flex-col w-full">
       <button
         onClick={onToggle}
-        className={`flex items-center ${
-          isCollapsed ? "justify-center px-2 py-3" : "justify-between px-3 py-2"
-        } rounded-lg transition-colors duration-200 w-full`}
+        className={`flex items-center ${isCollapsed ? "justify-center px-2 py-3" : "justify-between px-3 py-2"
+          } rounded-lg transition-colors duration-200 w-full`}
       >
         <div className="flex items-center gap-2">
           {React.cloneElement(icon, {
@@ -47,17 +46,15 @@ const CustomCollapse = ({
 
         {!isCollapsed && (
           <ChevronDown
-            className={`w-4 h-4 transition-transform duration-300 ${
-              open ? "rotate-180" : "rotate-0"
-            }`}
+            className={`w-4 h-4 transition-transform duration-300 ${open ? "rotate-180" : "rotate-0"
+              }`}
           />
         )}
       </button>
 
       <div
-        className={`flex flex-col overflow-hidden transition-all duration-300 ${
-          !isCollapsed && "pl-3"
-        } ${open ? "max-h-screen mt-1" : "max-h-0"}`}
+        className={`flex flex-col overflow-hidden transition-all duration-300 ${!isCollapsed && "pl-3"
+          } ${open ? "max-h-screen mt-1" : "max-h-0"}`}
       >
         {children}
       </div>
@@ -70,12 +67,10 @@ const SidebarLink = ({ to, icon: Icon, label, isCollapsed }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>
-      `flex items-center ${
-        isCollapsed ? "justify-center px-2 py-2" : "gap-2 px-3 py-2"
-      } rounded-md ${
-        isActive
-          ? "bg-(--primary-color) text-white"
-          : "text-black hover:bg-gray-100"
+      `flex items-center ${isCollapsed ? "justify-center px-2 py-2" : "gap-2 px-3 py-2"
+      } rounded-md ${isActive
+        ? "bg-(--primary-color) text-white"
+        : "text-black hover:bg-gray-100"
       }`
     }
   >
@@ -289,6 +284,12 @@ const OMSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       label="Monitoring"
       isCollapsed={isCollapsed}
     />
+    <SidebarLink
+      to="/operation-manager/ticket"
+      icon={Ticket}
+      label="Ticket"
+      isCollapsed={isCollapsed}
+    />
   </div>
 );
 
@@ -362,6 +363,12 @@ const HRSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
         isCollapsed={isCollapsed}
       />
     </CustomCollapse>
+    <SidebarLink
+      to="/human-resources/monitoring"
+      icon={Activity}
+      label="Monitoring"
+      isCollapsed={isCollapsed}
+    />
   </div>
 );
 
@@ -435,6 +442,12 @@ const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       isCollapsed={isCollapsed}
     />
     <SidebarLink
+      to="/admin/monitoring"
+      icon={Activity}
+      label="Monitoring"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
       to="/admin/account-management"
       icon={Users2Icon}
       label="Account"
@@ -498,9 +511,8 @@ export const Sidebar = ({ isCollapsed }) => {
 
   return (
     <aside
-      className={`flex flex-col h-full justify-between bg-white shadow-sm transition-all duration-300 overflow-y-auto ${
-        isCollapsed ? "w-16" : "w-64"
-      }`}
+      className={`flex flex-col h-full justify-between bg-white shadow-sm transition-all duration-300 overflow-y-auto ${isCollapsed ? "w-16" : "w-64"
+        }`}
     >
       <nav className="flex-1 m-4">{renderSidebar()}</nav>
     </aside>

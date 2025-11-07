@@ -105,6 +105,7 @@ const router = createBrowserRouter([
               { index: true, element: <Navigate to="dashboard" replace /> },
               { path: "dashboard", element: <AdminDashboard /> },
               { path: "attendance", element: <SharedAttendance /> },
+              { path: "ticket", element: <SharedTicket /> },
               {
                 path: "tracking",
                 element: <TrackingLayout role={Roles.ADMIN} />,
@@ -159,6 +160,7 @@ const router = createBrowserRouter([
                 path: "schedule/:id",
                 element: <SharedViewSchedule role={Roles.OM} />,
               },
+              { path: "ticket", element: <SharedTicket /> },
               {
                 path: "tracking",
                 element: <TrackingLayout role={Roles.OM} />,
@@ -188,6 +190,7 @@ const router = createBrowserRouter([
                 path: "schedule/:id",
                 element: <SharedViewSchedule role={Roles.HR} />,
               },
+              { path: "ticket", element: <SharedTicket /> },
               {
                 path: "tracking",
                 element: <TrackingLayout role={Roles.HR} />,
@@ -281,7 +284,7 @@ const router = createBrowserRouter([
                 path: "attendance",
                 element: <SharedAttendance readOnly={true} />,
               },
-              { path: "coaching", element: <AgentCoaching /> }, 
+              { path: "coaching", element: <AgentCoaching /> },
               { path: "offenses", element: <AgentOffences /> },
 
               { path: "ticket", element: <SharedTicket /> },
