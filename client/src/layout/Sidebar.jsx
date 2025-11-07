@@ -364,9 +364,9 @@ const HRSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       />
     </CustomCollapse>
     <SidebarLink
-      to="/human-resources/monitoring"
-      icon={Activity}
-      label="Monitoring"
+      to="/human-resources/ticket"
+      icon={Ticket}
+      label="Ticket"
       isCollapsed={isCollapsed}
     />
   </div>
@@ -442,9 +442,9 @@ const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       isCollapsed={isCollapsed}
     />
     <SidebarLink
-      to="/admin/monitoring"
-      icon={Activity}
-      label="Monitoring"
+      to="/admin/ticket"
+      icon={Ticket}
+      label="Ticket"
       isCollapsed={isCollapsed}
     />
     <SidebarLink
