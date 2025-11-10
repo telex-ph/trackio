@@ -627,7 +627,7 @@ const TicketsTable = () => {
         updateTicketNo: ticketDetails.ticketNo,
         feedback,
         rating: null,
-        status: "REJECT", // 👈 key difference
+        status: "REJECT",
       };
 
       const rejectResponse = await axios.patch(rejectUrl, rejectPayload, {
