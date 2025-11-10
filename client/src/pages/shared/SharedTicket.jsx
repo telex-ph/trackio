@@ -585,6 +585,7 @@ const TicketsTable = () => {
 
       // Close confirmation modal
       setIsConfirmationModalOpen(false);
+      setIsRejectModalOpen(false);
 
       // Refresh data
       await fetchTicketDetails();
@@ -656,6 +657,10 @@ const TicketsTable = () => {
     } finally {
       setIsRejecting(false);
     }
+  };
+
+  const openRejectModal = () => {
+    setIsRejectModalOpen(true);
   };
 
   // Ang mga handler na ito ay ipapasa na lang sa TicketsGrid
@@ -732,6 +737,7 @@ const TicketsTable = () => {
         isLoading={isModalLoading}
         onViewComments={() => setIsCommentsModalOpen(true)}
         onConfirmResolution={openConfirmationModal}
+        onRejectResolution={openRejectModal}
         formatDate={formatDate}
         userEmail={user.email}
         onTicketUpdate={(updatedTicket) => {
