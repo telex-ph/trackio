@@ -779,7 +779,7 @@ const TicketsTable = () => {
         onClose={() => setIsRejectModalOpen(false)}
         ticketDetails={ticketDetails}
         isRejecting={isRejecting}
-        onReject={handleRejectResolution}
+        onConfirm={handleRejectResolution} // ✅ match the modal prop
       />
     </div>
   );
