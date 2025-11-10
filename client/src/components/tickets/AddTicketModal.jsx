@@ -135,7 +135,7 @@ const AddTicketModal = ({
                 }}
                 required
                 value={formData.stationNo || ""}
-                placeholder="Enter station number (1-178)"
+                placeholder="Enter station number (1-230)"
                 className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#a10000] focus:border-transparent placeholder-gray-400 transition-all"
               />
             </div>
