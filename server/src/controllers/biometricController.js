@@ -78,6 +78,9 @@ export const getEvents = async (req, res) => {
                             const shiftEnd = DateTime.fromJSDate(attendance.shiftEnd).toUTC();
                             const nowTime = DateTime.utc();
 
+                            console.log(nowTime);
+                            console.log(shiftEnd);
+
                             if (shiftEnd < nowTime) {
                                 // Shift already ended
                                 await biometricOut(attendanceId);
@@ -141,39 +144,39 @@ export const getEvents = async (req, res) => {
                         }
                     } else {
                         // Create a new user if not found
-                        const arrName = ac.name.split(" ");
-                        const lastName = arrName[arrName.length - 1];
-                        const firstName = arrName.slice(0, -1).join(" ");
-                        const employeeId = ac.employeeNoString;
+                        // const arrName = ac.name.split(" ");
+                        // const lastName = arrName[arrName.length - 1];
+                        // const firstName = arrName.slice(0, -1).join(" ");
+                        // const employeeId = ac.employeeNoString;
 
-                        const newUser = {
-                            employeeId,
-                            firstName,
-                            lastName,
-                            teamId: null,
-                            email: null,
-                            phoneNumber: null,
-                            role: "agent",
-                            password:
-                                "$2a$10$1jHppZ6SOnm4wnTMDg0kPOY9FHu/0L31MdP50WaeGmnVkLpeLPpau",
-                            createdAt: new Date(),
-                        };
+                        // const newUser = {
+                        //     employeeId,
+                        //     firstName,
+                        //     lastName,
+                        //     teamId: null,
+                        //     email: null,
+                        //     phoneNumber: null,
+                        //     role: "agent",
+                        //     password:
+                        //         "$2a$10$1jHppZ6SOnm4wnTMDg0kPOY9FHu/0L31MdP50WaeGmnVkLpeLPpau",
+                        //     createdAt: new Date(),
+                        // };
 
-                        try {
-                            const user = await User.addUser(newUser);
-                            console.log(user);
-                            const message = `New user added: ${ac.name} (Employee ID: ${ac.employeeNoString}) has been added to the system.`;
-                            await webhook(message);
-                        } catch (error) {
-                            const stack = (error.stack || error.message || "").slice(0, 1500);
-                            const message =
-                                `**Add User Error:** Unable to add the user to the system.\n` +
-                                `Employee: ${ac.name}, ID: ${ac.employeeNoString}\n\n` +
-                                `**Technical details:**\n\n` +
-                                `\`\`\`\n${stack}\n\`\`\``;
+                        // try {
+                        //     const user = await User.addUser(newUser);
+                        //     console.log(user);
+                        //     const message = `New user added: ${ac.name} (Employee ID: ${ac.employeeNoString}) has been added to the system.`;
+                        //     await webhook(message);
+                        // } catch (error) {
+                        //     const stack = (error.stack || error.message || "").slice(0, 1500);
+                        //     const message =
+                        //         `**Add User Error:** Unable to add the user to the system.\n` +
+                        //         `Employee: ${ac.name}, ID: ${ac.employeeNoString}\n\n` +
+                        //         `**Technical details:**\n\n` +
+                        //         `\`\`\`\n${stack}\n\`\`\``;
 
-                            await webhook(message);
-                        }
+                        //     await webhook(message);
+                        // }
                     }
                 }
             }
