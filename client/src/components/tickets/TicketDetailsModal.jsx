@@ -7,6 +7,7 @@ import {
   Lock,
   Edit2,
   Save,
+  XCircle
 } from "lucide-react";
 import { Spinner } from "flowbite-react";
 import { useState } from "react";
