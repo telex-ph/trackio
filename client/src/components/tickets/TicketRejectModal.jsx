@@ -8,24 +8,24 @@ const TicketRejectModal = ({
   onClose,
   ticketDetails,
   isRejecting,
-  onConfirm, 
+  onConfirm,
 }) => {
-  const [comment, setComment] = useState("");
+  const [feedback, setFeedback] = useState("");
 
   const handleClose = () => {
-    setComment("");
+    setFeedback("");
     onClose();
   };
 
   if (!isOpen) return null;
 
   const handleSubmit = () => {
-    if (setComment === "") {
+    if (feedback.trim() === "") {
       toast.error("Please provide a comment to reject resolution.");
       return;
     }
-    
-    onConfirm(comment); 
+
+    onConfirm(feedback);
   };
 
   const isSubmitDisabled = isRejecting;
@@ -33,16 +33,19 @@ const TicketRejectModal = ({
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-        
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-5 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
               <XCircle className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Confirm Resolution & comment</h2>
-              <p className="text-green-100 text-sm">Mark ticket as resolved and provide comment</p>
+              <h2 className="text-xl font-bold text-white">
+                Confirm Rejection & comment
+              </h2>
+              <p className="text-red-100 text-sm">
+                Mark ticket as rejected and provide comment
+              </p>
             </div>
           </div>
           <button
@@ -67,24 +70,35 @@ const TicketRejectModal = ({
               Reject Ticket Resolution
             </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Are you sure you want to reject this ticket that has been marked as resolved?
-              Please provide your comment below.
+              Are you sure you want to reject this ticket that has been marked
+              as resolved? Please provide your comment below.
             </p>
-            
+
             <div className="bg-gray-50 rounded-lg p-4 text-left mb-6">
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-semibold text-gray-500 uppercase">Ticket No</span>
-                  <span className="text-sm font-bold text-gray-900">#{ticketDetails?.ticketNo}</span>
+                  <span className="text-xs font-semibold text-gray-500 uppercase">
+                    Ticket No
+                  </span>
+                  <span className="text-sm font-bold text-gray-900">
+                    #{ticketDetails?.ticketNo}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-semibold text-gray-500 uppercase">Subject</span>
-                  <span className="text-sm font-semibold text-gray-900 truncate ml-2 max-w-[200px]" title={ticketDetails?.subject}>
+                  <span className="text-xs font-semibold text-gray-500 uppercase">
+                    Subject
+                  </span>
+                  <span
+                    className="text-sm font-semibold text-gray-900 truncate ml-2 max-w-[200px]"
+                    title={ticketDetails?.subject}
+                  >
                     {ticketDetails?.subject}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-semibold text-gray-500 uppercase">Current Status</span>
+                  <span className="text-xs font-semibold text-gray-500 uppercase">
+                    Current Status
+                  </span>
                   <span className="inline-block px-3 py-1 text-xs font-bold rounded-full bg-yellow-100 text-yellow-700">
                     {ticketDetails?.status}
                   </span>
@@ -94,14 +108,17 @@ const TicketRejectModal = ({
 
             {/* Comment Input */}
             <div className="mb-6 text-left">
-              <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="comment"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Comment*
               </label>
               <textarea
-                id="comment"
+                id="feedback"
                 rows="3"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
                 disabled={isRejecting}
                 className="w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 transition-colors"
                 placeholder="Share your thoughts on the resolution..."
@@ -111,7 +128,8 @@ const TicketRejectModal = ({
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
             <p className="text-xs text-blue-800">
-              <strong>Note:</strong> Once confirmed, the ticket status will be updated to "In Progress" and the user will be notified.
+              <strong>Note:</strong> Once confirmed, the ticket status will be
+              updated to "In Progress" and the user will be notified.
             </p>
           </div>
 

@@ -11,15 +11,22 @@ const isDev = process.env.NODE_ENV !== "production";
 export default defineConfig({
   plugins: [tailwindcss(), react(), flowbiteReact()],
 
+  // server: isDev
+  //   ? {
+  //       https: {
+  //         key: fs.readFileSync(
+  //           path.resolve(__dirname, "keys/localhost-key.pem")
+  //         ),
+  //         cert: fs.readFileSync(path.resolve(__dirname, "keys/localhost.pem")),
+  //       },
+  //       port: 5173,
+  //     }
+  //   : {},
+
   server: isDev
     ? {
-        https: {
-          key: fs.readFileSync(
-            path.resolve(__dirname, "keys/localhost-key.pem")
-          ),
-          cert: fs.readFileSync(path.resolve(__dirname, "keys/localhost.pem")),
-        },
-        port: 5173,
-      }
+      https: false,
+      port: 5173,
+    }
     : {},
 });

@@ -561,6 +561,7 @@ const TicketsTable = () => {
         updateTicketNo: ticketDetails.ticketNo,
         feedback: feedback || "No feedback provided.",
         rating: rating,
+        status: "CONFIRM",
       };
 
       const confirmResponse = await axios.patch(confirmUrl, confirmPayload, {
@@ -585,6 +586,7 @@ const TicketsTable = () => {
 
       // Close confirmation modal
       setIsConfirmationModalOpen(false);
+      setIsRejectModalOpen(false);
 
       // Refresh data
       await fetchTicketDetails();
@@ -624,8 +626,8 @@ const TicketsTable = () => {
         email: user.email,
         updateTicketNo: ticketDetails.ticketNo,
         feedback,
-        rating: null,
-        status: "REJECT", // 👈 key difference
+        rating: 0,
+        status: "REJECT",
       };
 
       const rejectResponse = await axios.patch(rejectUrl, rejectPayload, {
@@ -656,6 +658,10 @@ const TicketsTable = () => {
     } finally {
       setIsRejecting(false);
     }
+  };
+
+  const openRejectModal = () => {
+    setIsRejectModalOpen(true);
   };
 
   // Ang mga handler na ito ay ipapasa na lang sa TicketsGrid
@@ -732,6 +738,7 @@ const TicketsTable = () => {
         isLoading={isModalLoading}
         onViewComments={() => setIsCommentsModalOpen(true)}
         onConfirmResolution={openConfirmationModal}
+        onRejectResolution={openRejectModal}
         formatDate={formatDate}
         userEmail={user.email}
         onTicketUpdate={(updatedTicket) => {
@@ -773,7 +780,7 @@ const TicketsTable = () => {
         onClose={() => setIsRejectModalOpen(false)}
         ticketDetails={ticketDetails}
         isRejecting={isRejecting}
-        onReject={handleRejectResolution}
+        onConfirm={handleRejectResolution} // ✅ match the modal prop
       />
     </div>
   );
