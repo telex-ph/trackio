@@ -268,7 +268,7 @@ const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
               <TextInput
                 id="employeeId"
                 name="employeeId"
-                placeholder="Employee ID (Optional)"
+                placeholder="Employee ID (must match the one in Biometrics)"
                 value={form.employeeId}
                 onChange={handleChange}
               />
@@ -356,11 +356,10 @@ const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
           <button
             type="submit"
             disabled={loading}
-            className={`flex-1 p-3 rounded-md font-medium text-sm sm:text-base cursor-pointer transition-colors ${
-              loading
-                ? "bg-blue-400 text-white"
-                : "bg-blue-600 text-white hover:bg-blue-700"
-            }`}
+            className={`flex-1 p-3 rounded-md font-medium text-sm sm:text-base cursor-pointer transition-colors ${loading
+              ? "bg-blue-400 text-white"
+              : "bg-blue-600 text-white hover:bg-blue-700"
+              }`}
           >
             {loading ? "Adding..." : "Confirm"}
           </button>
