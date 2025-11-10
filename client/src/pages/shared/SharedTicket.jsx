@@ -561,6 +561,7 @@ const TicketsTable = () => {
         updateTicketNo: ticketDetails.ticketNo,
         feedback: feedback || "No feedback provided.",
         rating: rating,
+        status: "CONFIRM",
       };
 
       const confirmResponse = await axios.patch(confirmUrl, confirmPayload, {
