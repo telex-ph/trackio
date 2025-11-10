@@ -1,4 +1,4 @@
-import { X, AlertCircle, Star, CheckCircle } from "lucide-react";
+import { X, AlertCircle, Star, XCircle } from "lucide-react";
 import { Spinner } from "flowbite-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -38,7 +38,7 @@ const TicketRejectModal = ({
         <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-white" />
+              <XCircle className="w-5 h-5 text-white" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-white">Confirm Resolution & comment</h2>
@@ -137,7 +137,7 @@ const TicketRejectModal = ({
                 </>
               ) : (
                 <>
-                  <CheckCircle className="w-4 h-4" />
+                  <XCircle className="w-4 h-4" />
                   <span>Re-open Ticket</span>
                 </>
               )}
