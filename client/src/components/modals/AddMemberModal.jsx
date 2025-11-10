@@ -271,6 +271,7 @@ const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
                 placeholder="Employee ID (must match the one in Biometrics)"
                 value={form.employeeId}
                 onChange={handleChange}
+                required
               />
             </div>
 

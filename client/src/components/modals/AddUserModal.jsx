@@ -150,6 +150,7 @@ const AddUserModal = ({
               name="employeeId"
               value={data.employeeId}
               onChange={handleChange}
+              required
             />
           </div>
 
