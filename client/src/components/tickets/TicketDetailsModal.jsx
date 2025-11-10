@@ -1,4 +1,13 @@
-import { X, MessageSquare, Clock, FileText, CheckCircle, Lock, Edit2, Save } from "lucide-react";
+import {
+  X,
+  MessageSquare,
+  Clock,
+  FileText,
+  CheckCircle,
+  Lock,
+  Edit2,
+  Save,
+} from "lucide-react";
 import { Spinner } from "flowbite-react";
 import { useState } from "react";
 import axios from "axios";
@@ -16,17 +25,19 @@ const AttachmentViewerModal = ({ isOpen, onClose, attachmentUrl }) => {
   // Ginawang mas robust para i-handle ang non-string values
   const getFileExtension = (url) => {
     // Siguraduhin na ito ay isang string bago mag-split
-    if (typeof url !== 'string' || !url) { 
+    if (typeof url !== "string" || !url) {
       return "";
     }
-    const parts = url.split('?')[0].split('.'); // Handle URLs with query params
+    const parts = url.split("?")[0].split("."); // Handle URLs with query params
     return parts.pop().toLowerCase();
   };
   // +++ END OF FIX +++
 
   const extension = getFileExtension(attachmentUrl);
-  const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension);
-  const isPdf = extension === 'pdf';
+  const isImage = ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(
+    extension
+  );
+  const isPdf = extension === "pdf";
 
   let content;
 
@@ -70,7 +81,9 @@ const AttachmentViewerModal = ({ isOpen, onClose, attachmentUrl }) => {
       onClick={onClose} // Isara kapag nag-click sa labas
     >
       <div
-        className={`bg-black/30 p-4 rounded-lg w-full ${isPdf ? 'max-w-5xl h-[90vh]' : 'max-w-4xl h-auto max-h-[90vh]'} relative flex items-center justify-center`}
+        className={`bg-black/30 p-4 rounded-lg w-full ${
+          isPdf ? "max-w-5xl h-[90vh]" : "max-w-4xl h-auto max-h-[90vh]"
+        } relative flex items-center justify-center`}
         onClick={(e) => e.stopPropagation()} // Pigilan ang pag-close kapag sa loob ng content nag-click
       >
         {/* Close Button */}
@@ -82,7 +95,11 @@ const AttachmentViewerModal = ({ isOpen, onClose, attachmentUrl }) => {
         </button>
 
         {/* Content */}
-        <div className={`flex items-center justify-center ${isPdf ? 'w-full h-full' : 'w-auto h-auto'}`}>
+        <div
+          className={`flex items-center justify-center ${
+            isPdf ? "w-full h-full" : "w-auto h-auto"
+          }`}
+        >
           {content}
         </div>
       </div>
@@ -91,7 +108,6 @@ const AttachmentViewerModal = ({ isOpen, onClose, attachmentUrl }) => {
 };
 // +++ END NG HELPER COMPONENT +++
 
-
 const TicketDetailsModal = ({
   isOpen,
   onClose,
@@ -99,6 +115,7 @@ const TicketDetailsModal = ({
   isLoading,
   onViewComments,
   onConfirmResolution,
+  onRejectResolution,
   formatDate,
   userEmail,
   onTicketUpdate,
@@ -110,26 +127,27 @@ const TicketDetailsModal = ({
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  
+
   const [isAttachmentModalOpen, setIsAttachmentModalOpen] = useState(false);
 
   if (!isOpen) return null;
 
   // Check ticket status and if it's editable
-  const isResolved = ticketDetails?.status?.toLowerCase() === 'resolved';
-  const isClosed = ticketDetails?.status?.toLowerCase() === 'closed';
+  const isResolved = ticketDetails?.status?.toLowerCase() === "resolved";
+  const isClosed = ticketDetails?.status?.toLowerCase() === "closed";
   const isTicketEditable = !isResolved && !isClosed;
-  const canConfirm = isResolved && ticketDetails?.ticketNo && !ticketDetails?.agentConfirmed;
+  const canConfirm =
+    isResolved && ticketDetails?.ticketNo && !ticketDetails?.agentConfirmed;
 
   // Handlers for editing
   const handleEdit = (field) => {
-    if (field === 'subject') {
+    if (field === "subject") {
       setEditedSubject(ticketDetails.subject || "");
       setIsEditingSubject(true);
-    } else if (field === 'stationNo') {
+    } else if (field === "stationNo") {
       setEditedStationNo(ticketDetails.stationNo || "");
       setIsEditingStationNo(true);
-    } else if (field === 'description') {
+    } else if (field === "description") {
       setEditedDescription(ticketDetails.description || "");
       setIsEditingDescription(true);
     }
@@ -145,9 +163,15 @@ const TicketDetailsModal = ({
   };
 
   const handleSaveTicketDetails = async () => {
-    const newSubject = isEditingSubject ? editedSubject.trim() : ticketDetails.subject;
-    const newStationNo = isEditingStationNo ? editedStationNo.trim() : ticketDetails.stationNo;
-    const newDescription = isEditingDescription ? editedDescription.trim() : ticketDetails.description;
+    const newSubject = isEditingSubject
+      ? editedSubject.trim()
+      : ticketDetails.subject;
+    const newStationNo = isEditingStationNo
+      ? editedStationNo.trim()
+      : ticketDetails.stationNo;
+    const newDescription = isEditingDescription
+      ? editedDescription.trim()
+      : ticketDetails.description;
 
     // Validation checks
     if (isEditingSubject && !newSubject) {
@@ -178,8 +202,9 @@ const TicketDetailsModal = ({
 
     setIsSaving(true);
     try {
-      const url = "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/updateTicket";
-      
+      const url =
+        "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/updateTicket";
+
       const payload = {
         email: userEmail,
         updateTicketNo: ticketDetails.ticketNo,
@@ -198,7 +223,7 @@ const TicketDetailsModal = ({
 
       toast.success("Ticket details updated successfully!");
       handleCancelEdit(); // Close all editing modes
-      
+
       // Update the local ticket details
       if (onTicketUpdate) {
         onTicketUpdate({
@@ -208,7 +233,6 @@ const TicketDetailsModal = ({
           stationNo: newStationNo, // Keep as string for display if API sends it that way, but convert to Number for API payload
         });
       }
-
     } catch (error) {
       console.error("Failed to update ticket details:", error);
       toast.error("Failed to update ticket details");
@@ -218,7 +242,8 @@ const TicketDetailsModal = ({
   };
 
   // Determine if any field is currently being edited
-  const isEditingAnyField = isEditingSubject || isEditingStationNo || isEditingDescription;
+  const isEditingAnyField =
+    isEditingSubject || isEditingStationNo || isEditingDescription;
 
   // Content to display inside the subject/stationNo/description card when editing is active
   const EditingControls = ({ onSave, onCancel, isSaving }) => (
@@ -253,11 +278,10 @@ const TicketDetailsModal = ({
   return (
     // Ang z-50 dito ay ang main modal
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div 
+      <div
         className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col overflow-hidden"
-        style={{ height: '700px', maxHeight: '90vh' }}
+        style={{ height: "700px", maxHeight: "90vh" }}
       >
-        
         {/* Header - FIXED */}
         <div className="flex-shrink-0 bg-gradient-to-r from-[#a10000] to-[#a10000] px-6 py-5 flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
@@ -283,7 +307,9 @@ const TicketDetailsModal = ({
             // Loading State
             <div className="flex flex-col justify-center items-center h-full">
               <Spinner size="xl" />
-              <span className="text-gray-600 mt-4 font-medium">Loading details...</span>
+              <span className="text-gray-600 mt-4 font-medium">
+                Loading details...
+              </span>
             </div>
           ) : ticketDetails ? (
             // Data Loaded State
@@ -299,7 +325,8 @@ const TicketDetailsModal = ({
                       Ticket Marked as Resolved
                     </h3>
                     <p className="text-xs text-green-700">
-                      This ticket has been resolved. Please confirm the resolution to close the ticket.
+                      This ticket has been resolved. Please confirm the
+                      resolution to close the ticket.
                     </p>
                   </div>
                 </div>
@@ -316,24 +343,25 @@ const TicketDetailsModal = ({
                       Ticket Closed
                     </h3>
                     <p className="text-xs text-red-700">
-                      This ticket has been closed. Both parties have confirmed the resolution.
+                      This ticket has been closed. Both parties have confirmed
+                      the resolution.
                     </p>
                   </div>
                 </div>
               )}
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                
                 {/* COLUMN 1: Main Content */}
                 <div className="space-y-5">
-                  
                   {/* Subject with Edit */}
                   <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
                     <div className="flex items-center justify-between mb-3">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Subject</p>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Subject
+                      </p>
                       {!isEditingAnyField && isTicketEditable && (
                         <button
-                          onClick={() => handleEdit('subject')}
+                          onClick={() => handleEdit("subject")}
                           className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -341,7 +369,7 @@ const TicketDetailsModal = ({
                         </button>
                       )}
                     </div>
-                    
+
                     {isEditingSubject ? (
                       <div className="space-y-3">
                         <input
@@ -352,7 +380,11 @@ const TicketDetailsModal = ({
                           placeholder="Enter ticket subject..."
                           disabled={isSaving}
                         />
-                        <EditingControls onSave={handleSaveTicketDetails} onCancel={handleCancelEdit} isSaving={isSaving} />
+                        <EditingControls
+                          onSave={handleSaveTicketDetails}
+                          onCancel={handleCancelEdit}
+                          isSaving={isSaving}
+                        />
                       </div>
                     ) : (
                       <p className="text-lg font-bold text-gray-900">
@@ -364,10 +396,12 @@ const TicketDetailsModal = ({
                   {/* Description with Edit */}
                   <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
                     <div className="flex items-center justify-between mb-3">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Description</p>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Description
+                      </p>
                       {!isEditingAnyField && isTicketEditable && (
                         <button
-                          onClick={() => handleEdit('description')}
+                          onClick={() => handleEdit("description")}
                           className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -375,7 +409,7 @@ const TicketDetailsModal = ({
                         </button>
                       )}
                     </div>
-                    
+
                     {isEditingDescription ? (
                       <div className="space-y-3">
                         <textarea
@@ -385,7 +419,11 @@ const TicketDetailsModal = ({
                           placeholder="Enter ticket description..."
                           disabled={isSaving}
                         />
-                        <EditingControls onSave={handleSaveTicketDetails} onCancel={handleCancelEdit} isSaving={isSaving} />
+                        <EditingControls
+                          onSave={handleSaveTicketDetails}
+                          onCancel={handleCancelEdit}
+                          isSaving={isSaving}
+                        />
                       </div>
                     ) : (
                       <div className="bg-gray-50 rounded-lg p-4 min-h-[120px]">
@@ -396,14 +434,16 @@ const TicketDetailsModal = ({
                               No description provided.
                             </span>
                           )}
-                        </p> 
+                        </p>
                       </div>
                     )}
                   </div>
 
                   {/* Resolution Notes */}
                   <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Resolution Notes</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                      Resolution Notes
+                    </p>
                     <div className="bg-gray-50 rounded-lg p-4 min-h-[120px]">
                       <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
                         {ticketDetails.resolutionText || (
@@ -416,46 +456,67 @@ const TicketDetailsModal = ({
                   </div>
 
                   {/* Attachment */}
-                  {ticketDetails.attachment && ticketDetails.attachment.length > 0 && (
-                    <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Attachment</p>
-                      
-                      <button
-                        type="button"
-                        onClick={() => setIsAttachmentModalOpen(true)}
-                        className="inline-flex items-center gap-2 text-[#a10000] hover:text-[#a10000] font-medium text-sm underline"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                        </svg>
-                        View Attachment
-                      </button>
+                  {ticketDetails.attachment &&
+                    ticketDetails.attachment.length > 0 && (
+                      <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                          Attachment
+                        </p>
 
-                    </div>
-                  )}
+                        <button
+                          type="button"
+                          onClick={() => setIsAttachmentModalOpen(true)}
+                          className="inline-flex items-center gap-2 text-[#a10000] hover:text-[#a10000] font-medium text-sm underline"
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                            />
+                          </svg>
+                          View Attachment
+                        </button>
+                      </div>
+                    )}
                 </div>
 
                 {/* COLUMN 2: Details & Timeline */}
                 <div className="space-y-5">
-                  
                   {/* Ticket Info Card */}
                   <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Ticket No</p>
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                          Ticket No
+                        </p>
                         <p className="text-xl font-bold text-gray-900">
                           #{ticketDetails.ticketNo}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Status</p>
-                        <span className={`inline-block px-3 py-1 text-sm font-bold rounded-full ${
-                          ticketDetails.status === 'Open' ? 'bg-blue-100 text-blue-700' :
-                          ticketDetails.status === 'In Progress' ? 'bg-yellow-100 text-yellow-700' :
-                          ticketDetails.status === 'Resolved' ? 'bg-green-100 text-green-700' :
-                          ticketDetails.status === 'Closed' ? 'bg-gray-100 text-gray-700' :
-                          'bg-gray-100 text-gray-700'
-                        }`}>
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                          Status
+                        </p>
+                        <span
+                          className={`inline-block px-3 py-1 text-sm font-bold rounded-full ${
+                            ticketDetails.status === "Open"
+                              ? "bg-blue-100 text-blue-700"
+                              : ticketDetails.status === "In Progress"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : ticketDetails.status === "Resolved"
+                              ? "bg-green-100 text-green-700"
+                              : ticketDetails.status === "Closed"
+                              ? "bg-gray-100 text-gray-700"
+                              : "bg-gray-100 text-gray-700"
+                          }`}
+                        >
                           {ticketDetails.status}
                         </span>
                       </div>
@@ -466,29 +527,44 @@ const TicketDetailsModal = ({
                   <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Severity</p>
-                        <span className={`inline-block px-3 py-1 text-sm font-bold rounded-full ${
-                          ticketDetails.severity === 'Critical' ? 'bg-red-100 text-red-700' :
-                          ticketDetails.severity === 'High' ? 'bg-orange-100 text-orange-700' :
-                          ticketDetails.severity === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-green-100 text-green-700'
-                        }`}>
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                          Severity
+                        </p>
+                        <span
+                          className={`inline-block px-3 py-1 text-sm font-bold rounded-full ${
+                            ticketDetails.severity === "Critical"
+                              ? "bg-red-100 text-red-700"
+                              : ticketDetails.severity === "High"
+                              ? "bg-orange-100 text-orange-700"
+                              : ticketDetails.severity === "Medium"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-green-100 text-green-700"
+                          }`}
+                        >
                           {ticketDetails.severity}
                         </span>
                       </div>
                       <div>
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Category</p>
-                        <p className="text-sm font-semibold text-gray-900">{ticketDetails.category}</p>
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                          Category
+                        </p>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {ticketDetails.category}
+                        </p>
                       </div>
                     </div>
                   </div>
 
                   {/* Requester Info & Station No with Edit */}
                   <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">People Involved</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
+                      People Involved
+                    </p>
                     <div className="space-y-4">
                       <div>
-                        <p className="text-xs font-medium text-gray-500 mb-1">Requester</p>
+                        <p className="text-xs font-medium text-gray-500 mb-1">
+                          Requester
+                        </p>
                         <p className="text-sm font-semibold text-gray-900">
                           {ticketDetails.requestee?.name || (
                             <span className="text-gray-400 italic">N/A</span>
@@ -499,10 +575,12 @@ const TicketDetailsModal = ({
                         {/* Station No with Edit */}
                         <div>
                           <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs font-medium text-gray-500">Station No</p>
+                            <p className="text-xs font-medium text-gray-500">
+                              Station No
+                            </p>
                             {!isEditingAnyField && isTicketEditable && (
                               <button
-                                onClick={() => handleEdit('stationNo')}
+                                onClick={() => handleEdit("stationNo")}
                                 className="flex items-center text-xs font-semibold text-blue-600 hover:bg-blue-50 rounded-lg transition-colors p-1"
                               >
                                 <Edit2 className="w-3 h-3" />
@@ -514,24 +592,36 @@ const TicketDetailsModal = ({
                               <input
                                 type="number"
                                 value={editedStationNo}
-                                onChange={(e) => setEditedStationNo(e.target.value)}
+                                onChange={(e) =>
+                                  setEditedStationNo(e.target.value)
+                                }
                                 className="w-full p-2.5 text-sm font-semibold text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Enter station no. (max 178)"
                                 disabled={isSaving}
                                 min="1"
                                 max="178" // Added max attribute
                               />
-                              <EditingControls onSave={handleSaveTicketDetails} onCancel={handleCancelEdit} isSaving={isSaving} />
+                              <EditingControls
+                                onSave={handleSaveTicketDetails}
+                                onCancel={handleCancelEdit}
+                                isSaving={isSaving}
+                              />
                             </div>
                           ) : (
-                            <p className="text-sm font-semibold text-gray-900">{ticketDetails.stationNo}</p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {ticketDetails.stationNo}
+                            </p>
                           )}
                         </div>
                         <div>
-                          <p className="text-xs font-medium text-gray-500 mb-1">Assigned To</p>
+                          <p className="text-xs font-medium text-gray-500 mb-1">
+                            Assigned To
+                          </p>
                           <p className="text-sm font-semibold text-gray-900">
                             {ticketDetails.assignee?.name || (
-                              <span className="text-gray-400 italic">Not assigned</span>
+                              <span className="text-gray-400 italic">
+                                Not assigned
+                              </span>
                             )}
                           </p>
                         </div>
@@ -541,28 +631,38 @@ const TicketDetailsModal = ({
 
                   {/* Timeline */}
                   <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Timeline</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
+                      Timeline
+                    </p>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs font-medium text-gray-500 mb-1">Date Created</p>
+                        <p className="text-xs font-medium text-gray-500 mb-1">
+                          Date Created
+                        </p>
                         <p className="text-sm font-semibold text-gray-900">
                           {formatDate(ticketDetails.$createdAt)}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-gray-500 mb-1">Last Updated</p>
+                        <p className="text-xs font-medium text-gray-500 mb-1">
+                          Last Updated
+                        </p>
                         <p className="text-sm font-semibold text-gray-900">
                           {formatDate(ticketDetails.$updatedAt)}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-gray-500 mb-1">Date Resolved</p>
+                        <p className="text-xs font-medium text-gray-500 mb-1">
+                          Date Resolved
+                        </p>
                         <p className="text-sm font-semibold text-gray-900">
                           {formatDate(ticketDetails.resolved_at)}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-gray-500 mb-1">Date Closed</p>
+                        <p className="text-xs font-medium text-gray-500 mb-1">
+                          Date Closed
+                        </p>
                         <p className="text-sm font-semibold text-gray-900">
                           {formatDate(ticketDetails.closed_at)}
                         </p>
@@ -572,28 +672,42 @@ const TicketDetailsModal = ({
 
                   {/* User Feedback */}
                   <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">User Feedback</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
+                      User Feedback
+                    </p>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs font-medium text-gray-500 mb-1">Rating</p>
+                        <p className="text-xs font-medium text-gray-500 mb-1">
+                          Rating
+                        </p>
                         <p className="text-sm font-semibold text-gray-900">
                           {ticketDetails.rating ? (
                             <span className="flex items-center gap-1">
                               {ticketDetails.rating}
-                              <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                              <svg
+                                className="w-4 h-4 text-yellow-400"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                               </svg>
                             </span>
                           ) : (
-                            <span className="text-gray-400 italic">No rating</span>
+                            <span className="text-gray-400 italic">
+                              No rating
+                            </span>
                           )}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-gray-500 mb-1">Feedback</p>
+                        <p className="text-xs font-medium text-gray-500 mb-1">
+                          Feedback
+                        </p>
                         <p className="text-sm font-semibold text-gray-900">
                           {ticketDetails.feedback || (
-                            <span className="text-gray-400 italic">No feedback</span>
+                            <span className="text-gray-400 italic">
+                              No feedback
+                            </span>
                           )}
                         </p>
                       </div>
@@ -613,20 +727,31 @@ const TicketDetailsModal = ({
                     <MessageSquare className="w-4 h-4" />
                     View Comments
                   </button>
-                  
+
                   {/* Confirm Resolution Button - Only show if status is Resolved and not yet confirmed */}
                   {canConfirm && (
-                    <button
-                      type="button"
-                      onClick={() => onConfirmResolution(ticketDetails)}
-                      className="px-5 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold rounded-lg hover:opacity-90 transition-all flex items-center gap-2"
-                    >
-                      <CheckCircle className="w-4 h-4" />
-                      Confirm Resolution
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => onConfirmResolution(ticketDetails)}
+                        className="px-5 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold rounded-lg hover:opacity-90 transition-all flex items-center gap-2"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        Confirm Resolution
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => onRejectResolution(ticketDetails)}
+                        className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold rounded-lg hover:opacity-90 transition-all flex items-center gap-2"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        Reject Resolution
+                      </button>
+                    </div>
                   )}
                 </div>
-                
+
                 <button
                   type="button"
                   onClick={onClose}
@@ -635,14 +760,16 @@ const TicketDetailsModal = ({
                   Close
                 </button>
               </div>
-              </div>
+            </div>
           ) : (
             // Error State
             <div className="flex flex-col items-center justify-center h-full">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                 <X className="w-8 h-8 text-gray-400" />
               </div>
-              <p className="text-gray-600 font-medium">Could not load ticket details.</p>
+              <p className="text-gray-600 font-medium">
+                Could not load ticket details.
+              </p>
             </div>
           )}
         </div>
@@ -653,9 +780,9 @@ const TicketDetailsModal = ({
           isOpen={isAttachmentModalOpen}
           onClose={() => setIsAttachmentModalOpen(false)}
           attachmentUrl={
-            Array.isArray(ticketDetails.attachment) 
-              ? ticketDetails.attachment[0] 
-              : ticketDetails.attachment   
+            Array.isArray(ticketDetails.attachment)
+              ? ticketDetails.attachment[0]
+              : ticketDetails.attachment
           }
         />
       )}
