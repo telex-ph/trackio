@@ -3,7 +3,7 @@ import { Spinner } from "flowbite-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-const TicketRejectionModal = ({
+const TicketRejectModal = ({
   isOpen,
   onClose,
   ticketDetails,
@@ -149,4 +149,4 @@ const TicketRejectionModal = ({
   );
 };
 
-export default TicketRejectionModal;
+export default TicketRejectModal;
