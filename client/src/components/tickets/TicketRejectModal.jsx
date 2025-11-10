@@ -10,22 +10,22 @@ const TicketRejectModal = ({
   isRejecting,
   onConfirm,
 }) => {
-  const [comment, setComment] = useState("");
+  const [feedback, setFeedback] = useState("");
 
   const handleClose = () => {
-    setComment("");
+    setFeedback("");
     onClose();
   };
 
   if (!isOpen) return null;
 
   const handleSubmit = () => {
-    if (comment.trim() === "") {
+    if (feedback.trim() === "") {
       toast.error("Please provide a comment to reject resolution.");
       return;
     }
 
-    onConfirm(comment);
+    onConfirm(feedback);
   };
 
   const isSubmitDisabled = isRejecting;
@@ -115,10 +115,10 @@ const TicketRejectModal = ({
                 Comment*
               </label>
               <textarea
-                id="comment"
+                id="feedback"
                 rows="3"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
                 disabled={isRejecting}
                 className="w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 transition-colors"
                 placeholder="Share your thoughts on the resolution..."
