@@ -626,7 +626,7 @@ const TicketsTable = () => {
         email: user.email,
         updateTicketNo: ticketDetails.ticketNo,
         feedback,
-        rating: null,
+        rating: 0,
         status: "REJECT",
       };
 
