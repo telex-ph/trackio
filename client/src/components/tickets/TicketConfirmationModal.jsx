@@ -20,7 +20,7 @@ const StarRating = ({ rating, setRating, disabled }) => {
     setHoverRating(newRating);
   };
 
-  const handleClick = (index) => {
+  const handleClick = () => {
     if (disabled) return;
     setRating(hoverRating);
     setHoverRating(0);
