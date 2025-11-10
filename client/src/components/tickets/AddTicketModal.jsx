@@ -111,7 +111,7 @@ const AddTicketModal = ({
                 name="stationNo"
                 type="number"
                 min="1"
-                max="178"
+                max="230"
                 onChange={(e) => {
                   const value = e.target.value;
                   if (value === "") {
