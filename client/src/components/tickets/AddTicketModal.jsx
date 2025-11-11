@@ -26,7 +26,7 @@ const AddTicketModal = ({
         const item = items[i];
 
         // Check if the pasted item is an image
-        if (item.type.indexOf('image') !== -1) {
+        if (item.type.indexOf("image") !== -1) {
           e.preventDefault();
           const blob = item.getAsFile();
 
@@ -45,10 +45,10 @@ const AddTicketModal = ({
     };
 
     // Add paste event listener to the document
-    document.addEventListener('paste', handlePaste);
+    document.addEventListener("paste", handlePaste);
 
     return () => {
-      document.removeEventListener('paste', handlePaste);
+      document.removeEventListener("paste", handlePaste);
     };
   }, [isOpen, setAttachmentFile]);
 
@@ -59,7 +59,7 @@ const AddTicketModal = ({
     if (files && files.length > 0) {
       const file = files[0];
       // Check if it's an image or PDF
-      if (file.type.startsWith('image/') || file.type === 'application/pdf') {
+      if (file.type.startsWith("image/") || file.type === "application/pdf") {
         setAttachmentFile(file);
       }
     }
@@ -75,9 +75,8 @@ const AddTicketModal = ({
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div
         className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden"
-        style={{ maxHeight: '90vh' }}
+        style={{ maxHeight: "90vh" }}
       >
-
         {/* Header - FIXED */}
         <div className="flex-shrink-0 bg-gradient-to-r from-[#a10000] to-[#a10000] px-6 py-5 flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
@@ -85,7 +84,9 @@ const AddTicketModal = ({
               <Plus className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Create New Ticket</h2>
+              <h2 className="text-xl font-bold text-white">
+                Create New Ticket
+              </h2>
               <p className="text-red-100 text-sm">Fill in the details below</p>
             </div>
           </div>
@@ -100,10 +101,12 @@ const AddTicketModal = ({
         {/* Form Content - SCROLLABLE */}
         <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
           <form onSubmit={onSubmit} className="space-y-5">
-
             {/* Station Number */}
             <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-              <label htmlFor="stationNo" className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 block">
+              <label
+                htmlFor="stationNo"
+                className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 block"
+              >
                 Station Number
               </label>
               <input
@@ -142,7 +145,10 @@ const AddTicketModal = ({
 
             {/* Subject */}
             <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-              <label htmlFor="subject" className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 block">
+              <label
+                htmlFor="subject"
+                className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 block"
+              >
                 Subject
               </label>
               <input
@@ -161,7 +167,10 @@ const AddTicketModal = ({
 
             {/* Description */}
             <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-              <label htmlFor="description" className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 block">
+              <label
+                htmlFor="description"
+                className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 block"
+              >
                 Description
               </label>
               <textarea
@@ -180,7 +189,10 @@ const AddTicketModal = ({
 
             {/* Attachment with Paste & Drag-Drop Support */}
             <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200 hidden">
-              <label htmlFor="attachment" className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 block">
+              <label
+                htmlFor="attachment"
+                className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 block"
+              >
                 Attachment (Optional)
               </label>
 
@@ -188,7 +200,8 @@ const AddTicketModal = ({
               <div className="mb-3 bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
                 <Clipboard className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
                 <p className="text-xs text-blue-700">
-                  <strong>Tip:</strong> You can paste screenshots (Ctrl/Cmd+V), drag & drop files, or browse to upload
+                  <strong>Tip:</strong> You can paste screenshots (Ctrl/Cmd+V),
+                  drag & drop files, or browse to upload
                 </p>
               </div>
 
@@ -244,7 +257,7 @@ const AddTicketModal = ({
                     </div>
 
                     {/* Image Preview */}
-                    {attachmentFile.type.startsWith('image/') && (
+                    {attachmentFile.type.startsWith("image/") && (
                       <div className="rounded-lg overflow-hidden border-2 border-gray-200">
                         <img
                           src={URL.createObjectURL(attachmentFile)}
@@ -262,7 +275,10 @@ const AddTicketModal = ({
             <div className="w-full">
               {/* Category */}
               <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-                <label htmlFor="category" className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 block">
+                <label
+                  htmlFor="category"
+                  className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 block"
+                >
                   Category
                 </label>
                 <select
