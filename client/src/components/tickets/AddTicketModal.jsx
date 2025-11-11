@@ -122,15 +122,15 @@ const AddTicketModal = ({
                   if (
                     !isNaN(numValue) &&
                     numValue >= 1 &&
-                    numValue <= 178 &&
+                    numValue <= 230 &&
                     Number.isInteger(numValue)
                   ) {
                     setFormData({
                       ...formData,
                       stationNo: numValue,
                     });
-                  } else if (numValue > 178) {
-                    setFormData({ ...formData, stationNo: 178 });
+                  } else if (numValue > 230) {
+                    setFormData({ ...formData, stationNo: 230 });
                   }
                 }}
                 required
