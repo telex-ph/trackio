@@ -52,6 +52,9 @@ const TicketCommentsModal = ({
   ticketStatus,
   onCommentUpdate,
 }) => {
+const [selectedImage, setSelectedImage] = useState(null); // JS version
+
+
   const [showQuickResponses, setShowQuickResponses] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -504,33 +507,60 @@ const TicketCommentsModal = ({
                                   </p>
 
                                   {/* Attachments */}
-                                  {attachments.length > 0 && (
-                                    <div className="mt-3 flex flex-wrap gap-2">
-                                      {attachments.map((url, i) => (
-                                        <a
-                                          key={i}
-                                          href={url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="w-24 h-24 rounded-md overflow-hidden border border-gray-200 hover:shadow-lg transition-all"
-                                        >
-                                          {url.match(
-                                            /\.(jpg|jpeg|png|gif|webp)$/i
-                                          ) ? (
-                                            <img
-                                              src={url}
-                                              alt={`Attachment ${i + 1}`}
-                                              className="w-full h-full object-cover"
-                                            />
-                                          ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500 text-xs font-medium text-center px-2">
-                                              {url.split("/").pop()}
-                                            </div>
-                                          )}
-                                        </a>
-                                      ))}
-                                    </div>
-                                  )}
+{attachments.length > 0 && (
+  <div className="mt-3 flex flex-wrap gap-2">
+    {attachments.map((url, i) => (
+      url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+        <div
+          key={i}
+          onClick={() => setSelectedImage(url)}
+          className="w-24 h-24 rounded-md overflow-hidden border border-gray-200 hover:shadow-lg transition-all cursor-pointer"
+        >
+          <img
+            src={url}
+            alt={`Attachment ${i + 1}`}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      ) : (
+        <a
+          key={i}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-24 h-24 rounded-md overflow-hidden border border-gray-200 hover:shadow-lg transition-all flex items-center justify-center text-xs text-gray-500 text-center px-2"
+        >
+          {url.split("/").pop()}
+        </a>
+      )
+    ))}
+  </div>
+)}
+
+// Modal for image preview
+{selectedImage && (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70"
+    onClick={() => setSelectedImage(null)}
+  >
+    <div
+      className="relative max-w-3xl w-full mx-4"
+      onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
+    >
+      <button
+        onClick={() => setSelectedImage(null)}
+        className="absolute top-2 right-2 text-white p-2 rounded-full hover:bg-gray-800 transition"
+      >
+        <X className="w-6 h-6" />
+      </button>
+      <img
+        src={selectedImage}
+        alt="Preview"
+        className="w-full max-h-[80vh] object-contain rounded-lg"
+      />
+    </div>
+  </div>
+)}
                                 </>
                               )}
                             </div>
