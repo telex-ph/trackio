@@ -49,7 +49,7 @@ const TeamModal = ({ isOpen, onClose, onConfirm, selectedTeam }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
+      <div className="absolute inset-0 bg-black/40"></div>
       <div className="relative bg-white rounded-md p-8 max-w-md w-full shadow-2xl border border-gray-200">
         {/* Title */}
         <h3 className="text-2xl font-bold text-gray-800 text-center mb-2">

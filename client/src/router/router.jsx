@@ -132,6 +132,10 @@ const router = createBrowserRouter([
               { path: "agentrequest", element: <AdminAgentRequest /> },
               { path: "offences", element: <AdminOffences /> },
               {
+                path: "team",
+                element: <SharedTeamViewMembers />,
+              },
+              {
                 path: "account-management",
                 element: <AdminAccountManagement />,
               },
@@ -150,7 +154,7 @@ const router = createBrowserRouter([
           // Operation Manager Routes
           {
             element: <ProtectedRoutes role={Roles.OM} />,
-            path: "operation-manager",
+            path: "operations-manager",
             children: [
               { index: true, element: <Navigate to="dashboard" replace /> },
               { path: "dashboard", element: <OMDashboard /> },
@@ -161,6 +165,10 @@ const router = createBrowserRouter([
                 element: <SharedViewSchedule role={Roles.OM} />,
               },
               { path: "ticket", element: <SharedTicket /> },
+              {
+                path: "team",
+                element: <SharedTeamViewMembers />,
+              },
               {
                 path: "tracking",
                 element: <TrackingLayout role={Roles.OM} />,
@@ -202,6 +210,10 @@ const router = createBrowserRouter([
               {
                 path: "monitoring",
                 element: <MonitoringLayout />,
+              },
+              {
+                path: "team",
+                element: <SharedTeamViewMembers />,
               },
               {
                 path: "offenses",
