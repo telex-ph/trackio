@@ -111,7 +111,7 @@ const AddTicketModal = ({
                 name="stationNo"
                 type="number"
                 min="1"
-                max="178"
+                max="230"
                 onChange={(e) => {
                   const value = e.target.value;
                   if (value === "") {
@@ -122,20 +122,20 @@ const AddTicketModal = ({
                   if (
                     !isNaN(numValue) &&
                     numValue >= 1 &&
-                    numValue <= 178 &&
+                    numValue <= 230 &&
                     Number.isInteger(numValue)
                   ) {
                     setFormData({
                       ...formData,
                       stationNo: numValue,
                     });
-                  } else if (numValue > 178) {
-                    setFormData({ ...formData, stationNo: 178 });
+                  } else if (numValue > 230) {
+                    setFormData({ ...formData, stationNo: 230 });
                   }
                 }}
                 required
                 value={formData.stationNo || ""}
-                placeholder="Enter station number (1-178)"
+                placeholder="Enter station number (1-230)"
                 className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#a10000] focus:border-transparent placeholder-gray-400 transition-all"
               />
             </div>
