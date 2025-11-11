@@ -167,7 +167,7 @@ const TicketCommentsModal = ({
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
       handleSubmit(e);
     }
   };
@@ -267,7 +267,6 @@ const TicketCommentsModal = ({
                       ) : (
                         <div className="space-y-3">
                           <div className="border-2 border-gray-200 rounded-lg bg-white focus-within:ring-2 focus-within:ring-[#a10000] focus-within:border-transparent transition-all">
-                            
                             {/* --- TINANGGAL ANG DIV PARA SA B/I/U BUTTONS --- */}
 
                             <textarea
@@ -277,7 +276,9 @@ const TicketCommentsModal = ({
                               className="w-full px-4 py-3 text-gray-900 bg-white rounded-lg focus:outline-none resize-none"
                               placeholder="Add a comment..."
                               value={newCommentText}
-                              onChange={(e) => setNewCommentText(e.target.value)}
+                              onChange={(e) =>
+                                setNewCommentText(e.target.value)
+                              }
                               onKeyDown={handleKeyDown}
                               disabled={isSubmitting}
                               autoFocus
@@ -298,7 +299,9 @@ const TicketCommentsModal = ({
                               <button
                                 type="button"
                                 onClick={handleSubmit}
-                                disabled={isSubmitting || !newCommentText.trim()}
+                                disabled={
+                                  isSubmitting || !newCommentText.trim()
+                                }
                                 className="px-4 py-2 bg-gradient-to-r from-[#a10000] to-[#a10000] text-white text-sm font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
                               >
                                 {isSubmitting ? (
@@ -349,9 +352,19 @@ const TicketCommentsModal = ({
                 ) : comments.length > 0 ? (
                   comments.map((comment, index) => {
                     const isNewest = index === 0;
-                    const isCurrentUser = comment.commentor?.email === user.email;
+                    const isCurrentUser =
+                      comment.commentor?.email === user.email;
                     const isCurrentCommentEditing = isEditing === comment.$id;
-                    const { isConfirmation } = parseConfirmationComment(comment.commentText);
+                    const { isConfirmation } = parseConfirmationComment(
+                      comment.commentText
+                    );
+
+                    // Normalize attachments to always be an array
+                    const attachments = Array.isArray(comment.attachment)
+                      ? comment.attachment
+                      : comment.attachment
+                      ? [comment.attachment]
+                      : [];
 
                     return (
                       <div
@@ -382,6 +395,7 @@ const TicketCommentsModal = ({
                                 )}
                               </div>
                             </div>
+
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between gap-3 mb-2">
                                 <div className="flex items-center gap-2 flex-wrap">
@@ -390,11 +404,14 @@ const TicketCommentsModal = ({
                                       comment.commentor?.email ||
                                       "Unknown User"}
                                   </h4>
-                                  {isNewest && !isCurrentUser && !isConfirmation && (
-                                    <span className="px-2.5 py-1 text-xs font-bold bg-[#a10000] text-white rounded-full shadow-sm">
-                                      NEW
-                                    </span>
-                                  )}
+
+                                  {isNewest &&
+                                    !isCurrentUser &&
+                                    !isConfirmation && (
+                                      <span className="px-2.5 py-1 text-xs font-bold bg-[#a10000] text-white rounded-full shadow-sm">
+                                        NEW
+                                      </span>
+                                    )}
                                   {isCurrentUser && !isConfirmation && (
                                     <span className="px-2.5 py-1 text-xs font-bold bg-green-500 text-white rounded-full shadow-sm">
                                       YOU
@@ -439,10 +456,11 @@ const TicketCommentsModal = ({
                                 </div>
                               </div>
 
+                              {/* Comment text or editing */}
                               {isCurrentCommentEditing ? (
                                 <div className="pt-2 space-y-3">
                                   <textarea
-                                    rows="4"
+                                    rows={4}
                                     className="w-full px-4 py-3 text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                                     value={editedCommentText}
                                     onChange={(e) =>
@@ -461,7 +479,9 @@ const TicketCommentsModal = ({
                                     </button>
                                     <button
                                       type="button"
-                                      onClick={() => handleSaveEdit(comment.$id)}
+                                      onClick={() =>
+                                        handleSaveEdit(comment.$id)
+                                      }
                                       disabled={
                                         isUpdatingComment ||
                                         !editedCommentText.trim()
@@ -478,10 +498,40 @@ const TicketCommentsModal = ({
                                   </div>
                                 </div>
                               ) : (
-                                // --- BINAGO: Binalik sa plain text ---
-                                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
-                                  {comment.commentText}
-                                </p>
+                                <>
+                                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
+                                    {comment.commentText}
+                                  </p>
+
+                                  {/* Attachments */}
+                                  {attachments.length > 0 && (
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                      {attachments.map((url, i) => (
+                                        <a
+                                          key={i}
+                                          href={url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="w-24 h-24 rounded-md overflow-hidden border border-gray-200 hover:shadow-lg transition-all"
+                                        >
+                                          {url.match(
+                                            /\.(jpg|jpeg|png|gif|webp)$/i
+                                          ) ? (
+                                            <img
+                                              src={url}
+                                              alt={`Attachment ${i + 1}`}
+                                              className="w-full h-full object-cover"
+                                            />
+                                          ) : (
+                                            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500 text-xs font-medium text-center px-2">
+                                              {url.split("/").pop()}
+                                            </div>
+                                          )}
+                                        </a>
+                                      ))}
+                                    </div>
+                                  )}
+                                </>
                               )}
                             </div>
                           </div>
