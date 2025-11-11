@@ -9,8 +9,6 @@ const TeamModal = ({ isOpen, onClose, onConfirm, selectedTeam }) => {
   const [teamName, setTeamName] = useState(selectedTeam?.name || "");
   const [loading, setLoading] = useState(false);
 
-  console.log(selectedTeam);
-
   const handleInputChange = (e) => {
     setTeamName(e.target.value);
   };

@@ -12,6 +12,7 @@ const SharedTeamViewMembers = () => {
   const user = useStore((state) => state.user);
   const [members, setMembers] = useState([]);
   const [teamId, setTeamId] = useState(null);
+  const [teamName, setTeamName] = useState("");
   const [loading, setLoading] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,7 +33,7 @@ const SharedTeamViewMembers = () => {
       }
 
       setMembers(response?.data?.agents || []);
-
+      setTeamName(response?.data?.name);
       setTeamId(response?.data?._id);
     } catch (error) {
       console.error("Error fetching user group:", error);
@@ -75,7 +76,13 @@ const SharedTeamViewMembers = () => {
     toast(`Edit feature for ${member.firstName} coming soon!`);
   };
 
-  const handleAddMember = () => setIsModalOpen(true);
+  const handleAddMember = () => {
+    if (!teamId) {
+      setTeamModal(true);
+    } else {
+      setIsModalOpen(true);
+    }
+  };
   const handleCloseModal = () => setIsModalOpen(false);
   const handleConfirmAdd = () => {
     setIsModalOpen(false);
@@ -119,7 +126,7 @@ const SharedTeamViewMembers = () => {
     <div>
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h2 className="text-xl font-semibold">Team</h2>
+          <h2 className="text-xl font-semibold">{teamName || "My Team"}</h2>
           <p className="text-gray-500">
             Easily view, add, and manage your team members to keep everyone
             organized.
