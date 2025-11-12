@@ -35,6 +35,9 @@ const Topbar = ({ toggleSidebar }) => {
     }
 
     switch (user.role) {
+      case Roles.ADMIN_HR_HEAD:
+        navigator("/admin-hr-head/account-settings");
+        break;
       case Roles.ADMIN:
         navigator("/admin/account-settings");
         break;

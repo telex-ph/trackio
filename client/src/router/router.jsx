@@ -132,6 +132,59 @@ const router = createBrowserRouter([
               { path: "agentrequest", element: <AdminAgentRequest /> },
               { path: "offences", element: <AdminOffences /> },
               {
+                path: "account-management",
+                element: <AdminAccountManagement />,
+              },
+              { path: "account-settings", element: <SharedSettings /> },
+              {
+                path: "offenses",
+                element: <HROffenses />,
+              },
+              {
+                path: "createoffense",
+                element: <HRReportedOffenses />,
+              },
+            ],
+          },
+
+          // Admin and HR Head Routes
+          {
+            element: <ProtectedRoutes role={Roles.ADMIN_HR_HEAD} />,
+            path: "admin-hr-head",
+            children: [
+              { index: true, element: <Navigate to="dashboard" replace /> },
+              { path: "dashboard", element: <AdminDashboard /> },
+              { path: "attendance", element: <SharedAttendance /> },
+              { path: "ticket", element: <SharedTicket /> },
+              {
+                path: "tracking",
+                element: <TrackingLayout role={Roles.ADMIN_HR_HEAD} />,
+                children: [
+                  { path: "list", element: <SharedTrackingLists /> },
+                  { path: "history", element: <SharedTrackingHistory /> },
+                ],
+              },
+              {
+                path: "monitoring",
+                element: <MonitoringLayout />,
+              },
+              {
+                path: "schedule",
+                element: <SharedSchedule role={Roles.ADMIN_HR_HEAD} />,
+              },
+              {
+                path: "schedule/:id",
+                element: (
+                  <SharedViewSchedule
+                    role={Roles.ADMIN_HR_HEAD}
+                    readOnly={true}
+                  />
+                ),
+              },
+              { path: "announcement", element: <AdminAnnouncement /> },
+              { path: "agentrequest", element: <AdminAgentRequest /> },
+              { path: "offences", element: <AdminOffences /> },
+              {
                 path: "team",
                 element: <SharedTeamViewMembers />,
               },
