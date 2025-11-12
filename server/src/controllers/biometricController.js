@@ -9,7 +9,7 @@ import {
   biometricBreakOut,
 } from "../utils/biometric.js";
 import { DateTime } from "luxon";
-import { BIO_IP } from "../../constants/biometricsIp.js";
+import { IP } from "../../constants/biometricsIp.js";
 
 const lastEventMap = new Map();
 const THROTTLE_MS = 5000;
@@ -62,6 +62,21 @@ export const getEvents = async (req, res) => {
             return res.status(200).send("OK");
           }
 
+          switch (ipAddress) {
+            case IP.BIO_IN:
+              console.log(
+                `Bio In (${ipAddress})! Name: ${ac.name} ID: ${ac.employeeNoString}`
+              );
+              break;
+            case IP.BIO_OUT:
+              console.log(
+                `Bio Out (${ipAddress})! Name: ${ac.name} ID: ${ac.employeeNoString}`
+              );
+              break;
+            default:
+              break;
+          }
+
           const user = await User.getById(ac.employeeNoString);
           if (user) {
             const userId = user._id.toString();
@@ -75,9 +90,6 @@ export const getEvents = async (req, res) => {
 
               const shiftEnd = DateTime.fromJSDate(attendance.shiftEnd).toUTC();
               const nowTime = DateTime.utc();
-
-              console.log(nowTime);
-              console.log(shiftEnd);
 
               if (shiftEnd < nowTime) {
                 // Shift already ended
@@ -150,7 +162,9 @@ export const getEvents = async (req, res) => {
               }
             }
           } else {
-            console.log(`No registered user for ${ac.name} (Employee ID: ${ac.employeeNoString})`);
+            console.log(
+              `No registered user for ${ac.name} (Employee ID: ${ac.employeeNoString})`
+            );
 
             // Create a new user if not found
             // const arrName = ac.name.split(" ");
