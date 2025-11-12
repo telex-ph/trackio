@@ -78,6 +78,8 @@ const useUser = () => {
     if (
       user.role === Roles.ADMIN ||
       user.role === Roles.ADMIN_HR_HEAD ||
+      user.role === Roles.COMPLIANCE ||
+      user.role === Roles.COMPLIANCE_HEAD ||
       user.role === Roles.OM ||
       user.role === Roles.TEAM_LEADER
     )

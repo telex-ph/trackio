@@ -23,18 +23,17 @@ import HROffenses from "../pages/hr/HROffenses";
 import HRReportedOffenses from "../pages/hr/HRReportedOffenses";
 
 import SharedSettings from "../pages/shared/SharedSettings";
-import SharedTeamViewMembers from "../pages/shared/SharedTeamViewMembers";
 import AdminAccountManagement from "../pages/admin/AdminAccountManagement";
 import SharedTicket from "../pages/shared/SharedTicket";
 
-const ADMIN_HR_HEAD_ROUTES = [
+const COMPLIANCE_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
   { path: "dashboard", element: <AdminDashboard /> },
   { path: "attendance", element: <SharedAttendance /> },
   { path: "ticket", element: <SharedTicket /> },
   {
     path: "tracking",
-    element: <TrackingLayout role={Roles.ADMIN_HR_HEAD} />,
+    element: <TrackingLayout role={Roles.COMPLIANCE} />,
     children: [
       { path: "list", element: <SharedTrackingLists /> },
       { path: "history", element: <SharedTrackingHistory /> },
@@ -46,19 +45,15 @@ const ADMIN_HR_HEAD_ROUTES = [
   },
   {
     path: "schedule",
-    element: <SharedSchedule role={Roles.ADMIN_HR_HEAD} />,
+    element: <SharedSchedule role={Roles.COMPLIANCE} />,
   },
   {
     path: "schedule/:id",
-    element: <SharedViewSchedule role={Roles.ADMIN_HR_HEAD} readOnly={true} />,
+    element: <SharedViewSchedule role={Roles.COMPLIANCE} readOnly={true} />,
   },
   { path: "announcement", element: <AdminAnnouncement /> },
   { path: "agentrequest", element: <AdminAgentRequest /> },
   { path: "offences", element: <AdminOffences /> },
-  {
-    path: "team",
-    element: <SharedTeamViewMembers />,
-  },
   {
     path: "account-management",
     element: <AdminAccountManagement />,
@@ -74,4 +69,4 @@ const ADMIN_HR_HEAD_ROUTES = [
   },
 ];
 
-export default ADMIN_HR_HEAD_ROUTES;
+export default COMPLIANCE_ROUTES;

@@ -34,7 +34,6 @@ class User {
     return user;
   }
 
-
   static async addUser(data) {
     if (!data.firstName || !data.lastName) {
       throw new Error("Missing required fields");
@@ -128,6 +127,9 @@ class User {
         break;
       case Roles.OM:
       case Roles.ADMIN:
+      case Roles.ADMIN_HR_HEAD:
+      case Roles.COMPLIANCE:
+      case Roles.COMPLIANCE_HEAD:
         // Admin/OM can see everyone, but still exclude deleted users
         query = { isDeleted: { $ne: true } };
         break;

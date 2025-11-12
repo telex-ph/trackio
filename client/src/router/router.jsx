@@ -19,6 +19,8 @@ import HR_ROUTES from "./HRRoutes";
 import OM_ROUTES from "./OMRoutes";
 import ADMIN_HR_HEAD_ROUTES from "./AdminHRHeadRoutes";
 import ADMIN_ROUTES from "./AdminRoutes";
+import COMPLIANCE_ROUTES from "./ComplianceRoutes";
+import COMPLIANCE_HEAD from "./ComplianceHeadRoutes";
 
 const router = createBrowserRouter([
   // Public Routes
@@ -36,6 +38,17 @@ const router = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
+          // Compliance Routes
+          {
+            element: <ProtectedRoutes role={Roles.COMPLIANCE_HEAD} />,
+            path: "compliance-head",
+            children: COMPLIANCE_HEAD,
+          },
+          {
+            element: <ProtectedRoutes role={Roles.COMPLIANCE} />,
+            path: "compliance",
+            children: COMPLIANCE_ROUTES,
+          },
           // Admin Routes
           {
             element: <ProtectedRoutes role={Roles.ADMIN} />,

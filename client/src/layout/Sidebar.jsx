@@ -8,6 +8,8 @@ import OMSidebar from "./sidebars/OMSidebar";
 import HRSidebar from "./sidebars/HRSidebar";
 import AdminSidebar from "./sidebars/AdminSidebar";
 import AdminHRHeadSidebar from "./sidebars/AdminHRHeadSidebar";
+import ComplianceSidebar from "./sidebars/ComplianceSidebar";
+import ComplianceHeadSidebar from "./sidebars/ComplianceHeadSidebar";
 
 // Main Sidebar
 export const Sidebar = ({ isCollapsed }) => {
@@ -25,7 +27,6 @@ export const Sidebar = ({ isCollapsed }) => {
   const renderSidebar = () => {
     switch (user.role) {
       case Role.AGENT:
-        // --- FIX 2: Ipinasa ang state pababa sa AgentSidebar ---
         return (
           <AgentSidebar
             isCollapsed={isCollapsed}
@@ -69,6 +70,22 @@ export const Sidebar = ({ isCollapsed }) => {
       case Role.ADMIN_HR_HEAD:
         return (
           <AdminHRHeadSidebar
+            isCollapsed={isCollapsed}
+            activeDropdown={activeDropdown}
+            setActiveDropdown={setActiveDropdown}
+          />
+        );
+      case Role.COMPLIANCE:
+        return (
+          <ComplianceSidebar
+            isCollapsed={isCollapsed}
+            activeDropdown={activeDropdown}
+            setActiveDropdown={setActiveDropdown}
+          />
+        );
+      case Role.COMPLIANCE_HEAD:
+        return (
+          <ComplianceHeadSidebar
             isCollapsed={isCollapsed}
             activeDropdown={activeDropdown}
             setActiveDropdown={setActiveDropdown}
