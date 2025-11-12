@@ -6,6 +6,9 @@ const Roles = Object.freeze({
   HR: "human-resources",
   ADMIN: "admin",
   ADMIN_HR_HEAD: "admin-hr-head",
+
+  COMPLIANCE_HEAD: "compliance-head",
+  COMPLIANCE: "compliance",
 });
 
 export default Roles;
