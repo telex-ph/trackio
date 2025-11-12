@@ -143,13 +143,14 @@ const AddUserModal = ({
           {/* Employee ID (optional) */}
           <div>
             <Label htmlFor="employeeId" className="text-light mb-2 block">
-              Employee ID (optional)
+              Employee ID (must match the one in Biometrics)
             </Label>
             <TextInput
               id="employeeId"
               name="employeeId"
               value={data.employeeId}
               onChange={handleChange}
+              required
             />
           </div>
 
@@ -223,8 +224,8 @@ const AddUserModal = ({
               {loading
                 ? "Saving..."
                 : mode === "add"
-                ? "Add User"
-                : "Update User"}
+                  ? "Add User"
+                  : "Update User"}
             </Button>
           </div>
         </form>

@@ -1,5 +1,5 @@
-export const BIO_IP = Object.freeze({
-    INDOOR: "192.168.3.6",
-    OUTDOOR: "192.168.3.7",
-    ADMINDOOR: "192.168.3.5"
+export const IP = Object.freeze({
+  BIO_OUT: "192.168.0.6",
+  BIO_IN: "192.168.0.7",
+  BIO_ADMIN: "192.168.0.5",
 });
