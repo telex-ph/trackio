@@ -106,7 +106,7 @@ export const getEvents = async (req, res) => {
                   console.log(`Employee is WORKING, processing break-in`);
                   try {
                     await biometricBreakIn(attendanceId, breaks, totalBreak);
-                    console.log(`Break-in successful for user ${userId}`);
+                    console.log(`Break-in successful for user ${ac.name}`);
                   } catch (error) {
                     console.error(`Break-in failed:`, error);
                     const stack = (error.stack || error.message || "").slice(
@@ -124,7 +124,7 @@ export const getEvents = async (req, res) => {
                   console.log(`Employee is ON_BREAK, processing break-out`);
                   try {
                     await biometricBreakOut(attendanceId, breaks);
-                    console.log(`Break-out successful for user ${userId}`);
+                    console.log(`Break-out successful for user ${ac.name}`);
                   } catch (error) {
                     console.error(`Break-out failed:`, error);
                     const stack = (error.stack || error.message || "").slice(
