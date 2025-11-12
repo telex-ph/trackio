@@ -36,7 +36,7 @@ const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
     }
     try {
       setLoading(true);
-      const res = await api.get(`/user/get-users?search=${value}`);
+      const res = await api.get(`/user/get-users?search=${value}&role=`);
       setSearchResults(res.data || []);
       if (res.data.length === 0) toast("No users found.");
     } catch (error) {
@@ -268,9 +268,10 @@ const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
               <TextInput
                 id="employeeId"
                 name="employeeId"
-                placeholder="Employee ID (Optional)"
+                placeholder="Employee ID (must match the one in Biometrics)"
                 value={form.employeeId}
                 onChange={handleChange}
+                required
               />
             </div>
 

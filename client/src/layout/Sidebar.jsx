@@ -257,19 +257,19 @@ const TeamLeaderSidebar = ({
 const OMSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
   <div className="space-y-1">
     <SidebarLink
-      to="/operation-manager/dashboard"
+      to="/operations-manager/dashboard"
       icon={LayoutGrid}
       label="Dashboard"
       isCollapsed={isCollapsed}
     />
     <SidebarLink
-      to="/operation-manager/attendance"
+      to="/operations-manager/attendance"
       icon={Bell}
       label="Attendance"
       isCollapsed={isCollapsed}
     />
     <SidebarLink
-      to="/operation-manager/schedule"
+      to="/operations-manager/schedule"
       icon={BookPlus}
       label="Schedule"
       isCollapsed={isCollapsed}
@@ -284,26 +284,32 @@ const OMSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       }
     >
       <SidebarLink
-        to={`/operation-manager/tracking/list`}
+        to={`/operations-manager/tracking/list`}
         icon={List}
         label="List"
         isCollapsed={isCollapsed}
       />
       <SidebarLink
-        to={`/operation-manager/tracking/history`}
+        to={`/operations-manager/tracking/history`}
         icon={GalleryVerticalEnd}
         label="History"
         isCollapsed={isCollapsed}
       />
     </CustomCollapse>
     <SidebarLink
-      to="/operation-manager/monitoring"
+      to="/operations-manager/monitoring"
       icon={Activity}
       label="Monitoring"
       isCollapsed={isCollapsed}
     />
     <SidebarLink
-      to="/operation-manager/ticket"
+      to="/operations-manager/team"
+      icon={Users2Icon}
+      label="Team"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
+      to="/operations-manager/ticket"
       icon={Ticket}
       label="Ticket"
       isCollapsed={isCollapsed}
@@ -388,6 +394,12 @@ const HRSidebar = ({
       />
     </CustomCollapse>
     <SidebarLink
+      to="/human-resources/team"
+      icon={Users2Icon}
+      label="Team"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
       to="/human-resources/ticket"
       icon={Ticket}
       label="Ticket"
@@ -463,6 +475,12 @@ const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       to="/admin/announcement"
       icon={Megaphone}
       label="Announcement"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
+      to="/admin/team"
+      icon={Users2Icon}
+      label="Team"
       isCollapsed={isCollapsed}
     />
     <SidebarLink
