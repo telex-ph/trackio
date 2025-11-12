@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import React from "react";
+import React, { useEffect } from "react";
 import {
   LayoutGrid,
   Bell,
@@ -34,8 +34,9 @@ const CustomCollapse = ({
     <div className="flex flex-col w-full">
       <button
         onClick={onToggle}
-        className={`flex items-center ${isCollapsed ? "justify-center px-2 py-3" : "justify-between px-3 py-2"
-          } rounded-lg transition-colors duration-200 w-full`}
+        className={`flex items-center ${
+          isCollapsed ? "justify-center px-2 py-3" : "justify-between px-3 py-2"
+        } rounded-lg transition-colors duration-200 w-full`}
       >
         <div className="flex items-center gap-2">
           {React.cloneElement(icon, {
@@ -46,15 +47,17 @@ const CustomCollapse = ({
 
         {!isCollapsed && (
           <ChevronDown
-            className={`w-4 h-4 transition-transform duration-300 ${open ? "rotate-180" : "rotate-0"
-              }`}
+            className={`w-4 h-4 transition-transform duration-300 ${
+              open ? "rotate-180" : "rotate-0"
+            }`}
           />
         )}
       </button>
 
       <div
-        className={`flex flex-col overflow-hidden transition-all duration-300 ${!isCollapsed && "pl-3"
-          } ${open ? "max-h-screen mt-1" : "max-h-0"}`}
+        className={`flex flex-col overflow-hidden transition-all duration-300 ${
+          !isCollapsed && "pl-3"
+        } ${open ? "max-h-screen mt-1" : "max-h-0"}`}
       >
         {children}
       </div>
@@ -63,19 +66,34 @@ const CustomCollapse = ({
 };
 
 // Sidebar link component
-const SidebarLink = ({ to, icon: Icon, label, isCollapsed }) => (
+const SidebarLink = ({ to, icon: Icon, label, isCollapsed, badge }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>
-      `flex items-center ${isCollapsed ? "justify-center px-2 py-2" : "gap-2 px-3 py-2"
-      } rounded-md ${isActive
-        ? "bg-(--primary-color) text-white"
-        : "text-black hover:bg-gray-100"
+      `relative flex items-center ${
+        isCollapsed ? "justify-center px-2 py-2" : "gap-2 px-3 py-2"
+      } 
+      rounded-md transition-colors duration-200 ${
+        isActive
+          ? "bg-(--primary-color) text-white"
+          : "text-black hover:bg-gray-100"
       }`
     }
   >
-    <Icon className={`${isCollapsed ? "w-4 h-4" : "w-4 h-4"} flex-shrink-0`} />
-    {!isCollapsed && <span className="font-medium">{label}</span>}
+    <div className="flex items-center gap-2">
+      <Icon className="w-4 h-4 flex-shrink-0" />
+      {!isCollapsed && <span className="font-medium">{label}</span>}
+    </div>
+
+    {badge ? (
+      isCollapsed ? (
+        <span className="absolute top-1 right-2 w-2 h-2 bg-red-500 rounded-full" />
+      ) : (
+        <span className="ml-auto text-xs font-semibold px-2 py-0.5 bg-red-500 text-white rounded-full">
+          {badge}
+        </span>
+      )
+    ) : null}
   </NavLink>
 );
 
@@ -293,7 +311,12 @@ const OMSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
   </div>
 );
 
-const HRSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
+const HRSidebar = ({
+  isCollapsed,
+  activeDropdown,
+  setActiveDropdown,
+  unreadOffenses,
+}) => (
   <div className="space-y-1">
     <SidebarLink
       to="/human-resources/dashboard"
@@ -361,6 +384,7 @@ const HRSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
         icon={GalleryVerticalEnd}
         label="Reported IR"
         isCollapsed={isCollapsed}
+        badge={unreadOffenses}
       />
     </CustomCollapse>
     <SidebarLink
@@ -460,6 +484,14 @@ const AdminSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
 export const Sidebar = ({ isCollapsed }) => {
   const user = useStore((state) => state.user);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const unreadOffenses = useStore((state) => state.unreadOffenses);
+  const fetchUnreadOffenses = useStore((state) => state.fetchUnreadOffenses);
+
+  useEffect(() => {
+    if (user.role === Role.HR) {
+      fetchUnreadOffenses();
+    }
+  }, [user.role, fetchUnreadOffenses]);
 
   const renderSidebar = () => {
     switch (user.role) {
@@ -494,6 +526,7 @@ export const Sidebar = ({ isCollapsed }) => {
             isCollapsed={isCollapsed}
             activeDropdown={activeDropdown}
             setActiveDropdown={setActiveDropdown}
+            unreadOffenses={unreadOffenses}
           />
         );
       case Role.ADMIN:
@@ -511,8 +544,9 @@ export const Sidebar = ({ isCollapsed }) => {
 
   return (
     <aside
-      className={`flex flex-col h-full justify-between bg-white shadow-sm transition-all duration-300 overflow-y-auto ${isCollapsed ? "w-16" : "w-64"
-        }`}
+      className={`flex flex-col h-full justify-between bg-white shadow-sm transition-all duration-300 overflow-y-auto ${
+        isCollapsed ? "w-16" : "w-64"
+      }`}
     >
       <nav className="flex-1 m-4">{renderSidebar()}</nav>
     </aside>
