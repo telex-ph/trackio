@@ -1,0 +1,51 @@
+import TrackingLayout from "../layout/TrackingLayout";
+import MonitoringLayout from "../layout/MonitoringLayout";
+
+// Operation Manager Routes
+import OMDashboard from "../pages/om/OMDashboard";
+
+// Shared Routes
+import SharedAttendance from "../pages/shared/SharedAttendance";
+import SharedTrackingLists from "../pages/shared/SharedTrackingLists";
+import SharedTrackingHistory from "../pages/shared/SharedTrackingHistory";
+import SharedSchedule from "../pages/shared/SharedSchedule";
+import SharedViewSchedule from "../pages/shared/SharedViewSchedule";
+
+// Others
+import { Navigate } from "react-router-dom";
+import Roles from "../constants/roles";
+
+import SharedSettings from "../pages/shared/SharedSettings";
+import SharedTeamViewMembers from "../pages/shared/SharedTeamViewMembers";
+import SharedTicket from "../pages/shared/SharedTicket";
+
+const OM_ROUTES = [
+  { index: true, element: <Navigate to="dashboard" replace /> },
+  { path: "dashboard", element: <OMDashboard /> },
+  { path: "attendance", element: <SharedAttendance /> },
+  { path: "schedule", element: <SharedSchedule role={Roles.OM} /> },
+  {
+    path: "schedule/:id",
+    element: <SharedViewSchedule role={Roles.OM} />,
+  },
+  { path: "ticket", element: <SharedTicket /> },
+  {
+    path: "team",
+    element: <SharedTeamViewMembers />,
+  },
+  {
+    path: "tracking",
+    element: <TrackingLayout role={Roles.OM} />,
+    children: [
+      { path: "list", element: <SharedTrackingLists /> },
+      { path: "history", element: <SharedTrackingHistory /> },
+    ],
+  },
+  {
+    path: "monitoring",
+    element: <MonitoringLayout />,
+  },
+  { path: "account-settings", element: <SharedSettings /> },
+];
+
+export default OM_ROUTES;
