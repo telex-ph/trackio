@@ -49,7 +49,7 @@ const ADMIN_ROUTES = [
   },
   {
     path: "schedule/:id",
-    element: <SharedViewSchedule role={Roles.ADMIN} readOnly={true} />,
+    element: <SharedViewSchedule role={Roles.ADMIN} readOnly={false} />,
   },
   { path: "announcement", element: <AdminAnnouncement /> },
   { path: "agentrequest", element: <AdminAgentRequest /> },
