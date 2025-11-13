@@ -9,6 +9,8 @@ const Roles = Object.freeze({
 
   COMPLIANCE_HEAD: "compliance-head",
   COMPLIANCE: "compliance",
+
+  PRESIDENT: "president",
 });
 
 export default Roles;

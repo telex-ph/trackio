@@ -6,6 +6,7 @@ import AdminDashboard from "../pages/admin/AdminDashboard";
 import AdminAnnouncement from "../pages/admin/AdminAnnouncement";
 import AdminAgentRequest from "../pages/admin/AdminAgentRequest";
 import AdminOffences from "../pages/admin/AdminOffences";
+import AdminAccountManagement from "../pages/admin/AdminAccountManagement";
 
 // Shared Routes
 import SharedAttendance from "../pages/shared/SharedAttendance";
@@ -13,28 +14,30 @@ import SharedTrackingLists from "../pages/shared/SharedTrackingLists";
 import SharedTrackingHistory from "../pages/shared/SharedTrackingHistory";
 import SharedSchedule from "../pages/shared/SharedSchedule";
 import SharedViewSchedule from "../pages/shared/SharedViewSchedule";
-
-// Others
-import { Navigate } from "react-router-dom";
-import Roles from "../constants/roles";
+import SharedSettings from "../pages/shared/SharedSettings";
+import SharedTeamViewMembers from "../pages/shared/SharedTeamViewMembers";
+import SharedTicket from "../pages/shared/SharedTicket";
 
 // Human Resources
 import HROffenses from "../pages/hr/HROffenses";
 import HRReportedOffenses from "../pages/hr/HRReportedOffenses";
 
-import SharedSettings from "../pages/shared/SharedSettings";
-import SharedTeamViewMembers from "../pages/shared/SharedTeamViewMembers";
-import AdminAccountManagement from "../pages/admin/AdminAccountManagement";
-import SharedTicket from "../pages/shared/SharedTicket";
+// Team Leader Routes
+import TeamLeaderPerformance from "../pages/team-leader/TeamLeaderPerformance";
+import TeamLeaderCoaching from "../pages/team-leader/TeamLeaderCoaching";
 
-const COMPLIANCE_HEAD_ROUTES = [
+// Others
+import { Navigate } from "react-router-dom";
+import Roles from "../constants/roles";
+
+const PRESIDENT_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
   { path: "dashboard", element: <AdminDashboard /> },
   { path: "attendance", element: <SharedAttendance /> },
   { path: "ticket", element: <SharedTicket /> },
   {
     path: "tracking",
-    element: <TrackingLayout role={Roles.COMPLIANCE} />,
+    element: <TrackingLayout role={Roles.PRESIDENT} />,
     children: [
       { path: "list", element: <SharedTrackingLists /> },
       { path: "history", element: <SharedTrackingHistory /> },
@@ -46,11 +49,11 @@ const COMPLIANCE_HEAD_ROUTES = [
   },
   {
     path: "schedule",
-    element: <SharedSchedule role={Roles.COMPLIANCE} />,
+    element: <SharedSchedule role={Roles.PRESIDENT} />,
   },
   {
     path: "schedule/:id",
-    element: <SharedViewSchedule role={Roles.COMPLIANCE} readOnly={true} />,
+    element: <SharedViewSchedule role={Roles.PRESIDENT} readOnly={false} />,
   },
   { path: "announcement", element: <AdminAnnouncement /> },
   { path: "agentrequest", element: <AdminAgentRequest /> },
@@ -63,7 +66,8 @@ const COMPLIANCE_HEAD_ROUTES = [
     path: "account-management",
     element: <AdminAccountManagement />,
   },
-  { path: "account-settings", element: <SharedSettings /> },
+  { path: "performance", element: <TeamLeaderPerformance /> },
+  { path: "coaching", element: <TeamLeaderCoaching /> },
   {
     path: "offenses",
     element: <HROffenses />,
@@ -72,6 +76,11 @@ const COMPLIANCE_HEAD_ROUTES = [
     path: "createoffense",
     element: <HRReportedOffenses />,
   },
+  {
+    path: "reported-ir",
+    element: <HRReportedOffenses />,
+  },
+  { path: "account-settings", element: <SharedSettings /> },
 ];
 
-export default COMPLIANCE_HEAD_ROUTES;
+export default PRESIDENT_ROUTES;

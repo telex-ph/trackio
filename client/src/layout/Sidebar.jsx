@@ -10,6 +10,7 @@ import AdminSidebar from "./sidebars/AdminSidebar";
 import AdminHRHeadSidebar from "./sidebars/AdminHRHeadSidebar";
 import ComplianceSidebar from "./sidebars/ComplianceSidebar";
 import ComplianceHeadSidebar from "./sidebars/ComplianceHeadSidebar";
+import PresidentSidebar from "./sidebars/PresidentSidebar";
 
 // Main Sidebar
 export const Sidebar = ({ isCollapsed }) => {
@@ -86,6 +87,14 @@ export const Sidebar = ({ isCollapsed }) => {
       case Role.COMPLIANCE_HEAD:
         return (
           <ComplianceHeadSidebar
+            isCollapsed={isCollapsed}
+            activeDropdown={activeDropdown}
+            setActiveDropdown={setActiveDropdown}
+          />
+        );
+      case Role.PRESIDENT:
+        return (
+          <PresidentSidebar
             isCollapsed={isCollapsed}
             activeDropdown={activeDropdown}
             setActiveDropdown={setActiveDropdown}

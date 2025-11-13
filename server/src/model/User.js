@@ -130,6 +130,7 @@ class User {
       case Roles.ADMIN_HR_HEAD:
       case Roles.COMPLIANCE:
       case Roles.COMPLIANCE_HEAD:
+      case Roles.PRESIDENT:
         // Admin/OM can see everyone, but still exclude deleted users
         query = { isDeleted: { $ne: true } };
         break;
