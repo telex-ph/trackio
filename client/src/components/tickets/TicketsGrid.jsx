@@ -38,38 +38,46 @@ const getResolutionDeadline = (createdAt, severity) => {
 // Helper function to calculate time remaining
 const calculateTimeRemaining = (resolutionTime, pausedAt) => {
   if (!resolutionTime) {
-    return { timeText: "N/A", isOverdue: false, percentage: 0, hours: 0, minutes: 0 };
+    return {
+      timeText: "N/A",
+      isOverdue: false,
+      percentage: 0,
+      hours: 0,
+      minutes: 0,
+    };
   }
 
   const deadline = new Date(resolutionTime).getTime();
   const now = new Date().getTime();
-  
+
   // If paused_at exists, use it instead of current time
   const referenceTime = pausedAt ? new Date(pausedAt).getTime() : now;
-  
+
   const timeDiff = deadline - referenceTime;
   const isOverdue = timeDiff < 0;
-  
+
   // Calculate absolute time difference in minutes
   const totalMinutes = Math.abs(Math.floor(timeDiff / (1000 * 60)));
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  
+
   let timeText;
   if (hours > 0) {
     timeText = `${hours}h ${minutes}m`;
   } else {
     timeText = `${minutes}m`;
   }
-  
-  const percentage = isOverdue ? 100 : Math.min(100, 100 - ((timeDiff / (1000 * 60 * 60 * 24)) * 100));
-  
+
+  const percentage = isOverdue
+    ? 100
+    : Math.min(100, 100 - (timeDiff / (1000 * 60 * 60 * 24)) * 100);
+
   return {
     timeText,
     isOverdue,
     percentage: Math.max(0, Math.min(100, percentage)),
     hours,
-    minutes
+    minutes,
   };
 };
 
@@ -109,7 +117,7 @@ const calculateDuration = (start, end) => {
   }
 
   let totalMinutes = Math.floor(diffMs / (1000 * 60));
-  
+
   if (totalMinutes < 1) {
     return "< 1m";
   }
@@ -123,11 +131,17 @@ const calculateDuration = (start, end) => {
   if (hours > 0) parts.push(`${hours}h`);
   if (minutes > 0) parts.push(`${minutes}m`);
 
-  return parts.join(' ');
+  return parts.join(" ");
 };
 
-
-const TicketsGrid = ({ data, isLoading, tableRef, onViewDetails, onEdit, onDelete }) => {
+const TicketsGrid = ({
+  data,
+  isLoading,
+  tableRef,
+  onViewDetails,
+  onEdit,
+  onDelete,
+}) => {
   const columns = [
     {
       headerName: "Ticket No",
@@ -149,7 +163,9 @@ const TicketsGrid = ({ data, isLoading, tableRef, onViewDetails, onEdit, onDelet
         }
         return (
           <div className="flex items-center justify-start h-full">
-            <span className="text-gray-700 font-medium">Station {params.value}</span>
+            <span className="text-gray-700 font-medium">
+              Station {params.value}
+            </span>
           </div>
         );
       },
@@ -157,34 +173,82 @@ const TicketsGrid = ({ data, isLoading, tableRef, onViewDetails, onEdit, onDelet
     { headerName: "Subject", field: "subject", flex: 1.5 },
     { headerName: "Category", field: "category", flex: 1 },
     { headerName: "Severity", field: "severity", flex: 1 },
-    { headerName: "Status", field: "status", flex: 1 },
+    {
+      headerName: "Status",
+      field: "status",
+      flex: 1,
+      filter: true,
+      filterRenderer: ({ filterValue, setFilter }) => {
+        const statusOptions = [
+          { label: "Open", value: "OPEN" },
+          { label: "In Progress", value: "IN_PROGRESS" },
+          { label: "Waiting for Customer", value: "WAITING_FOR_CUSTOMER" },
+          { label: "Resolved", value: "RESOLVED" },
+          { label: "Completed", value: "COMPLETED" },
+        ];
+
+        return (
+          <select
+            value={filterValue || ""}
+            onChange={(e) => setFilter(e.target.value || null)}
+            className="border rounded px-2 py-1 text-sm"
+          >
+            <option value="">All</option>
+            {statusOptions.map((status) => (
+              <option key={status.value} value={status.value}>
+                {status.label}
+              </option>
+            ))}
+          </select>
+        );
+      },
+      cellRenderer: (params) => {
+        const statusMap = {
+          OPEN: "Open",
+          IN_PROGRESS: "In Progress",
+          WAITING_FOR_CUSTOMER: "Waiting for Customer",
+          RESOLVED: "Resolved",
+          COMPLETED: "Completed",
+        };
+        return (
+          <span className="font-medium text-gray-700">
+            {statusMap[params.value] || params.value}
+          </span>
+        );
+      },
+    },
     {
       headerName: "Resolution Time",
       field: "resolution_time",
       flex: 1.5,
       cellRenderer: (params) => {
-        const isPaused = params.data.paused_at !== null && params.data.paused_at !== undefined;
+        const isPaused =
+          params.data.paused_at !== null && params.data.paused_at !== undefined;
         const isClosed = params.data.status?.toLowerCase() === "closed";
 
         // --- STATE 1: CLOSED ---
         if (isClosed) {
           // Use closed_at timestamp if available, otherwise fall back to resolution_time
-          const closedAtTimestamp = params.data.closed_at 
+          const closedAtTimestamp = params.data.closed_at
             ? new Date(params.data.closed_at)
             : params.data.resolution_time
-            ? new Date(params.data.resolution_time) 
+            ? new Date(params.data.resolution_time)
             : null;
 
           const closedDateTime = closedAtTimestamp
             ? closedAtTimestamp.toLocaleString("en-US", {
-                month: "short", day: "2-digit", year: "numeric",
-                hour: "2-digit", minute: "2-digit", hour12: true,
+                month: "short",
+                day: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
               })
             : "";
-          
+
           // Calculate duration from created to closed
           const durationText = calculateDuration(
-            params.data.$createdAt, 
+            params.data.$createdAt,
             params.data.closed_at || params.data.resolution_time
           );
 
@@ -212,8 +276,10 @@ const TicketsGrid = ({ data, isLoading, tableRef, onViewDetails, onEdit, onDelet
           calculatedResolutionTime,
           params.data.paused_at
         );
-        const durationText = params.data.duration ? `Duration: ${params.data.duration}` : null;
-        
+        const durationText = params.data.duration
+          ? `Duration: ${params.data.duration}`
+          : null;
+
         // --- STATE 2: N/A ---
         if (timeText === "N/A" && !durationText) {
           return (
@@ -222,7 +288,7 @@ const TicketsGrid = ({ data, isLoading, tableRef, onViewDetails, onEdit, onDelet
             </div>
           );
         }
-        
+
         const textColor = isOverdue ? "text-red-600" : "text-green-600";
         const labelText = isOverdue ? "Overdue:" : "Remaining:";
 
@@ -232,8 +298,12 @@ const TicketsGrid = ({ data, isLoading, tableRef, onViewDetails, onEdit, onDelet
           if (durationText) {
             const pausedDate = params.data.paused_at
               ? new Date(params.data.paused_at).toLocaleString("en-US", {
-                  month: "short", day: "2-digit", year: "numeric",
-                  hour: "2-digit", minute: "2-digit", hour12: true,
+                  month: "short",
+                  day: "2-digit",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
                 })
               : "";
             return (
@@ -241,15 +311,19 @@ const TicketsGrid = ({ data, isLoading, tableRef, onViewDetails, onEdit, onDelet
                 {pausedDate && (
                   <div className="text-xs text-gray-600">{pausedDate}</div>
                 )}
-                <div className="text-xs text-gray-500 mt-0.5">{durationText}</div>
+                <div className="text-xs text-gray-500 mt-0.5">
+                  {durationText}
+                </div>
                 <div className="flex items-center gap-1 mt-1">
                   <div className="w-2 h-2 bg-blue-500 rounded-sm"></div>
-                  <span className="text-xs text-blue-600 font-medium">Paused</span>
+                  <span className="text-xs text-blue-600 font-medium">
+                    Paused
+                  </span>
                 </div>
               </div>
             );
           }
-          
+
           // Paused *with* Remaining Time
           return (
             <div className="flex flex-col justify-center h-full py-2">
@@ -258,7 +332,9 @@ const TicketsGrid = ({ data, isLoading, tableRef, onViewDetails, onEdit, onDelet
               </div>
               <div className="flex items-center gap-1 mt-1">
                 <div className="w-2 h-2 bg-blue-500 rounded-sm"></div>
-                <span className="text-xs text-blue-600 font-medium">Paused</span>
+                <span className="text-xs text-blue-600 font-medium">
+                  Paused
+                </span>
               </div>
             </div>
           );
@@ -270,11 +346,14 @@ const TicketsGrid = ({ data, isLoading, tableRef, onViewDetails, onEdit, onDelet
         if (isOverdue) barColor = "bg-red-500";
         else if (hours < 1) barColor = "bg-yellow-400"; // Less than 1 hour
         else if (hours < 4) barColor = "bg-green-400"; // Less than 4 hours
-        
+
         return (
           <div className="flex flex-col justify-start h-full py-2">
             <div className="w-8 h-0.5 rounded-full overflow-hidden">
-              <div className={`h-full ${barColor}`} style={{ width: `100%` }}></div>
+              <div
+                className={`h-full ${barColor}`}
+                style={{ width: `100%` }}
+              ></div>
             </div>
             <div className={`text-sm font-semibold ${textColor} mt-1`}>
               {labelText} {timeText}
@@ -283,7 +362,7 @@ const TicketsGrid = ({ data, isLoading, tableRef, onViewDetails, onEdit, onDelet
         );
       },
     },
-    
+
     // --- Date Created Column ---
     {
       headerName: "Date Created",
@@ -306,15 +385,11 @@ const TicketsGrid = ({ data, isLoading, tableRef, onViewDetails, onEdit, onDelet
           hour12: true,
         });
         const relativeTime = timeAgo(params.value);
-        
+
         return (
           <div className="flex flex-col justify-center h-full py-2">
-            <div className="text-xs text-gray-600">
-              {createdDate}
-            </div>
-            <div className="text-xs text-gray-500 mt-0.5">
-              {relativeTime}
-            </div>
+            <div className="text-xs text-gray-600">{createdDate}</div>
+            <div className="text-xs text-gray-500 mt-0.5">{relativeTime}</div>
           </div>
         );
       },
