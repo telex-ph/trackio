@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { Alert } from "flowbite-react";
 import {
   ChevronLeft,
   ChevronsLeft,
@@ -9,6 +10,7 @@ import {
   Plus,
   X,
   Trash,
+  Lightbulb,
 } from "lucide-react";
 import { DateTime } from "luxon";
 import useKeyboardKey from "../hooks/useKeyboardKey";
@@ -263,6 +265,28 @@ const Calendar = ({ handleBtnsClick, loading, readOnly = false }) => {
                     .join(", ")
                 : "None"}
             </p>
+            <Alert
+              color="info"
+              icon={Lightbulb}
+              rounded
+              className="border border-blue-200 mt-2"
+            >
+              <span className="font-medium text-blue-900 text-sm!">
+                Scheduling Instructions
+              </span>
+              <p className="text-sm! text-blue-800 mt-1">
+                To set a schedule, <strong>select a date</strong> on the
+                calendar and
+                <strong> right-click</strong> to open the scheduling options.
+              </p>
+              <p className="text-sm! text-blue-800 mt-1">
+                To select multiple dates,{" "}
+                <strong>
+                  hold the <kbd>Shift</kbd> key while clicking{" "}
+                </strong>{" "}
+                each additional date you want to include.
+              </p>
+            </Alert>
           </div>
 
           <div>
