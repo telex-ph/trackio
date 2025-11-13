@@ -26,7 +26,7 @@ const OM_ROUTES = [
   { path: "schedule", element: <SharedSchedule role={Roles.OM} /> },
   {
     path: "schedule/:id",
-    element: <SharedViewSchedule role={Roles.OM} />,
+    element: <SharedViewSchedule role={Roles.OM} readOnly={false} />,
   },
   { path: "ticket", element: <SharedTicket /> },
   {

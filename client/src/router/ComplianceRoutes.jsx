@@ -49,7 +49,7 @@ const COMPLIANCE_ROUTES = [
   },
   {
     path: "schedule/:id",
-    element: <SharedViewSchedule role={Roles.COMPLIANCE} readOnly={true} />,
+    element: <SharedViewSchedule role={Roles.COMPLIANCE} readOnly={false} />,
   },
   { path: "announcement", element: <AdminAnnouncement /> },
   { path: "agentrequest", element: <AdminAgentRequest /> },

@@ -50,7 +50,7 @@ const ADMIN_HR_HEAD_ROUTES = [
   },
   {
     path: "schedule/:id",
-    element: <SharedViewSchedule role={Roles.ADMIN_HR_HEAD} readOnly={true} />,
+    element: <SharedViewSchedule role={Roles.ADMIN_HR_HEAD} readOnly={false} />,
   },
   { path: "announcement", element: <AdminAnnouncement /> },
   { path: "agentrequest", element: <AdminAgentRequest /> },
