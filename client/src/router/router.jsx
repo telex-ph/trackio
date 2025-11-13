@@ -20,7 +20,8 @@ import OM_ROUTES from "./OMRoutes";
 import ADMIN_HR_HEAD_ROUTES from "./AdminHRHeadRoutes";
 import ADMIN_ROUTES from "./AdminRoutes";
 import COMPLIANCE_ROUTES from "./ComplianceRoutes";
-import COMPLIANCE_HEAD from "./ComplianceHeadRoutes";
+import COMPLIANCE_HEAD_ROUTES from "./ComplianceHeadRoutes";
+import PRESIDENT_ROUTES from "./PresidentRoutes";
 
 const router = createBrowserRouter([
   // Public Routes
@@ -40,9 +41,15 @@ const router = createBrowserRouter([
         children: [
           // Compliance Routes
           {
+            element: <ProtectedRoutes role={Roles.PRESIDENT} />,
+            path: "president",
+            children: PRESIDENT_ROUTES,
+          },
+          // Compliance Routes
+          {
             element: <ProtectedRoutes role={Roles.COMPLIANCE_HEAD} />,
             path: "compliance-head",
-            children: COMPLIANCE_HEAD,
+            children: COMPLIANCE_HEAD_ROUTES,
           },
           {
             element: <ProtectedRoutes role={Roles.COMPLIANCE} />,

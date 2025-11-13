@@ -76,6 +76,7 @@ const useUser = () => {
 
   useEffect(() => {
     if (
+      user.role === Roles.PRESIDENT ||
       user.role === Roles.ADMIN ||
       user.role === Roles.ADMIN_HR_HEAD ||
       user.role === Roles.COMPLIANCE ||
