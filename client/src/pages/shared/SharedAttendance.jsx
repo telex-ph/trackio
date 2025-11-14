@@ -54,45 +54,6 @@ const SharedAttendance = () => {
           </p>
         </Alert>
       </section>
-      {/* TODO: remove  */}
-      <section className="grid grid-cols-3 gap-5">
-        {TIME_BOX_CONFIG.map((config, index) => {
-          if (index === 0) {
-            return (
-              <>
-                <TimeBox
-                  key={config.id}
-                  attendance={attendance}
-                  config={config}
-                  onTimeIn={addAttendance}
-                  onUpdate={updateAttendance}
-                  user={user}
-                  fetchUserAttendance={fetchUserAttendance}
-                />
-                <section>
-                  <Stopwatch
-                    attendance={attendance}
-                    fetchUserAttendance={fetchUserAttendance}
-                  />
-                </section>
-              </>
-            );
-          } else {
-            return (
-              <TimeBox
-                key={config.id}
-                attendance={attendance}
-                config={config}
-                onTimeIn={addAttendance}
-                onUpdate={updateAttendance}
-                user={user}
-                fetchUserAttendance={fetchUserAttendance}
-              />
-            );
-          }
-        })}
-      </section>
-
       <section>
         <Calendar loading={scheduleLoading} readOnly={true} />
       </section>
