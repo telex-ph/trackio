@@ -99,7 +99,7 @@ const SharedTrackingHistory = () => {
   };
 
   const columns = [
-    { headerName: "ID", field: "id", flex: 1 },
+    { headerName: "ID", field: "employeeId", flex: 1 },
     { headerName: "Date", field: "date", flex: 1 },
     { headerName: "Name", field: "name", flex: 1 },
     { headerName: "Time In", field: "timeIn", filter: false, flex: 1 },

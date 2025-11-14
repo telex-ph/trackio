@@ -66,10 +66,18 @@ const SharedViewSchedule = ({ role, readOnly }) => {
               </h3>
             </div>
             <div>
-              <div>Doc #: {user._id}</div>
-              <div>Role: {user.role}</div>
-              <div>Email: {user.email}</div>
-              <div>Group: {user.group}</div>
+              <div className="text-light">{user._id}</div>
+              <div>
+                Employee ID:{" "}
+                <span className="text-light"> {user.employeeId}</span>
+              </div>
+              <div>
+                Role: <span className="text-light">{user.role}</span>
+              </div>
+              <div>
+                Email: <span className="text-light">{user.email}</span>
+              </div>
+              {/* <div>Group: {user.group}</div> */}
             </div>
           </section>
         )}
