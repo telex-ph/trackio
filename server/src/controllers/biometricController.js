@@ -95,11 +95,11 @@ export const getEvents = async (req, res) => {
               const nowTime = DateTime.utc();
 
               if (shiftEnd < nowTime) {
-                // Shift already ended
-                await biometricOut(attendanceId);
                 if (status === STATUS.ON_BREAK) {
                   await biometricBreakOut(attendanceId, breaks);
                 }
+                // Shift already ended
+                await biometricOut(attendanceId);
               } else {
                 // Active shift
                 // if (status === STATUS.WORKING) {
