@@ -95,7 +95,7 @@ const SharedTeamViewMembers = () => {
 
   // 📋 Table columns
   const columns = [
-    { headerName: "ID", field: "_id", flex: 1 },
+    { headerName: "ID", field: "employeeId", flex: 1 },
     { headerName: "First Name", field: "firstName", flex: 1 },
     { headerName: "Last Name", field: "lastName", flex: 1 },
     { headerName: "Email", field: "email", flex: 1 },
