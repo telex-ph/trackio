@@ -23,7 +23,13 @@ const SharedOnBreak = () => {
 
   // Columns
   const columns = [
-    { headerName: "ID", field: "id", sortable: true, filter: true, flex: 1 },
+    {
+      headerName: "ID",
+      field: "employeeId",
+      sortable: true,
+      filter: true,
+      flex: 1,
+    },
     {
       headerName: "Name",
       field: "name",
@@ -53,7 +59,7 @@ const SharedOnBreak = () => {
       cellRenderer: (params) => {
         const item = params.data;
         if (!item.breaks || item.breaks.length === 0) {
-          return "—"; 
+          return "—";
         }
 
         const latest = item.breaks[item.breaks.length - 1].start;

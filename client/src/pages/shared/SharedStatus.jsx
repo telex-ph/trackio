@@ -78,7 +78,7 @@ const SharedStatus = () => {
   };
 
   const columns = [
-    { headerName: "ID", field: "id", sortable: true, filter: true, flex: 1 },
+    { headerName: "ID", field: "employeeId", sortable: true, filter: true, flex: 1 },
     {
       headerName: "Name",
       field: "name",
