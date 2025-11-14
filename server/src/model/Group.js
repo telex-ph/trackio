@@ -79,6 +79,7 @@ class Group {
         {
           $project: {
             _id: 1,
+            employeeId: 1,
             name: 1,
             teamLeaderId: 1,
             createdAt: 1,
