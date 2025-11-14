@@ -111,12 +111,9 @@ const TimeBox = ({
       <h3 className="text-black">{title}</h3>
       <div className="flex gap-3">
         <button
-          className={`flex-1 bg-(--primary-color) py-4 rounded-md text-white font-bold transition-colors duration-200
-          ${isStartDisabled ? "cursor-not-allowed" : "cursor-pointer"}
-          `}
-          onClick={handleStartClick}
+          className={`flex-1 bg-(--primary-color) py-4 rounded-md text-white font-bold transition-colors duration-200`}
         >
-          {duration}
+          {startTime ? formatTime(startTime) : "Not recorded"}
         </button>
         {isTwoBtn && (
           <button
@@ -127,21 +124,6 @@ const TimeBox = ({
           >
             <Square />
           </button>
-        )}
-      </div>
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-light">
-          Recorded on: {startTime ? formatTime(startTime) : "Not recorded"}
-        </span>
-        {fieldTwo && (
-          <span>
-            Ended:{" "}
-            {endTime
-              ? formatTime(endTime)
-              : startTime
-              ? "In Progress…"
-              : "Not recorded"}
-          </span>
         )}
       </div>
     </div>
