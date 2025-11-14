@@ -38,7 +38,7 @@ class Schedules {
 
     const bulkOps = schedules.map((schedule) => ({
       deleteOne: {
-        filter: { userId: userId, date: schedule.date },
+        filter: { userId: userId, date: schedule },
       },
     }));
 
