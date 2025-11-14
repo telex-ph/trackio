@@ -80,7 +80,10 @@ export const deleteSchedules = async (req, res) => {
   });
 
   try {
-    const schedules = await Schedule.deleteAll(shiftSchedulesInUTC, userId);
+    const schedules = await Schedule.deleteAll(
+      shiftSchedulesInUTC,
+      new ObjectId(userId)
+    );
     return res.status(200).json(schedules);
   } catch (error) {
     console.error("Error deleting schedules: ", error);
