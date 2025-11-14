@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { DateTime } from "luxon";
 import api from "../../utils/axios";
+import socket from "../../utils/socket";
 
 // Import components
 import Notification from "../../components/incident-reports/Notification";
@@ -8,6 +9,7 @@ import Notification from "../../components/incident-reports/Notification";
 import HR_OffenseDetails from "../../components/HRIncidentReport/ReportedIR/HR_OffenseDetails";
 import HR_CasesInProgress from "../../components/HRIncidentReport/ReportedIR/HR_CasesInProgress";
 import HR_CaseHistory from "../../components/HRIncidentReport/ReportedIR/HR_CaseHistory";
+import { useStore } from "../../store/useStore";
 
 // Define TypeScript Interfaces
 interface OffenseEvidence {
@@ -76,6 +78,10 @@ const HRReportedOffenses = () => {
 
   const today: string = DateTime.now().toISODate()!;
 
+  const decrementUnreadOffensesHR = useStore(
+    (state) => state.decrementUnreadOffensesHR
+  );
+
   const [notification, setNotification] = useState({
     message: "",
     type: "",
@@ -83,9 +89,14 @@ const HRReportedOffenses = () => {
   });
 
   const [formData, setFormData] = useState<Partial<Offense>>({
-    agentName: "", offenseCategory: "", offenseType: "", offenseLevel: "",
-    dateOfOffense: "", status: "", actionTaken: "", remarks: "",
-    evidence: [], isRead: false, isReadByHR: false,
+    agentName: "",
+    offenseCategory: "",
+    offenseLevel: "",
+    dateOfOffense: "",
+    status: "",
+    actionTaken: "",
+    remarks: "",
+    evidence: [],
   });
 
   const showNotification = (message: string, type: string) => {
@@ -110,38 +121,93 @@ const HRReportedOffenses = () => {
     fetchOffenses();
   }, []);
 
+  useEffect(() => {
+    if (!setOffenses) return; // safeguard
+
+    const handleAdded = (newOffense: Offense | null) => {
+      if (!newOffense?._id) return;
+      setOffenses((prev) => [newOffense, ...(prev || [])]);
+    };
+
+    const handleUpdated = (updatedOffense: Offense | null) => {
+      if (!updatedOffense?._id) return;
+      setOffenses((prev) =>
+        (prev || []).map((off) =>
+          off?._id === updatedOffense._id ? { ...off, ...updatedOffense } : off
+        )
+      );
+    };
+
+    const handleDeleted = (deletedId: string | null) => {
+      if (!deletedId) return;
+      setOffenses((prev) =>
+        (prev || []).filter((off) => off?._id !== deletedId)
+      );
+    };
+
+    const attachListeners = () => {
+      socket.on("offenseAdded", handleAdded);
+      socket.on("offenseUpdated", handleUpdated);
+      socket.on("offenseDeleted", handleDeleted);
+    };
+
+    if (socket.connected) attachListeners();
+
+    socket.on("connect", () => attachListeners());
+
+    return () => {
+      socket.off("offenseAdded", handleAdded);
+      socket.off("offenseUpdated", handleUpdated);
+      socket.off("offenseDeleted", handleDeleted);
+      socket.off("connect", attachListeners);
+    };
+  }, [setOffenses]);
+
   // Reset form/view
   const resetForm = () => {
     setFormData({
-      agentName: "", offenseCategory: "", offenseType: "", offenseLevel: "",
-      dateOfOffense: "", status: "", actionTaken: "", remarks: "",
-      evidence: [], isRead: false, isReadByHR: false,
+      agentName: "",
+      offenseCategory: "",
+      offenseLevel: "",
+      dateOfOffense: "",
+      status: "",
+      remarks: "",
+      evidence: [],
+      isReadByHR: false,
     });
     setIsViewMode(false);
     setEditingId(null);
   };
 
   // Handle clicking "View" on a card
-  const handleView = (off: Offense) => {
+  const handleView = async (off: Offense) => {
     setIsViewMode(true);
     setEditingId(off._id);
     setFormData({
-      ...off, // Load all offense data
+      ...off,
       agentName: off.agentName,
       offenseCategory: off.offenseCategory,
-      offenseType: off.offenseType,
       offenseLevel: off.offenseLevel || "",
-      dateOfOffense: off.dateOfOffense, // Keep as ISO string for the input
+      dateOfOffense: off.dateOfOffense,
       status: off.status,
-      actionTaken: off.actionTaken,
       remarks: off.remarks || "",
       evidence: off.evidence || [],
-      isRead: off.isRead || false,
-      isReadByHR: off.isReadByHR || false,
     });
-  };
 
-  // REMOVED: handleMarkAsRead function is no longer needed.
+    try {
+      const { data: offense } = await api.get(`/offenses/${off._id}`);
+      if (offense.isReadByHR === false) {
+        const payload = { ...off, isReadByHR: true };
+        await api.put(`/offenses/${off._id}`, payload);
+        decrementUnreadOffensesHR();
+        showNotification("New offense have been read!", "success");
+        fetchOffenses();
+      }
+    } catch (error) {
+      console.error("Error updating offense:", error);
+      showNotification("Failed to update. Please try again.", "error");
+    }
+  };
 
   // NEW: Handle form field changes
   const handleFormChange = (
@@ -154,12 +220,16 @@ const HRReportedOffenses = () => {
   };
 
   // NEW: Handle Update button
-  const handleUpdate = async () => {
+  const handleValid = async () => {
     if (!editingId) return;
     try {
-      const payload = { ...formData, isReadByHR: true };
+      const payload = {
+        ...formData,
+        isReadByRespondant: false,
+        status: "NTE Sent",
+      };
       await api.put(`/offenses/${editingId}`, payload);
-      showNotification("Offense updated successfully!", "success");
+      showNotification("Offense is validated. NTE sent!", "success");
       resetForm();
       fetchOffenses(); // Refresh list
     } catch (error) {
@@ -168,43 +238,24 @@ const HRReportedOffenses = () => {
     }
   };
 
-  // NEW: Handle Escalate button
-  const handleEscalate = async () => {
-    if (!editingId) return;
-    try {
-      const payload = {
-        ...formData,
-        status: "Escalated to Compliance", // Set new status
-        isReadByHR: true,
-      };
-      await api.put(`/offenses/${editingId}`, payload);
-      showNotification("Case escalated to Compliance!", "success");
-      resetForm();
-      fetchOffenses();
-    } catch (error) {
-      console.error("Error escalating case:", error);
-      showNotification("Failed to escalate. Please try again.", "error");
-    }
-  };
+  const [showInvalidModal, setShowInvalidModal] = useState(false);
+  const [invalidReason, setInvalidReason] = useState("");
 
-  // NEW: Handle Reject button
-  const handleReject = async () => {
-    if (!editingId) return;
+  const rejectOffense = async (invalidReason: string) => {
     try {
-      // You might want to ensure remarks are filled before rejecting
-      if (!formData.remarks) {
-        showNotification("Please add remarks before rejecting.", "warning");
-        return;
-      }
       const payload = {
         ...formData,
-        status: "Rejected", // Set new status
-        isReadByHR: true,
+        status: "Invalid",
+        invalidReason,
+        isReadByReporter: false
       };
+
       await api.put(`/offenses/${editingId}`, payload);
       showNotification("Case has been rejected.", "success");
       resetForm();
       fetchOffenses();
+      setShowInvalidModal(false);
+      setInvalidReason("");
     } catch (error) {
       console.error("Error rejecting case:", error);
       showNotification("Failed to reject. Please try again.", "error");
@@ -226,7 +277,13 @@ const HRReportedOffenses = () => {
   // Filter for "Cases In Progress"
   const filteredOffenses = offenses.filter(
     (off) =>
-      !["Action Taken", "Escalated", "Closed", "Rejected", "Escalated to Compliance"].includes(off.status) &&
+      ![
+        "Action Taken",
+        "Escalated",
+        "Closed",
+        "Rejected",
+        "Escalated to Compliance",
+      ].includes(off.status) &&
       [
         off.agentName,
         off.offenseType,
@@ -245,9 +302,13 @@ const HRReportedOffenses = () => {
 
   // Filter for "Case History"
   const resolvedOffenses = offenses.filter((off) => {
-    const isResolved = ["Action Taken", "Escalated", "Closed", "Rejected", "Escalated to Compliance"].includes(
-      off.status
-    );
+    const isResolved = [
+      "Action Taken",
+      "Escalated",
+      "Closed",
+      "Rejected",
+      "Escalated to Compliance",
+    ].includes(off.status);
     if (!isResolved) return false;
 
     const textMatch = [
@@ -290,7 +351,9 @@ const HRReportedOffenses = () => {
         <div className="flex items-center gap-1">
           <h2>Reported Offenses</h2>
         </div>
-        <p className="text-gray-600">View all reported disciplinary offenses.</p>
+        <p className="text-gray-600">
+          View all reported disciplinary offenses.
+        </p>
       </section>
 
       <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
@@ -300,11 +363,9 @@ const HRReportedOffenses = () => {
           formData={formData as Offense} // Casting here is fine
           onClose={resetForm}
           onFormChange={handleFormChange}
-          onUpdate={handleUpdate}
-          onEscalate={handleEscalate}
-          onReject={handleReject}
-          formatDisplayDate={formatDisplayDate}
+          handleValid={handleValid}
           base64ToBlobUrl={base64ToBlobUrl}
+          rejectOffense={rejectOffense}
         />
 
         {/* Cases in Progress Panel */}

@@ -10,7 +10,12 @@ import {
 import SidebarLink from "../sidebars/SidebarLink";
 import CustomCollapse from "../sidebars/CustomCollapse";
 
-const AgentSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
+const AgentSidebar = ({
+  isCollapsed,
+  activeDropdown,
+  setActiveDropdown,
+  unreadOffenses,
+}) => (
   <div className="space-y-1">
     <SidebarLink
       to="/agent/dashboard"
@@ -48,7 +53,16 @@ const AgentSidebar = ({ isCollapsed, activeDropdown, setActiveDropdown }) => (
       <SidebarLink
         to={`/agent/offenses`}
         icon={GalleryVerticalEnd}
-        label="My Offenses"
+        label={
+          <>
+            My Offenses
+            {!isCollapsed && unreadOffenses > 0 && (
+              <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                {unreadOffenses}
+              </span>
+            )}
+          </>
+        }
         isCollapsed={isCollapsed}
       />
     </CustomCollapse>

@@ -18,6 +18,7 @@ const TeamLeaderSidebar = ({
   isCollapsed,
   activeDropdown,
   setActiveDropdown,
+  unreadOffenses, // <-- add prop
 }) => (
   <div className="space-y-1">
     <SidebarLink
@@ -32,7 +33,6 @@ const TeamLeaderSidebar = ({
       label="Attendance"
       isCollapsed={isCollapsed}
     />
-
     <SidebarLink
       to="/team-leader/schedule"
       icon={Calendar}
@@ -62,6 +62,7 @@ const TeamLeaderSidebar = ({
         isCollapsed={isCollapsed}
       />
     </CustomCollapse>
+
     <SidebarLink
       to="/team-leader/team"
       icon={Users2Icon}
@@ -92,6 +93,7 @@ const TeamLeaderSidebar = ({
       label="Agent Request"
       isCollapsed={isCollapsed}
     />
+
     <CustomCollapse
       icon={<Clock className="w-5 h-5" />}
       label="Offenses"
@@ -110,7 +112,16 @@ const TeamLeaderSidebar = ({
       <SidebarLink
         to={`/team-leader/offenses`}
         icon={GalleryVerticalEnd}
-        label="My Offenses"
+        label={
+          <>
+            My Offenses
+            {!isCollapsed && unreadOffenses > 0 && (
+              <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                {unreadOffenses}
+              </span>
+            )}
+          </>
+        }
         isCollapsed={isCollapsed}
       />
     </CustomCollapse>

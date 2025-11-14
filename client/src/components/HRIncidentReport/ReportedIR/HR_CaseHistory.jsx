@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  FileText,
-  Search,
-  Eye,
-  Download,
-  X as ClearIcon,
-} from "lucide-react";
+import { FileText, Search, Eye, Download, X as ClearIcon } from "lucide-react";
 
 const HR_CaseHistory = ({
   offenses,
@@ -94,80 +88,83 @@ const HR_CaseHistory = ({
               </tr>
             </thead>
             <tbody>
-              {offenses.map((off) => (
-                <tr
-                  key={off._id}
-                  className="border-b border-gray-100 hover:bg-gray-50"
-                >
-                  <td className="p-4 text-sm text-gray-600">
-                    {formatDisplayDate(off.dateOfOffense)}
-                  </td>
-                  <td className="p-4 text-sm text-gray-600">
-                    {off.offenseType}
-                  </td>
-                  <td className="p-4 text-sm text-gray-600">
-                    {off.offenseLevel || "N/A"}
-                  </td>
-                  <td className="p-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${off.status === "Closed"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-200 text-gray-600"
+              {offenses
+                ?.filter((o) => o && o._id)
+                .map((off) => (
+                  <tr
+                    key={off._id}
+                    className="border-b border-gray-100 hover:bg-gray-50"
+                  >
+                    <td className="p-4 text-sm text-gray-600">
+                      {formatDisplayDate(off.dateOfOffense)}
+                    </td>
+                    <td className="p-4 text-sm text-gray-600">
+                      {off.offenseType}
+                    </td>
+                    <td className="p-4 text-sm text-gray-600">
+                      {off.offenseLevel || "N/A"}
+                    </td>
+                    <td className="p-4">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          off.status === "Closed"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-200 text-gray-600"
                         }`}
-                    >
-                      {off.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-sm text-gray-600">
-                    {off.actionTaken}
-                  </td>
+                      >
+                        {off.status}
+                      </span>
+                    </td>
+                    <td className="p-4 text-sm text-gray-600">
+                      {off.actionTaken}
+                    </td>
 
-                  {/* Evidence Column with icons */}
-                  <td className="p-4 text-sm text-gray-600">
-                    {off.evidence && off.evidence.length > 0 ? (
-                      <div className="flex flex-col items-start gap-2">
-                        {off.evidence.map((ev, idx) => {
-                          const viewUrl = base64ToBlobUrl(ev.data, ev.type);
-                          return (
-                            <div
-                              key={idx}
-                              className="flex items-center gap-2"
-                            >
-                              <span className="truncate" title={ev.fileName}>
-                                {ev.fileName}
-                              </span>
-                              <a
-                                href={viewUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-1 text-gray-500 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
-                                title="View"
+                    {/* Evidence Column with icons */}
+                    <td className="p-4 text-sm text-gray-600">
+                      {off.evidence && off.evidence.length > 0 ? (
+                        <div className="flex flex-col items-start gap-2">
+                          {off.evidence.map((ev, idx) => {
+                            const viewUrl = base64ToBlobUrl(ev.data, ev.type);
+                            return (
+                              <div
+                                key={idx}
+                                className="flex items-center gap-2"
                               >
-                                <Eye className="w-4 h-4" />
-                              </a>
-                              <a
-                                href={ev.data}
-                                download={ev.fileName}
-                                className="p-1 text-gray-500 hover:text-green-600 rounded-md hover:bg-green-50 transition-colors"
-                                title="Download"
-                              >
-                                <Download className="w-4 h-4" />
-                              </a>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                  {/* End of Evidence Column */}
+                                <span className="truncate" title={ev.fileName}>
+                                  {ev.fileName}
+                                </span>
+                                <a
+                                  href={viewUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-1 text-gray-500 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
+                                  title="View"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </a>
+                                <a
+                                  href={ev.data}
+                                  download={ev.fileName}
+                                  className="p-1 text-gray-500 hover:text-green-600 rounded-md hover:bg-green-50 transition-colors"
+                                  title="Download"
+                                >
+                                  <Download className="w-4 h-4" />
+                                </a>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    {/* End of Evidence Column */}
 
-                  <td className="p-4 text-sm text-gray-600">
-                    {off.remarks || "—"}
-                  </td>
-                </tr>
-              ))}
+                    <td className="p-4 text-sm text-gray-600">
+                      {off.remarks || "—"}
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
@@ -176,8 +173,8 @@ const HR_CaseHistory = ({
           {isLoading
             ? "Loading history..."
             : filters.searchQuery || filters.startDate || filters.endDate // Check if any filter is active
-              ? "No matching history records found for the selected filters."
-              : "No resolved offense records found."}
+            ? "No matching history records found for the selected filters."
+            : "No resolved offense records found."}
         </div>
       )}
     </div>

@@ -1,10 +1,13 @@
 import { Server } from "socket.io";
 import statusHandler from "./handlers/statusHandler.js";
+import offenseWatcher from "./handlers/offenseWatcher.js";
 
 let io;
 
-const socket = async (server) => {
-  io = new Server(server, {
+export const getIO = () => io;
+
+const socket = async (server, app) => {
+  const io = new Server(server, {
     cors: {
       origin: [
         "http://localhost:5173",
@@ -17,6 +20,8 @@ const socket = async (server) => {
     },
   });
 
+  app.set("io", io);
+
   io.on("connection", (socket) => {
     console.log("Client connected:", socket.id);
 
@@ -27,7 +32,7 @@ const socket = async (server) => {
 
   // Status watcher
   await statusHandler(io);
-
+  await offenseWatcher(io);
 };
 
 export default socket;

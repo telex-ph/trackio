@@ -20,6 +20,9 @@ const HR_CasesInProgress = ({
   formatDisplayDate,
   base64ToBlobUrl,
 }) => {
+  const safeOffenses = Array.isArray(offenses)
+    ? offenses.filter((o) => o && typeof o === "object" && o._id)
+    : [];
   return (
     <div className="rounded-md p-6 sm:p-8 border border-light">
       <div className="flex items-center justify-between mb-6">
@@ -32,7 +35,7 @@ const HR_CasesInProgress = ({
           </h3>
         </div>
         <span className="bg-red-100 text-red-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
-          {offenses.length} Records
+          {safeOffenses.length} Records
         </span>
       </div>
       <div className="mb-6">
@@ -48,9 +51,9 @@ const HR_CasesInProgress = ({
         </div>
       </div>
 
-      {offenses.length > 0 ? (
+      {safeOffenses.length > 0 ? (
         <div className="space-y-4 overflow-y-auto max-h-210 pr-2">
-          {offenses.map((off) => (
+          {safeOffenses.map((off) => (
             <div
               key={off._id}
               className="group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border border-gray-100"
@@ -70,22 +73,54 @@ const HR_CasesInProgress = ({
                         Date: {formatDisplayDate(off.dateOfOffense)}
                       </span>
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${off.status === "Pending Review"
-                            ? "bg-yellow-100 text-yellow-700"
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          off.status === "Pending Review"
+                            ? "bg-amber-100 text-amber-700 border border-amber-200"
                             : off.status === "Under Investigation"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-gray-200 text-gray-600"
-                          }`}
+                            ? "bg-blue-100 text-blue-700 border border-blue-200"
+                            : off.status === "NTE Sent"
+                            ? "bg-purple-100 text-purple-700 border border-purple-200"
+                            : off.status === "Invalid" ||
+                              off.status === "Unread"
+                            ? "bg-gray-200 text-gray-600 border border-gray-300"
+                            : "bg-gray-100 text-gray-600 border border-gray-200"
+                        }`}
                       >
                         {off.status}
                       </span>
-                      {off.isRead ? (
+
+                      {off.status === "Invalid" && !off.isReadByReporter ? (
+                        // 🔴 Reporter hasn’t read after Invalid
+                        <span className="flex items-center gap-1 text-red-600 text-xs font-bold">
+                          <Bell className="w-4 h-4" /> Unread by Reporter
+                        </span>
+                      ) : off.status === "Invalid" && off.isReadByReporter ? (
+                        // 🔴 Reporter hasn’t read after Invalid
+                        <span className="flex items-center gap-1 text-green-600 text-xs">
+                          <Bell className="w-4 h-4" /> Read by Reporter
+                        </span>
+                      ) : off.status === "NTE Sent" &&
+                        !off.isReadByRespondant ? (
+                        // 🔴 Respondent hasn’t read after NTE sent
+                        <span className="flex items-center gap-1 text-red-600 text-xs font-bold">
+                          <Bell className="w-4 h-4" /> Unread by Respondent
+                        </span>
+                      ) : off.isReadByHR ? (
+                        // ✅ HR has read
                         <span className="flex items-center gap-1 text-green-600 text-xs">
                           <CheckCircle className="w-4 h-4" /> Read
                         </span>
-                      ) : (
+                      ) : !off.isReadByHR &&
+                        !off.isReadByReporter &&
+                        !off.isReadByRespondant ? (
+                        // 🔴 None have read
                         <span className="flex items-center gap-1 text-red-600 text-xs font-bold">
                           <Bell className="w-4 h-4" /> Unread
+                        </span>
+                      ) : (
+                        // Fallback
+                        <span className="flex items-center gap-1 text-gray-600 text-xs">
+                          Unknown
                         </span>
                       )}
                     </div>
@@ -96,27 +131,17 @@ const HR_CasesInProgress = ({
               <div className="space-y-3 mb-4">
                 {/* Card Body Content */}
                 <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
+                  <Hash className="w-3 h-3 sm:w-4 sm:h-4" />
+                  Respondant:{" "}
+                  <span className="font-medium">
+                    {off.reporterName || "N/A"}
+                  </span>
+                </p>
+                <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
                   <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
                   Category:{" "}
                   <span className="font-medium">{off.offenseCategory}</span>
                 </p>
-                <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                  <Hash className="w-3 h-3 sm:w-4 sm:h-4" />
-                  Level:{" "}
-                  <span className="font-medium">
-                    {off.offenseLevel || "N/A"}
-                  </span>
-                </p>
-
-                <div className="bg-red-50 rounded-xl p-3 sm:p-4 border-l-4 border-red-500">
-                  <p className="text-xs sm:text-sm text-gray-700">
-                    <span className="font-semibold text-gray-800">
-                      Action Taken:
-                    </span>{" "}
-                    {off.actionTaken}
-                  </p>
-                </div>
-
                 {off.remarks && (
                   <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border-l-4 border-gray-400">
                     <p className="text-xs sm:text-sm text-gray-700">
@@ -174,7 +199,7 @@ const HR_CasesInProgress = ({
 
               <div className="flex gap-3">
                 <button
-                  onClick={() => onView(off)}
+                  onClick={() => off && off._id && onView(off)}
                   className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
                 >
                   View
@@ -188,8 +213,8 @@ const HR_CasesInProgress = ({
           {isLoading
             ? "Loading offenses..."
             : searchQuery
-              ? "No matching offense records found."
-              : "No offense records found."}
+            ? "No matching offense records found."
+            : "No offense records found."}
         </div>
       )}
     </div>

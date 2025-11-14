@@ -33,31 +33,36 @@ export const getOffenseById = async (req, res) => {
 };
 
 export const addOffense = async (req, res) => {
-  try {
-    const offenseData = req.body;
-    const user = req.user; // Galing sa auth middleware
+  try {
+    const offenseData = req.body;
+    const user = req.user; // Galing sa auth middleware
 
-    console.log("Backend req.user:", user); 
+    console.log("Backend req.user:", user);
 
-    const newOffenseData = {
-      ...offenseData,
+    const newOffenseData = {
+      ...offenseData,
 
-      reportedById: new ObjectId(user._id), 
+      reportedById: new ObjectId(user._id),
 
-      reporterName: `${user.firstName} ${user.lastName}`, 
-      status: "Pending Review", 
-      isRead: false, 
-      isReadByHR: false,
-    };
+      reporterName: `${user.firstName} ${user.lastName}`,
+      status: "Pending Review",
+      isReadByHR: false,
+    };
 
-    const newOffense = await Offense.create(newOffenseData);
-    res.status(201).json(newOffense);
-  } catch (error) {
-    console.error("CONTROLLER - Error adding offense:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to add offense", error: error.message });
-  }
+    const newOffense = await Offense.create(newOffenseData);
+
+    if (req.app.get("io")) {
+      req.app.get("io").emit("offenseAdded", newOffense);
+      console.log("Emitted offenseAdded event");
+    }
+
+    res.status(201).json(newOffense);
+  } catch (error) {
+    console.error("CONTROLLER - Error adding offense:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to add offense", error: error.message });
+  }
 };
 
 export const updateOffense = async (req, res) => {
@@ -73,15 +78,25 @@ export const updateOffense = async (req, res) => {
     }
 
     const updatedOffense = await Offense.update(id, req.body);
+
+    // --- EMIT SOCKET EVENT ---
+    if (req.app.get("io")) {
+      const io = req.app.get("io");
+      io.emit("offenseUpdated", updatedOffense);
+      console.log("Emitted offenseUpdated event");
+    } else {
+      console.log("Socket IO not attached to app — cannot emit event.");
+    }
+
     res.status(200).json(updatedOffense);
   } catch (error) {
-    // Iwan ang error log para sa production debugging
     console.error("Update error details:", error);
     res
       .status(500)
       .json({ message: "Failed to update offense", error: error.message });
   }
 };
+
 
 // Delete
 export const deleteOffense = async (req, res) => {
@@ -93,6 +108,12 @@ export const deleteOffense = async (req, res) => {
     const deletedCount = await Offense.delete(id);
     if (deletedCount === 0)
       return res.status(404).json({ message: "Offense not found" });
+
+    if (req.app.get("io")) {
+      req.app.get("io").emit("offenseDeleted", id);
+      console.log("Emitted offenseDeleted event");
+    }
+
     res.status(200).json({ message: "Offense deleted successfully" });
   } catch (error) {
     res

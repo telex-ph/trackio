@@ -1,17 +1,11 @@
 import React from "react";
-import {
-  Calendar,
-  X,
-  FileText,
-  Eye,
-  Download,
-} from "lucide-react";
+import { Calendar, X, FileText, Eye, Download } from "lucide-react";
 
 const TLOffenseDetails = ({
   isViewMode,
   formData,
   onClose,
-  onMarkAsRead,
+  onDelete,
   formatDisplayDate,
   base64ToBlobUrl,
 }) => {
@@ -47,7 +41,7 @@ const TLOffenseDetails = ({
               {formData.agentName}
             </p>
           </div>
-          {/* Category & Type */}
+          {/* Category & Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -55,25 +49,6 @@ const TLOffenseDetails = ({
               </label>
               <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
                 {formData.offenseCategory || "N/A"}
-              </p>
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Offense Type
-              </label>
-              <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
-                {formData.offenseType || "N/A"}
-              </p>
-            </div>
-          </div>
-          {/* Level & Date */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Offense Level
-              </label>
-              <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
-                {formData.offenseLevel || "N/A"}
               </p>
             </div>
             <div className="space-y-2">
@@ -87,24 +62,6 @@ const TLOffenseDetails = ({
                 </p>
               </div>
             </div>
-          </div>
-          {/* Status */}
-          <div className="space-y-2">
-            <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-              Status
-            </label>
-            <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
-              {formData.status || "N/A"}
-            </p>
-          </div>
-          {/* Action Taken */}
-          <div className="space-y-2">
-            <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-              Action Taken
-            </label>
-            <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
-              {formData.actionTaken || "N/A"}
-            </p>
           </div>
           {/* Remarks */}
           <div className="space-y-2">
@@ -163,6 +120,16 @@ const TLOffenseDetails = ({
                 </p>
               </div>
             )}
+            {formData.status === "Invalid" ? (
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  Invalid Reason
+                </label>
+                <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 text-gray-800 text-sm sm:text-base overflow-y-auto">
+                  {formData.invalidReason}
+                </p>
+              </div>
+            ) : null}
           </div>
           {/* End of Evidence Section */}
 
@@ -174,14 +141,14 @@ const TLOffenseDetails = ({
             >
               Close
             </button>
-            {!formData.isRead && (
+            {formData.isReadByHR ? (
               <button
-                onClick={onMarkAsRead}
+                onClick={onDelete}
                 className="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
               >
-                Mark as Read
+                Delete
               </button>
-            )}
+            ) : null}
           </div>
         </div>
       ) : (

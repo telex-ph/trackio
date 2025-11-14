@@ -6,7 +6,6 @@ import Notification from "../../components/incident-reports/Notification";
 
 // --- IMPORT NEW TL COMPONENTS ---
 import TLOffenseDetails from "../../components/incident-reports/TLOffenseDetails";
-import TLCasesInProgress from "../../components/incident-reports/TLCasesInProgress";
 import TLCaseHistory from "../../components/incident-reports/TLCaseHistory";
 
 // --- HELPER FUNCTION ---
@@ -71,6 +70,7 @@ const TeamLeaderOffenses = () => {
     status: "",
     actionTaken: "",
     remarks: "",
+    invalidReason: "",
     evidence: [],
     isRead: false,
   });
@@ -117,6 +117,8 @@ const TeamLeaderOffenses = () => {
     loadData();
   }, []);
 
+
+
   const resetForm = () => {
     setFormData({
       agentName: "",
@@ -135,6 +137,7 @@ const TeamLeaderOffenses = () => {
   };
 
   const handleView = (off) => {
+    if (!off || !off._id) return;
     setIsViewMode(true);
     setEditingId(off._id);
     setFormData({
@@ -149,20 +152,6 @@ const TeamLeaderOffenses = () => {
       evidence: off.evidence || [],
       isRead: off.isRead || false,
     });
-  };
-
-  const handleMarkAsRead = async () => {
-    if (!editingId) return;
-    try {
-      const payload = { isRead: true };
-      await api.put(`/offenses/${editingId}`, payload);
-      showNotification("Marked as read successfully!", "success");
-      resetForm();
-      fetchOffenses(); // Re-fetch to update the list immediately
-    } catch (error) {
-      console.error("Error marking as read:", error);
-      showNotification("Failed to mark as read. Please try again.", "error");
-    }
   };
 
   const formatDisplayDate = (dateStr) =>
@@ -255,21 +244,11 @@ const TeamLeaderOffenses = () => {
           isViewMode={isViewMode}
           formData={formData}
           onClose={resetForm}
-          onMarkAsRead={handleMarkAsRead}
           formatDisplayDate={formatDisplayDate}
           base64ToBlobUrl={base64ToBlobUrl}
         />
 
         {/* --- CASES IN PROGRESS (Refactored) --- */}
-        <TLCasesInProgress
-          offenses={filteredOffenses}
-          searchQuery={searchQuery}
-          onSearchChange={(e) => setSearchQuery(e.target.value)}
-          onView={handleView}
-          isLoading={isLoading}
-          formatDisplayDate={formatDisplayDate}
-          base64ToBlobUrl={base64ToBlobUrl}
-        />
       </div>
 
       {/* --- CASE HISTORY (Refactored) --- */}

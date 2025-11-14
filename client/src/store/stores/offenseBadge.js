@@ -1,23 +1,53 @@
 import api from "../../utils/axios";
 
-
 export const offenseBadge = (set) => ({
-  unreadOffenses: 0,
+  unreadOffensesHR: 0,
+  unreadOffensesRespondent: 0,
 
-  // Fetch unread offenses count
-  fetchUnreadOffenses: async () => {
+  // ✅ Fetch unread offenses for HR (isReadByHR: false)
+  fetchUnreadOffensesHR: async () => {
     try {
       const { data } = await api.get("/offenses");
       const unreadCount = data.filter((o) => !o.isReadByHR).length;
-      set({ unreadOffenses: unreadCount });
+      set({ unreadOffensesHR: unreadCount });
     } catch (error) {
-      console.error("Error fetching unread offenses:", error);
+      console.error("Error fetching unread offenses (HR):", error);
     }
   },
 
-  // Decrease count locally when HR views one
-  decrementUnreadOffenses: () =>
+  // ✅ Fetch unread offenses for Team Leader & Agent (isReadByRespondant: false)
+  fetchUnreadOffensesRespondent: async (employeeId) => {
+    if (!employeeId) return; // Skip if no ID available
+    try {
+      const { data } = await api.get("/offenses");
+
+      const unreadCount = data.filter(
+        (o) =>
+          // Must have the field
+          Object.prototype.hasOwnProperty.call(o, "isReadByRespondant") &&
+          // Unread by respondent
+          o.isReadByRespondant === false &&
+          // Belongs to current user
+          o.employeeId === employeeId
+      ).length;
+
+      set({ unreadOffensesRespondent: unreadCount });
+    } catch (error) {
+      console.error("Error fetching unread offenses (TL/AGENT):", error);
+    }
+  },
+
+  // ✅ Decrease counts when read
+  decrementUnreadOffensesHR: () =>
     set((state) => ({
-      unreadOffenses: Math.max(state.unreadOffenses - 1, 0),
+      unreadOffensesHR: Math.max(state.unreadOffensesHR - 1, 0),
+    })),
+
+  decrementUnreadOffensesRespondent: () =>
+    set((state) => ({
+      unreadOffensesRespondent: Math.max(
+        state.unreadOffensesRespondent - 1,
+        0
+      ),
     })),
 });
