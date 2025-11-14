@@ -202,7 +202,8 @@ const UnderContruction = () => {
       <div className="mt-10">
         <h3 className="font-bold mb-2">Page Under Construction</h3>
         <p className="text-lg mb-6">
-          Tech Team is currently working on this page. Please check back soon!
+          Innovation Team is currently working on this page. Please check back
+          soon!
         </p>
       </div>
     </div>

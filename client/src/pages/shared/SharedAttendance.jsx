@@ -34,26 +34,6 @@ const SharedAttendance = () => {
         />
         <ServerTime />
       </section>
-
-      {/* Responsive grid: 1 col on small, 2 cols on md, up to 5 cols on xl */}
-      <section>
-        <Alert
-          color="info"
-          icon={Info}
-          rounded
-          className="border border-blue-200"
-        >
-          <span className="font-medium text-blue-900 text-sm">
-            Upcoming Biometric Integration
-          </span>
-          <p className="text-sm text-blue-900">
-            These boxes will be replaced by the{" "}
-            <strong>Biometric System</strong> once we move to the new office.
-            After that, only <strong>duration data</strong> will be visible
-            here.
-          </p>
-        </Alert>
-      </section>
       <section>
         <Calendar loading={scheduleLoading} readOnly={true} />
       </section>

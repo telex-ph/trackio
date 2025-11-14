@@ -92,11 +92,13 @@ export default function LiveBreaks() {
     .sort((a, b) => b.percentage - a.percentage);
 
   return (
-    <section style={{
-      backgroundImage: `url(${liveMonitoring})`,
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-    }}>
+    <section
+      style={{
+        backgroundImage: `url(${liveMonitoring})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
       {/* <section>
         <ServerTime />
       </section> */}
@@ -104,7 +106,9 @@ export default function LiveBreaks() {
       <div className="flex gap-5 p-5  h-screen">
         {/* LEFT PANEL: ON BREAK */}
         <div className="flex-1 p-5 rounded-sm">
-          <h2 className="mb-4 text-gray-700 border p-2 border-light bg-gray-50 rounded-md">Live On Break (max: 1hr 30min)</h2>
+          <h2 className="mb-4 text-gray-700 border p-2 border-light bg-gray-50 rounded-md">
+            Live On Break (max: 1hr 30min)
+          </h2>
           <section className="space-y-3">
             <AnimatePresence mode="popLayout">
               {onBreakStatuses.map((status, key) => (
@@ -146,8 +150,10 @@ export default function LiveBreaks() {
 
         {/* RIGHT PANEL: OVER BREAK */}
         <div className="flex-1 p-5 rounded-sm">
-          <h2 className="mb-4 text-gray-700 border p-2 border-light bg-gray-50 rounded-md">Live Over Break</h2>
-          <section className="space-y-3">
+          <h2 className="mb-4 text-gray-700 border p-2 border-light bg-gray-50 rounded-md">
+            Live Over Break
+          </h2>
+          {/* <section className="space-y-3">
             <AnimatePresence mode="popLayout">
               {overBreakStatuses.map((status, key) => (
                 <motion.div
@@ -173,7 +179,7 @@ export default function LiveBreaks() {
                 </motion.div>
               ))}
             </AnimatePresence>
-          </section>
+          </section> */}
         </div>
       </div>
     </section>
