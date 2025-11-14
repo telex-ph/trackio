@@ -105,6 +105,7 @@ export const useAttendance = (userId, filter) => {
         return {
           doc_id: item._id,
           id: item.user._id,
+          employeeId: item.user.employeeId,
           date: formatDate(item.createdAt),
           name: `${item.user.firstName} ${item.user.lastName}`,
           email: item.user.email,
