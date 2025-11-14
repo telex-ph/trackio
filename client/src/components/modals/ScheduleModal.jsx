@@ -108,7 +108,7 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
   const handleDelete = async () => {
     try {
       const response = await api.delete("/schedule/delete-schedules", {
-        data: { shiftSchedules: selectedDates },
+        data: { shiftSchedules: selectedDates, userId: id },
       });
 
       const deletedCount = response.data.deletedCount;

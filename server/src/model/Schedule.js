@@ -28,7 +28,7 @@ class Schedules {
     };
   }
 
-  static async deleteAll(schedules) {
+  static async deleteAll(schedules, userId) {
     if (!Array.isArray(schedules) || schedules.length === 0) {
       throw new Error("Schedules must be a non-empty array");
     }
@@ -38,7 +38,7 @@ class Schedules {
 
     const bulkOps = schedules.map((schedule) => ({
       deleteOne: {
-        filter: { userId: schedule.userId, date: schedule.date },
+        filter: { userId: userId, date: schedule.date },
       },
     }));
 
