@@ -70,6 +70,7 @@ export const addSchedules = async (req, res) => {
 
 export const deleteSchedules = async (req, res) => {
   const shiftSchedules = req.body.shiftSchedules;
+  const userId = req.body.userId;
 
   // Since the date stored in db is in utc
   const shiftSchedulesInUTC = shiftSchedules.map((schedule) => {
@@ -79,7 +80,7 @@ export const deleteSchedules = async (req, res) => {
   });
 
   try {
-    const schedules = await Schedule.deleteAll(shiftSchedulesInUTC);
+    const schedules = await Schedule.deleteAll(shiftSchedulesInUTC, userId);
     return res.status(200).json(schedules);
   } catch (error) {
     console.error("Error deleting schedules: ", error);
