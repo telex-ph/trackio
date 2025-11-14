@@ -74,6 +74,7 @@ const HRSidebar = ({
       onToggle={() =>
         setActiveDropdown(activeDropdown === "offenses" ? null : "offenses")
       }
+      badge={unreadOffenses}
     >
       <SidebarLink
         to="/human-resources/offenses"
@@ -86,7 +87,7 @@ const HRSidebar = ({
         icon={GalleryVerticalEnd}
         label="Reported IR"
         isCollapsed={isCollapsed}
-        badge={unreadOffenses}
+        badge={!isCollapsed ? unreadOffenses : 0}
       />
     </CustomCollapse>
     <SidebarLink

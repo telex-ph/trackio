@@ -42,45 +42,6 @@ const base64ToBlobUrl = (base64, type) => {
 };
 // --- END OF HELPER FUNCTION ---
 
-const offenseTypesByCategory = {
-  Attendance: [
-    "Tardiness / Lates",
-    "Undertime",
-    "Absent without Official Leave (AWOL)",
-    "Excessive Sick Leave / SL Abuse",
-    "No Call, No Show",
-    "Leaving workstation without permission",
-  ],
-  Performance: [
-    "Low Quality Scores (QA Fails)",
-    "Missed Deadlines / Targets",
-    "Excessive AHT",
-    "Not Meeting KPIs / Metrics",
-    "Failure to follow processes / workflows",
-  ],
-  Behavioral: [
-    "Rudeness / Unprofessional behavior",
-    "Disrespect towards peers or superiors",
-    "Workplace misconduct",
-    "Sleeping while on duty",
-    "Excessive personal activities during work hours",
-    "Horseplay / disruption",
-  ],
-  Compliance: [
-    "Data Privacy Violation",
-    "Breach of Company Policy / Security Policy",
-    "Misuse of Company Equipment",
-    "Tampering with logs / falsification of records",
-    "Accessing unauthorized tools / websites",
-    "Timekeeping fraud",
-  ],
-  "Account/Employment": [
-    "Transfer to another account",
-    "Final Written Warning / Termination record",
-    "Disciplinary actions history",
-  ],
-};
-
 const OffenseForm = ({
   formData,
   setFormData,
@@ -130,7 +91,7 @@ const OffenseForm = ({
   const fetchEmployees = async (query) => {
     setIsSearching(true);
     try {
-      const response = await api.get(`/users?search=${query}`);
+      const response = await api.get(`user/users?search=${query}`);
       setSuggestions(response.data || []);
       setShowSuggestions(response.data && response.data.length > 0);
     } catch (error) {
@@ -140,6 +101,7 @@ const OffenseForm = ({
           "Failed to fetch employee suggestions. Please try again.",
           "error"
         );
+        console.log(error);
       }
       setSuggestions([]);
       setShowSuggestions(false);
@@ -187,19 +149,15 @@ const OffenseForm = ({
 
   const isValidSuggestion = (emp) => {
     return (
-      emp &&
-      typeof emp === "object" &&
-      emp._id &&
-      emp.firstName &&
-      emp.lastName
+      emp && typeof emp === "object" && emp._id && emp.firstName && emp.lastName
     );
   };
 
   // --- MODIFICATION: Kinukuha ang LOCAL date, hindi UTC ---
   const date = new Date();
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // 0-indexed kaya +1
-  const day = String(date.getDate()).padStart(2, '0'); // Kukunin ang local date
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // 0-indexed kaya +1
+  const day = String(date.getDate()).padStart(2, "0"); // Kukunin ang local date
   const today = `${year}-${month}-${day}`; // Format: YYYY-MM-DD
   // --- END OF MODIFICATION ---
 
@@ -208,8 +166,9 @@ const OffenseForm = ({
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div
-            className={`p-2 ${isEditMode ? "bg-red-100" : "bg-indigo-100"
-              } rounded-lg`}
+            className={`p-2 ${
+              isEditMode ? "bg-red-100" : "bg-indigo-100"
+            } rounded-lg`}
           >
             {isEditMode ? (
               <Edit className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
@@ -261,11 +220,13 @@ const OffenseForm = ({
                     </li>
                   ))
                 ) : (
-                  <li className="p-3 text-gray-500 text-sm">No matches found</li>
+                  <li className="p-3 text-gray-500 text-sm">
+                    No matches found
+                  </li>
                 )}
                 {suggestions.length > 0 &&
                   suggestions.filter(isValidSuggestion).length !==
-                  suggestions.length && (
+                    suggestions.length && (
                     <li className="p-3 text-gray-400 text-xs italic">
                       Some results might be hidden due to incomplete data.
                     </li>
@@ -310,60 +271,18 @@ const OffenseForm = ({
               className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
             >
               <option value="">Select category</option>
-              <option value="Attendance">Attendance</option>
-              <option value="Performance">Performance</option>
-              <option value="Behavioral">Behavioral</option>
-              <option value="Compliance">Compliance</option>
-              <option value="Account/Employment">Account/Employment</option>
+              <option value="Attendance and Punctuality">Attendance and Punctuality</option>
+              <option value="Behavior and Conduct">Behavior and Conduct</option>
+              <option value="Good Morals and Work Ethics">Good Morals and Work Ethics</option>
+              <option value="Negligence in the Performance of Duty">Negligence in the Performance of Duty</option>
+              <option value="Company Interest/Insubordination">Company Interest/Insubordination</option>
+              <option value="Company Funds and Property">Company Funds and Property</option>
+              <option value="Sanitation, Safety and Security at Work">Sanitation, Safety and Security at Work</option>
+              <option value="Securing or Divulging Confidential Information">Securing or Divulging Confidential Information</option>
             </select>
           </div>
           <div className="space-y-2">
-            <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-              Offense Type *
-            </label>
-            <select
-              value={formData.offenseType}
-              onChange={(e) =>
-                handleInputChange("offenseType", e.target.value)
-              }
-              className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-            >
-              <option value="">Select offense type</option>
-              {formData.offenseCategory &&
-                offenseTypesByCategory[formData.offenseCategory]?.map(
-                  (type, index) => (
-                    <option key={index} value={type}>
-                      {type}
-                    </option>
-                  )
-                )}
-            </select>
-          </div>
-        </div>
-
-        {/* Offense Level / Date */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <div className="space-y-2">
-            <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-              Offense Level *
-            </label>
-            <select
-              value={formData.offenseLevel}
-              onChange={(e) =>
-                handleInputChange("offenseLevel", e.target.value)
-              }
-              className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-            >
-              <option value="">Select level</option>
-              <option value="1st Offense">1st Offense</option>
-              <option value="2nd Offense">2nd Offense</option>
-              <option value="3rd Offense">3rd Offense</option>
-              <option value="4th Offense">4th Offense</option>
-              <option value="5th Offense+">5th Offense+</option>
-            </select>
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+<label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
               Date of Offense *
             </label>
             <div className="relative">
@@ -380,53 +299,6 @@ const OffenseForm = ({
               />
             </div>
           </div>
-        </div>
-
-        {/* Status */}
-        <div className="space-y-2">
-          <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-            Status *
-          </label>
-          <select
-            value={formData.status}
-            onChange={(e) => handleInputChange("status", e.target.value)}
-            className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-          >
-            <option value="">Select status</option>
-            <option value="Pending Review">Pending Review</option>
-            <option value="Under Investigation">Under Investigation</option>
-            <option value="For Counseling">For Counseling</option>
-            <option value="Action Taken">Action Taken</option>
-            <option value="Escalated">Escalated</option>
-            <option value="Closed">Closed</option>
-          </select>
-        </div>
-
-        {/* Action Taken */}
-        <div className="space-y-2">
-          <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-            Action Taken *
-          </label>
-          <select
-            value={formData.actionTaken}
-            onChange={(e) => handleInputChange("actionTaken", e.target.value)}
-            className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-          >
-            <option value="">Select action</option>
-            <option value="Coaching / Counseling">Coaching / Counseling</option>
-            <option value="Verbal Warning">Verbal Warning</option>
-            <option value="Written Warning">Written Warning</option>
-            <option value="Final Written Warning">Final Written Warning</option>
-            <option value="Performance Improvement Plan (PIP)">
-              Performance Improvement Plan (PIP)
-            </option>
-            <option value="Suspension">Suspension</option>
-            <option value="Demotion / Reassignment">
-              Demotion / Reassignment
-            </option>
-            <option value="Termination">Termination</option>
-            <option value="None">None</option>
-          </select>
         </div>
 
         {/* Remarks */}
@@ -513,10 +385,11 @@ const OffenseForm = ({
             </div>
           ) : (
             <div
-              className={`relative border-2 border-dashed rounded-2xl p-4 transition-all duration-300 ${isDragOver
+              className={`relative border-2 border-dashed rounded-2xl p-4 transition-all duration-300 ${
+                isDragOver
                   ? "border-red-400 bg-red-50"
                   : "border-gray-300 bg-gray-50/30"
-                }`}
+              }`}
               onDrop={handleDrop}
               onDragOver={(e) => {
                 e.preventDefault();

@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { DateTime } from "luxon"; // Import DateTime
 import api from "../../utils/axios";
+import { useStore } from "../../store/useStore";
 
 // --- HELPER FUNCTION ---
 // Converts Base64 data URL to a browser-readable Blob URL
@@ -141,7 +142,7 @@ const AgentOffences = () => {
   const [historyStartDate, setHistoryStartDate] = useState("");
   const [historyEndDate, setHistoryEndDate] = useState("");
 
-   // Get today's date in YYYY-MM-DD format for max attribute
+  // Get today's date in YYYY-MM-DD format for max attribute
   const today = DateTime.now().toISODate();
 
   const [notification, setNotification] = useState({
@@ -152,6 +153,10 @@ const AgentOffences = () => {
 
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null); // Although not used here, keep for consistency if needed later
+
+  const decrementUnreadOffensesRespondent = useStore(
+    (state) => state.decrementUnreadOffensesRespondent
+  );
 
   const [formData, setFormData] = useState({
     agentName: "",
@@ -212,47 +217,51 @@ const AgentOffences = () => {
     setFormData({
       agentName: "",
       offenseCategory: "",
-      offenseType: "",
       offenseLevel: "",
       dateOfOffense: "",
       status: "",
-      actionTaken: "",
       remarks: "",
       evidence: [],
-      isRead: false,
     });
     setIsViewMode(false);
     setEditingId(null);
   };
 
-  const handleView = (off) => {
+  const handleView = async (off) => {
     setIsViewMode(true);
     setEditingId(off._id);
     setFormData({
+      ...off,
       agentName: off.agentName,
       offenseCategory: off.offenseCategory,
-      offenseType: off.offenseType,
       offenseLevel: off.offenseLevel || "",
       dateOfOffense: off.dateOfOffense,
       status: off.status,
-      actionTaken: off.actionTaken,
       remarks: off.remarks || "",
       evidence: off.evidence || [],
-      isRead: off.isRead || false,
+      isReadByRespondant: off.isReadByRespondant || false, // for agents
     });
-  };
 
-  const handleMarkAsRead = async () => {
-    if (!editingId) return;
     try {
-      const payload = { isRead: true };
-      await api.put(`/offenses/${editingId}`, payload);
-      showNotification("Marked as read successfully!", "success");
-      resetForm();
-      fetchOffenses(); // Re-fetch to update the list immediately
+      // Fetch the latest offense data
+      const { data: offense } = await api.get(`/offenses/${off._id}`);
+
+      // Only update if not yet read
+      if (offense.isReadByRespondant === false) {
+        const payload = { ...offense, isReadByRespondant: true };
+        await api.put(`/offenses/${off._id}`, payload);
+
+        // Optional: If you have a socket badge counter or store action for unread offenses
+        if (typeof decrementUnreadOffensesAgent === "function") {
+          decrementUnreadOffensesRespondent();
+        }
+
+        showNotification("Marked as read successfully!", " success");
+        fetchOffenses(); // Refresh the list
+      }
     } catch (error) {
-      console.error("Error marking as read:", error);
-      showNotification("Failed to mark as read. Please try again.", "error");
+      console.error("Error updating offense:", error);
+      showNotification("Failed to update offense. Please try again.", "error");
     }
   };
 
@@ -262,8 +271,8 @@ const AgentOffences = () => {
       : "";
 
   const handleHistoryDateReset = () => {
-      setHistoryStartDate("");
-      setHistoryEndDate("");
+    setHistoryStartDate("");
+    setHistoryEndDate("");
   };
 
   // Filter for "Cases In Progress"
@@ -311,8 +320,12 @@ const AgentOffences = () => {
 
     // Date range filter using Luxon
     const offenseDate = DateTime.fromISO(off.dateOfOffense).startOf("day");
-    const start = historyStartDate ? DateTime.fromISO(historyStartDate).startOf("day") : null;
-    const end = historyEndDate ? DateTime.fromISO(historyEndDate).startOf("day") : null;
+    const start = historyStartDate
+      ? DateTime.fromISO(historyStartDate).startOf("day")
+      : null;
+    const end = historyEndDate
+      ? DateTime.fromISO(historyEndDate).startOf("day")
+      : null;
 
     const isAfterStartDate = start ? offenseDate >= start : true;
     const isBeforeEndDate = end ? offenseDate <= end : true;
@@ -496,14 +509,6 @@ const AgentOffences = () => {
                 >
                   Close
                 </button>
-                {!formData.isRead && (
-                  <button
-                    onClick={handleMarkAsRead}
-                    className="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
-                  >
-                    Mark as Read
-                  </button>
-                )}
               </div>
             </div>
           ) : (
@@ -512,7 +517,7 @@ const AgentOffences = () => {
             </div>
           )}
         </div>
-        
+
         {/* --- CASES IN PROGRESS --- */}
         <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
           <div className="flex items-center justify-between mb-6">
@@ -528,6 +533,7 @@ const AgentOffences = () => {
               {filteredOffenses.length} Records
             </span>
           </div>
+
           <div className="mb-6">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -542,140 +548,127 @@ const AgentOffences = () => {
           </div>
 
           {filteredOffenses.length > 0 ? (
-            <div className="space-y-4 overflow-y-auto max-h-210 pr-2">
-              {filteredOffenses.map((off) => (
-                <div
-                  key={off._id}
-                  className="group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border border-gray-100"
-                >
-                  <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
-                     {/* Card Header Content */}
-                     <div className="flex items-start gap-3 sm:gap-4">
-                      <div className="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors">
-                        <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-2 group-hover:text-red-600 transition-colors">
-                          {off.offenseType}
-                        </h4>
-                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
-                          <span className="text-xs text-gray-500">
-                            Date: {formatDisplayDate(off.dateOfOffense)}
-                          </span>
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              off.status === "Pending Review"
-                                ? "bg-yellow-100 text-yellow-700"
-                                : off.status === "Under Investigation"
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-gray-200 text-gray-600"
-                            }`}
-                          >
-                            {off.status}
-                          </span>
-                          {off.isRead ? (
-                            <span className="flex items-center gap-1 text-green-600 text-xs">
-                              <CheckCircle className="w-4 h-4" /> Read
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1 text-red-600 text-xs font-bold">
-                              <Bell className="w-4 h-4" /> Unread
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 mb-4">
-                     {/* Card Body Content */}
-                     <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                      <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
-                      Category:{" "}
-                      <span className="font-medium">{off.offenseCategory}</span>
-                    </p>
-                    <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                      <Hash className="w-3 h-3 sm:w-4 sm:h-4" />
-                      Level:{" "}
-                      <span className="font-medium">
-                        {off.offenseLevel || "N/A"}
-                      </span>
-                    </p>
-
-                    <div className="bg-red-50 rounded-xl p-3 sm:p-4 border-l-4 border-red-500">
-                      <p className="text-xs sm:text-sm text-gray-700">
-                        <span className="font-semibold text-gray-800">
-                          Action Taken:
-                        </span>{" "}
-                        {off.actionTaken}
-                      </p>
-                    </div>
-
-                    {off.remarks && (
-                      <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border-l-4 border-gray-400">
-                        <p className="text-xs sm:text-sm text-gray-700">
-                          <span className="font-semibold text-gray-800">
-                            Remarks:
-                          </span>{" "}
-                          {off.remarks}
-                        </p>
-                      </div>
-                    )}
-
-                    {off.evidence && off.evidence.length > 0 && (
-                      <div className="bg-purple-50 rounded-xl p-3 sm:p-4 border-l-4 border-purple-500">
-                        <div className="text-xs sm:text-sm text-gray-700">
-                          <div className="flex items-center gap-2 mb-2">
-                            <FileText className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                            <span className="font-semibold text-gray-800">
-                              Evidence:
-                            </span>
-                          </div>
-                          {off.evidence.map((ev, idx) => {
-                            const viewUrl = base64ToBlobUrl(ev.data, ev.type);
-                            return (
-                              <div
-                                key={idx}
-                                className="flex items-center justify-between gap-2 w-full p-2 bg-white border border-purple-100 rounded-lg mt-1"
-                              >
-                                <span className="text-purple-700 truncate text-xs font-medium">
-                                  {ev.fileName}
-                                </span>
-                                <div className="flex items-center gap-1 flex-shrink-0">
-                                  <a
-                                    href={viewUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="p-1 text-gray-500 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
-                                  >
-                                    <Eye className="w-3.5 h-3.5" />
-                                  </a>
-                                  <a
-                                    href={ev.data}
-                                    download={ev.fileName}
-                                    className="p-1 text-gray-500 hover:text-green-600 rounded-md hover:bg-green-50 transition-colors"
-                                  >
-                                    <Download className="w-3.5 h-3.5" />
-                                  </a>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => handleView(off)}
-                      className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
+            <div className="space-y-4 overflow-y-auto max-h-[52.5rem] pr-2">
+              {filteredOffenses.map(
+                (off) =>
+                  off.status !== "Pending Review" &&
+                  off.status !== "Invalid" && (
+                    <div
+                      key={off._id}
+                      className="group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border border-gray-100"
                     >
-                      View
-                    </button>
-                  </div>
-                </div>
-              ))}
+                      {/* Card Header */}
+                      <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
+                        <div className="flex items-start gap-3 sm:gap-4">
+                          <div className="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors">
+                            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-2 group-hover:text-red-600 transition-colors">
+                              {off.offenseType}
+                            </h4>
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
+                              <span className="text-xs text-gray-500">
+                                Date: {formatDisplayDate(off.dateOfOffense)}
+                              </span>
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  off.status === "Under Investigation"
+                                    ? "bg-blue-100 text-blue-700"
+                                    : "bg-gray-200 text-gray-600"
+                                }`}
+                              >
+                                {off.status}
+                              </span>
+                              {off.isReadByRespondant ? (
+                                <span className="flex items-center gap-1 text-green-600 text-xs">
+                                  <CheckCircle className="w-4 h-4" /> Read
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1 text-red-600 text-xs font-bold">
+                                  <Bell className="w-4 h-4" /> Unread
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Card Body */}
+                      <div className="space-y-3 mb-4">
+                        <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
+                          <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
+                          Category:{" "}
+                          <span className="font-medium">
+                            {off.offenseCategory}
+                          </span>
+                        </p>
+                        <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
+                          Type:{" "}
+                          <span className="font-medium">
+                            {off.offenseType || "N/A"}
+                          </span>
+                        </p>
+
+                        {off.remarks && (
+                          <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border-l-4 border-gray-400">
+                            <p className="text-xs sm:text-sm text-gray-700">
+                              <span className="font-semibold text-gray-800">
+                                Remarks:
+                              </span>{" "}
+                              {off.remarks}
+                            </p>
+                          </div>
+                        )}
+
+                        {off.evidence?.length > 0 && (
+                          <div className="bg-purple-50 rounded-xl p-3 sm:p-4 border-l-4 border-purple-500">
+                            {off.evidence.map((ev, idx) => {
+                              const viewUrl = base64ToBlobUrl(ev.data, ev.type);
+                              return (
+                                <div
+                                  key={idx}
+                                  className="flex items-center justify-between gap-2 w-full p-2 bg-white border border-purple-100 rounded-lg mt-1"
+                                >
+                                  <span className="text-purple-700 truncate text-xs font-medium">
+                                    {ev.fileName}
+                                  </span>
+                                  <div className="flex items-center gap-1 flex-shrink-0">
+                                    <a
+                                      href={viewUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="p-1 text-gray-500 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
+                                    >
+                                      <Eye className="w-3.5 h-3.5" />
+                                    </a>
+                                    <a
+                                      href={ev.data}
+                                      download={ev.fileName}
+                                      className="p-1 text-gray-500 hover:text-green-600 rounded-md hover:bg-green-50 transition-colors"
+                                    >
+                                      <Download className="w-3.5 h-3.5" />
+                                    </a>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* View Button */}
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => handleView(off)}
+                          className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
+                        >
+                          View
+                        </button>
+                      </div>
+                    </div>
+                  )
+              )}
             </div>
           ) : (
             <div className="flex items-center justify-center py-10 text-gray-500 italic">
@@ -688,7 +681,7 @@ const AgentOffences = () => {
           )}
         </div>
       </div>
-      
+
       {/* --- CASE HISTORY --- */}
       <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
         <div className="flex items-center justify-between mb-6">
@@ -736,7 +729,7 @@ const AgentOffences = () => {
               value={historyEndDate}
               onChange={(e) => setHistoryEndDate(e.target.value)}
               min={historyStartDate} // Cannot be before start date
-              max={today}       // Cannot be in the future
+              max={today} // Cannot be in the future
               className="w-full px-4 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-green-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
               title="End Date"
             />

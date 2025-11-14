@@ -233,6 +233,7 @@ const fetchCurrentUser = async () => {
   };
 
   const handleView = (off) => {
+    if (!off || !off._id) return;
     // For viewing, we'll populate the form in edit mode
     if (off.status !== "Pending Review" && off.status !== "Submitted") {
       showNotification(

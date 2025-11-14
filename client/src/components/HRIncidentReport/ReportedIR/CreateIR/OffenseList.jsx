@@ -244,22 +244,6 @@ const OffenseList = ({
               </div>
               <div className="flex gap-3">
                 <button
-                  onClick={() => {
-                    console.log("Delete button clicked for ID:", off._id);
-                    if (typeof handleDeleteClick === "function") {
-                      handleDeleteClick(off._id);
-                    } else {
-                      console.error(
-                        "handleDeleteClick is not a function:",
-                        handleDeleteClick
-                      );
-                    }
-                  }}
-                  className="flex-1 bg-white border-2 border-red-500 text-red-600 p-2 sm:p-3 rounded-xl hover:bg-red-50 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
-                >
-                  Delete
-                </button>
-                <button
                   onClick={() => handleEdit(off)}
                   className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
                 >

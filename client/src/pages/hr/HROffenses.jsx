@@ -78,45 +78,6 @@ const HROffenses = () => {
     fetchOffenses();
   }, []);
 
-  const offenseTypesByCategory = {
-    Attendance: [
-      "Tardiness / Lates",
-      "Undertime",
-      "Absent without Official Leave (AWOL)",
-      "Excessive Sick Leave / SL Abuse",
-      "No Call, No Show",
-      "Leaving workstation without permission",
-    ],
-    Performance: [
-      "Low Quality Scores (QA Fails)",
-      "Missed Deadlines / Targets",
-      "Excessive AHT",
-      "Not Meeting KPIs / Metrics",
-      "Failure to follow processes / workflows",
-    ],
-    Behavioral: [
-      "Rudeness / Unprofessional behavior",
-      "Disrespect towards peers or superiors",
-      "Workplace misconduct",
-      "Sleeping while on duty",
-      "Excessive personal activities during work hours",
-      "Horseplay / disruption",
-    ],
-    Compliance: [
-      "Data Privacy Violation",
-      "Breach of Company Policy / Security Policy",
-      "Misuse of Company Equipment",
-      "Tampering with logs / falsification of records",
-      "Accessing unauthorized tools / websites",
-      "Timekeeping fraud",
-    ],
-    "Account/Employment": [
-      "Transfer to another account",
-      "Final Written Warning / Termination record",
-      "Disciplinary actions history",
-    ],
-  };
-
   const fileToBase64 = (file) =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -298,7 +259,6 @@ const HROffenses = () => {
           resetForm={resetForm}
           handleSubmit={handleSubmit}
           showNotification={showNotification}
-          offenseTypesByCategory={offenseTypesByCategory}
         />
         <OffenseList
           offenses={offenses}
