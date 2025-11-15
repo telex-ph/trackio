@@ -151,7 +151,7 @@ class Attendance {
       throw new Error("ID is required");
     }
 
-    const now = DateTime.now();
+    const now = DateTime.now().setZone("Asia/Manila");
     const db = await connectDB();
     const collection = db.collection(this.#collection);
 
