@@ -7,14 +7,14 @@ export const biometricIn = async (userId, employeeId) => {
   const TARDINESS_TOLERANCE_HOURS = 2;
   const EARLY_GRACE_HOURS = 4;
 
-  const timeIn = DateTime.now().toUTC();
+  const timeIn = DateTime.now().setZone("Asia/Manila");
   const minShiftStart = timeIn.minus({ hours: TARDINESS_TOLERANCE_HOURS });
   const maxShiftStart = timeIn.plus({ hours: EARLY_GRACE_HOURS });
 
   const matchingSchedule = await Schedules.get(
     userId,
-    minShiftStart.toJSDate(),
-    maxShiftStart.toJSDate()
+    minShiftStart.toUTC().toJSDate(),
+    maxShiftStart.toUTC().toJSDate()
   );
 
   if (!matchingSchedule) {

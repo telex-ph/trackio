@@ -161,8 +161,8 @@ class Attendance {
           $match: {
             userId: new ObjectId(id),
             shiftDate: {
-              $gte: now.startOf("day"),
-              $lte: now.endOf("day"),
+              $gte: now.startOf("day").toUTC().toJSDate(),
+              $lte: now.endOf("day").toUTC().toJSDate(),
             },
           },
         },
@@ -293,8 +293,8 @@ class Attendance {
         // Optional: send a webhook notification with details
         await webhook(
           `**Duplicate attendance prevented**\nUser ID: ${id}\n` +
-          `Reason: Attempted to record attendance for the same shift or day.\n\n` +
-          `**Error Details:**\n\`\`\`${err.message}\`\`\``
+            `Reason: Attempted to record attendance for the same shift or day.\n\n` +
+            `**Error Details:**\n\`\`\`${err.message}\`\`\``
         );
 
         // Return the existing attendance so the app can continue smoothly
@@ -306,7 +306,9 @@ class Attendance {
 
       // For all other errors, also send a webhook
       await webhook(
-        `**Attendance Error:**\nUser ID: ${id}\n\n\`\`\`${err.stack || err.message}\`\`\``
+        `**Attendance Error:**\nUser ID: ${id}\n\n\`\`\`${
+          err.stack || err.message
+        }\`\`\``
       );
 
       // Then rethrow to be handled upstream if needed
