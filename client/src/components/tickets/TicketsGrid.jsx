@@ -361,20 +361,6 @@ const TicketsGrid = ({
       cellRenderer: (params) => (
         <section className="flex items-center gap-2 justify-center h-full">
           <TableAction action={() => onViewDetails(params.data)} />
-          <button
-            onClick={() => onEdit(params.data)}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
-            title="Edit Ticket"
-          >
-            <Pen size={18} className="text-blue-600" />
-          </button>
-          <button
-            onClick={() => onDelete(params.data)}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
-            title="Delete Ticket"
-          >
-            <Trash2 size={18} className="text-red-600" />
-          </button>
         </section>
       ),
     },
