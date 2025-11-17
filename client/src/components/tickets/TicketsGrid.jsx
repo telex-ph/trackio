@@ -88,37 +88,12 @@ const timeAgo = (dateString) => {
   return `(${Math.floor(seconds)}s ago)`;
 };
 
-const calculateDuration = (start, end) => {
-  if (!start || !end) return "N/A";
-
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-  const diffMs = endDate.getTime() - startDate.getTime();
-  if (diffMs < 0) return "N/A";
-
-  let totalMinutes = Math.floor(diffMs / (1000 * 60));
-  if (totalMinutes < 1) return "< 1m";
-
-  const days = Math.floor(totalMinutes / (60 * 24));
-  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
-  const minutes = totalMinutes % 60;
-
-  const parts = [];
-  if (days > 0) parts.push(`${days}d`);
-  if (hours > 0) parts.push(`${hours}h`);
-  if (minutes > 0) parts.push(`${minutes}m`);
-
-  return parts.join(" ");
-};
-
 // --- TicketsGrid Component ---
 const TicketsGrid = ({
   data,
   isLoading,
   tableRef,
   onViewDetails,
-  onEdit,
-  onDelete,
 }) => {
   const [statusFilter, setStatusFilter] = useState("");
 
@@ -133,7 +108,7 @@ const TicketsGrid = ({
       headerName: "Ticket No",
       field: "ticketNo",
       flex: 1,
-      valueFormatter: (params) => `Ticket#${params.value}`,
+      valueFormatter: (params) => `${params.value}`,
     },
     {
       headerName: "Station No",
@@ -146,7 +121,7 @@ const TicketsGrid = ({
               params.value ? "text-gray-700 font-medium" : "text-gray-500"
             }
           >
-            {params.value ? `Station ${params.value}` : "N/A"}
+            {params.value ? `${params.value}` : "N/A"}
           </span>
         </div>
       ),
