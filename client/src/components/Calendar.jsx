@@ -334,9 +334,6 @@ const Calendar = ({ handleBtnsClick, loading, readOnly = false }) => {
                 ? "text-gray-900"
                 : "text-gray-400";
 
-              // eg: 2025-09-11
-              // const shiftDate = formatDate(date);
-
               return (
                 <button
                   key={index}
