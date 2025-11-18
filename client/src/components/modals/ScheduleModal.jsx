@@ -13,6 +13,8 @@ import WarningDeletion from "../../assets/illustrations/WarningDeletion";
 
 const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
   const { id } = useParams();
+  const user = useStore((state) => state.user);
+
   const selectedDates = useStore((state) => state.selectedDates);
 
   const [loading, setLoading] = useState(false);
@@ -91,6 +93,7 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
         schedules,
         id,
         type,
+        updatedBy: user._id,
       });
       toast.success("Schedules have been saved successfully.");
       if (fetchSchedules) {

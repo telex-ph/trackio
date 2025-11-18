@@ -5,7 +5,7 @@ import SCHEDULE from "../../constants/schedule.js";
 import User from "../model/User.js";
 
 export const addSchedules = async (req, res) => {
-  const { schedules, id, type } = req.body;
+  const { schedules, id, type, updatedBy } = req.body;
 
   // Early return if the id is invalid
   const user = await User.getById(id);
@@ -53,6 +53,7 @@ export const addSchedules = async (req, res) => {
           type,
           notes: schedule.notes,
           createdAt: DateTime.utc().toJSDate(),
+          updatedBy: new ObjectId(updatedBy),
         };
 
       default:
@@ -62,6 +63,7 @@ export const addSchedules = async (req, res) => {
           type,
           notes: schedule.notes,
           createdAt: DateTime.utc().toJSDate(),
+          updatedBy: new ObjectId(updatedBy),
         };
     }
   });
