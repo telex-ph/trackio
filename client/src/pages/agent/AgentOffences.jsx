@@ -131,7 +131,6 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, message }) => {
 
 const AgentOffences = () => {
   const [isViewMode, setIsViewMode] = useState(false);
-  const [editingId, setEditingId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [offenses, setOffenses] = useState([]);
   const [searchQuery, setSearchQuery] = useState(""); // For Cases in Progress
@@ -150,9 +149,6 @@ const AgentOffences = () => {
     type: "",
     isVisible: false,
   });
-
-  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState(null); // Although not used here, keep for consistency if needed later
 
   const decrementUnreadOffensesRespondent = useStore(
     (state) => state.decrementUnreadOffensesRespondent
@@ -224,12 +220,10 @@ const AgentOffences = () => {
       evidence: [],
     });
     setIsViewMode(false);
-    setEditingId(null);
   };
 
   const handleView = async (off) => {
     setIsViewMode(true);
-    setEditingId(off._id);
     setFormData({
       ...off,
       agentName: off.agentName,

@@ -7,6 +7,10 @@ import {
   addAnnouncement,
   getAnnouncements,
   updateAnnouncement,
+  deleteAnnouncement,
+  addView,
+  addAcknowledgement,
+  removeAcknowledgement
 } from "../controllers/announcementControllers.js";
 import Announcement from "../model/Announcement.js";
 
@@ -20,15 +24,15 @@ router.post("/", addAnnouncement);
 router.put("/:id", updateAnnouncement);
 
 // DELETE an announcement
-router.delete("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    await Announcement.delete(id);
-    res.status(200).json({ message: "Announcement deleted successfully" });
-  } catch (e) {
-    console.error("Failed to delete announcement:", e);
-    res.status(500).json({ message: "Failed to delete announcement" });
-  }
-});
+router.delete("/:id", deleteAnnouncement);
+
+// POST - Add view to announcement
+router.post("/:id/view", addView);
+
+// POST - Add acknowledgement (like) to announcement
+router.post("/:id/acknowledge", addAcknowledgement);
+
+// DELETE - Remove acknowledgement (unlike) from announcement
+router.delete("/:id/acknowledge", removeAcknowledgement);
 
 export default router;
