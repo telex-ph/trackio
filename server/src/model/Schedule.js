@@ -72,7 +72,22 @@ class Schedules {
       };
     }
 
-    return await collection.find(query).toArray();
+    const schedules = await collection
+      .aggregate([
+        { $match: query },
+        {
+          $lookup: {
+            from: "users",
+            localField: "updatedBy",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: "$user" },
+      ])
+      .toArray();
+
+    return schedules;
   }
 
   static async get(id, min, max) {
