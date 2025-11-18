@@ -151,7 +151,7 @@ class Attendance {
       throw new Error("ID is required");
     }
 
-    const now = DateTime.now().setZone("Asia/Manila");
+    const nowPH = DateTime.now().setZone("Asia/Manila");
     const db = await connectDB();
     const collection = db.collection(this.#collection);
 
@@ -161,8 +161,8 @@ class Attendance {
           $match: {
             userId: new ObjectId(id),
             shiftDate: {
-              $gte: now.startOf("day").toUTC().toJSDate(),
-              $lte: now.endOf("day").toUTC().toJSDate(),
+              $gte: nowPH.startOf("day").toJSDate(),
+              $lte: nowPH.endOf("day").toJSDate(),
             },
           },
         },
@@ -249,20 +249,17 @@ class Attendance {
    * @returns {Promise<Object>} The result of the insert operation (new record info).
    */
   static async timeIn(id, employeeId, shiftStart, shiftEnd) {
-    if (!id) {
-      throw new Error("ID is required");
-    }
+    if (!id) throw new Error("ID is required");
 
     const db = await connectDB();
     const collection = db.collection(this.#collection);
 
-    const now = DateTime.utc();
+    // Get current PH time for "today" boundaries
+    const nowPH = DateTime.now().setZone("Asia/Manila");
+    const startOfDay = nowPH.startOf("day").toJSDate(); // converts to UTC
+    const endOfDay = nowPH.endOf("day").toJSDate();
 
-    // Get start and end of today (UTC)
-    const startOfDay = now.startOf("day").toJSDate();
-    const endOfDay = now.endOf("day").toJSDate();
-
-    // Check if user already has a record today
+    // Check if attendance already exists today
     const existing = await collection.findOne({
       userId: new ObjectId(id),
       shiftDate: { $gte: startOfDay, $lte: endOfDay },
@@ -272,46 +269,38 @@ class Attendance {
       throw new Error("Attendance already recorded for today.");
     }
 
+    const nowUtc = DateTime.utc();
+
     try {
       const result = await collection.insertOne({
         userId: new ObjectId(id),
         employeeId,
-        shiftDate: now.toJSDate(),
+        shiftDate: nowUtc.toJSDate(),
         shiftStart,
         shiftEnd,
-        timeIn: now.toJSDate(),
-        status: "Working",
-        createdAt: now.toJSDate(),
-        updatedAt: now.toJSDate(),
+        timeIn: nowUtc.toJSDate(),
+        status: STATUS.WORKING,
+        createdAt: nowUtc.toJSDate(),
+        updatedAt: nowUtc.toJSDate(),
       });
       return result;
     } catch (err) {
-      // If it’s a duplicate key error (code 11000)
       if (err.code === 11000) {
         console.warn(`Duplicate attendance prevented for user ${id}`);
-
-        // Optional: send a webhook notification with details
         await webhook(
-          `**Duplicate attendance prevented**\nUser ID: ${id}\n` +
-            `Reason: Attempted to record attendance for the same shift or day.\n\n` +
-            `**Error Details:**\n\`\`\`${err.message}\`\`\``
+          `**Duplicate attendance prevented**\nUser ID: ${id}\nReason: Attempted duplicate record.\n\n**Error Details:**\n\`\`\`${err.message}\`\`\``
         );
-
-        // Return the existing attendance so the app can continue smoothly
         return await collection.findOne({
           userId: new ObjectId(id),
           shiftDate: { $gte: startOfDay, $lte: endOfDay },
         });
       }
 
-      // For all other errors, also send a webhook
       await webhook(
         `**Attendance Error:**\nUser ID: ${id}\n\n\`\`\`${
           err.stack || err.message
         }\`\`\``
       );
-
-      // Then rethrow to be handled upstream if needed
       throw err;
     }
   }
