@@ -59,17 +59,13 @@ class Schedules {
 
     if (startDate && endDate) {
       query.date = {
-        $gte: startDate,
-        $lte: endDate,
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
       };
     } else if (startDate) {
-      query.date = {
-        $gte: startDate,
-      };
+      query.date = { $gte: new Date(startDate) };
     } else if (endDate) {
-      query.date = {
-        $lte: endDate,
-      };
+      query.date = { $lte: new Date(endDate) };
     }
 
     const schedules = await collection
@@ -83,13 +79,17 @@ class Schedules {
             as: "user",
           },
         },
-        { $unwind: "$user" },
+        {
+          $unwind: {
+            path: "$user",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
       ])
       .toArray();
 
     return schedules;
   }
-
   static async get(id, min, max) {
     if (!id) {
       throw new Error("ID is required");

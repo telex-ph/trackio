@@ -66,7 +66,7 @@ const CalendarDay = ({ date, handleRightClick, handleDateClick }) => {
             </span>
           </div>
 
-          <div className="flex items-start gap-1 w-full">
+          <div className="flex items-start gap-1 w-full mt-3">
             <span
               title={`${schedule?.user?.firstName} ${schedule?.user?.lastName}`}
               className="text-xs! ml-auto w-min truncate"
@@ -103,7 +103,7 @@ const CalendarDay = ({ date, handleRightClick, handleDateClick }) => {
               {schedule.notes || "---"}
             </span>
           </div>
-          <div className="flex items-start gap-1 w-full">
+          <div className="flex items-start gap-1 w-full mt-3">
             <span
               title={`${schedule?.user?.firstName} ${schedule?.user?.lastName}`}
               className="text-xs! ml-auto w-min truncate"
@@ -131,7 +131,7 @@ const CalendarDay = ({ date, handleRightClick, handleDateClick }) => {
             <TentTree className="h-8 w-8" />
           </div>
 
-          <div className="flex items-end gap-1 w-full h-full">
+          <div className="flex items-end gap-1 w-full h-full mt-3">
             <StickyNote className="w-4 h-4" />
             <span
               title={schedule.notes}
