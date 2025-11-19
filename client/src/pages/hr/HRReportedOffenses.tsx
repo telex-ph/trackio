@@ -12,7 +12,7 @@ import HR_CaseHistory from "../../components/HRIncidentReport/ReportedIR/HR_Case
 import { useStore } from "../../store/useStore";
 
 // Define TypeScript Interfaces
-interface OffenseEvidence {
+interface FileUpload {
   fileName: string;
   size: number;
   type: string;
@@ -31,13 +31,17 @@ interface Offense {
   status: string;
   actionTaken: string;
   remarks?: string;
-  evidence?: OffenseEvidence[];
-  isRead?: boolean;
-  isReadByHR?: boolean; // Added for HR acknowledgment
+  evidence?: FileUpload[];
+  fileNTE?: FileUpload[];
+  fileMOM?: FileUpload[];
+  fileNDA?: FileUpload[];
+  isReadByHR?: boolean;
+  isAcknowledged?: boolean;
+  afterHearingDateTime?: string;
   reportedById?: string;
-  reportedByName?: string; // Field for reporter's name
+  reportedByName?: string;
   reporterRole?: string;
-  createdAt?: string; // Field for when it was created
+  createdAt?: string;
   updatedAt?: string;
 }
 
@@ -88,15 +92,37 @@ const HRReportedOffenses = () => {
     isVisible: false,
   });
 
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragOver, setIsDragOver] = useState<boolean>(false);
+
+  const [selectedMOMFile, setSelectedMOMFile] = useState<File | null>(null);
+  const [isDragOverMOM, setIsDragOverMOM] = useState(false);
+
+  const [selectedNDAFile, setSelectedNDAFile] = useState<File | null>(null);
+  const [isDragOverNDA, setIsDragOverNDA] = useState(false);
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => resolve(reader.result as string); // FIX
+      reader.onerror = (error) => reject(error);
+
+      reader.readAsDataURL(file);
+    });
+  };
+
   const [formData, setFormData] = useState<Partial<Offense>>({
     agentName: "",
     offenseCategory: "",
     offenseLevel: "",
     dateOfOffense: "",
     status: "",
-    actionTaken: "",
     remarks: "",
     evidence: [],
+    fileNTE: [],
+    fileMOM: [],
+    fileNDA: [],
   });
 
   const showNotification = (message: string, type: string) => {
@@ -173,7 +199,6 @@ const HRReportedOffenses = () => {
       status: "",
       remarks: "",
       evidence: [],
-      isReadByHR: false,
     });
     setIsViewMode(false);
     setEditingId(null);
@@ -192,10 +217,15 @@ const HRReportedOffenses = () => {
       status: off.status,
       remarks: off.remarks || "",
       evidence: off.evidence || [],
+      fileMOM: off.fileMOM || [],
+      fileNDA: off.fileNDA || [],
+      fileNTE: off.fileNTE || [],
     });
 
     try {
       const { data: offense } = await api.get(`/offenses/${off._id}`);
+      console.log(offense.isReadByHR);
+      
       if (offense.isReadByHR === false) {
         const payload = { ...off, isReadByHR: true };
         await api.put(`/offenses/${off._id}`, payload);
@@ -219,19 +249,133 @@ const HRReportedOffenses = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const [showHearingModal, setShowHearingModal] = useState<boolean>(false);
+  const [hearingDate, setHearingDate] = React.useState("");
+
+  const handleHearingDate = async (
+    hearingDate: string,
+    witnesses: { _id: string; name: string; employeeId: string }[]
+  ) => {
+    try {
+      const payload = {
+        ...formData,
+        status: "Scheduled for hearing",
+        hearingDate,
+        witnesses,
+      };
+
+      await api.put(`/offenses/${editingId}`, payload);
+
+      showNotification("Hearing has been set.", "success");
+      resetForm();
+      fetchOffenses();
+      setHearingDate("");
+      setShowHearingModal(false);
+    } catch (error) {
+      console.error("Error setting hearing date:", error);
+      showNotification(
+        "Failed to set hearing date. Please try again.",
+        "error"
+      );
+    }
+  };
+
   // NEW: Handle Update button
   const handleValid = async () => {
     if (!editingId) return;
+
+    const now = new Date();
+
     try {
       const payload = {
         ...formData,
         isReadByRespondant: false,
-        status: "NTE Sent",
+        status: "NTE",
+        nteSentDateTime: now.toISOString(),
       };
+
+      if (selectedFile) {
+        const base64File = await fileToBase64(selectedFile);
+        payload.fileNTE = [
+          {
+            fileName: selectedFile.name,
+            size: selectedFile.size,
+            type: selectedFile.type,
+            data: base64File,
+          },
+        ];
+      }
+      // -------------------------------------------
+
       await api.put(`/offenses/${editingId}`, payload);
-      showNotification("Offense is validated. NTE sent!", "success");
+
+      showNotification("Offense is validated. NTE!", "success");
+
       resetForm();
-      fetchOffenses(); // Refresh list
+      setSelectedFile(null);
+      fetchOffenses();
+    } catch (error) {
+      console.error("Error updating offense:", error);
+      showNotification("Failed to update. Please try again.", "error");
+    }
+  };
+
+  const handleAfterHearing = async () => {
+    if (!editingId) return;
+
+    const now = new Date();
+
+    try {
+      const payload = {
+        ...formData,
+        isAcknowledged: false,
+        status: "After Hearing",
+        afterHearingDateTime: now.toISOString(),
+      };
+
+      if (selectedMOMFile) {
+        const base64MOM = await fileToBase64(selectedMOMFile);
+        payload.fileMOM = [
+          ...(formData.fileMOM || []),
+          {
+            fileName: selectedMOMFile.name,
+            size: selectedMOMFile.size,
+            type: selectedMOMFile.type,
+            data: base64MOM,
+          },
+        ];
+      }
+
+      if (selectedNDAFile) {
+        const base64NDA = await fileToBase64(selectedNDAFile);
+        payload.fileNDA = [
+          ...(formData.fileNDA || []),
+          {
+            fileName: selectedNDAFile.name,
+            size: selectedNDAFile.size,
+            type: selectedNDAFile.type,
+            data: base64NDA,
+          },
+        ];
+      }
+
+      console.log("Final payload fileMOM:", payload.fileMOM);
+      console.log("Final payload fileNDA:", payload.fileNDA);
+      console.log("Payload before API call:", payload);
+      console.log("selectedMOMFile:", selectedMOMFile);
+      console.log("selectedNDAFile:", selectedNDAFile);
+
+      // --- API Call ---
+      await api.put(`/offenses/${editingId}`, payload);
+
+      showNotification("Documents uploaded successfully!", "success");
+
+      // --- Reset ---
+      resetForm();
+      setSelectedMOMFile(null);
+      setSelectedNDAFile(null);
+
+      fetchOffenses();
     } catch (error) {
       console.error("Error updating offense:", error);
       showNotification("Failed to update. Please try again.", "error");
@@ -247,7 +391,7 @@ const HRReportedOffenses = () => {
         ...formData,
         status: "Invalid",
         invalidReason,
-        isReadByReporter: false
+        isReadByReporter: false,
       };
 
       await api.put(`/offenses/${editingId}`, payload);
@@ -364,9 +508,24 @@ const HRReportedOffenses = () => {
           onClose={resetForm}
           onFormChange={handleFormChange}
           handleValid={handleValid}
+          handleHearingDate={handleHearingDate}
+          handleAfterHearing={handleAfterHearing}
           base64ToBlobUrl={base64ToBlobUrl}
           rejectOffense={rejectOffense}
+          selectedFile={selectedFile}
+          setSelectedFile={setSelectedFile}
+          selectedMOMFile={selectedMOMFile}
+          setSelectedMOMFile={setSelectedMOMFile}
+          selectedNDAFile={selectedNDAFile}
+          setSelectedNDAFile={setSelectedNDAFile}
+          isDragOver={isDragOver}
+          setIsDragOver={setIsDragOver}
+          isDragOverMOM={isDragOverMOM}
+          setIsDragOverMOM={setIsDragOverMOM}
+          isDragOverNDA={isDragOverNDA}
+          setIsDragOverNDA={setIsDragOverNDA}
         />
+
 
         {/* Cases in Progress Panel */}
         <HR_CasesInProgress
