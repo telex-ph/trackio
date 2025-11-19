@@ -9,7 +9,7 @@ import {
   Hash,
   Download,
 } from "lucide-react";
-
+import { DateTime } from "luxon";
 const TLCasesInProgress = ({
   offenses,
   searchQuery,
@@ -74,47 +74,90 @@ const TLCasesInProgress = ({
                       </span>
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          off.status === "Pending Review"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : off.status === "Under Investigation"
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-gray-200 text-gray-600"
+                          {
+                            "Pending Review":
+                              "bg-amber-100 text-amber-700 border border-amber-200",
+                            NTE: "bg-blue-100 text-blue-700 border border-blue-200",
+                            Invalid:
+                              "bg-red-100 text-red-700 border border-red-200",
+                            "Respondent Explained":
+                              "bg-purple-100 text-purple-700 border border-purple-200",
+                            "Scheduled for hearing":
+                              "bg-indigo-100 text-indigo-700 border border-indigo-200",
+                            "After Hearing":
+                              "bg-teal-100 text-teal-700 border border-teal-200",
+                            Acknowledged:
+                              "bg-green-100 text-green-700 border border-green-200",
+                          }[off.status] ||
+                          "bg-gray-100 text-gray-700 border border-gray-200"
                         }`}
                       >
                         {off.status}
                       </span>
-                      {off.isReadByReporter ? (
-                        // ✅ Reporter has read → always green "Read"
-                        <span className="flex items-center gap-1 text-green-600 text-xs">
-                          <CheckCircle className="w-4 h-4" /> Read
-                        </span>
-                      ) : !off.isReadByHR && !off.isReadByRespondant ? (
-                        // 🔴 Nobody has read
-                        <span className="flex items-center gap-1 text-red-600 text-xs font-bold">
-                          <Bell className="w-4 h-4" /> Unread by HR & Respondent
-                        </span>
-                      ) : !off.isReadByHR ? (
-                        // 🔴 HR hasn't read
-                        <span className="flex items-center gap-1 text-red-600 text-xs font-bold">
-                          <Bell className="w-4 h-4" /> Unread by HR
-                        </span>
-                      ) : !off.isReadByRespondant ? (
-                        // 🔴 Respondent hasn't read
-                        <span className="flex items-center gap-1 text-red-600 text-xs font-bold">
-                          <Bell className="w-4 h-4" /> Unread by Respondent
-                        </span>
-                      ) : off.isReadByHR && off.isReadByRespondant ? (
-                        // ✅ Both HR and Respondent have read
-                        <span className="flex items-center gap-1 text-green-600 text-xs">
-                          <CheckCircle className="w-4 h-4" /> Read by HR &
-                          Respondent
-                        </span>
-                      ) : (
-                        // Fallback (should rarely hit)
-                        <span className="flex items-center gap-1 text-gray-600 text-xs">
-                          <Bell className="w-4 h-4" /> Unknown
-                        </span>
-                      )}
+
+                      {(() => {
+                        const status = off.status;
+
+                        // Map status to which "reader" we care about
+                        const statusReaderMap = {
+                          "Pending Review": "isReadByHR",
+                          "Respondent Explained": "isReadByHR",
+                          Acknowledged: "isReadByHR",
+                          NTE: "isReadByRespondant",
+                          "Scheduled for hearing": "isReadByRespondant",
+                          "After Hearing": "isReadByRespondant",
+                          Invalid: "isReadByReporter",
+                        };
+
+                        const readerKey = statusReaderMap[status];
+                        const hasRead = readerKey ? off[readerKey] : null;
+
+                        // Determine label based on status
+                        const labelMap = {
+                          isReadByHR: {
+                            read: "Read by HR",
+                            unread: "Unread by HR",
+                          },
+                          isReadByRespondant: {
+                            read: "Read by Respondent",
+                            unread: "Unread by Respondent",
+                          },
+                          isReadByReporter: {
+                            read: "Read by You",
+                            unread: "Unread by You",
+                          },
+                        };
+
+                        if (!readerKey) {
+                          return (
+                            <span className="flex items-center gap-1 text-gray-500 text-xs">
+                              <Bell className="w-4 h-4" /> No Read Status
+                            </span>
+                          );
+                        }
+
+                        const label = hasRead
+                          ? labelMap[readerKey].read
+                          : labelMap[readerKey].unread;
+                        const isUnread = !hasRead;
+
+                        return (
+                          <span
+                            className={`flex items-center gap-1 text-xs ${
+                              isUnread
+                                ? "text-red-600 font-bold"
+                                : "text-green-600"
+                            }`}
+                          >
+                            {isUnread ? (
+                              <Bell className="w-4 h-4" />
+                            ) : (
+                              <CheckCircle className="w-4 h-4" />
+                            )}
+                            {label}
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -127,13 +170,21 @@ const TLCasesInProgress = ({
                   Category:{" "}
                   <span className="font-medium">{off.offenseCategory}</span>
                 </p>
-                <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                  Type:{" "}
-                  <span className="font-medium">
-                    {off.offenseType || "N/A"}
-                  </span>
-                </p>
-
+                {off.hearingDate && (
+                  <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
+                    Hearing date:{" "}
+                    <span className="font-medium">
+                      {DateTime.fromISO(off.hearingDate).toLocaleString({
+                        weekday: "short",
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </p>
+                )}
                 {off.remarks && (
                   <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border-l-4 border-gray-400">
                     <p className="text-xs sm:text-sm text-gray-700">
@@ -147,14 +198,61 @@ const TLCasesInProgress = ({
 
                 {off.evidence?.length > 0 && (
                   <div className="bg-purple-50 rounded-xl p-3 sm:p-4 border-l-4 border-purple-500">
-                    <div className="text-xs sm:text-sm text-gray-700">
-                      <div className="flex items-center gap-2 mb-2">
-                        <FileText className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                        <span className="font-semibold text-gray-800">
-                          Evidence:
-                        </span>
-                      </div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <FileText className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                      <span className="font-semibold text-gray-800 text-sm">
+                        Evidence:
+                      </span>
+                    </div>
+
+                    <div className="space-y-2">
                       {off.evidence.map((ev, idx) => {
+                        const viewUrl = base64ToBlobUrl(ev.data, ev.type);
+                        return (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between gap-2 w-full p-2 bg-white border border-purple-100 rounded-lg"
+                          >
+                            <span className="text-purple-700 truncate text-xs font-medium">
+                              {ev.fileName}
+                            </span>
+
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              {/* View Button */}
+                              <a
+                                href={viewUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1 text-gray-500 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </a>
+
+                              {/* Download Button */}
+                              <a
+                                href={ev.data}
+                                download={ev.fileName}
+                                className="p-1 text-gray-500 hover:text-green-600 rounded-md hover:bg-green-50 transition-colors"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {off.fileNTE?.length > 0 && (
+                  <div className="bg-purple-50 rounded-xl p-3 sm:p-4 border-l-4 border-purple-500">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FileText className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                      <span className="font-semibold text-gray-800 text-sm">
+                        Notice to explain:
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {off.fileNTE.map((ev, idx) => {
                         const viewUrl = base64ToBlobUrl(ev.data, ev.type);
                         return (
                           <div

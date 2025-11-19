@@ -76,13 +76,12 @@ const TeamLeaderOffenses = () => {
     dateOfOffense: "",
     remarks: "",
     evidence: [],
-    isRead: false,
   });
 
   const today = DateTime.now().toISODate();
 
   // --- Functions ---
-
+ 
   const showNotification = (message, type) => {
     setNotification({ message, type, isVisible: true });
   };
@@ -257,6 +256,8 @@ const TeamLeaderOffenses = () => {
       status: off.status,
       remarks: off.remarks || "",
       evidence: off.evidence || [],
+      fileNTE: off.fileNTE || [],
+      respondantExplanation: off.respondantExplanation || "",
       employeeId: off.employeeId || "",
       agentRole: off.agentRole || "",
     });

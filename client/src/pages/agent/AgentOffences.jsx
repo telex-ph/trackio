@@ -13,7 +13,10 @@ import {
   Eye,
   Hash,
   Download,
-  X as ClearIcon, // Added ClearIcon for reset
+  X as ClearIcon,
+  Tag,
+  MessageCircle,
+  Users, // Added ClearIcon for reset
 } from "lucide-react";
 import { DateTime } from "luxon"; // Import DateTime
 import api from "../../utils/axios";
@@ -137,6 +140,9 @@ const AgentOffences = () => {
   const [searchQuery, setSearchQuery] = useState(""); // For Cases in Progress
   const [currentUser, setCurrentUser] = useState(null);
 
+  const [showAcknowledgeModal, setShowAcknowledgeModal] = useState(false);
+  const [ackMessage, setAckMessage] = useState("");
+
   // States for History Filters
   const [historySearchQuery, setHistorySearchQuery] = useState("");
   const [historyStartDate, setHistoryStartDate] = useState("");
@@ -151,9 +157,6 @@ const AgentOffences = () => {
     isVisible: false,
   });
 
-  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState(null); // Although not used here, keep for consistency if needed later
-
   const decrementUnreadOffensesRespondent = useStore(
     (state) => state.decrementUnreadOffensesRespondent
   );
@@ -161,15 +164,14 @@ const AgentOffences = () => {
   const [formData, setFormData] = useState({
     agentName: "",
     offenseCategory: "",
-    offenseType: "",
     offenseLevel: "",
     dateOfOffense: "",
-    status: "",
-    actionTaken: "",
     remarks: "",
     evidence: [],
-    isRead: false,
+    respondantExplanation: "",
   });
+
+  const [originalExplanation, setOriginalExplanation] = useState("");
 
   const showNotification = (message, type) => {
     setNotification({ message, type, isVisible: true });
@@ -227,6 +229,63 @@ const AgentOffences = () => {
     setEditingId(null);
   };
 
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async () => {
+    if (
+      !formData.respondantExplanation ||
+      formData.respondantExplanation.trim() === ""
+    ) {
+      showNotification("Please provide an explanation.", "error");
+      return;
+    }
+
+    try {
+      const payload = {
+        ...formData,
+        respondantExplanation: formData.respondantExplanation,
+        status: "Respondent Explained",
+        isReadByHR: false,
+      };
+
+      await api.put(`/offenses/${editingId}`, payload);
+
+      showNotification("Explanation submitted successfully!", "success");
+
+      resetForm();
+      fetchOffenses();
+    } catch (error) {
+      console.error("Error submitting explanation:", error);
+      showNotification(
+        "Failed to submit explanation. Please try again.",
+        "error"
+      );
+    }
+  };
+
+  const handleAcknowledge = async (ackMessage) => {
+    try {
+      const payload = {
+        ...formData,
+        status: "Acknowledged",
+        ackMessage,
+        isReadByHR: false,
+      };
+
+      await api.put(`/offenses/${editingId}`, payload);
+      showNotification("Case has been acknowledged.", "success");
+      resetForm();
+      fetchOffenses();
+      setShowAcknowledgeModal(false);
+      setAckMessage("");
+    } catch (error) {
+      console.error("Error acknowledging case:", error);
+      showNotification("Failed to acknowledge. Please try again.", "error");
+    }
+  };
+
   const handleView = async (off) => {
     setIsViewMode(true);
     setEditingId(off._id);
@@ -241,6 +300,12 @@ const AgentOffences = () => {
       evidence: off.evidence || [],
       isReadByRespondant: off.isReadByRespondant || false, // for agents
     });
+
+    setOriginalExplanation(off.respondantExplanation || "");
+
+    setRespondentHasExplanation(!!off.respondantExplanation);
+
+    setAcknowledged(off.isAcknowledged === false);
 
     try {
       // Fetch the latest offense data
@@ -265,6 +330,11 @@ const AgentOffences = () => {
     }
   };
 
+  const [respondentHasExplanation, setRespondentHasExplanation] =
+    useState(false);
+
+  const [acknowledged, setAcknowledged] = useState(false);
+
   const formatDisplayDate = (dateStr) =>
     dateStr
       ? DateTime.fromISO(dateStr).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)
@@ -279,7 +349,8 @@ const AgentOffences = () => {
   const filteredOffenses = offenses.filter(
     (off) =>
       currentUser &&
-      off.employeeId === currentUser.employeeId &&
+      (off.employeeId === currentUser.employeeId ||
+        off.witnesses?.some((w) => w._id === currentUser._id)) &&
       !["Action Taken", "Escalated", "Closed"].includes(off.status) &&
       [
         off.offenseType,
@@ -373,31 +444,22 @@ const AgentOffences = () => {
 
           {isViewMode ? (
             <div className="space-y-6">
-              {/* Agent Name */}
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Agent Name
-                </label>
-                <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
-                  {formData.agentName}
-                </p>
-              </div>
-              {/* Category & Type */}
+              {/* Agent Name & Category */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                    Respondant
+                  </label>
+                  <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
+                    {formData.agentName}
+                  </p>
+                </div>
                 <div className="space-y-2">
                   <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                     Offense Category
                   </label>
                   <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
                     {formData.offenseCategory || "N/A"}
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                    Offense Type
-                  </label>
-                  <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
-                    {formData.offenseType || "N/A"}
                   </p>
                 </div>
               </div>
@@ -408,7 +470,7 @@ const AgentOffences = () => {
                     Offense Level
                   </label>
                   <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
-                    {formData.offenseLevel || "N/A"}
+                    {formData.offenseLevel || "Coming Soon!"}
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -423,24 +485,6 @@ const AgentOffences = () => {
                   </div>
                 </div>
               </div>
-              {/* Status */}
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Status
-                </label>
-                <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
-                  {formData.status || "N/A"}
-                </p>
-              </div>
-              {/* Action Taken */}
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Action Taken
-                </label>
-                <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
-                  {formData.actionTaken || "N/A"}
-                </p>
-              </div>
               {/* Remarks */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -452,11 +496,12 @@ const AgentOffences = () => {
               </div>
 
               {/* Evidence Section (Styled like HR Form) */}
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Evidence
-                </label>
-                {formData.evidence.length > 0 ? (
+
+              {formData.evidence.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                    Evidence
+                  </label>
                   <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
                     {formData.evidence.slice(0, 1).map((ev, idx) => {
                       const viewUrl = base64ToBlobUrl(ev.data, ev.type);
@@ -491,18 +536,86 @@ const AgentOffences = () => {
                       );
                     })}
                   </div>
-                ) : (
-                  <div className="border-2 border-dashed rounded-2xl p-4 border-gray-300 bg-gray-50/30">
-                    <p className="text-center text-gray-500 text-sm italic">
-                      No evidence attached.
-                    </p>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  Notice to explain
+                </label>
+                {formData.fileNTE.length > 0 ? (
+                  <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
+                    {formData.fileNTE.slice(0, 1).map((nte, idx) => {
+                      const viewUrl = base64ToBlobUrl(nte.data, nte.type);
+                      return (
+                        <div key={idx} className="flex flex-col gap-3">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                            <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
+                              {nte.fileName}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={viewUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                            >
+                              <Eye className="w-4 h-4" />
+                              View
+                            </a>
+                            <a
+                              href={nte.data}
+                              download={nte.fileName}
+                              className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                            >
+                              <Download className="w-4 h-4" />
+                              Download
+                            </a>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                )}
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  Explanation
+                </label>
+                <textarea
+                  onChange={(e) =>
+                    handleInputChange("respondantExplanation", e.target.value)
+                  }
+                  placeholder="Your explanation..."
+                  className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl 
+                    h-24 sm:h-32 focus:border-red-500 focus:bg-white transition-all duration-300 
+                  text-gray-800 placeholder-gray-400 resize-none text-sm sm:text-base"
+                  disabled={!!originalExplanation}
+                  value={formData.respondantExplanation || ""}
+                />
               </div>
               {/* End of Evidence Section */}
 
               {/* Buttons */}
               <div className="flex gap-4">
+                {!respondentHasExplanation && (
+                  <button
+                    onClick={handleSubmit}
+                    className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
+                  >
+                    Submit
+                  </button>
+                )}
+                {acknowledged && (
+                  <button
+                    onClick={() => setShowAcknowledgeModal(true)}
+                    className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
+                  >
+                    Acknowledge
+                  </button>
+                )}
                 <button
                   onClick={resetForm}
                   className="flex-1 bg-gray-200 text-gray-800 p-3 sm:p-4 rounded-2xl hover:bg-gray-300 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
@@ -517,6 +630,58 @@ const AgentOffences = () => {
             </div>
           )}
         </div>
+
+        {showAcknowledgeModal && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-gray-900">
+                  Acknowledge Action
+                </h2>
+                <button
+                  onClick={() => setShowAcknowledgeModal(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Message */}
+              <p className="text-gray-700 mb-4">
+                Please provide a message or note as part of your
+                acknowledgement.
+              </p>
+
+              {/* Textarea */}
+              <textarea
+                className="w-full border border-gray-300 rounded-xl p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                rows={4}
+                value={ackMessage}
+                onChange={(e) => setAckMessage(e.target.value)}
+                placeholder="Enter your acknowledgement message..."
+              />
+
+              {/* Buttons */}
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors"
+                  onClick={() => setShowAcknowledgeModal(false)}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  disabled={!ackMessage.trim()}
+                  onClick={() => handleAcknowledge(ackMessage)}
+                >
+                  Acknowledge
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* --- CASES IN PROGRESS --- */}
         <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
@@ -573,22 +738,93 @@ const AgentOffences = () => {
                               </span>
                               <span
                                 className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  off.status === "Under Investigation"
-                                    ? "bg-blue-100 text-blue-700"
-                                    : "bg-gray-200 text-gray-600"
+                                  {
+                                    "Pending Review":
+                                      "bg-amber-100 text-amber-700 border border-amber-200",
+                                    NTE: "bg-blue-100 text-blue-700 border border-blue-200",
+                                    Invalid:
+                                      "bg-red-100 text-red-700 border border-red-200",
+                                    "Respondent Explained":
+                                      "bg-purple-100 text-purple-700 border border-purple-200",
+                                    "Scheduled for hearing":
+                                      "bg-indigo-100 text-indigo-700 border border-indigo-200",
+                                    "After Hearing":
+                                      "bg-teal-100 text-teal-700 border border-teal-200",
+                                    Acknowledged:
+                                      "bg-green-100 text-green-700 border border-green-200",
+                                  }[off.status] ||
+                                  "bg-gray-100 text-gray-700 border border-gray-200"
                                 }`}
                               >
                                 {off.status}
                               </span>
-                              {off.isReadByRespondant ? (
-                                <span className="flex items-center gap-1 text-green-600 text-xs">
-                                  <CheckCircle className="w-4 h-4" /> Read
-                                </span>
-                              ) : (
-                                <span className="flex items-center gap-1 text-red-600 text-xs font-bold">
-                                  <Bell className="w-4 h-4" /> Unread
-                                </span>
-                              )}
+
+                              {(() => {
+                                const status = off.status;
+
+                                // Map status to which "reader" we care about
+                                const statusReaderMap = {
+                                  "Pending Review": "isReadByHR",
+                                  "Respondent Explained": "isReadByHR",
+                                  Acknowledged: "isReadByHR",
+                                  NTE: "isReadByRespondant",
+                                  "Scheduled for hearing": "isReadByRespondant",
+                                  "After Hearing": "isReadByRespondant",
+                                  Invalid: "isReadByReporter",
+                                };
+
+                                const readerKey = statusReaderMap[status];
+                                const hasRead = readerKey
+                                  ? off[readerKey]
+                                  : null;
+
+                                // Determine label based on status
+                                const labelMap = {
+                                  isReadByHR: {
+                                    read: "Read by HR",
+                                    unread: "Unread by HR",
+                                  },
+                                  isReadByRespondant: {
+                                    read: "Read",
+                                    unread: "Unread",
+                                  },
+                                  isReadByReporter: {
+                                    read: "Read by You",
+                                    unread: "Unread by You",
+                                  },
+                                };
+
+                                if (!readerKey) {
+                                  return (
+                                    <span className="flex items-center gap-1 text-gray-500 text-xs">
+                                      <Bell className="w-4 h-4" /> No Read
+                                      Status
+                                    </span>
+                                  );
+                                }
+
+                                const label = hasRead
+                                  ? labelMap[readerKey].read
+                                  : labelMap[readerKey].unread;
+                                const isUnread = !hasRead;
+
+                                return (
+                                  <span
+                                    className={`flex items-center gap-1 text-xs ${
+                                      isUnread
+                                        ? "text-red-600 font-bold"
+                                        : "text-green-600"
+                                    }`}
+                                  >
+                                    {isUnread ? (
+                                      <Bell className="w-4 h-4" />
+                                    ) : (
+                                      <CheckCircle className="w-4 h-4" />
+                                    )}
+                                    {label}
+                                  </span>
+                                );
+                              })()}
                             </div>
                           </div>
                         </div>
@@ -597,22 +833,53 @@ const AgentOffences = () => {
                       {/* Card Body */}
                       <div className="space-y-3 mb-4">
                         <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                          <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <User className="w-3 h-3 sm:w-4 sm:h-4" />
+                          Reporter:{" "}
+                          <span className="font-medium">
+                            {off.reporterName || "N/A"}
+                          </span>
+                        </p>
+                        <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
+                          <Tag className="w-3 h-3 sm:w-4 sm:h-4" />
                           Category:{" "}
                           <span className="font-medium">
                             {off.offenseCategory}
                           </span>
                         </p>
-                        <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                          Type:{" "}
-                          <span className="font-medium">
-                            {off.offenseType || "N/A"}
-                          </span>
-                        </p>
+                        {off.hearingDate && (
+                          <div className="space-y-3 mb-4">
+                            <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
+                              <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+                              Hearing date:{" "}
+                              <span className="font-medium">
+                                {DateTime.fromISO(
+                                  off.hearingDate
+                                ).toLocaleString({
+                                  weekday: "short",
+                                  month: "long",
+                                  day: "numeric",
+                                  year: "numeric",
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            </p>
+                            <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
+                              <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                              Witnesses:{" "}
+                              <span className="font-medium">
+                                {off.witnesses?.length > 0
+                                  ? off.witnesses.map((w) => w.name).join(", ")
+                                  : "None"}
+                              </span>
+                            </p>
+                          </div>
+                        )}
 
                         {off.remarks && (
                           <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border-l-4 border-gray-400">
-                            <p className="text-xs sm:text-sm text-gray-700">
+                            <p className="text-xs sm:text-sm text-gray-700 flex items-start gap-2">
+                              <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4 mt-0.5 text-gray-600" />
                               <span className="font-semibold text-gray-800">
                                 Remarks:
                               </span>{" "}
@@ -653,6 +920,51 @@ const AgentOffences = () => {
                                 </div>
                               );
                             })}
+                          </div>
+                        )}
+                        {off.fileNTE?.length > 0 && (
+                          <div className="bg-purple-50 rounded-xl p-3 sm:p-4 border-l-4 border-purple-500">
+                            <div className="flex items-center gap-2 mb-2">
+                              <FileText className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                              <span className="font-semibold text-gray-800 text-sm">
+                                Notice to explain:
+                              </span>
+                            </div>
+                            <div className="space-y-2">
+                              {off.fileNTE.map((ev, idx) => {
+                                const viewUrl = base64ToBlobUrl(
+                                  ev.data,
+                                  ev.type
+                                );
+                                return (
+                                  <div
+                                    key={idx}
+                                    className="flex items-center justify-between gap-2 w-full p-2 bg-white border border-purple-100 rounded-lg mt-1"
+                                  >
+                                    <span className="text-purple-700 truncate text-xs font-medium">
+                                      {ev.fileName}
+                                    </span>
+                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                      <a
+                                        href={viewUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-1 text-gray-500 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
+                                      >
+                                        <Eye className="w-3.5 h-3.5" />
+                                      </a>
+                                      <a
+                                        href={ev.data}
+                                        download={ev.fileName}
+                                        className="p-1 text-gray-500 hover:text-green-600 rounded-md hover:bg-green-50 transition-colors"
+                                      >
+                                        <Download className="w-3.5 h-3.5" />
+                                      </a>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
                         )}
                       </div>

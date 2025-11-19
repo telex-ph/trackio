@@ -74,11 +74,12 @@ const TLOffenseDetails = ({
           </div>
 
           {/* Evidence Section (Styled like HR Form) */}
-          <div className="space-y-2">
-            <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-              Evidence
-            </label>
-            {formData.evidence.length > 0 ? (
+
+          {formData.evidence.length > 0 && (
+            <div className="space-y-2">
+              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                Evidence
+              </label>
               <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
                 {formData.evidence.slice(0, 1).map((ev, idx) => {
                   const viewUrl = base64ToBlobUrl(ev.data, ev.type);
@@ -113,24 +114,75 @@ const TLOffenseDetails = ({
                   );
                 })}
               </div>
-            ) : (
-              <div className="border-2 border-dashed rounded-2xl p-4 border-gray-300 bg-gray-50/30">
-                <p className="text-center text-gray-500 text-sm italic">
-                  No evidence attached.
-                </p>
+            </div>
+          )}
+          {formData.fileNTE && formData.fileNTE.length > 0 && (
+            <div className="space-y-2">
+              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                Notice to explain
+              </label>
+              <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
+                {formData.fileNTE.slice(0, 1).map((nte, idx) => {
+                  const viewUrl = base64ToBlobUrl(nte.data, nte.type);
+                  return (
+                    <div key={idx} className="flex flex-col gap-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                        <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
+                          {nte.fileName}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={viewUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                        >
+                          <Eye className="w-4 h-4" />
+                          View
+                        </a>
+                        <a
+                          href={nte.data}
+                          download={nte.fileName}
+                          className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                        >
+                          <Download className="w-4 h-4" />
+                          Download
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            )}
-            {formData.status === "Invalid" ? (
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Invalid Reason
-                </label>
-                <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 text-gray-800 text-sm sm:text-base overflow-y-auto">
-                  {formData.invalidReason}
-                </p>
-              </div>
-            ) : null}
-          </div>
+            </div>
+          )}
+          {[
+            "Respondent Explained",
+            "Scheduled for hearing",
+            "Respondent Explained",
+          ].includes(formData.status) && (
+            <div className="space-y-2">
+              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                Explanation
+              </label>
+              <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 text-gray-800 text-sm sm:text-base overflow-y-auto">
+                {formData.respondantExplanation || "No explanation"}
+              </p>
+            </div>
+          )}
+
+          {formData.status === "Invalid" ? (
+            <div className="space-y-2">
+              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                Invalid Reason
+              </label>
+              <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 text-gray-800 text-sm sm:text-base overflow-y-auto">
+                {formData.invalidReason}
+              </p>
+            </div>
+          ) : null}
+
           {/* End of Evidence Section */}
 
           {/* Buttons */}

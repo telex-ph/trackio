@@ -72,7 +72,6 @@ const TeamLeaderOffenses = () => {
     remarks: "",
     invalidReason: "",
     evidence: [],
-    isRead: false,
   });
 
   const showNotification = (message, type) => {
