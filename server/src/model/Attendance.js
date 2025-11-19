@@ -279,7 +279,7 @@ class Attendance {
         shiftStart,
         shiftEnd,
         timeIn: nowUtc.toJSDate(),
-        status: STATUS.WORKING,
+        status: "Working",
         createdAt: nowUtc.toJSDate(),
         updatedAt: nowUtc.toJSDate(),
       });
