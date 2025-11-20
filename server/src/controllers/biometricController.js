@@ -82,8 +82,6 @@ export const getEvents = async (req, res) => {
             const userId = user._id.toString();
             const [attendance] = await Attendance.getById(userId);
 
-            console.log(attendance.shiftStart);
-
             // TODO: remove soon;
             await User.update(userId, "isValidEmployeeId", true);
 
@@ -106,10 +104,22 @@ export const getEvents = async (req, res) => {
                   `Employee ${ac.name} is about to go out of the office`
                 );
               } else {
-                // Active shift
-                // if (status === STATUS.WORKING) {
-                //     await biometricBreakIn(attendanceId, breaks, totalBreak);
-                // }
+                // Prevent the scenario where an employee logs in but doesn't actually enter the area
+                if (status === STATUS.WORKING && ipAddress === IP.BIO_IN) {
+                  console.log(
+                    `Ignoring event at ${IP.BIO_IN}: Employee ${ac.name} attempted BIO_IN while already in WORKING status.`
+                  );
+                  return res.status(200).send("OK");
+                }
+
+                // Prevent the scenario where an employee logs out without actually leaving the production area
+                if (status === STATUS.ON_BREAK && ipAddress === IP.BIO_OUT) {
+                  console.log(
+                    `Ignoring event at ${IP.BIO_OUT}: Employee ${ac.name} attempted BIO_OUT while already in ON_BREAK status.`
+                  );
+                  return res.status(200).send("OK");
+                }
+
                 if (status === STATUS.WORKING) {
                   console.log(
                     `Employee ${ac.name} is WORKING, processing break-in`
