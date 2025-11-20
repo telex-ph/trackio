@@ -103,7 +103,6 @@ const HR_CasesInProgress = ({
                       {(() => {
                         const status = off.status;
 
-                        // Map status to which "reader" we care about
                         const statusReaderMap = {
                           "Pending Review": "isReadByHR",
                           "Respondent Explained": "isReadByHR",
@@ -117,7 +116,6 @@ const HR_CasesInProgress = ({
                         const readerKey = statusReaderMap[status];
                         const hasRead = readerKey ? off[readerKey] : null;
 
-                        // Determine label based on status
                         const labelMap = {
                           isReadByHR: {
                             read: "Read",
@@ -128,8 +126,8 @@ const HR_CasesInProgress = ({
                             unread: "Unread by Respondent",
                           },
                           isReadByReporter: {
-                            read: "Read by You",
-                            unread: "Unread by You",
+                            read: "Read by Reporter",
+                            unread: "Unread by Reporter",
                           },
                         };
 

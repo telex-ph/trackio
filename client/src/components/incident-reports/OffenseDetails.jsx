@@ -1,7 +1,7 @@
 import React from "react";
 import { Calendar, X, FileText, Eye, Download } from "lucide-react";
 
-const TLOffenseDetails = ({
+const OffenseDetails = ({
   isViewMode,
   formData,
   onClose,
@@ -212,4 +212,4 @@ const TLOffenseDetails = ({
   );
 };
 
-export default TLOffenseDetails;
+export default OffenseDetails;
