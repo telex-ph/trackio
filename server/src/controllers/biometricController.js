@@ -82,6 +82,8 @@ export const getEvents = async (req, res) => {
             const userId = user._id.toString();
             const [attendance] = await Attendance.getById(userId);
 
+            console.log(attendance.shiftStart);
+
             // TODO: remove soon;
             await User.update(userId, "isValidEmployeeId", true);
 
