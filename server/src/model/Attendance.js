@@ -152,6 +152,10 @@ class Attendance {
     }
 
     const nowPH = DateTime.now().setZone("Asia/Manila");
+
+    const todayStart = nowPH.startOf("day").toJSDate();
+    const todayEnd = nowPH.endOf("day").toJSDate();
+
     const db = await connectDB();
     const collection = db.collection(this.#collection);
 
@@ -160,10 +164,10 @@ class Attendance {
         {
           $match: {
             userId: new ObjectId(id),
-            shiftDate: {
-              $gte: nowPH.startOf("day").toJSDate(),
-              $lte: nowPH.endOf("day").toJSDate(),
-            },
+            $or: [
+              { shiftStart: { $lte: todayEnd } },
+              { shiftEnd: { $gte: todayStart } },
+            ],
           },
         },
         { $sort: { createdAt: 1 } },
