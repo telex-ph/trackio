@@ -170,7 +170,7 @@ class Attendance {
             ],
           },
         },
-        { $sort: { createdAt: 1 } },
+        { $sort: { createdAt: -1 } },
         {
           $lookup: {
             from: "users",
