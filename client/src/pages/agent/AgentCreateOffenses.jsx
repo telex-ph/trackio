@@ -1,17 +1,21 @@
-// src/pages/AgentCreateOffenses.jsx
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { DateTime } from "luxon";
 import api from "../../utils/axios";
+import socket from "../../utils/socket";
 
-// Import all the reusable components
+// Components
+import OffenseForm from "../../components/incident-reports/OffenseForm";
+import OffenseDetails from "../../components/incident-reports/OffenseDetails";
+import CasesInProgress from "../../components/incident-reports/CasesInProgress";
+import CaseHistory from "../../components/incident-reports/CaseHistory";
 import Notification from "../../components/incident-reports/Notification";
-import ConfirmationModal from "../../components/incident-reports/ConfirmationModal";
-import OffenseForm from "../../components/HRIncidentReport/ReportedIR/CreateIR/OffenseForm";
-import TLCasesInProgress from "../../components/incident-reports/TLCasesInProgress";
-import TLCaseHistory from "../../components/incident-reports/TLCaseHistory";
 
-// Helper function
+
+import { useStore } from "../../store/useStore";
+
+// -----------------------------
+// Helper Utilities
+// -----------------------------
 const fileToBase64 = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -20,55 +24,44 @@ const fileToBase64 = (file) =>
     reader.onerror = (error) => reject(error);
   });
 
-// Helper function for blob URLs
 const base64ToBlobUrl = (base64, type) => {
   try {
     const base64Data = base64.split(",")[1];
-    if (!base64Data) {
-      console.error("Invalid Base64 string");
-      return base64;
-    }
-    const binaryString = atob(base64Data);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    const blob = new Blob([bytes], { type: type });
-    const url = URL.createObjectURL(blob);
-    return url;
-  } catch (e) {
-    console.error("Failed to convert Base64 to Blob URL:", e);
+    if (!base64Data) return base64;
+
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+    const blob = new Blob([bytes], { type });
+    return URL.createObjectURL(blob);
+  } catch {
     return base64;
   }
 };
 
+// -----------------------------
+// Component
+// -----------------------------
 const AgentCreateOffenses = () => {
-  // State variables
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editingId, setEditingId] = useState(null);
+  // UI & State
   const [isLoading, setIsLoading] = useState(false);
-  const [submittedReports, setSubmittedReports] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [currentUser, setCurrentUser] = useState(null);
-
-  // History states
-  const [historySearchQuery, setHistorySearchQuery] = useState("");
-  const [historyStartDate, setHistoryStartDate] = useState("");
-  const [historyEndDate, setHistoryEndDate] = useState("");
-
-  const today = DateTime.now().toISODate();
-
+  const [panelMode, setPanelMode] = useState("create");
   const [notification, setNotification] = useState({
     message: "",
     type: "",
     isVisible: false,
   });
 
-  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState(null);
+  // Data
+  const [offenses, setOffenses] = useState([]);
+  const loggedUser = useStore((state) => state.user);
+  const [_currentUser, setCurrentUser] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+
+  // Form
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const [formData, setFormData] = useState({
     agentName: "",
@@ -76,98 +69,139 @@ const AgentCreateOffenses = () => {
     agentRole: "",
     offenseCategory: "",
     offenseType: "",
-    otherOffenseType: "",
     offenseLevel: "",
     dateOfOffense: "",
     status: "",
     actionTaken: "",
     remarks: "",
     evidence: [],
+    isRead: false,
   });
 
-  const showNotification = (message, type) => {
+  // Filters
+  const [searchQuery, setSearchQuery] = useState("");
+  const [historySearchQuery, setHistorySearchQuery] = useState("");
+  const [historyStartDate, setHistoryStartDate] = useState("");
+  const [historyEndDate, setHistoryEndDate] = useState("");
+
+  const today = DateTime.now().toISODate();
+
+  // -----------------------------
+  // Notifications
+  // -----------------------------
+  const showNotification = useCallback((message, type) => {
     setNotification({ message, type, isVisible: true });
-  };
-
-const fetchCurrentUser = async () => {
-  try {
-    const timestamp = Date.now();
-    const response = await api.get(`/auth/get-auth-user?_=${timestamp}`);
-    console.log("👤 Current User:", response.data); // ✅ Debug
-    console.log("🆔 User ID:", response.data._id); // ✅ Debug
-    setCurrentUser(response.data);
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching current user:", error);
-    showNotification(
-      "Failed to load user data. Please log in again.",
-      "error"
-    );
-    return null;
-  }
-};
-
-  const fetchMySubmittedReports = async (userId) => {
-  if (!userId) {
-    showNotification("Could not verify user to fetch reports.", "error");
-    return;
-  }
-  try {
-    setIsLoading(true);
-    const timestamp = Date.now();
-    console.log("🔍 Fetching reports for user ID:", userId); // ✅ Debug
-    const response = await api.get(
-      `/offenses/reporter/${userId}?_=${timestamp}`
-    );
-    console.log("📋 Fetched reports:", response.data); // ✅ Debug
-    setSubmittedReports(response.data);
-  } catch (error) {
-    console.error("Error fetching my submitted reports:", error);
-    showNotification(
-      "Failed to load my submitted reports. Please try again.",
-      "error"
-    );
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-  // Load data on component mount
-  useEffect(() => {
-    const loadData = async () => {
-      const user = await fetchCurrentUser();
-      if (user) {
-        await fetchMySubmittedReports(user._id);
-      }
-    };
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // --- END OF REPORTER-SPECIFIC FUNCTIONS ---
-
-  const handleSubmit = async () => {
-    // Validation
-    if (
-      !formData.agentName ||
-      !formData.employeeId ||
-      !formData.offenseCategory ||
-      !formData.offenseType ||
-      (formData.offenseType === "Other" && !formData.otherOffenseType) ||
-      !formData.dateOfOffense
-    ) {
+  // -----------------------------
+  // API Calls
+  // -----------------------------
+  const fetchCurrentUser = useCallback(async () => {
+    try {
+      const res = await api.get("/auth/get-auth-user");
+      setCurrentUser(res.data);
+    } catch (err) {
+      console.error("Fetch user failed", err);
       showNotification(
-        "Please fill in all required fields (Agent, Category, Type, Date).",
+        "Failed to load user data. Please log in again.",
         "error"
       );
+    }
+  }, [showNotification]);
+
+  const fetchTeamOffenses = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const res = await api.get("/offenses");
+      const list = Array.isArray(res.data)
+        ? res.data.filter((o) => o && o._id)
+        : [];
+      setOffenses(list);
+    } catch (err) {
+      console.error("Fetch offenses failed", err);
+      showNotification("Failed to load team offenses.", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [showNotification]);
+
+  // -----------------------------
+  // Socket Handlers
+  // -----------------------------
+  const setupSocketListeners = useCallback(() => {
+    const onAdd = (off) => off?._id && setOffenses((p) => [off, ...p]);
+
+    const onUpdate = (updated) => {
+      if (!updated?._id) return;
+      setOffenses((prev) =>
+        prev.map((o) => (o._id === updated._id ? { ...o, ...updated } : o))
+      );
+    };
+
+    const onDelete = (id) => {
+      if (!id) return;
+      setOffenses((prev) => prev.filter((o) => o._id !== id));
+    };
+
+    socket.on("offenseAdded", onAdd);
+    socket.on("offenseUpdated", onUpdate);
+    socket.on("offenseDeleted", onDelete);
+    socket.on("connect", setupSocketListeners);
+
+    return () => {
+      socket.off("offenseAdded", onAdd);
+      socket.off("offenseUpdated", onUpdate);
+      socket.off("offenseDeleted", onDelete);
+      socket.off("connect", setupSocketListeners);
+    };
+  }, []);
+
+  // -----------------------------
+  // Lifecycle
+  // -----------------------------
+  useEffect(() => {
+    fetchCurrentUser();
+    fetchTeamOffenses();
+  }, [fetchCurrentUser, fetchTeamOffenses]);
+
+  useEffect(() => setupSocketListeners(), [setupSocketListeners]);
+
+  // -----------------------------
+  // Handlers
+  // -----------------------------
+  const resetFormAndPanel = useCallback(() => {
+    setFormData({
+      agentName: "",
+      employeeId: "",
+      agentRole: "",
+      offenseCategory: "",
+      offenseType: "",
+      offenseLevel: "",
+      dateOfOffense: "",
+      status: "",
+      actionTaken: "",
+      remarks: "",
+      evidence: [],
+      isRead: false,
+    });
+    setSelectedFile(null);
+    setEditingId(null);
+    setPanelMode("create");
+  }, []);
+
+  const handleSubmit = useCallback(async () => {
+    if (
+      !formData.agentName ||
+      !formData.offenseCategory ||
+      !formData.dateOfOffense
+    ) {
+      showNotification("Please fill all required fields", "error");
       return;
     }
 
     try {
       const payload = { ...formData };
-      delete payload.status;
-      delete payload.actionTaken;
-      delete payload.offenseLevel;
+      delete payload.isRead;
 
       if (selectedFile) {
         const base64File = await fileToBase64(selectedFile);
@@ -179,136 +213,114 @@ const fetchCurrentUser = async () => {
             data: base64File,
           },
         ];
-      } else {
-        payload.evidence = formData.evidence || [];
       }
 
-      if (isEditMode) {
-        const originalOffense = submittedReports.find(
-          (o) => o._id === editingId
-        );
-        if (originalOffense && originalOffense.status !== "Pending Review") {
-          showNotification(
-            "Cannot edit a report that is already under review.",
-            "error"
-          );
-          return;
-        }
+      if (panelMode === "edit") {
         await api.put(`/offenses/${editingId}`, payload);
-        showNotification("Report updated successfully!", "success");
+        showNotification("Offense updated!", "success");
       } else {
         await api.post("/offenses", payload);
-        showNotification("Report submitted successfully!", "success");
+        showNotification("Offense created!", "success");
       }
 
-      resetForm();
-      if (currentUser) {
-        await fetchMySubmittedReports(currentUser._id);
-      }
-    } catch (error) {
-      console.error("Error submitting offense:", error);
-      showNotification("Failed to submit report. Please try again.", "error");
+      resetFormAndPanel();
+      fetchTeamOffenses();
+    } catch (err) {
+      console.error("Submit error", err);
+      showNotification("Failed to submit offense", "error");
     }
-  };
+  }, [
+    formData,
+    panelMode,
+    editingId,
+    selectedFile,
+    resetFormAndPanel,
+    fetchTeamOffenses,
+    showNotification,
+  ]);
 
-  // --- Reusable functions ---
-  const resetForm = () => {
-    setFormData({
-      agentName: "",
-      employeeId: "",
-      agentRole: "",
-      offenseCategory: "",
-      offenseType: "",
-      otherOffenseType: "",
-      offenseLevel: "",
-      dateOfOffense: "",
-      status: "",
-      actionTaken: "",
-      remarks: "",
-      evidence: [],
-    });
-    setSelectedFile(null);
-    setIsEditMode(false);
-    setEditingId(null);
-  };
+  const handleView = async (off) => {
+    if (!off) return;
 
-  const handleView = (off) => {
-    if (!off || !off._id) return;
-    // For viewing, we'll populate the form in edit mode
-    if (off.status !== "Pending Review" && off.status !== "Submitted") {
-      showNotification(
-        "Cannot edit a report that is already under review or closed.",
-        "error"
-      );
-      return;
-    }
-    setIsEditMode(true);
-    setEditingId(off._id);
     setFormData({
       agentName: off.agentName,
       employeeId: off.employeeId || "",
       agentRole: off.agentRole || "",
       offenseCategory: off.offenseCategory,
-      offenseType: off.offenseType,
-      otherOffenseType: off.otherOffenseType || "",
+      offenseType: off.offenseType || "",
       offenseLevel: off.offenseLevel || "",
       dateOfOffense: off.dateOfOffense,
       status: off.status,
-      actionTaken: off.actionTaken,
       remarks: off.remarks || "",
       evidence: off.evidence || [],
+      fileNTE: off.fileNTE || [],
+      respondantExplanation: off.respondantExplanation || "",
     });
-    setSelectedFile(null);
-  };
 
-  const handleDeleteClick = (id) => {
-    const originalOffense = submittedReports.find((o) => o._id === id);
-    if (originalOffense && originalOffense.status !== "Pending Review") {
-      showNotification(
-        "Cannot delete a report that is already under review.",
-        "error"
-      );
-      return;
-    }
-    setItemToDelete(id);
-    setIsConfirmationModalOpen(true);
-  };
+    setEditingId(off._id);
+    setPanelMode("view");
 
-  const handleConfirmDelete = async () => {
-    if (!itemToDelete) return;
-    try {
-      await api.delete(`/offenses/${itemToDelete}`);
-      showNotification("Report deleted successfully!", "success");
-      if (currentUser) {
-        await fetchMySubmittedReports(currentUser._id);
+    if (off.isReadByReporter === false) {
+      try {
+        await api.put(`/offenses/${off._id}`, {
+          ...off,
+          isReadByReporter: true,
+        });
+        setOffenses((prev) =>
+          prev.map((o) =>
+            o._id === off._id ? { ...o, isReadByReporter: true } : o
+          )
+        );
+      } catch (err) {
+        console.error("Mark as read failed", err);
       }
-    } catch (error) {
-      console.error("Error deleting offense:", error);
-      showNotification("Failed to delete report. Please try again.", "error");
-    } finally {
-      setIsConfirmationModalOpen(false);
-      setItemToDelete(null);
     }
   };
 
-  // Format date for display
-  const formatDisplayDate = (dateStr) =>
-    dateStr
-      ? DateTime.fromISO(dateStr).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)
-      : "";
+  const handleEditClick = (off) => {
+    setEditingId(off._id);
+    setPanelMode("edit");
+    setSelectedFile(null);
+    setFormData({ ...off });
+    window.scrollTo(0, 0);
+  };
 
-  // Reset history date filters
+  const handleDelete = async () => {
+    try {
+      await api.delete(`/offenses/${editingId}`);
+      showNotification("Deleted successfully", "success");
+      resetFormAndPanel();
+      fetchTeamOffenses();
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message || err.message || "Unknown error";
+      showNotification(`Delete failed: ${msg}`, "error");
+    }
+  };
+
+  const formatDisplayDate = (d) =>
+    d ? DateTime.fromISO(d).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY) : "";
+
   const handleHistoryDateReset = () => {
     setHistoryStartDate("");
     setHistoryEndDate("");
   };
 
-  // --- UPDATED FILTER LOGIC (from HR file, but for JSX) ---
-  // Filter for "Cases In Progress"
-  const filteredOffenses = submittedReports.filter(
-    (off) =>
-      !["Action Taken", "Escalated", "Closed"].includes(off.status) &&
-      [
+  // -----------------------------
+  // Memos for Filtering
+  // -----------------------------
+  const safeOffenses = useMemo(
+    () => offenses.filter((o) => o && o._id),
+    [offenses]
+  );
+
+  const filteredOffensesForList = useMemo(() => {
+    return safeOffenses.filter((off) => {
+      if (off.reportedById !== loggedUser._id) return false;
+      if (["Action Taken", "Escalated", "Closed"].includes(off.status))
+        return false;
+
+      return [
         off.agentName,
         off.offenseType,
         off.offenseCategory,
@@ -317,52 +329,51 @@ const fetchCurrentUser = async () => {
         off.actionTaken,
         off.remarks || "",
         formatDisplayDate(off.dateOfOffense),
-        off.reportedByName || "", // Added from HR logic
       ]
         .join(" ")
         .toLowerCase()
-        .includes(searchQuery.toLowerCase())
-  );
+        .includes(searchQuery.toLowerCase());
+    });
+  }, [safeOffenses, searchQuery, loggedUser, formatDisplayDate]);
 
-  // Filter for "Case History"
-  const resolvedOffenses = submittedReports.filter((off) => {
-    const isResolved = ["Action Taken", "Escalated", "Closed"].includes(
-      off.status
-    );
-    if (!isResolved) return false;
+  const resolvedOffensesForHistory = useMemo(() => {
+    return safeOffenses.filter((off) => {
+      const isResolved = ["Action Taken", "Escalated", "Closed"].includes(
+        off.status
+      );
+      if (!isResolved) return false;
 
-    const textMatch = [
-      off.agentName,
-      off.offenseType,
-      off.offenseLevel || "",
-      off.status,
-      off.actionTaken,
-      off.remarks || "",
-      formatDisplayDate(off.dateOfOffense),
-      off.reportedByName || "", // Added from HR logic
-    ]
-      .join(" ")
-      .toLowerCase()
-      .includes(historySearchQuery.toLowerCase());
-    if (!textMatch) return false;
+      const textMatch = [
+        off.offenseType,
+        off.offenseLevel || "",
+        off.status,
+        off.actionTaken,
+        off.remarks || "",
+        formatDisplayDate(off.dateOfOffense),
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(historySearchQuery.toLowerCase());
 
-    const offenseDate = DateTime.fromISO(off.dateOfOffense).startOf("day");
-    const start = historyStartDate
-      ? DateTime.fromISO(historyStartDate).startOf("day")
-      : null;
-    const end = historyEndDate
-      ? DateTime.fromISO(historyEndDate).startOf("day")
-      : null;
-    const isAfterStartDate = start ? offenseDate >= start : true;
-    const isBeforeEndDate = end ? offenseDate <= end : true;
-    return isAfterStartDate && isBeforeEndDate;
-  });
-  // --- END OF UPDATED FILTER LOGIC ---
+      if (!textMatch) return false;
 
-  // --- JSX ---
+      const offenseDate = DateTime.fromISO(off.dateOfOffense).startOf("day");
+      const start = historyStartDate
+        ? DateTime.fromISO(historyStartDate).startOf("day")
+        : null;
+      const end = historyEndDate
+        ? DateTime.fromISO(historyEndDate).startOf("day")
+        : null;
+
+      return (!start || offenseDate >= start) && (!end || offenseDate <= end);
+    });
+  }, [safeOffenses, historySearchQuery, historyStartDate, historyEndDate]);
+
+  // -----------------------------
+  // Render
+  // -----------------------------
   return (
     <div>
-      {/* Notification */}
       {notification.isVisible && (
         <Notification
           message={notification.message}
@@ -370,66 +381,64 @@ const fetchCurrentUser = async () => {
           onClose={() => setNotification({ ...notification, isVisible: false })}
         />
       )}
-      {/* Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={isConfirmationModalOpen}
-        onClose={() => {
-          setIsConfirmationModalOpen(false);
-          setItemToDelete(null);
-        }}
-        onConfirm={handleConfirmDelete}
-        message="Are you sure you want to delete this incident report?"
-      />
-      {/* Header */}
+
       <section className="flex flex-col mb-2">
-        <div className="flex items-center gap-1">
-          <h2>My Incident Reports</h2>
-        </div>
-        <p className="text-gray-600">
-          Submit a new incident report or view your past submissions.
+        <h2>Team Offense Management</h2>
+        <p className="text-gray-600 mt-1">
+          Create, view, and manage offenses for your team.
         </p>
       </section>
 
-      {/* Main Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
-        {/* Left Panel: Form */}
-        <OffenseForm
-          formData={formData}
-          setFormData={setFormData}
-          selectedFile={selectedFile}
-          setSelectedFile={setSelectedFile}
-          isDragOver={isDragOver}
-          setIsDragOver={setIsDragOver}
-          isEditMode={isEditMode}
-          resetForm={resetForm}
-          handleSubmit={handleSubmit}
-          showNotification={showNotification}
-          isAgentForm={true}
-        />
-        {/* Right Panel: Cases in Progress */}
-        <TLCasesInProgress
-          offenses={filteredOffenses}
+        <div>
+          {panelMode === "create" || panelMode === "edit" ? (
+            <OffenseForm
+              formData={formData}
+              setFormData={setFormData}
+              selectedFile={selectedFile}
+              setSelectedFile={setSelectedFile}
+              isDragOver={isDragOver}
+              setIsDragOver={setIsDragOver}
+              isEditMode={panelMode === "edit"}
+              resetForm={resetFormAndPanel}
+              handleSubmit={handleSubmit}
+              showNotification={showNotification}
+            />
+          ) : (
+            <OffenseDetails
+              isViewMode={true}
+              formData={formData}
+              onClose={resetFormAndPanel}
+              onDelete={handleDelete}
+              formatDisplayDate={formatDisplayDate}
+              base64ToBlobUrl={base64ToBlobUrl}
+              onEditClick={() => handleEditClick(formData)}
+            />
+          )}
+        </div>
+
+        <CasesInProgress
+          offenses={filteredOffensesForList}
           searchQuery={searchQuery}
           onSearchChange={(e) => setSearchQuery(e.target.value)}
           onView={handleView}
-          onDelete={handleDeleteClick} // Keep delete for agent
           isLoading={isLoading}
           formatDisplayDate={formatDisplayDate}
           base64ToBlobUrl={base64ToBlobUrl}
         />
       </div>
-      {/* Bottom Panel: Case History */}
-      <TLCaseHistory
-        offenses={resolvedOffenses}
+
+      <CaseHistory
+        offenses={resolvedOffensesForHistory}
         filters={{
           searchQuery: historySearchQuery,
           startDate: historyStartDate,
           endDate: historyEndDate,
         }}
         setFilters={{
-          setSearchQuery: (value) => setHistorySearchQuery(value),
-          setStartDate: (value) => setHistoryStartDate(value),
-          setEndDate: (value) => setHistoryEndDate(value),
+          setSearchQuery: setHistorySearchQuery,
+          setStartDate: setHistoryStartDate,
+          setEndDate: setHistoryEndDate,
         }}
         onDateReset={handleHistoryDateReset}
         isLoading={isLoading}

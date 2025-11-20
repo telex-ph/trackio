@@ -148,46 +148,39 @@ const HRReportedOffenses = () => {
   }, []);
 
   useEffect(() => {
-    if (!setOffenses) return; // safeguard
-
-    const handleAdded = (newOffense: Offense | null) => {
+    const handleAdded = (newOffense: Offense) => {
       if (!newOffense?._id) return;
       setOffenses((prev) => [newOffense, ...(prev || [])]);
     };
 
-    const handleUpdated = (updatedOffense: Offense | null) => {
+    const handleUpdated = (updatedOffense: Offense) => {
       if (!updatedOffense?._id) return;
       setOffenses((prev) =>
         (prev || []).map((off) =>
-          off?._id === updatedOffense._id ? { ...off, ...updatedOffense } : off
+          off._id === updatedOffense._id ? updatedOffense : off
         )
       );
     };
 
-    const handleDeleted = (deletedId: string | null) => {
+    const handleDeleted = (deletedId: string) => {
       if (!deletedId) return;
       setOffenses((prev) =>
-        (prev || []).filter((off) => off?._id !== deletedId)
+        (prev || []).filter((off) => off._id !== deletedId)
       );
     };
 
-    const attachListeners = () => {
-      socket.on("offenseAdded", handleAdded);
-      socket.on("offenseUpdated", handleUpdated);
-      socket.on("offenseDeleted", handleDeleted);
-    };
+    // Attach once
+    socket.on("offenseAdded", handleAdded);
+    socket.on("offenseUpdated", handleUpdated);
+    socket.on("offenseDeleted", handleDeleted);
 
-    if (socket.connected) attachListeners();
-
-    socket.on("connect", () => attachListeners());
-
+    // Cleanup on unmount
     return () => {
       socket.off("offenseAdded", handleAdded);
       socket.off("offenseUpdated", handleUpdated);
       socket.off("offenseDeleted", handleDeleted);
-      socket.off("connect", attachListeners);
     };
-  }, [setOffenses]);
+  }, []);
 
   // Reset form/view
   const resetForm = () => {
@@ -225,7 +218,7 @@ const HRReportedOffenses = () => {
     try {
       const { data: offense } = await api.get(`/offenses/${off._id}`);
       console.log(offense.isReadByHR);
-      
+
       if (offense.isReadByHR === false) {
         const payload = { ...off, isReadByHR: true };
         await api.put(`/offenses/${off._id}`, payload);
@@ -260,6 +253,7 @@ const HRReportedOffenses = () => {
       const payload = {
         ...formData,
         status: "Scheduled for hearing",
+        isReadByRespondant: false,
         hearingDate,
         witnesses,
       };
@@ -292,6 +286,7 @@ const HRReportedOffenses = () => {
         isReadByRespondant: false,
         status: "NTE",
         nteSentDateTime: now.toISOString(),
+        isReadByHR: true,
       };
 
       if (selectedFile) {
@@ -525,7 +520,6 @@ const HRReportedOffenses = () => {
           isDragOverNDA={isDragOverNDA}
           setIsDragOverNDA={setIsDragOverNDA}
         />
-
 
         {/* Cases in Progress Panel */}
         <HR_CasesInProgress

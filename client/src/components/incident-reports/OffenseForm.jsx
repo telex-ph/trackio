@@ -117,6 +117,7 @@ const OffenseForm = ({
       agentName: fullName,
       employeeId: employee.employeeId,
       agentRole: employee.role,
+      respondantId: employee._id
     }));
     setSearchQuery(fullName);
     setShowSuggestions(false);
@@ -271,18 +272,32 @@ const OffenseForm = ({
               className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
             >
               <option value="">Select category</option>
-              <option value="Attendance and Punctuality">Attendance and Punctuality</option>
+              <option value="Attendance and Punctuality">
+                Attendance and Punctuality
+              </option>
               <option value="Behavior and Conduct">Behavior and Conduct</option>
-              <option value="Good Morals and Work Ethics">Good Morals and Work Ethics</option>
-              <option value="Negligence in the Performance of Duty">Negligence in the Performance of Duty</option>
-              <option value="Company Interest/Insubordination">Company Interest/Insubordination</option>
-              <option value="Company Funds and Property">Company Funds and Property</option>
-              <option value="Sanitation, Safety and Security at Work">Sanitation, Safety and Security at Work</option>
-              <option value="Securing or Divulging Confidential Information">Securing or Divulging Confidential Information</option>
+              <option value="Good Morals and Work Ethics">
+                Good Morals and Work Ethics
+              </option>
+              <option value="Negligence in the Performance of Duty">
+                Negligence in the Performance of Duty
+              </option>
+              <option value="Company Interest/Insubordination">
+                Company Interest/Insubordination
+              </option>
+              <option value="Company Funds and Property">
+                Company Funds and Property
+              </option>
+              <option value="Sanitation, Safety and Security at Work">
+                Sanitation, Safety and Security at Work
+              </option>
+              <option value="Securing or Divulging Confidential Information">
+                Securing or Divulging Confidential Information
+              </option>
             </select>
           </div>
           <div className="space-y-2">
-<label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+            <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
               Date of Offense *
             </label>
             <div className="relative">

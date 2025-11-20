@@ -5,13 +5,11 @@ import {
   X,
   User,
   FileText,
-  ChevronDown,
   CheckCircle,
   XCircle,
   Bell,
   Search,
   Eye,
-  Hash,
   Download,
   X as ClearIcon,
   Tag,
@@ -20,7 +18,6 @@ import {
 } from "lucide-react";
 import { DateTime } from "luxon"; // Import DateTime
 import api from "../../utils/axios";
-import { useStore } from "../../store/useStore";
 
 // --- HELPER FUNCTION ---
 // Converts Base64 data URL to a browser-readable Blob URL
@@ -157,10 +154,6 @@ const AgentOffences = () => {
     isVisible: false,
   });
 
-  const decrementUnreadOffensesRespondent = useStore(
-    (state) => state.decrementUnreadOffensesRespondent
-  );
-
   const [formData, setFormData] = useState({
     agentName: "",
     offenseCategory: "",
@@ -271,6 +264,7 @@ const AgentOffences = () => {
         ...formData,
         status: "Acknowledged",
         ackMessage,
+        isAcknowledged: true,
         isReadByHR: false,
       };
 
@@ -294,7 +288,7 @@ const AgentOffences = () => {
       agentName: off.agentName,
       offenseCategory: off.offenseCategory,
       offenseLevel: off.offenseLevel || "",
-      dateOfOffense: off.dateOfOffense,
+      dateOfOffense: off.dateOfOffense, 
       status: off.status,
       remarks: off.remarks || "",
       evidence: off.evidence || [],
@@ -305,7 +299,7 @@ const AgentOffences = () => {
 
     setRespondentHasExplanation(!!off.respondantExplanation);
 
-    setAcknowledged(off.isAcknowledged === false);
+    setAcknowledged(!!off.isAcknowledged);
 
     try {
       // Fetch the latest offense data
@@ -315,11 +309,6 @@ const AgentOffences = () => {
       if (offense.isReadByRespondant === false) {
         const payload = { ...offense, isReadByRespondant: true };
         await api.put(`/offenses/${off._id}`, payload);
-
-        // Optional: If you have a socket badge counter or store action for unread offenses
-        if (typeof decrementUnreadOffensesAgent === "function") {
-          decrementUnreadOffensesRespondent();
-        }
 
         showNotification("Marked as read successfully!", " success");
         fetchOffenses(); // Refresh the list
@@ -596,8 +585,96 @@ const AgentOffences = () => {
                   value={formData.respondantExplanation || ""}
                 />
               </div>
-              {/* End of Evidence Section */}
-
+              {formData.fileMOM &&
+                formData.fileMOM.length > 0 &&
+                formData.fileNDA.length > 0 && (
+                  <div>
+                    <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                      Minutes of the meeting
+                    </label>
+                    <div className="border-2 border-dashed rounded-2xl p-4 mb-4 border-blue-400 bg-blue-50">
+                      {formData.fileMOM.slice(0, 1).map((mom, idx) => {
+                        const viewUrl = base64ToBlobUrl(mom.data, mom.type);
+                        return (
+                          <div key={idx} className="flex flex-col gap-3">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                              <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
+                                {mom.fileName}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={viewUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                              >
+                                <Eye className="w-4 h-4" />
+                                View
+                              </a>
+                              <a
+                                href={mom.data}
+                                download={mom.fileName}
+                                className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                              >
+                                <Download className="w-4 h-4" />
+                                Download
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                      Notice of Disciplinary Action
+                    </label>
+                    <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
+                      {formData.fileNDA.slice(0, 1).map((nda, idx) => {
+                        const viewUrl = base64ToBlobUrl(nda.data, nda.type);
+                        return (
+                          <div key={idx} className="flex flex-col gap-3">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                              <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
+                                {nda.fileName}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={viewUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                              >
+                                <Eye className="w-4 h-4" />
+                                View
+                              </a>
+                              <a
+                                href={nda.data}
+                                download={nda.fileName}
+                                className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                              >
+                                <Download className="w-4 h-4" />
+                                Download
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              {acknowledged && (
+                <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                    Acknowledgement
+                  </label>
+                  <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 text-gray-800 text-sm sm:text-base overflow-y-auto">
+                    {formData.ackMessage || "No acknowledgement"}
+                  </p>
+                </div>
+              )}
               {/* Buttons */}
               <div className="flex gap-4">
                 {!respondentHasExplanation && (

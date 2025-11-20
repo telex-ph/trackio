@@ -102,6 +102,7 @@ const TeamLeaderSidebar = ({
       onToggle={() =>
         setActiveDropdown(activeDropdown === "offenses" ? null : "offenses")
       }
+      badge={unreadOffenses}
     >
       <SidebarLink
         to={`/team-leader/createoffense`}
