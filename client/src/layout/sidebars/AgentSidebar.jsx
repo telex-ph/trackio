@@ -43,6 +43,7 @@ const AgentSidebar = ({
       onToggle={() =>
         setActiveDropdown(activeDropdown === "offenses" ? null : "offenses")
       }
+      badge={unreadOffenses}
     >
       <SidebarLink
         to={`agent/createoffense`}

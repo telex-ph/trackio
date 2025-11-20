@@ -10,7 +10,7 @@ import {
   Download,
 } from "lucide-react";
 import { DateTime } from "luxon";
-const TLCasesInProgress = ({
+const CasesInProgress = ({
   offenses,
   searchQuery,
   onSearchChange,
@@ -311,4 +311,4 @@ const TLCasesInProgress = ({
   );
 };
 
-export default TLCasesInProgress;
+export default CasesInProgress;

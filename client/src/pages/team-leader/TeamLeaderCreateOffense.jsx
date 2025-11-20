@@ -1,17 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { DateTime } from "luxon";
 import api from "../../utils/axios";
-
-// Import ALL necessary components
-import Notification from "../../components/incident-reports/Notification";
-import ConfirmationModal from "../../components/incident-reports/ConfirmationModal";
-import OffenseForm from "../../components/incident-reports/TLOffenseForm";
-import TLOffenseDetails from "../../components/incident-reports/TLOffenseDetails";
-import TLCasesInProgress from "../../components/incident-reports/TLCasesInProgress";
-import TLCaseHistory from "../../components/incident-reports/TLCaseHistory";
 import socket from "../../utils/socket";
 
-// --- HELPER FUNCTIONS ---
+// Components
+import OffenseForm from "../../components/incident-reports/OffenseForm";
+import OffenseDetails from "../../components/incident-reports/OffenseDetails";
+import CasesInProgress from "../../components/incident-reports/CasesInProgress";
+import CaseHistory from "../../components/incident-reports/CaseHistory";
+import Notification from "../../components/incident-reports/Notification";
+
+
+import { useStore } from "../../store/useStore";
+
+// -----------------------------
+// Helper Utilities
+// -----------------------------
 const fileToBase64 = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -23,209 +27,149 @@ const fileToBase64 = (file) =>
 const base64ToBlobUrl = (base64, type) => {
   try {
     const base64Data = base64.split(",")[1];
-    if (!base64Data) {
-      console.error("Invalid Base64 string");
-      return base64; // Fallback
-    }
-    const binaryString = atob(base64Data);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    const blob = new Blob([bytes], { type: type });
-    const url = URL.createObjectURL(blob);
-    return url;
-  } catch (e) {
-    console.error("Failed to convert Base64 to Blob URL:", e);
-    return base64; // Fallback
+    if (!base64Data) return base64;
+
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+    const blob = new Blob([bytes], { type });
+    return URL.createObjectURL(blob);
+  } catch {
+    return base64;
   }
 };
-// --- END OF HELPER FUNCTIONS ---
 
+// -----------------------------
+// Component
+// -----------------------------
 const TeamLeaderOffenses = () => {
-  // --- States ---
+  // UI & State
   const [isLoading, setIsLoading] = useState(false);
-  const [offenses, setOffenses] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [currentUser, setCurrentUser] = useState(null);
-  const [historySearchQuery, setHistorySearchQuery] = useState("");
-  const [historyStartDate, setHistoryStartDate] = useState("");
-  const [historyEndDate, setHistoryEndDate] = useState("");
-
-  // --- (SIGURADUHIN MONG ITO ANG NAKALAGAY) ---
-  const [panelMode, setPanelMode] = useState("create"); // <-- Dapat 'create' agad
-
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-
+  const [panelMode, setPanelMode] = useState("create");
   const [notification, setNotification] = useState({
     message: "",
     type: "",
     isVisible: false,
   });
-  // const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false); // Unused for now
-  // const [itemToDelete, setItemToDelete] = useState(null); // Unused for now
+
+  // Data
+  const [offenses, setOffenses] = useState([]);
+  const loggedUser = useStore((state) => state.user);
+  const [_currentUser, setCurrentUser] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+
+  // Form
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const [formData, setFormData] = useState({
     agentName: "",
     employeeId: "",
     agentRole: "",
     offenseCategory: "",
+    offenseType: "",
+    offenseLevel: "",
     dateOfOffense: "",
+    status: "",
+    actionTaken: "",
     remarks: "",
     evidence: [],
+    isRead: false,
   });
+
+  // Filters
+  const [searchQuery, setSearchQuery] = useState("");
+  const [historySearchQuery, setHistorySearchQuery] = useState("");
+  const [historyStartDate, setHistoryStartDate] = useState("");
+  const [historyEndDate, setHistoryEndDate] = useState("");
 
   const today = DateTime.now().toISODate();
 
-  // --- Functions ---
- 
-  const showNotification = (message, type) => {
+  // -----------------------------
+  // Notifications
+  // -----------------------------
+  const showNotification = useCallback((message, type) => {
     setNotification({ message, type, isVisible: true });
-  };
+  }, []);
 
-  const fetchCurrentUser = async () => {
-    /* ...existing fetchCurrentUser... */
+  // -----------------------------
+  // API Calls
+  // -----------------------------
+  const fetchCurrentUser = useCallback(async () => {
     try {
-      const response = await api.get("/auth/get-auth-user");
-      setCurrentUser(response.data);
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching current user:", error);
+      const res = await api.get("/auth/get-auth-user");
+      setCurrentUser(res.data);
+    } catch (err) {
+      console.error("Fetch user failed", err);
       showNotification(
         "Failed to load user data. Please log in again.",
         "error"
       );
-      return null;
     }
-  };
+  }, [showNotification]);
 
-  const fetchTeamOffenses = async () => {
+  const fetchTeamOffenses = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await api.get("/offenses");
-
-      setOffenses(
-        Array.isArray(response.data)
-          ? response.data.filter((o) => o && o._id)
-          : []
-      );
-    } catch (error) {
-      console.error("Error fetching team offenses:", error);
-      showNotification(
-        "Failed to load team offenses. Please try again.",
-        "error"
-      );
+      const res = await api.get("/offenses");
+      const list = Array.isArray(res.data)
+        ? res.data.filter((o) => o && o._id)
+        : [];
+      setOffenses(list);
+    } catch (err) {
+      console.error("Fetch offenses failed", err);
+      showNotification("Failed to load team offenses.", "error");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [showNotification]);
 
-  useEffect(() => {
-    const loadData = async () => {
-      await fetchCurrentUser();
-      await fetchTeamOffenses();
-    };
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // -----------------------------
+  // Socket Handlers
+  // -----------------------------
+  const setupSocketListeners = useCallback(() => {
+    const onAdd = (off) => off?._id && setOffenses((p) => [off, ...p]);
 
-  useEffect(() => {
-    if (!setOffenses) return;
-
-    const handleAdded = (newOffense) => {
-      if (!newOffense?._id) return;
-      setOffenses((prev) => [
-        newOffense,
-        ...(prev || []).filter((o) => o?._id),
-      ]);
-    };
-
-    const handleUpdated = (updatedOffense) => {
-      if (!updatedOffense?._id) return;
-      console.log("Received offenseUpdated:", updatedOffense);
+    const onUpdate = (updated) => {
+      if (!updated?._id) return;
       setOffenses((prev) =>
-        (prev || [])
-          .filter((off) => off?._id)
-          .map((off) =>
-            off._id === updatedOffense._id ? { ...off, ...updatedOffense } : off
-          )
+        prev.map((o) => (o._id === updated._id ? { ...o, ...updated } : o))
       );
     };
 
-    const handleDeleted = (deletedId) => {
-      if (!deletedId) return;
-      setOffenses((prev) =>
-        (prev || []).filter((o) => o?._id && o._id !== deletedId)
-      );
+    const onDelete = (id) => {
+      if (!id) return;
+      setOffenses((prev) => prev.filter((o) => o._id !== id));
     };
 
-    const attachListeners = () => {
-      socket.on("offenseAdded", handleAdded);
-      socket.on("offenseUpdated", handleUpdated);
-      socket.on("offenseDeleted", handleDeleted);
-    };
-
-    if (socket.connected) attachListeners();
-
-    socket.on("connect", () => attachListeners());
+    socket.on("offenseAdded", onAdd);
+    socket.on("offenseUpdated", onUpdate);
+    socket.on("offenseDeleted", onDelete);
+    socket.on("connect", setupSocketListeners);
 
     return () => {
-      socket.off("offenseAdded", handleAdded);
-      socket.off("offenseUpdated", handleUpdated);
-      socket.off("offenseDeleted", handleDeleted);
-      socket.off("connect", attachListeners);
+      socket.off("offenseAdded", onAdd);
+      socket.off("offenseUpdated", onUpdate);
+      socket.off("offenseDeleted", onDelete);
+      socket.off("connect", setupSocketListeners);
     };
   }, []);
 
-  const handleSubmit = async () => {
-    /* ...existing handleSubmit... */
-    if (
-      !formData.agentName ||
-      !formData.offenseCategory ||
-      !formData.dateOfOffense
-    ) {
-      showNotification(
-        "Please fill in all required fields, including selecting an agent",
-        "error"
-      );
-      return;
-    }
+  // -----------------------------
+  // Lifecycle
+  // -----------------------------
+  useEffect(() => {
+    fetchCurrentUser();
+    fetchTeamOffenses();
+  }, [fetchCurrentUser, fetchTeamOffenses]);
 
-    try {
-      const payload = { ...formData };
-      delete payload.isRead;
-      if (selectedFile) {
-        const base64File = await fileToBase64(selectedFile);
-        payload.evidence = [
-          {
-            fileName: selectedFile.name,
-            size: selectedFile.size,
-            type: selectedFile.type,
-            data: base64File,
-          },
-        ];
-      }
-      if (panelMode === "edit") {
-        await api.put(`/offenses/${editingId}`, payload);
-        showNotification("Offense updated successfully!", "success");
-      } else {
-        await api.post("/offenses", payload);
-        showNotification("Offense submitted successfully!", "success");
-      }
+  useEffect(() => setupSocketListeners(), [setupSocketListeners]);
 
-      resetFormAndPanel();
-      await fetchTeamOffenses();
-    } catch (error) {
-      console.error("Error submitting offense:", error);
-      showNotification("Failed to submit offense. Please try again.", "error");
-    }
-  };
-
-  const resetFormAndPanel = () => {
-    /* ...existing resetFormAndPanel... */
+  // -----------------------------
+  // Handlers
+  // -----------------------------
+  const resetFormAndPanel = useCallback(() => {
     setFormData({
       agentName: "",
       employeeId: "",
@@ -242,15 +186,68 @@ const TeamLeaderOffenses = () => {
     });
     setSelectedFile(null);
     setEditingId(null);
-    setPanelMode("create"); // Bumalik sa create mode
-  };
+    setPanelMode("create");
+  }, []);
+
+  const handleSubmit = useCallback(async () => {
+    if (
+      !formData.agentName ||
+      !formData.offenseCategory ||
+      !formData.dateOfOffense
+    ) {
+      showNotification("Please fill all required fields", "error");
+      return;
+    }
+
+    try {
+      const payload = { ...formData };
+      delete payload.isRead;
+
+      if (selectedFile) {
+        const base64File = await fileToBase64(selectedFile);
+        payload.evidence = [
+          {
+            fileName: selectedFile.name,
+            size: selectedFile.size,
+            type: selectedFile.type,
+            data: base64File,
+          },
+        ];
+      }
+
+      if (panelMode === "edit") {
+        await api.put(`/offenses/${editingId}`, payload);
+        showNotification("Offense updated!", "success");
+      } else {
+        await api.post("/offenses", payload);
+        showNotification("Offense created!", "success");
+      }
+
+      resetFormAndPanel();
+      fetchTeamOffenses();
+    } catch (err) {
+      console.error("Submit error", err);
+      showNotification("Failed to submit offense", "error");
+    }
+  }, [
+    formData,
+    panelMode,
+    editingId,
+    selectedFile,
+    resetFormAndPanel,
+    fetchTeamOffenses,
+    showNotification,
+  ]);
 
   const handleView = async (off) => {
-    if (!off || !off._id) return;
-    /* ...existing handleView... */
+    if (!off) return;
+
     setFormData({
       agentName: off.agentName,
+      employeeId: off.employeeId || "",
+      agentRole: off.agentRole || "",
       offenseCategory: off.offenseCategory,
+      offenseType: off.offenseType || "",
       offenseLevel: off.offenseLevel || "",
       dateOfOffense: off.dateOfOffense,
       status: off.status,
@@ -258,81 +255,72 @@ const TeamLeaderOffenses = () => {
       evidence: off.evidence || [],
       fileNTE: off.fileNTE || [],
       respondantExplanation: off.respondantExplanation || "",
-      employeeId: off.employeeId || "",
-      agentRole: off.agentRole || "",
     });
+
     setEditingId(off._id);
     setPanelMode("view");
-    setSelectedFile(null);
 
     if (off.isReadByReporter === false) {
       try {
-        const payload = { ...off, isReadByReporter: true };
-        await api.put(`/offenses/${off._id}`, payload);
-        showNotification("Offense marked as read!", "success");
-        // Update local state to reflect read status immediately
+        await api.put(`/offenses/${off._id}`, {
+          ...off,
+          isReadByReporter: true,
+        });
         setOffenses((prev) =>
           prev.map((o) =>
             o._id === off._id ? { ...o, isReadByReporter: true } : o
           )
         );
-      } catch (error) {
-        console.error("Error marking offense as read:", error);
-        showNotification("Failed to mark offense as read.", "error");
+      } catch (err) {
+        console.error("Mark as read failed", err);
       }
     }
   };
 
-  const handleEditClick = (offenseDataToEdit) => {
-    if (!offenseDataToEdit || !offenseDataToEdit._id) return;
-    /* ...existing handleEditClick... */
-    setFormData({
-      agentName: offenseDataToEdit.agentName,
-      employeeId: offenseDataToEdit.employeeId || "",
-      agentRole: offenseDataToEdit.agentRole || "",
-      offenseCategory: offenseDataToEdit.offenseCategory,
-      offenseType: offenseDataToEdit.offenseType,
-      offenseLevel: offenseDataToEdit.offenseLevel || "",
-      dateOfOffense: offenseDataToEdit.dateOfOffense,
-      status: offenseDataToEdit.status,
-      actionTaken: offenseDataToEdit.actionTaken,
-      remarks: offenseDataToEdit.remarks || "",
-      evidence: offenseDataToEdit.evidence || [],
-    });
-    setEditingId(offenseDataToEdit._id);
+  const handleEditClick = (off) => {
+    setEditingId(off._id);
     setPanelMode("edit");
     setSelectedFile(null);
+    setFormData({ ...off });
     window.scrollTo(0, 0);
   };
 
   const handleDelete = async () => {
-    if (!editingId) return;
     try {
       await api.delete(`/offenses/${editingId}`);
-      showNotification("Marked as read successfully!", "success");
+      showNotification("Deleted successfully", "success");
       resetFormAndPanel();
       fetchTeamOffenses();
-    } catch (error) {
-      console.error("Error marking as read:", error);
-      showNotification("Failed to mark as read. Please try again.", "error");
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message || err.message || "Unknown error";
+      showNotification(`Delete failed: ${msg}`, "error");
     }
   };
 
-  const formatDisplayDate = (dateStr) =>
-    dateStr
-      ? DateTime.fromISO(dateStr).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)
-      : "";
+  const formatDisplayDate = (d) =>
+    d ? DateTime.fromISO(d).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY) : "";
+
   const handleHistoryDateReset = () => {
     setHistoryStartDate("");
     setHistoryEndDate("");
   };
 
-  const safeOffenses = offenses.filter((o) => o && o._id);
+  // -----------------------------
+  // Memos for Filtering
+  // -----------------------------
+  const safeOffenses = useMemo(
+    () => offenses.filter((o) => o && o._id),
+    [offenses]
+  );
 
-  const filteredOffensesForList = safeOffenses.filter(
-    (off) =>
-      !["Action Taken", "Escalated", "Closed"].includes(off.status) &&
-      [
+  const filteredOffensesForList = useMemo(() => {
+    return safeOffenses.filter((off) => {
+      if (off.reportedById !== loggedUser._id) return false;
+      if (["Action Taken", "Escalated", "Closed"].includes(off.status))
+        return false;
+
+      return [
         off.agentName,
         off.offenseType,
         off.offenseCategory,
@@ -344,16 +332,17 @@ const TeamLeaderOffenses = () => {
       ]
         .join(" ")
         .toLowerCase()
-        .includes(searchQuery.toLowerCase())
-  );
+        .includes(searchQuery.toLowerCase());
+    });
+  }, [safeOffenses, searchQuery, loggedUser, formatDisplayDate]);
 
-  const resolvedOffensesForHistory = offenses.filter(
-    /* ...existing filter... */
-    (off) => {
+  const resolvedOffensesForHistory = useMemo(() => {
+    return safeOffenses.filter((off) => {
       const isResolved = ["Action Taken", "Escalated", "Closed"].includes(
         off.status
       );
       if (!isResolved) return false;
+
       const textMatch = [
         off.offenseType,
         off.offenseLevel || "",
@@ -365,7 +354,9 @@ const TeamLeaderOffenses = () => {
         .join(" ")
         .toLowerCase()
         .includes(historySearchQuery.toLowerCase());
+
       if (!textMatch) return false;
+
       const offenseDate = DateTime.fromISO(off.dateOfOffense).startOf("day");
       const start = historyStartDate
         ? DateTime.fromISO(historyStartDate).startOf("day")
@@ -373,15 +364,16 @@ const TeamLeaderOffenses = () => {
       const end = historyEndDate
         ? DateTime.fromISO(historyEndDate).startOf("day")
         : null;
-      const isAfterStartDate = start ? offenseDate >= start : true;
-      const isBeforeEndDate = end ? offenseDate <= end : true;
-      return isAfterStartDate && isBeforeEndDate;
-    }
-  );
 
+      return (!start || offenseDate >= start) && (!end || offenseDate <= end);
+    });
+  }, [safeOffenses, historySearchQuery, historyStartDate, historyEndDate]);
+
+  // -----------------------------
+  // Render
+  // -----------------------------
   return (
     <div>
-      {/* --- Notification --- */}
       {notification.isVisible && (
         <Notification
           message={notification.message}
@@ -389,23 +381,16 @@ const TeamLeaderOffenses = () => {
           onClose={() => setNotification({ ...notification, isVisible: false })}
         />
       )}
-      {/* <ConfirmationModal ... /> */}
 
-      {/* --- Header (No Create Button) --- */}
       <section className="flex flex-col mb-2">
-        <div className="flex items-center gap-1">
-          <h2>Team Offense Management</h2>
-        </div>
+        <h2>Team Offense Management</h2>
         <p className="text-gray-600 mt-1">
-          Create, view, and manage offenses for your team members.
+          Create, view, and manage offenses for your team.
         </p>
       </section>
 
-      {/* --- Main Grid Layout --- */}
       <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
-        {/* --- LEFT PANEL (Conditional Rendering) --- */}
         <div>
-          {/* --- (SIGURADUHIN MONG ITO ANG NAKALAGAY) --- */}
           {panelMode === "create" || panelMode === "edit" ? (
             <OffenseForm
               formData={formData}
@@ -414,14 +399,13 @@ const TeamLeaderOffenses = () => {
               setSelectedFile={setSelectedFile}
               isDragOver={isDragOver}
               setIsDragOver={setIsDragOver}
-              isEditMode={panelMode === "edit"} // Dynamic based on panelMode
+              isEditMode={panelMode === "edit"}
               resetForm={resetFormAndPanel}
               handleSubmit={handleSubmit}
               showNotification={showNotification}
             />
           ) : (
-            // Only 'view' mode remains if not create or edit
-            <TLOffenseDetails
+            <OffenseDetails
               isViewMode={true}
               formData={formData}
               onClose={resetFormAndPanel}
@@ -433,20 +417,18 @@ const TeamLeaderOffenses = () => {
           )}
         </div>
 
-        {/* --- RIGHT PANEL (Cases in Progress) --- */}
-        <TLCasesInProgress
+        <CasesInProgress
           offenses={filteredOffensesForList}
           searchQuery={searchQuery}
           onSearchChange={(e) => setSearchQuery(e.target.value)}
-          onView={handleView} // Sets panelMode to 'view'
+          onView={handleView}
           isLoading={isLoading}
           formatDisplayDate={formatDisplayDate}
           base64ToBlobUrl={base64ToBlobUrl}
         />
       </div>
 
-      {/* --- BOTTOM PANEL (Case History) --- */}
-      <TLCaseHistory
+      <CaseHistory
         offenses={resolvedOffensesForHistory}
         filters={{
           searchQuery: historySearchQuery,

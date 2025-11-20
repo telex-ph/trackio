@@ -1,7 +1,7 @@
 import React from "react";
 import { FileText, Search, Eye, Download, X as ClearIcon } from "lucide-react";
 
-const TLCaseHistory = ({
+const CaseHistory = ({
   offenses,
   filters,
   setFilters,
@@ -181,4 +181,4 @@ const TLCaseHistory = ({
   );
 };
 
-export default TLCaseHistory;
+export default CaseHistory;
