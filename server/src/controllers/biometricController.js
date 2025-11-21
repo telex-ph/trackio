@@ -94,6 +94,9 @@ export const getEvents = async (req, res) => {
               const shiftEnd = DateTime.fromJSDate(attendance.shiftEnd).toUTC();
               const nowTime = DateTime.utc();
 
+              console.log(shiftEnd);
+              console.log(nowTime);
+
               if (shiftEnd < nowTime) {
                 if (status === STATUS.ON_BREAK) {
                   await biometricBreakOut(attendanceId, breaks);
