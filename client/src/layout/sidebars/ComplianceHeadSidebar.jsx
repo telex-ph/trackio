@@ -9,8 +9,6 @@ import {
   GalleryVerticalEnd,
   Users2Icon,
   Ticket,
-  BarChart2,
-  ClipboardList,
 } from "lucide-react";
 import SidebarLink from "./SidebarLink";
 import CustomCollapse from "./CustomCollapse";
@@ -93,28 +91,12 @@ const ComplianceHeadSidebar = ({
       label="Team"
       isCollapsed={isCollapsed}
     />
-    <CustomCollapse
-      icon={<ClipboardList className="w-5 h-5" />}
+    <SidebarLink
+      to="/compliance-head/ticket"
+      icon={Ticket}
       label="Ticket"
       isCollapsed={isCollapsed}
-      open={activeDropdown === "tickets"}
-      onToggle={() =>
-        setActiveDropdown(activeDropdown === "tickets" ? null : "tickets")
-      }
-    >
-      <SidebarLink
-        to="/president/ticket/list"
-        icon={List}
-        label="List"
-        isCollapsed={isCollapsed}
-      />
-      <SidebarLink
-        to={`/president/ticket/analytics`}
-        icon={BarChart2}
-        label="Analytics"
-        isCollapsed={isCollapsed}
-      />
-    </CustomCollapse>
+    />
     <SidebarLink
       to="/compliance-head/account-management"
       icon={Users2Icon}
