@@ -146,7 +146,7 @@ class Attendance {
    * @returns {Promise<Array>} A list of today's attendance records for the user,
    *   including the user details (via lookup).
    */
-  static async getById(id, sortOrder = "desc") {
+  static async getById(id, sort = "desc") {
     if (!id) {
       throw new Error("ID is required");
     }
