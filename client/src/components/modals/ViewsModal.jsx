@@ -9,14 +9,14 @@ const ViewsModal = ({ isOpen, onClose, views, announcementTitle }) => {
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300"></div>
       <div className="relative w-full max-w-2xl max-h-[90vh] bg-white rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden animate-scale-up">
-        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200 bg-gradient-to-r from-red-600 to-red-700 text-white">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-white/20 rounded-lg">
               <Users className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-lg sm:text-xl font-bold truncate">Announcement Views</h3>
-              <p className="text-blue-100 text-xs sm:text-sm truncate">
+              <p className="text-red-100 text-xs sm:text-sm truncate">
                 "{announcementTitle}"
               </p>
             </div>
@@ -37,9 +37,9 @@ const ViewsModal = ({ isOpen, onClose, views, announcementTitle }) => {
         <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
           {views && views.length > 0 ? (
             <div className="space-y-3">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl sm:rounded-2xl shadow-lg border border-blue-200 p-4">
+              <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl sm:rounded-2xl shadow-lg border border-red-200 p-4">
                 <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-                  <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                  <Users className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
                   Viewers List ({views.length})
                 </h4>
                 <div className="grid gap-2">
@@ -49,7 +49,7 @@ const ViewsModal = ({ isOpen, onClose, views, announcementTitle }) => {
                       className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all duration-300"
                     >
                       <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                        <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
                           {view.userName ? view.userName.charAt(0).toUpperCase() : 'U'}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -86,7 +86,7 @@ const ViewsModal = ({ isOpen, onClose, views, announcementTitle }) => {
         <div className="flex justify-end p-4 border-t border-gray-200">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold text-sm shadow-lg hover:shadow-xl"
+            className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 transition-all duration-300 font-semibold text-sm shadow-lg hover:shadow-xl"
           >
             Close
           </button>

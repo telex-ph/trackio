@@ -58,7 +58,8 @@ const LikesModal = ({ isOpen, onClose, likes, announcementTitle }) => {
                             {like.userName || like.userId}
                           </p>
                             <p className="text-xs text-gray-500 truncate">
-                              Viewed on {like.timestamp ? DateTime.fromISO(like.timestamp).toLocaleString(DateTime.DATETIME_MED) : 'Unknown date'}
+                              {/* ✅ FIXED: Changed 'timestamp' to 'acknowledgedAt' and 'Viewed' to 'Liked' */}
+                              Liked on {like.acknowledgedAt ? DateTime.fromISO(like.acknowledgedAt).toLocaleString(DateTime.DATETIME_MED) : 'Unknown date'}
                             </p>
                         </div>
                       </div>

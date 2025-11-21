@@ -177,18 +177,17 @@ const AnnouncementCard = ({
 
     const viewCount = getViewCount(announcement);
     const likeCount = getLikeCount(announcement);
-    const isLiked = hasLiked(announcement);
+    
+    const isLiked = hasLiked(announcement, currentUserId);
     const isAnnouncementUrgent = isUrgent();
 
     return (
-      <div className={`group bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] overflow-hidden border ${
-        isAnnouncementUrgent ? 'border-red-300 border-2' : 'border-gray-200'
-      } h-full flex flex-col relative`}>
+      <div className={`group bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden h-full flex flex-col relative`}>
         
         {/* Urgent Badge */}
         {isAnnouncementUrgent && (
           <div className="absolute top-2 right-2 z-10">
-            <div className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 animate-pulse">
+            <div className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
               <AlertCircle className="w-3 h-3" />
               URGENT
             </div>
@@ -200,7 +199,7 @@ const AnnouncementCard = ({
             <img
               src={announcement.attachment.data}
               alt={announcement.title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               onError={(e) => {
                 e.target.src = placeholderImage;
               }}
@@ -209,10 +208,10 @@ const AnnouncementCard = ({
             <img
               src={placeholderImage}
               alt="Announcement"
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
           
           {/* Pin Button */}
           <button
@@ -223,7 +222,7 @@ const AnnouncementCard = ({
             disabled={!canPinMore && !announcement.isPinned}
             className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 transition-all duration-300 backdrop-blur-sm ${
               announcement.isPinned 
-                ? 'bg-yellow-500 text-white hover:bg-yellow-600 shadow-lg' 
+                ? 'bg-yellow-500 text-white hover:bg-yellow-600' 
                 : !canPinMore
                 ? 'bg-gray-400 text-white cursor-not-allowed'
                 : 'bg-gray-500/80 text-white hover:bg-gray-600'
@@ -293,17 +292,23 @@ const AnnouncementCard = ({
                 <span>{viewCount}</span>
               </div>
               
-              {/* Likes */}
+              {/* Likes Button */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!isLiked && currentUserId) {
+                  if (currentUserId) {
                     onLike(announcement._id, currentUserId);
                   }
                 }}
-                disabled={isLiked || !currentUserId}
+                disabled={!currentUserId}
                 className="flex items-center gap-1 text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed group/like"
-                title={isLiked ? "You liked this" : "Like this announcement"}
+                title={
+                  !currentUserId 
+                    ? "Please log in to like announcements" 
+                    : isLiked 
+                      ? "You liked this announcement" 
+                      : "Like this announcement"
+                }
               >
                 <Heart 
                   className={`w-4 h-4 transition-all ${
@@ -329,9 +334,6 @@ const AnnouncementCard = ({
             </button>
           </div>
         </div>
-
-        {/* Hover Effects */}
-        <div className="absolute inset-0 rounded-xl border-2 border-transparent group-hover:border-blue-200 transition-all duration-300 pointer-events-none"></div>
       </div>
     );
 };

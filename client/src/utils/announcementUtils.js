@@ -1,28 +1,69 @@
-// announcementUtils.js - COMBINED LIKES AND VIEWS SYSTEM
-export const getAnnouncementDepartment = (postedBy = '') => {
-  if (!postedBy) return "HR & Admin";
+export const getAnnouncementDepartment = (postedBy = '') => 
   
-  const postedByLower = postedBy.toLowerCase();
-  
-  if (postedByLower.includes('anjanneth') && postedByLower.includes('bilas')) {
-    return 'Accounting';
-  } else if (postedByLower.includes('maybelle') && postedByLower.includes('cabalar')) {
-    return 'Compliance';
-  } else if (postedByLower.includes('mark jason robes') ||
-           postedByLower.includes('mark jason') ||
-           postedByLower.includes('robes')) {
-    return 'Technical';
-  } else if (postedByLower.includes('fatima') && postedByLower.includes('guzman')) {
-    return 'HR & Admin';
-  } else {
-    return 'HR & Admin';
-  }
-};
+    {
+      //HR & ADMIN 
+      if (!postedBy) return "HR & Admin";
+      const postedByLower = postedBy.toLowerCase();
+      
+      //ACCOUNTING 
+      if (postedByLower.includes('anjanneth') && postedByLower.includes('bilas')) {
+        return 'Accounting';
 
-// Get real user data from database
-export const getRealUserData = () => {
-  try {
-    console.log("🔄 Getting real user data...");
+      //COMPLIANCE  
+      } else if (postedByLower.includes('maybelle') && postedByLower.includes('cabalar')) {
+        return 'Compliance';
+
+      //IT TECHNICAL 
+      } else if (postedByLower.includes('mark jason robes') ||
+              postedByLower.includes('mark jason') ||
+              postedByLower.includes('robes')) {
+        return 'Technical';
+      } else if (postedByLower.includes('fatima') && postedByLower.includes('guzman')) {
+
+        return 'HR & Admin';
+      } else {
+        return 'HR & Admin';
+      }
+    };
+
+
+    export const getRealUserData = () => {
+      try {
+        console.log("Getting real user data...");
+        
+        // IMPORTING ZUSTAND
+        let zustandUser = null;
+
+        try {
+          import('../store/useStore.js')
+            .then(({ useStore }) => {
+              zustandUser = useStore.getState().user;
+            })
+            .catch(() => {
+              console.log("Zustand store not available, using localStorage fallback");
+            });
+        } catch {
+          console.log("Error loading Zustand, using fallback");
+        }
+        
+        // USE ZUSTAND
+        if (zustandUser && (zustandUser._id || zustandUser.employeeId)) {
+          console.log("Using user from Zustand store:", zustandUser);
+          const fullName = zustandUser.name || 
+                          `${zustandUser.firstName || ''} ${zustandUser.lastName || ''}`.trim() ||
+                          'Unknown User';
+      
+      return {
+        userId: zustandUser._id || zustandUser.employeeId,
+        employeeId: zustandUser.employeeId,
+        userName: zustandUser.email || zustandUser.name,
+        fullName: fullName,
+        firstName: zustandUser.firstName,
+        lastName: zustandUser.lastName,
+        email: zustandUser.email,
+        role: zustandUser.role
+      };
+    }
     
     const userFromStore = JSON.parse(localStorage.getItem('user-store') || sessionStorage.getItem('user-store') || '{}');
     const userDirect = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
@@ -61,11 +102,13 @@ export const getRealUserData = () => {
       };
     }
     
+    const fullName = user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown User';
+    
     const result = {
       userId: user._id || user.employeeId,
       employeeId: user.employeeId,
       userName: user.email || user.name,
-      fullName: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+      fullName: fullName,
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
@@ -86,42 +129,29 @@ export const getRealUserData = () => {
   }
 };
 
-// Backward compatibility
 export const getPersistentUserId = () => getRealUserData().userId;
 export const getPersistentUserName = () => getRealUserData().fullName;
 export const getPersistentUserEmployeeId = () => getRealUserData().employeeId;
 export const getPersistentUserDepartment = () => getRealUserData().department || 'Unknown Department';
 
-// COMBINED LIKES AND VIEWS STORAGE SYSTEM
-const getUserInteractionsKey = (userId) => `user_${userId}_interactions`;
+    // Check if user has already viewed an announcement (from database)
+    export const hasUserViewed = async (announcement, userId) => {
+      try {
+        if (!announcement?.views || !Array.isArray(announcement.views)) return false;
+        return announcement.views.some(view => view.userId === userId);
+      } catch (error) {
+        console.error('Error checking user view:', error);
+        return false;
+      }
+    };
 
-export const getUserInteractions = (userId) => {
-  try {
-    const interactions = localStorage.getItem(getUserInteractionsKey(userId));
-    return interactions ? JSON.parse(interactions) : { views: {}, likes: {} };
-  } catch (error) {
-    console.error('Error reading user interactions:', error);
-    return { views: {}, likes: {} };
-  }
-};
-
-export const saveUserInteraction = (userId, announcementId, type) => {
-  try {
-    const interactions = getUserInteractions(userId);
-    interactions[type][announcementId] = true;
-    localStorage.setItem(getUserInteractionsKey(userId), JSON.stringify(interactions));
-  } catch (error) {
-    console.error('Error saving user interaction:', error);
-  }
-};
-
-// Check if user has already viewed/liked an announcement
-export const hasUserViewed = (userId, announcementId) => {
-  const interactions = getUserInteractions(userId);
-  return !!interactions.views[announcementId];
-};
-
-export const hasUserLiked = (userId, announcementId) => {
-  const interactions = getUserInteractions(userId);
-  return !!interactions.likes[announcementId];
-};
+    // Check if user has already liked an announcement (from database)
+    export const hasUserLiked = async (announcement, userId) => {
+      try {
+        if (!announcement?.acknowledgements || !Array.isArray(announcement.acknowledgements)) return false;
+        return announcement.acknowledgements.some(ack => ack.userId === userId);
+      } catch (error) {
+        console.error('Error checking user like:', error);
+        return false;
+      }
+    };

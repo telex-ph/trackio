@@ -9,39 +9,34 @@ import {
   User,
   FileText,
   Edit,
-  Download,
   Paperclip,
-  Image,
   Eye,
   Heart,
-  Users,
   Filter,
   Search,
+  RotateCcw
 } from "lucide-react";
 import { DateTime } from "luxon";
 import { useStore } from "../../store/useStore";
 import api from "../../utils/axios";
 
-// CORRECTED IMPORT PATHS - from announcement folder
 import Notification from "../../components/announcement/Notification";
-import FileViewModal from "../../components/announcement/FileViewModal";
 import FileAttachment from "../../components/announcement/FileAttachment";
 
-// Import Modal Components - CORRECTED PATHS
 import ConfirmationModal from "../../components/modals/ConfirmationModal";
 import AnnouncementPreviewModal from "../../components/announcement/AnnouncementPreview";
 import ViewsModal from "../../components/modals/ViewsModal";
 import LikesModal from "../../components/modals/LikesModal";
+import FileViewModal from "../../components/modals/FileViewModal";
 
 const AdminAnnouncement = () => {
   const [announcements, setAnnouncements] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Filter states
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [priorityFilter, setPriorityFilter] = useState('all');
+  // Filter states - SEARCH ONLY
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('active'); // 'active' or 'inactive'
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -58,10 +53,12 @@ const AdminAnnouncement = () => {
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isViewsModalOpen, setIsViewsModalOpen] = useState(false);
   const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
+  const [isRepostModalOpen, setIsRepostModalOpen] = useState(false);
   const [selectedAnnouncementViews, setSelectedAnnouncementViews] = useState([]);
   const [selectedAnnouncementLikes, setSelectedAnnouncementLikes] = useState([]);
   const [selectedAnnouncementTitle, setSelectedAnnouncementTitle] = useState('');
   const [itemToCancel, setItemToCancel] = useState(null);
+  const [itemToRepost, setItemToRepost] = useState(null);
   const [fileViewModal, setFileViewModal] = useState({
     isOpen: false,
     file: null,
@@ -70,7 +67,6 @@ const AdminAnnouncement = () => {
   const user = useStore((state) => state.user);
   console.log (user)
 
-  // FIXED: Gamitin ang useCallback para iwas infinite loop
   const getUserFullName = useCallback(() => {
     if (user && user.firstName && user.lastName) {
       return `${user.firstName} ${user.lastName}`.trim();
@@ -95,7 +91,6 @@ const AdminAnnouncement = () => {
     };
   }, []);
 
-  // FIXED: Initialize formData once
   const [formData, setFormData] = useState(() => {
     const currentDateTime = getCurrentDateTime();
     const userName = getUserFullName();
@@ -111,24 +106,25 @@ const AdminAnnouncement = () => {
     };
   });
 
-  // Filtered announcements logic
   const filteredAnnouncements = useMemo(() => {
     return announcements.filter(announcement => {
-      const statusMatch = statusFilter === 'all' || announcement.status === statusFilter;
-      const priorityMatch = priorityFilter === 'all' || announcement.priority === priorityFilter;
       const searchMatch = searchTerm === '' || 
         announcement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         announcement.agenda.toLowerCase().includes(searchTerm.toLowerCase()) ||
         announcement.postedBy.toLowerCase().includes(searchTerm.toLowerCase());
       
-      return statusMatch && priorityMatch && searchMatch;
+      return searchMatch;
     });
-  }, [announcements, statusFilter, priorityFilter, searchTerm]);
+  }, [announcements, searchTerm]);
 
-  // Clear filters function
+  // Counts for tabs
+  const activeCount = useMemo(() => 
+    announcements.filter(a => a.status === "Active").length, [announcements]);
+  
+  const inactiveCount = useMemo(() => 
+    announcements.filter(a => a.status === "Inactive").length, [announcements]);
+
   const clearFilters = () => {
-    setStatusFilter('all');
-    setPriorityFilter('all');
     setSearchTerm('');
   };
 
@@ -138,7 +134,6 @@ const AdminAnnouncement = () => {
     setNotification({ message, type, isVisible: true });
   };
 
-  // FIXED: Gamitin ang useCallback para sa fetchAnnouncements
   const fetchAnnouncements = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -153,15 +148,9 @@ const AdminAnnouncement = () => {
       
       const allAnnouncements = Array.isArray(response.data) ? response.data : [];
       console.log("📈 Total announcements from database:", allAnnouncements.length);
-      
-      // For admin view, show all announcements except cancelled ones
-      const activeAnnouncements = allAnnouncements.filter((a) => 
-        a.status !== "Cancelled"
-      );
 
-      console.log("✅ Active announcements from DB:", activeAnnouncements.length);
-
-      const sortedActive = activeAnnouncements.sort((a, b) => {
+      // ✅ REMOVED FILTER - GET ALL ANNOUNCEMENTS INCLUDING INACTIVE
+      const sortedAll = allAnnouncements.sort((a, b) => {
         const priorityA = a.priority === "High" ? 3 : a.priority === "Medium" ? 2 : 1;
         const priorityB = b.priority === "High" ? 3 : b.priority === "Medium" ? 2 : 1;
 
@@ -172,7 +161,7 @@ const AdminAnnouncement = () => {
         return DateTime.fromISO(b.dateTime).toMillis() - DateTime.fromISO(a.dateTime).toMillis();
       });
 
-      setAnnouncements(sortedActive);
+      setAnnouncements(sortedAll);
       
     } catch (err) {
       console.error("❌ Error fetching announcements:", err);
@@ -190,284 +179,303 @@ const AdminAnnouncement = () => {
       
       setError(errorMessage);
       setAnnouncements([]);
+
     } finally {
       setIsLoading(false);
     }
-  }, []);
+    }, 
+    []);
 
-  // FIXED: Isang useEffect na lang para sa initial fetch
-  useEffect(() => {
-    fetchAnnouncements();
-  }, [fetchAnnouncements]);
+    useEffect(() => {
+      fetchAnnouncements();
+    }, [fetchAnnouncements]);
 
-  // FIXED: I-update ang postedBy name kapag nagbago ang user
-  useEffect(() => {
-    const userName = getUserFullName();
-    setFormData(prev => ({
-      ...prev,
-      postedBy: userName
-    }));
-  }, [getUserFullName]);
+    useEffect(() => {
+        const userName = getUserFullName();
+          setFormData(prev => ({
+            ...prev,
+            postedBy: userName
+          }));
+      }, [getUserFullName]);
 
-  const handleViewDetails = async (announcement) => {
-    try {
-      setAnnouncements(prev => 
-        prev.map(a => 
-          a._id === announcement._id 
-            ? { ...a, isLoadingViews: true }
-            : a
-        )
+        const handleViewDetails = async (announcement) => {
+          try {
+            setAnnouncements(prev => 
+              prev.map(a => 
+                a._id === announcement._id 
+                  ? { ...a, isLoadingViews: true }
+                  : a
+              )
       );
 
       const viewsData = Array.isArray(announcement.views) ? announcement.views : [];
       setSelectedAnnouncementViews(viewsData);
       setSelectedAnnouncementTitle(announcement.title);
       setIsViewsModalOpen(true);
-    } catch (error) {
-      console.error("❌ Error fetching view details:", error);
-      showNotification("Failed to load view details", "error");
-    } finally {
-      setAnnouncements(prev => 
-        prev.map(a => 
-          a._id === announcement._id 
-            ? { ...a, isLoadingViews: false }
-            : a
-        )
-      );
-    }
-  };
+      } 
+      catch (error) 
+      {
+        console.error("❌ Error fetching view details:", error);
+        showNotification("Failed to load view details", "error");
+      } finally 
+      {
+        setAnnouncements(prev => 
+          prev.map(a => 
+            a._id === announcement._id 
+              ? { ...a, isLoadingViews: false }
+              : a
+            )
+          );
+        }
+      };
 
-  const handleLikeDetails = async (announcement) => {
-    try {
-      setAnnouncements(prev => 
-        prev.map(a => 
-          a._id === announcement._id 
-            ? { ...a, isLoadingLikes: true }
-            : a
-        )
-      );
+      const handleLikeDetails = async (announcement) => {
+        try {
+          setAnnouncements(prev => 
+            prev.map(a => 
+              a._id === announcement._id 
+                ? { ...a, isLoadingLikes: true }
+                : a
+            )
+          );
 
       const likesData = Array.isArray(announcement.acknowledgements) ? announcement.acknowledgements : [];
       setSelectedAnnouncementLikes(likesData);
       setSelectedAnnouncementTitle(announcement.title);
       setIsLikesModalOpen(true);
-    } catch (error) {
-      console.error("❌ Error fetching like details:", error);
-      showNotification("Failed to load like details", "error");
-    } finally {
+      } 
+      catch (error) 
+      {
+        console.error("❌ Error fetching like details:", error);
+        showNotification("Failed to load like details", "error");
+
+      } 
+      finally 
+      {
       setAnnouncements(prev => 
         prev.map(a => 
           a._id === announcement._id 
             ? { ...a, isLoadingLikes: false }
             : a
-        )
-      );
-    }
-  };
-
-  const handleInputChange = (field, value) => {
-    if (field === "postedBy") return;
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleFileUpload = (file) => {
-    if (file && file.size <= 10 * 1024 * 1024) {
-      setSelectedFile(file);
-    } else {
-      showNotification("File size must be less than 10MB", "error");
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleFileUpload(file);
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragOver(false);
-  };
-
-  const resetForm = () => {
-    const currentDT = getCurrentDateTime();
-    const userName = getUserFullName();
-    setFormData({
-      title: "",
-      dateTime: "",
-      postedBy: userName,
-      agenda: "",
-      priority: "Medium",
-      dateInput: currentDT.dateInput,
-      timeInput: currentDT.timeInput,
-    });
-    setSelectedFile(null);
-    setIsEditMode(false);
-    setEditingId(null);
-  };
-
-  const fileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
-  };
-
-  const handlePreview = () => {
-    if (!formData.title || 
-        !formData.dateInput || 
-        !formData.timeInput || 
-        !formData.postedBy || 
-        !formData.agenda) {
-      showNotification("Please fill in all required fields", "error");
-      return;
-    }
-
-    const combinedDateTime = DateTime.fromISO(`${formData.dateInput}T${formData.timeInput}`);
-    if (!combinedDateTime.isValid) {
-      showNotification("Invalid date or time. Please check your input.", "error");
-      return;
-    }
-
-    setIsPreviewModalOpen(true);
-  };
-
-  // FIXED: I-optimize ang handleSubmit para iwas multiple calls
-  const handleSubmit = async () => {
-    try {
-      const combinedDateTime = DateTime.fromISO(`${formData.dateInput}T${formData.timeInput}`);
-      if (!combinedDateTime.isValid) {
-        showNotification("Invalid date or time format", "error");
-        return;
-      }
-
-      const payload = {
-        title: formData.title,
-        postedBy: formData.postedBy,
-        agenda: formData.agenda,
-        priority: formData.priority,
-        dateTime: combinedDateTime.toISO(),
+            )
+          );
+        }
       };
 
-      if (selectedFile) {
-        if (selectedFile instanceof File) {
-          try {
-            const base64File = await fileToBase64(selectedFile);
-            payload.attachment = {
-              name: selectedFile.name,
-              size: selectedFile.size,
-              type: selectedFile.type,
-              data: base64File,
-            };
-          } catch (error) {
-            console.error("❌ Error converting file to base64:", error);
-            showNotification("Error processing file attachment", "error");
-            return;
-          }
-        } else {
-          payload.attachment = selectedFile;
-        }
-      }
-
-      let response;
-      if (isEditMode) {
-        console.log("✏️ Updating announcement:", editingId);
-        response = await api.put(`/announcements/${editingId}`, payload);
-        
-        if (response.status === 200) {
-          showNotification("Announcement updated successfully!", "success");
-        } else {
-          throw new Error(`Update failed with status: ${response.status}`);
-        }
-      } else {
-        console.log("📝 Creating new announcement");
-        response = await api.post(`/announcements`, { ...payload, status: "Scheduled" });
-        
-        if (response.status === 201) {
-          showNotification("Announcement created successfully!", "success");
-        } else {
-          throw new Error(`Creation failed with status: ${response.status}`);
-        }
-      }
-      resetForm();
-      setIsPreviewModalOpen(false);
-      
-      // Refresh announcements after successful operation
-      await fetchAnnouncements();
-      
-    } catch (error) {
-      console.error("❌ Error submitting announcement:", error);
-      showNotification(`Failed to ${isEditMode ? "update" : "create"} announcement. Please try again.`, "error");
-    }
-  };
-
-  const handleEdit = (announcement) => {
-    setIsEditMode(true);
-    setEditingId(announcement._id);
-
-    const dt = DateTime.fromISO(announcement.dateTime);
-    const userName = getUserFullName();
-    
-    setFormData({
-      title: announcement.title,
-      dateTime: announcement.dateTime,
-      postedBy: userName,
-      agenda: announcement.agenda,
-      priority: announcement.priority,
-      dateInput: dt.toISODate(),
-      timeInput: dt.toFormat("HH:mm"),
-    });
-    
-    if (announcement.attachment) {
-      setSelectedFile(announcement.attachment);
-    } else {
-      setSelectedFile(null);
-    }
-  };
-
-  const handleCancelClick = (id) => {
-    setItemToCancel(id);
-    setIsConfirmationModalOpen(true);
-  };
-
-  const handleConfirmCancel = async () => {
-    try {
-      const announcementToCancel = announcements.find(a => a._id === itemToCancel);
-      if (!announcementToCancel) {
-        showNotification("Announcement not found", "error");
-        return;
-      }
-
-      console.log("🗑️ Cancelling announcement:", itemToCancel);
-      
-      const payload = {
-        status: "Cancelled",
-        cancelledAt: new Date().toISOString(),
-        cancelledBy: getUserFullName(),
-        updatedAt: new Date().toISOString()
+      const handleInputChange = (field, value) => {
+        if (field === "postedBy") return;
+        setFormData((prev) => ({ ...prev, [field]: value }));
       };
 
-      let response;
-      try {
-        response = await api.patch(`/announcements/${itemToCancel}`, payload);
-        console.log("✅ PATCH response:", response.data);
-      } catch (patchError) {
-        console.log("🔄 PATCH failed, trying PUT:", patchError);
-        
-        const putPayload = {
-          ...announcementToCancel,
-          status: "Cancelled",
-          cancelledAt: new Date().toISOString(),
-          cancelledBy: getUserFullName(),
-          updatedAt: new Date().toISOString()
+      const handleFileUpload = (file) => {
+        if (file && file.size <= 10 * 1024 * 1024) {
+          setSelectedFile(file);
+        } else {
+          showNotification("File size must be less than 10MB", "error");
+        }
+      };
+
+          const handleDrop = (e) => {
+            e.preventDefault();
+            setIsDragOver(false);
+            const file = e.dataTransfer.files[0];
+            if (file) handleFileUpload(file);
+          };
+
+          const handleDragOver = (e) => {
+            e.preventDefault();
+            setIsDragOver(true);
+          };
+
+          const handleDragLeave = () => {
+            setIsDragOver(false);
+          };
+
+          const resetForm = () => {
+          const currentDT = getCurrentDateTime();
+          const userName = getUserFullName();
+
+            setFormData({
+              title: "",
+              dateTime: "",
+              postedBy: userName,
+              agenda: "",
+              priority: "Medium",
+              dateInput: currentDT.dateInput,
+              timeInput: currentDT.timeInput,
+            });
+
+            setSelectedFile(null);
+            setIsEditMode(false);
+            setEditingId(null);
+          };
+
+          const fileToBase64 = (file) => {
+            return new Promise((resolve, reject) => {
+
+          const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (error) => reject(error);
+          });
         };
+
+        const handlePreview = () => {
+          if (!formData.title || 
+              !formData.dateInput || 
+              !formData.timeInput || 
+              !formData.postedBy || 
+              !formData.agenda) 
+            {
+              showNotification("Please fill in all required fields", "error");
+
+              return;
+            }
+
+        const combinedDateTime = DateTime.fromISO(`${formData.dateInput}T${formData.timeInput}`);
+           if (!combinedDateTime.isValid) 
+            {
+              showNotification("Invalid date or time. Please check your input.", "error");
+
+              return;
+            }
+
+          setIsPreviewModalOpen(true);
+        };
+
+        const handleSubmit = async () => {
+          try {
+            const combinedDateTime = DateTime.fromISO(`${formData.dateInput}T${formData.timeInput}`);
+
+            if (!combinedDateTime.isValid) {
+              showNotification("Invalid date or time format", "error");
+
+              return;
+            }
+
+          const payload = {
+            title: formData.title,
+            postedBy: formData.postedBy,
+            agenda: formData.agenda,
+            priority: formData.priority,
+            dateTime: combinedDateTime.toISO(),
+          };
+
+              if (selectedFile) {
+                if (selectedFile instanceof File) {
+                  try {
+                    const base64File = await fileToBase64(selectedFile);
+                    payload.attachment = {
+                      name: selectedFile.name,
+                      size: selectedFile.size,
+                      type: selectedFile.type,
+                      data: base64File,
+                    };
+                  } catch (error) {
+                    console.error("Error converting file to base64:", error);
+                    showNotification("Error processing file attachment", "error");
+                    return;
+                  }
+                } else 
+                  {
+                  payload.attachment = selectedFile;
+                  }
+                }
+      
+          let response;
+          if (isEditMode) {
+            console.log("✏️ Updating announcement:", editingId);
+            response = await api.put(`/announcements/${editingId}`, payload);
+        
+                  if (response.status === 200) {
+                    showNotification("Announcement updated successfully!", "success");
+                  } else {
+                    throw new Error(`Update failed with status: ${response.status}`);
+                  }
+                  } 
+                  else {
+                    console.log("📝 Creating new announcement");
+                    // ✅ LAGING ACTIVE KAPAG PINOPOST
+                    response = await api.post(`/announcements`, { ...payload, status: "Active" });
+                  
+                  if (response.status === 201) {
+                    showNotification("Announcement posted successfully!", "success");
+                  } else {
+                    throw new Error(`Creation failed with status: ${response.status}`);
+                  }
+                  }
+                  resetForm();
+                  setIsPreviewModalOpen(false);
+    
+                  await fetchAnnouncements();
+      
+                  } catch (error) {
+                    console.error("❌ Error submitting announcement:", error);
+                    showNotification(`Failed to ${isEditMode ? "update" :
+                    "create"} announcement. Please try again.`, "error");
+                  }
+                };
+
+          const handleEdit = (announcement) => {
+            setIsEditMode(true);
+            setEditingId(announcement._id);
+
+          const dt = DateTime.fromISO(announcement.dateTime);
+          const userName = getUserFullName();
+    
+            setFormData({
+              title: announcement.title,
+              dateTime: announcement.dateTime,
+              postedBy: userName,
+              agenda: announcement.agenda,
+              priority: announcement.priority,
+              dateInput: dt.toISODate(),
+              timeInput: dt.toFormat("HH:mm"),
+            });
+    
+            if (announcement.attachment) {
+              setSelectedFile(announcement.attachment);
+            } else {
+              setSelectedFile(null);
+            }
+          };
+
+          const handleCancelClick = (id) => {
+            setItemToCancel(id);
+            setIsConfirmationModalOpen(true);
+          };
+
+          const handleConfirmCancel = async () => {
+            try {
+            const announcementToCancel = announcements.find(a => a._id === itemToCancel);
+            if (!announcementToCancel) {
+              showNotification("Announcement not found", "error");
+              return;
+            }
+
+          console.log("🗑️ Cancelling announcement:", itemToCancel);
+      
+          const payload = {
+            status: "Inactive",  // ✅ PALITAN NG INACTIVE
+            cancelledAt: new Date().toISOString(),
+            cancelledBy: getUserFullName(),
+            updatedAt: new Date().toISOString()
+          };
+
+          let response;
+            try {
+              response = await api.patch(`/announcements/${itemToCancel}`, payload);
+              console.log("✅ PATCH response:", response.data);
+            } catch (patchError) {
+              console.log("🔄 PATCH failed, trying PUT:", patchError);
+        
+          const putPayload = {
+            ...announcementToCancel,
+            status: "Inactive",  // ✅ PALITAN NG INACTIVE
+            cancelledAt: new Date().toISOString(),
+            cancelledBy: getUserFullName(),
+            updatedAt: new Date().toISOString()
+          };
         
         delete putPayload._id;
         delete putPayload.__v;
@@ -478,8 +486,8 @@ const AdminAnnouncement = () => {
 
       showNotification("Announcement cancelled successfully!", "success");
       
-      // Remove the cancelled announcement from local state immediately
-      setAnnouncements(prev => prev.filter(a => a._id !== itemToCancel));
+      // Refresh announcements
+      await fetchAnnouncements();
       
     } catch (error) {
       console.error("❌ Error cancelling announcement:", error);
@@ -498,6 +506,76 @@ const AdminAnnouncement = () => {
     } finally {
       setIsConfirmationModalOpen(false);
       setItemToCancel(null);
+    }
+  };
+
+  // NEW: Repost functionality
+  const handleRepostClick = (id) => {
+    setItemToRepost(id);
+    setIsRepostModalOpen(true);
+  };
+
+  const handleConfirmRepost = async () => {
+    try {
+      const announcementToRepost = announcements.find(a => a._id === itemToRepost);
+      if (!announcementToRepost) {
+        showNotification("Announcement not found", "error");
+        return;
+      }
+
+      console.log("🔄 Reposting announcement:", itemToRepost);
+      
+      const payload = {
+        status: "Active",  // ✅ BALIK SA ACTIVE
+        updatedAt: new Date().toISOString(),
+        cancelledAt: null,
+        cancelledBy: null
+      };
+
+      let response;
+      try {
+        response = await api.patch(`/announcements/${itemToRepost}`, payload);
+        console.log("✅ PATCH response:", response.data);
+      } catch (patchError) {
+        console.log("🔄 PATCH failed, trying PUT:", patchError);
+  
+        const putPayload = {
+          ...announcementToRepost,
+          status: "Active",  // ✅ BALIK SA ACTIVE
+          updatedAt: new Date().toISOString(),
+          cancelledAt: null,
+          cancelledBy: null
+        };
+      
+        delete putPayload._id;
+        delete putPayload.__v;
+        
+        response = await api.put(`/announcements/${itemToRepost}`, putPayload);
+        console.log("✅ PUT response:", response.data);
+      }
+
+      showNotification("Announcement reposted successfully!", "success");
+      
+      // Refresh announcements
+      await fetchAnnouncements();
+      
+    } catch (error) {
+      console.error("❌ Error reposting announcement:", error);
+      console.error("📋 Error response:", error.response?.data);
+      
+      let errorMessage = "Failed to repost announcement. Please try again.";
+      if (error.response?.status === 404) {
+        errorMessage = "Announcement not found in database.";
+      } else if (error.response?.status === 500) {
+        errorMessage = "Server error. Please try again later.";
+      } else if (error.message?.includes("Network Error")) {
+        errorMessage = "Cannot connect to server. Please check your connection.";
+      }
+      
+      showNotification(errorMessage, "error");
+    } finally {
+      setIsRepostModalOpen(false);
+      setItemToRepost(null);
     }
   };
 
@@ -552,9 +630,8 @@ const AdminAnnouncement = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "Completed": return "bg-green-100 text-green-700";
-      case "Cancelled": return "bg-red-100 text-red-600";
-      case "Scheduled": return "bg-blue-100 text-blue-600";
+      case "Active": return "bg-green-100 text-green-700";
+      case "Inactive": return "bg-red-100 text-red-600";
       default: return "bg-gray-100 text-gray-600";
     }
   };
@@ -578,8 +655,14 @@ const AdminAnnouncement = () => {
     
     const diff = DateTime.local().diff(combinedDateTime, ["years", "months", "days", "hours", "minutes", "seconds"]);
 
-    if (diff.years > 0) return `${Math.floor(diff.years)} year${Math.floor(diff.years) > 1 ? "s" : ""} ago`;
-    if (diff.months > 0) return `${Math.floor(diff.months)} month${Math.floor(diff.months) > 1 ? "s" : ""} ago`;
+    if (diff.years > 0) 
+    return `${Math.floor(diff.years)} 
+    year${Math.floor(diff.years) > 1 ? "s" : ""} ago`;
+
+    if (diff.months > 0) 
+    return `${Math.floor(diff.months)} 
+    month${Math.floor(diff.months) > 1 ? "s" : ""} ago`;
+
     if (diff.days > 0) return `${Math.floor(diff.days)} day${Math.floor(diff.days) > 1 ? "s" : ""} ago`;
     if (diff.hours > 0) return `${Math.floor(diff.hours)} hour${Math.floor(diff.hours) > 1 ? "s" : ""} ago`;
     if (diff.minutes > 0) return `${Math.floor(diff.minutes)} minute${Math.floor(diff.minutes) > 1 ? "s" : ""} ago`;
@@ -604,6 +687,14 @@ const AdminAnnouncement = () => {
         onConfirm={handleConfirmCancel}
         message="Are you sure you want to cancel this announcement?"
         confirmText="Cancel Announcement"
+      />
+
+      <ConfirmationModal
+        isOpen={isRepostModalOpen}
+        onClose={() => setIsRepostModalOpen(false)}
+        onConfirm={handleConfirmRepost}
+        message="Are you sure you want to repost this announcement? It will become active again and visible to all users."
+        confirmText="Repost Announcement"
       />
 
       <AnnouncementPreviewModal
@@ -830,7 +921,7 @@ const AdminAnnouncement = () => {
           </div>
         </div>
 
-        {/* RIGHT COLUMN - ACTIVE ANNOUNCEMENTS WITH FILTERS */}
+        {/* RIGHT COLUMN - ANNOUNCEMENTS MANAGEMENT WITH TABS */}
         <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl p-4 sm:p-6 border border-white/20">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
             <div className="flex items-center gap-2">
@@ -838,52 +929,25 @@ const AdminAnnouncement = () => {
                 <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
               </div>
               <h3 className="text-lg sm:text-xl font-bold text-gray-800">
-                Active Announcements
+                Announcements Management
               </h3>
             </div>
             
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-              {/* FILTER SECTION */}
+              {/* SEARCH SECTION */}
               <div className="flex items-center gap-1 flex-wrap">
-                {/* Search Input */}
                 <div className="relative">
                   <Search className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 transform -translate-y-1/2" />
                   <input
                     type="text"
-                    placeholder="Search..."
+                    placeholder="Search announcements..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-7 pr-2 py-1 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white w-24"
+                    className="pl-7 pr-2 py-1 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white w-32"
                   />
                 </div>
                 
-                {/* Status Filter */}
-                <select 
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-2 py-1 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white"
-                >
-                  <option value="all">All Status</option>
-                  <option value="Active">Active</option>
-                  <option value="Scheduled">Scheduled</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Cancelled">Cancelled</option>
-                </select>
-                
-                {/* Priority Filter */}
-                <select 
-                  value={priorityFilter}
-                  onChange={(e) => setPriorityFilter(e.target.value)}
-                  className="px-2 py-1 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white"
-                >
-                  <option value="all">All Priority</option>
-                  <option value="High">High</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Low">Low</option>
-                </select>
-                
-                {/* Clear Filters Button */}
-                {(statusFilter !== 'all' || priorityFilter !== 'all' || searchTerm !== '') && (
+                {searchTerm !== '' && (
                   <button
                     onClick={clearFilters}
                     className="px-2 py-1 text-xs text-gray-600 hover:text-gray-800 transition-colors flex items-center gap-1"
@@ -894,9 +958,29 @@ const AdminAnnouncement = () => {
                 )}
               </div>
               
-              <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
-                {filteredAnnouncements.length} {statusFilter !== 'all' ? statusFilter : 'Active'}
-              </span>
+              {/* TABS */}
+              <div className="flex bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setActiveTab('active')}
+                  className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
+                    activeTab === 'active' 
+                      ? 'bg-white text-blue-600 shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  Active ({activeCount})
+                </button>
+                <button
+                  onClick={() => setActiveTab('inactive')}
+                  className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
+                    activeTab === 'inactive' 
+                      ? 'bg-white text-red-600 shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  Inactive ({inactiveCount})
+                </button>
+              </div>
             </div>
           </div>
 
@@ -908,20 +992,48 @@ const AdminAnnouncement = () => {
             <div className="flex items-center justify-center py-6 text-red-500 italic text-sm">
               {error}
             </div>
-          ) : filteredAnnouncements.length > 0 ? (
+          ) : filteredAnnouncements.filter(a => 
+            activeTab === 'active' ? a.status === 'Active' : a.status === 'Inactive'
+          ).length > 0 ? (
             <div className="space-y-3 overflow-y-auto max-h-[60vh] pr-1">
-              {filteredAnnouncements.map((a) => (
+              {filteredAnnouncements
+                .filter(a => activeTab === 'active' ? a.status === 'Active' : a.status === 'Inactive')
+                .map((a) => (
                 <div
                   key={a._id}
-                  className={`group p-3 rounded-xl shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 bg-gradient-to-br from-white to-gray-50 border border-gray-100`}
+                  className={`group p-3 rounded-xl shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 ${
+                    a.status === 'Inactive' 
+                      ? 'bg-gray-100 border border-gray-300 opacity-90' 
+                      : 'bg-gradient-to-br from-white to-gray-50 border border-gray-100'
+                  }`}
                 >
+                  {/* INACTIVE BADGE */}
+                  {a.status === 'Inactive' && (
+                    <div className="flex justify-between items-center mb-2 p-2 bg-red-50 rounded-lg border border-red-200">
+                      <div className="flex items-center gap-2">
+                        <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-medium">
+                          🗑️ INACTIVE
+                        </span>
+                        <span className="text-xs text-red-600">
+                          Cancelled by {a.cancelledBy} • {formatTimeAgo(a.cancelledAt)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="flex flex-col sm:flex-row justify-between items-start mb-2">
                     <div className="flex items-start gap-2 w-full">
-                      <div className="p-1 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors mt-1">
-                        <Bell className="w-3 h-3 text-indigo-600" />
+                      <div className={`p-1 rounded-lg group-hover:bg-indigo-200 transition-colors mt-1 ${
+                        a.status === 'Inactive' ? 'bg-gray-300' : 'bg-indigo-100'
+                      }`}>
+                        <Bell className={`w-3 h-3 ${
+                          a.status === 'Inactive' ? 'text-gray-600' : 'text-indigo-600'
+                        }`} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-bold text-gray-800 mb-1 group-hover:text-indigo-600 transition-colors truncate">
+                        <h4 className={`text-sm font-bold mb-1 group-hover:text-indigo-600 transition-colors truncate ${
+                          a.status === 'Inactive' ? 'text-gray-600' : 'text-gray-800'
+                        }`}>
                           {a.title}
                         </h4>
                         <div className="flex flex-wrap items-center gap-1 mb-2">
@@ -975,7 +1087,7 @@ const AdminAnnouncement = () => {
                         title="View who viewed this announcement"
                       >
                         <Eye className="w-3 h-3" />
-                        <span>{Array.isArray(a.views) ? a.views.length : 0}</span>
+                        <span>{Array.isArray(a.views) ? a.views.length : 0} views</span>
                         {a.isLoadingViews && (
                           <div className="ml-1 w-2 h-2 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                         )}
@@ -987,7 +1099,7 @@ const AdminAnnouncement = () => {
                         title="View who liked this announcement"
                       >
                         <Heart className="w-3 h-3 text-red-500" fill="currentColor" />
-                        <span>{Array.isArray(a.acknowledgements) ? a.acknowledgements.length : 0}</span>
+                        <span>{Array.isArray(a.acknowledgements) ? a.acknowledgements.length : 0} Likes</span>
                         {a.isLoadingLikes && (
                           <div className="ml-1 w-2 h-2 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
                         )}
@@ -1008,38 +1120,56 @@ const AdminAnnouncement = () => {
                       </div>
                     )}
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleCancelClick(a._id)}
-                      className="flex-1 bg-white border border-red-500 text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-all font-medium text-xs shadow-sm hover:shadow"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => handleEdit(a)}
-                      className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-1.5 rounded-lg hover:from-red-600 hover:to-red-700 transition-all font-medium text-xs shadow-sm hover:shadow"
-                    >
-                      Edit
-                    </button>
-                  </div>
+
+                  {/* DIFFERENT BUTTONS FOR ACTIVE vs INACTIVE */}
+                  {a.status !== 'Inactive' ? (
+                    // ACTIVE ANNOUNCEMENT BUTTONS (Cancel & Edit)
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleCancelClick(a._id)}
+                        className="flex-1 bg-white border border-red-500 text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-all font-medium text-xs shadow-sm hover:shadow"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleEdit(a)}
+                        className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-1.5 rounded-lg hover:from-red-600 hover:to-red-700 transition-all font-medium text-xs shadow-sm hover:shadow"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  ) : (
+                    // INACTIVE ANNOUNCEMENT BUTTONS (Repost)
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleRepostClick(a._id)}
+                        className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white p-1.5 rounded-lg hover:from-green-600 hover:to-green-700 transition-all font-medium text-xs shadow-sm hover:shadow flex items-center justify-center gap-1"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        Repost
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-6 text-gray-500 italic text-sm">
-              {statusFilter !== 'all' || priorityFilter !== 'all' || searchTerm !== '' ? (
+              {searchTerm !== '' ? (
                 <>
                   <Filter className="w-8 h-8 text-gray-400 mb-2" />
-                  <p className="text-center">No announcements match your filters.</p>
+                  <p className="text-center">No announcements match your search.</p>
                   <button
                     onClick={clearFilters}
                     className="mt-2 px-3 py-1 text-xs text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
                   >
-                    Clear filters
+                    Clear search
                   </button>
                 </>
-              ) : (
+              ) : activeTab === 'active' ? (
                 <p>No active announcements found.</p>
+              ) : (
+                <p>No inactive announcements found.</p>
               )}
             </div>
           )}
