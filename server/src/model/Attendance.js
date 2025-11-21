@@ -146,12 +146,12 @@ class Attendance {
    * @returns {Promise<Array>} A list of today's attendance records for the user,
    *   including the user details (via lookup).
    */
-  static async getById(id, sort = "desc") {
+  static async getById(id, sort = "asc") {
     if (!id) throw new Error("ID is required");
 
     const nowPH = DateTime.now().setZone("Asia/Manila");
-    const todayStart = nowPH.startOf("day").toUTC().toJSDate();
-    const todayEnd = nowPH.endOf("day").toUTC().toJSDate();
+    const todayStartUTC = nowPH.startOf("day").toUTC().toJSDate();
+    const todayEndUTC = nowPH.endOf("day").toUTC().toJSDate();
 
     const db = await connectDB();
     const collection = db.collection(this.#collection);
@@ -163,8 +163,7 @@ class Attendance {
         {
           $match: {
             userId: new ObjectId(id),
-            shiftStart: { $lte: todayEnd },
-            shiftEnd: { $gte: todayStart },
+            shiftDate: { $gte: todayStartUTC, $lte: todayEndUTC },
           },
         },
         { $sort: { shiftStart: sortOrder } },
