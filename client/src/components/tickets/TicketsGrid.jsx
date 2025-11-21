@@ -51,10 +51,23 @@ const calculateTimeRemaining = (resolutionTime, pausedAt) => {
   const isOverdue = timeDiff < 0;
 
   const totalMinutes = Math.abs(Math.floor(timeDiff / (1000 * 60)));
-  const hours = Math.floor(totalMinutes / 60);
+  const totalHours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
 
-  const timeText = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+  // Convert to days, hours, minutes if more than 24h
+  let timeText = "";
+  if (totalHours >= 24) {
+    const days = Math.floor(totalHours / 24);
+    const hours = totalHours % 24;
+    timeText = `${days}d${hours ? ` ${hours}h` : ""}${
+      minutes ? ` ${minutes}m` : ""
+    }`;
+  } else if (totalHours > 0) {
+    timeText = `${totalHours}h${minutes ? ` ${minutes}m` : ""}`;
+  } else {
+    timeText = `${minutes}m`;
+  }
+
   const percentage = isOverdue
     ? 100
     : Math.min(100, 100 - (timeDiff / (1000 * 60 * 60 * 24)) * 100);
@@ -63,7 +76,7 @@ const calculateTimeRemaining = (resolutionTime, pausedAt) => {
     timeText,
     isOverdue,
     percentage: Math.max(0, Math.min(100, percentage)),
-    hours,
+    hours: totalHours,
     minutes,
   };
 };
@@ -89,12 +102,7 @@ const timeAgo = (dateString) => {
 };
 
 // --- TicketsGrid Component ---
-const TicketsGrid = ({
-  data,
-  isLoading,
-  tableRef,
-  onViewDetails,
-}) => {
+const TicketsGrid = ({ data, isLoading, tableRef, onViewDetails }) => {
   const [statusFilter, setStatusFilter] = useState("");
 
   // Filtered data based on status
