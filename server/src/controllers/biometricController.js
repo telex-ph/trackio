@@ -83,6 +83,8 @@ export const getEvents = async (req, res) => {
             const attendances = await Attendance.getById(userId, "asc");
             const attendance = attendances[0];
 
+            console.log(attendances);
+
             // TODO: remove soon;
             await User.update(userId, "isValidEmployeeId", true);
 
@@ -93,7 +95,8 @@ export const getEvents = async (req, res) => {
               const status = attendance.status;
 
               const shiftEnd = DateTime.fromJSDate(attendance.shiftEnd).setZone(
-                "Asia/Manila"
+                "Asia/Manila",
+                { keepLocalTime: false }
               );
               const nowTime = DateTime.now().setZone("Asia/Manila");
 
