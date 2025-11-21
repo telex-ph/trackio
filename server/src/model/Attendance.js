@@ -146,7 +146,7 @@ class Attendance {
    * @returns {Promise<Array>} A list of today's attendance records for the user,
    *   including the user details (via lookup).
    */
-  static async getById(id) {
+  static async getById(id, sortOrder = "desc") {
     if (!id) {
       throw new Error("ID is required");
     }
@@ -159,6 +159,8 @@ class Attendance {
     const db = await connectDB();
     const collection = db.collection(this.#collection);
 
+    const sortOrder = sort === "asc" ? 1 : -1;
+
     const attendances = await collection
       .aggregate([
         {
@@ -170,7 +172,7 @@ class Attendance {
             ],
           },
         },
-        { $sort: { createdAt: -1 } },
+        { $sort: { createdAt: sortOrder } },
         {
           $lookup: {
             from: "users",
