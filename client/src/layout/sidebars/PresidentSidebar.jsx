@@ -12,6 +12,8 @@ import {
   BarChart,
   Video,
   Calendar,
+  BarChart2,
+  ClipboardList,
 } from "lucide-react";
 import SidebarLink from "../sidebars/SidebarLink";
 import CustomCollapse from "../sidebars/CustomCollapse";
@@ -137,7 +139,7 @@ const PresidentSidebar = ({
       />
     </CustomCollapse>
     <CustomCollapse
-      icon={<Clock className="w-5 h-5" />}
+      icon={<ClipboardList className="w-5 h-5" />}
       label="Ticket"
       isCollapsed={isCollapsed}
       open={activeDropdown === "tickets"}
@@ -147,13 +149,13 @@ const PresidentSidebar = ({
     >
       <SidebarLink
         to="/president/ticket/list"
-        icon={Calendar}
+        icon={List}
         label="List"
         isCollapsed={isCollapsed}
       />
       <SidebarLink
         to={`/president/ticket/analytics`}
-        icon={List}
+        icon={BarChart2}
         label="Analytics"
         isCollapsed={isCollapsed}
       />
