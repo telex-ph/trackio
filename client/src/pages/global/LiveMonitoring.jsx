@@ -12,7 +12,8 @@ const SOCKET_URL =
   import.meta.env.VITE_API_RENDER_BASE_URL || "http://localhost:3000";
 
 export default function LiveBreaks() {
-  const [statuses, setStatuses] = useState([]);
+  const [onBreak, setOnBreaks] = useState([]);
+  const [overBreaks, setOverBreaks] = useState([]); // ⬅ NEW
   const [now, setNow] = useState(DateTime.now().setZone("Asia/Manila"));
   const maxBreakTime = 5400000; // 1hr 30min in ms
 
@@ -36,8 +37,14 @@ export default function LiveBreaks() {
       reconnection: true,
     });
 
-    socket.on("statuses", (statuses) => {
-      setStatuses(statuses);
+    socket.on("on-break", (onBreak) => {
+      console.log("on-break: ", onBreak);
+      setOnBreaks(onBreak);
+    });
+
+    socket.on("over-break", (overBreak) => {
+      console.log("over-break: ", overBreak);
+      setOverBreaks(overBreak);
     });
 
     return () => {
@@ -52,44 +59,56 @@ export default function LiveBreaks() {
     return () => clearInterval(interval);
   }, []);
 
-  const processedStatuses = statuses
-    .map((status) => {
-      const breaksCount = status.breaks?.length - 1;
-      // if (!breaksCount) return null;
-      const lastBreakStart = status.breaks[breaksCount]?.start;
-      // if (!lastBreakStart) return null;
+  const formatMilliseconds = (ms) => {
+    const totalMinutes = Math.floor(ms / 1000 / 60);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
 
-      const percentage = calculatePercentage(
-        status.totalBreakTime,
-        lastBreakStart
-      );
+    const hDisplay = hours > 0 ? `${hours}h ` : "";
+    const mDisplay = minutes > 0 ? `${minutes}m` : "";
 
-      const breakDurationMs =
-        status.totalBreakTime +
-        now.toMillis() -
-        DateTime.fromISO(lastBreakStart).toMillis();
+    return `${hDisplay}${mDisplay}`.trim();
+  };
 
-      if (isNaN(breakDurationMs)) return null;
+  // Shared processor for both panels
+  const processRecords = (records) =>
+    records
+      .map((status) => {
+        const breaksCount = status.breaks?.length - 1;
+        const lastBreakStart = status.breaks[breaksCount]?.start;
 
-      const duration = Duration.fromMillis(breakDurationMs).shiftTo(
-        "hours",
-        "minutes"
-      );
-      const formattedTime = `${Math.floor(duration.hours)}h ${Math.floor(
-        duration.minutes
-      )}m`;
+        if (!lastBreakStart) return null;
 
-      return { ...status, percentage, formattedTime };
-    })
-    .filter(Boolean);
+        const percentage = calculatePercentage(
+          status.totalBreakTime,
+          lastBreakStart
+        );
 
-  const onBreakStatuses = processedStatuses
-    .filter((s) => s.percentage < 100 && s.status == STATUS.ON_BREAK)
-    .sort((a, b) => b.percentage - a.percentage);
+        const breakDurationMs =
+          status.totalBreakTime +
+          now.toMillis() -
+          DateTime.fromISO(lastBreakStart).toMillis();
 
-  const overBreakStatuses = processedStatuses
-    .filter((s) => s.percentage >= 100)
-    .sort((a, b) => b.percentage - a.percentage);
+        if (isNaN(breakDurationMs)) return null;
+
+        const duration = Duration.fromMillis(breakDurationMs).shiftTo(
+          "hours",
+          "minutes"
+        );
+
+        const formattedTime = `${Math.floor(duration.hours)}h ${Math.floor(
+          duration.minutes
+        )}m`;
+
+        return { ...status, percentage, formattedTime };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.percentage - a.percentage);
+
+  // Process on-break and overbreak records
+  const onBreakStatuses = processRecords(
+    onBreak.filter((s) => s.status === STATUS.ON_BREAK)
+  );
 
   return (
     <section
@@ -99,17 +118,12 @@ export default function LiveBreaks() {
         backgroundPosition: "center",
       }}
     >
-      {/* <section>
-        <ServerTime />
-      </section> */}
-
-      <div className="flex gap-5 p-5  h-screen">
-        {/* LEFT PANEL: ON BREAK */}
+      <div className="flex gap-5 p-5 h-screen">
         <div className="flex-1 p-5 rounded-sm">
           <h2 className="mb-4 text-gray-700 border p-2 border-light bg-gray-50 rounded-md">
             Live On Break (max: 1hr 30min)
           </h2>
-          <section className="space-y-3">
+          <section className="grid grid-cols-4 grid-rows-10 grid-flow-col gap-3">
             <AnimatePresence mode="popLayout">
               {onBreakStatuses.map((status, key) => (
                 <motion.div
@@ -126,21 +140,18 @@ export default function LiveBreaks() {
                   ></div>
                   <div className="w-full flex items-center gap-2 px-7 relative z-10">
                     <div className="flex gap-3">
-                      <h2>{key + 1}</h2>
-                      <h2 className="flex-1 text-center">
+                      <h4>{key + 1}</h4>
+                      <h4 className="flex-1 text-center">
                         {status.firstName} {status.lastName}
-                      </h2>
+                      </h4>
                     </div>
-                    {/* <h3 className="text-center flex-1">
-                      {status.percentage.toFixed(1)}%
-                    </h3> */}
-                    <h3 className="text-center flex-1">
+                    <h4 className="text-center flex-1">
                       {status?.percentage <= 0
                         ? 0.0
                         : status?.percentage.toFixed(1)}
                       %
-                    </h3>
-                    <h3>{status.formattedTime}</h3>
+                    </h4>
+                    <h4>{status.formattedTime}</h4>
                   </div>
                 </motion.div>
               ))}
@@ -148,14 +159,13 @@ export default function LiveBreaks() {
           </section>
         </div>
 
-        {/* RIGHT PANEL: OVER BREAK */}
-        <div className="flex-1 p-5 rounded-sm">
+        <div className="flex-1 p-5 rounded-sm overflow-y-scroll">
           <h2 className="mb-4 text-gray-700 border p-2 border-light bg-gray-50 rounded-md">
             Live Over Break
           </h2>
-          {/* <section className="space-y-3">
+          <section className="grid grid-cols-4 grid-rows-10 grid-flow-col gap-3">
             <AnimatePresence mode="popLayout">
-              {overBreakStatuses.map((status, key) => (
+              {overBreaks.map((status, key) => (
                 <motion.div
                   key={status._id}
                   layout
@@ -166,20 +176,17 @@ export default function LiveBreaks() {
                 >
                   <div className="w-full flex items-center gap-2 px-7 relative z-10">
                     <div className="flex gap-3">
-                      <h2>{key + 1})</h2>
-                      <h2 className="flex-1 text-center">
+                      <h4>{key + 1})</h4>
+                      <h4 className="flex-1 text-center">
                         {status.firstName} {status.lastName}
-                      </h2>
+                      </h4>
                     </div>
-                    <h3 className="text-center flex-1">
-                      {status.percentage.toFixed(1)}%
-                    </h3>
-                    <h3>{status.formattedTime}</h3>
+                    <h4>{formatMilliseconds(status?.totalBreakTime)}</h4>
                   </div>
                 </motion.div>
               ))}
             </AnimatePresence>
-          </section> */}
+          </section>
         </div>
       </div>
     </section>
