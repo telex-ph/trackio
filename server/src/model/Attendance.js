@@ -147,12 +147,9 @@ class Attendance {
    *   including the user details (via lookup).
    */
   static async getById(id, sort = "desc") {
-    if (!id) {
-      throw new Error("ID is required");
-    }
+    if (!id) throw new Error("ID is required");
 
     const nowPH = DateTime.now().setZone("Asia/Manila");
-
     const todayStart = nowPH.startOf("day").toJSDate();
     const todayEnd = nowPH.endOf("day").toJSDate();
 
@@ -166,13 +163,11 @@ class Attendance {
         {
           $match: {
             userId: new ObjectId(id),
-            $or: [
-              { shiftStart: { $lte: todayEnd } },
-              { shiftEnd: { $gte: todayStart } },
-            ],
+            shiftStart: { $lte: todayEnd },
+            shiftEnd: { $gte: todayStart },
           },
         },
-        { $sort: { createdAt: sortOrder } },
+        { $sort: { shiftStart: sortOrder } },
         {
           $lookup: {
             from: "users",
@@ -184,6 +179,7 @@ class Attendance {
         { $unwind: "$user" },
       ])
       .toArray();
+
     return attendances;
   }
 

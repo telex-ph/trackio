@@ -80,8 +80,8 @@ export const getEvents = async (req, res) => {
           const user = await User.getById(ac.employeeNoString);
           if (user) {
             const userId = user._id.toString();
-            const [attendance] = await Attendance.getById(userId, "asc");
-            console.log(attendance);
+            const attendances = await Attendance.getById(userId, "asc");
+            const attendance = attendances[0];
 
             // TODO: remove soon;
             await User.update(userId, "isValidEmployeeId", true);
