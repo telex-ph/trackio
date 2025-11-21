@@ -1,5 +1,8 @@
 import { Server } from "socket.io";
-import statusHandler from "./handlers/statusHandler.js";
+import {
+  onBreakWatcher,
+  overBreakWatcher,
+} from "./handlers/statusWatcher.js";
 import offenseWatcher from "./handlers/offenseWatcher.js";
 
 let io;
@@ -31,7 +34,8 @@ const socket = async (server, app) => {
   });
 
   // Status watcher
-  await statusHandler(io);
+  await onBreakWatcher(io);
+  await overBreakWatcher(io);
   await offenseWatcher(io);
 };
 
