@@ -94,11 +94,10 @@ export const getEvents = async (req, res) => {
               const totalBreak = attendance.totalBreak || 0;
               const status = attendance.status;
 
-              const shiftEnd = DateTime.fromJSDate(attendance.shiftEnd).setZone(
-                "Asia/Manila",
-                { keepLocalTime: false }
-              );
-              const nowTime = DateTime.now().setZone("Asia/Manila");
+              const shiftEnd = DateTime.fromJSDate(attendance.shiftEnd, {
+                zone: "utc",
+              });
+              const nowTime = DateTime.now().toUTC();
 
               console.log(
                 `Name: ${ac.name} ID: ${userId} shiftEnd: ${shiftEnd} nowTime: ${nowTime}`
