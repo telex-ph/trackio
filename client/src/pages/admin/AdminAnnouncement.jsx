@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import {
   Calendar,
   Clock,
@@ -27,13 +27,11 @@ import Notification from "../../components/announcement/Notification";
 import FileViewModal from "../../components/announcement/FileViewModal";
 import FileAttachment from "../../components/announcement/FileAttachment";
 
-
 // Import Modal Components - CORRECTED PATHS
 import ConfirmationModal from "../../components/modals/ConfirmationModal";
 import AnnouncementPreviewModal from "../../components/announcement/AnnouncementPreview";
 import ViewsModal from "../../components/modals/ViewsModal";
-import LikesModal from "../../components/modals/LikesModal"; 
-
+import LikesModal from "../../components/modals/LikesModal";
 
 const AdminAnnouncement = () => {
   const [announcements, setAnnouncements] = useState([]);
@@ -69,8 +67,49 @@ const AdminAnnouncement = () => {
     file: null,
   });
 
-  const [currentTime, setCurrentTime] = useState(DateTime.local());
   const user = useStore((state) => state.user);
+  console.log (user)
+
+  // FIXED: Gamitin ang useCallback para iwas infinite loop
+  const getUserFullName = useCallback(() => {
+    if (user && user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`.trim();
+    }
+    if (user && user.firstName) {
+      return user.firstName.trim();
+    }
+    if (user && user.lastName) {
+      return user.lastName.trim();
+    }
+    if (user && user.name) {
+      return user.name.trim();
+    }
+    return "Admin User";
+  }, [user]);
+
+  const getCurrentDateTime = useCallback(() => {
+    const currentTime = DateTime.local();
+    return {
+      dateInput: currentTime.toISODate(),
+      timeInput: currentTime.toFormat('HH:mm')
+    };
+  }, []);
+
+  // FIXED: Initialize formData once
+  const [formData, setFormData] = useState(() => {
+    const currentDateTime = getCurrentDateTime();
+    const userName = getUserFullName();
+    
+    return {
+      title: "",
+      dateTime: "",
+      postedBy: userName, 
+      agenda: "",
+      priority: "Medium",
+      dateInput: currentDateTime.dateInput,
+      timeInput: currentDateTime.timeInput,
+    };
+  });
 
   // Filtered announcements logic
   const filteredAnnouncements = useMemo(() => {
@@ -93,93 +132,34 @@ const AdminAnnouncement = () => {
     setSearchTerm('');
   };
 
-  const getUserFullName = () => {
-    if (user && user.firstName && user.lastName) {
-      return `${user.firstName} ${user.lastName}`.trim();
-    }
-    if (user && user.firstName) {
-      return user.firstName.trim();
-    }
-    if (user && user.lastName) {
-      return user.lastName.trim();
-    }
-    if (user && user.name) {
-      return user.name.trim();
-    }
-    return "Admin User";
-  };
-
-  const currentUserName = getUserFullName();
-
-  const getCurrentDateTime = () => {
-    return {
-      dateInput: currentTime.toISODate(),
-      timeInput: currentTime.toFormat('HH:mm')
-    };
-  };
-
-  const currentDateTime = getCurrentDateTime();
-
-  const [formData, setFormData] = useState({
-    title: "",
-    dateTime: "",
-    postedBy: currentUserName, 
-    agenda: "",
-    priority: "Medium",
-    dateInput: currentDateTime.dateInput,
-    timeInput: currentDateTime.timeInput,
-  });
-
-  useEffect(() => {
-    const userName = getUserFullName();
-    setFormData(prev => ({
-      ...prev,
-      postedBy: userName
-    }));
-  }, [user]);
-
-  useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      dateInput: currentTime.toISODate(),
-      timeInput: currentTime.toFormat('HH:mm')
-    }));
-  }, [currentTime]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(DateTime.local());
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
   const today = new Date().toISOString().split("T")[0];
 
   const showNotification = (message, type) => {
     setNotification({ message, type, isVisible: true });
   };
 
-  const fetchAnnouncements = async () => {
+  // FIXED: Gamitin ang useCallback para sa fetchAnnouncements
+  const fetchAnnouncements = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      console.log("Fetching announcements from database...");
+      console.log("🔄 Fetching announcements from database...");
       const response = await api.get("/announcements");
-      console.log("Database response:", response.data);
+      console.log("📊 Database response:", response.data);
       
       if (!response.data) {
         throw new Error("No data received from server");
       }
       
       const allAnnouncements = Array.isArray(response.data) ? response.data : [];
-      console.log("Total announcements from database:", allAnnouncements.length);
+      console.log("📈 Total announcements from database:", allAnnouncements.length);
       
       // For admin view, show all announcements except cancelled ones
       const activeAnnouncements = allAnnouncements.filter((a) => 
         a.status !== "Cancelled"
       );
 
-      console.log("Active announcements from DB:", activeAnnouncements.length);
+      console.log("✅ Active announcements from DB:", activeAnnouncements.length);
 
       const sortedActive = activeAnnouncements.sort((a, b) => {
         const priorityA = a.priority === "High" ? 3 : a.priority === "Medium" ? 2 : 1;
@@ -193,11 +173,10 @@ const AdminAnnouncement = () => {
       });
 
       setAnnouncements(sortedActive);
-      setIsLoading(false);
       
     } catch (err) {
-      console.error("Error fetching announcements:", err);
-      console.error("Error details:", err.response?.data);
+      console.error("❌ Error fetching announcements:", err);
+      console.error("📋 Error details:", err.response?.data);
       
       let errorMessage = "Failed to load announcements from database.";
       
@@ -211,13 +190,24 @@ const AdminAnnouncement = () => {
       
       setError(errorMessage);
       setAnnouncements([]);
+    } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
+  // FIXED: Isang useEffect na lang para sa initial fetch
   useEffect(() => {
     fetchAnnouncements();
-  }, []);
+  }, [fetchAnnouncements]);
+
+  // FIXED: I-update ang postedBy name kapag nagbago ang user
+  useEffect(() => {
+    const userName = getUserFullName();
+    setFormData(prev => ({
+      ...prev,
+      postedBy: userName
+    }));
+  }, [getUserFullName]);
 
   const handleViewDetails = async (announcement) => {
     try {
@@ -234,7 +224,7 @@ const AdminAnnouncement = () => {
       setSelectedAnnouncementTitle(announcement.title);
       setIsViewsModalOpen(true);
     } catch (error) {
-      console.error("Error fetching view details:", error);
+      console.error("❌ Error fetching view details:", error);
       showNotification("Failed to load view details", "error");
     } finally {
       setAnnouncements(prev => 
@@ -262,7 +252,7 @@ const AdminAnnouncement = () => {
       setSelectedAnnouncementTitle(announcement.title);
       setIsLikesModalOpen(true);
     } catch (error) {
-      console.error("Error fetching like details:", error);
+      console.error("❌ Error fetching like details:", error);
       showNotification("Failed to load like details", "error");
     } finally {
       setAnnouncements(prev => 
@@ -331,7 +321,11 @@ const AdminAnnouncement = () => {
   };
 
   const handlePreview = () => {
-    if (!formData.title || !formData.dateInput || !formData.timeInput || !formData.postedBy || !formData.agenda) {
+    if (!formData.title || 
+        !formData.dateInput || 
+        !formData.timeInput || 
+        !formData.postedBy || 
+        !formData.agenda) {
       showNotification("Please fill in all required fields", "error");
       return;
     }
@@ -345,6 +339,7 @@ const AdminAnnouncement = () => {
     setIsPreviewModalOpen(true);
   };
 
+  // FIXED: I-optimize ang handleSubmit para iwas multiple calls
   const handleSubmit = async () => {
     try {
       const combinedDateTime = DateTime.fromISO(`${formData.dateInput}T${formData.timeInput}`);
@@ -372,7 +367,7 @@ const AdminAnnouncement = () => {
               data: base64File,
             };
           } catch (error) {
-            console.error("Error converting file to base64:", error);
+            console.error("❌ Error converting file to base64:", error);
             showNotification("Error processing file attachment", "error");
             return;
           }
@@ -383,19 +378,32 @@ const AdminAnnouncement = () => {
 
       let response;
       if (isEditMode) {
+        console.log("✏️ Updating announcement:", editingId);
         response = await api.put(`/announcements/${editingId}`, payload);
-        showNotification("Announcement updated successfully!", "success");
+        
+        if (response.status === 200) {
+          showNotification("Announcement updated successfully!", "success");
+        } else {
+          throw new Error(`Update failed with status: ${response.status}`);
+        }
       } else {
+        console.log("📝 Creating new announcement");
         response = await api.post(`/announcements`, { ...payload, status: "Scheduled" });
-        showNotification("Announcement created successfully!", "success");
+        
+        if (response.status === 201) {
+          showNotification("Announcement created successfully!", "success");
+        } else {
+          throw new Error(`Creation failed with status: ${response.status}`);
+        }
       }
-
       resetForm();
       setIsPreviewModalOpen(false);
+      
+      // Refresh announcements after successful operation
       await fetchAnnouncements();
       
     } catch (error) {
-      console.error("Error submitting announcement:", error);
+      console.error("❌ Error submitting announcement:", error);
       showNotification(`Failed to ${isEditMode ? "update" : "create"} announcement. Please try again.`, "error");
     }
   };
@@ -437,42 +445,35 @@ const AdminAnnouncement = () => {
         return;
       }
 
-      console.log("Cancelling announcement:", itemToCancel);
-      console.log("Announcement data:", announcementToCancel);
+      console.log("🗑️ Cancelling announcement:", itemToCancel);
       
-      // Create payload that matches your database structure
       const payload = {
         status: "Cancelled",
         cancelledAt: new Date().toISOString(),
-        cancelledBy: currentUserName,
+        cancelledBy: getUserFullName(),
         updatedAt: new Date().toISOString()
       };
 
-      console.log("Sending cancellation payload:", payload);
-
       let response;
       try {
-        // Use PATCH to update only the necessary fields
         response = await api.patch(`/announcements/${itemToCancel}`, payload);
-        console.log("PATCH response:", response.data);
+        console.log("✅ PATCH response:", response.data);
       } catch (patchError) {
-        console.log("PATCH failed, trying PUT:", patchError);
+        console.log("🔄 PATCH failed, trying PUT:", patchError);
         
-        // If PATCH fails, try PUT with complete data but status changed
         const putPayload = {
           ...announcementToCancel,
           status: "Cancelled",
           cancelledAt: new Date().toISOString(),
-          cancelledBy: currentUserName,
+          cancelledBy: getUserFullName(),
           updatedAt: new Date().toISOString()
         };
         
-        // Remove MongoDB internal fields that might cause issues
         delete putPayload._id;
         delete putPayload.__v;
         
         response = await api.put(`/announcements/${itemToCancel}`, putPayload);
-        console.log("PUT response:", response.data);
+        console.log("✅ PUT response:", response.data);
       }
 
       showNotification("Announcement cancelled successfully!", "success");
@@ -480,20 +481,15 @@ const AdminAnnouncement = () => {
       // Remove the cancelled announcement from local state immediately
       setAnnouncements(prev => prev.filter(a => a._id !== itemToCancel));
       
-      // Also refresh from server to ensure consistency
-      await fetchAnnouncements();
-      
     } catch (error) {
-      console.error("Error cancelling announcement:", error);
-      console.error("Error response:", error.response?.data);
-      console.error("Error status:", error.response?.status);
+      console.error("❌ Error cancelling announcement:", error);
+      console.error("📋 Error response:", error.response?.data);
       
       let errorMessage = "Failed to cancel announcement. Please try again.";
       if (error.response?.status === 404) {
         errorMessage = "Announcement not found in database.";
       } else if (error.response?.status === 500) {
         errorMessage = "Server error. Please try again later.";
-        console.error("Server error details:", error.response.data);
       } else if (error.message?.includes("Network Error")) {
         errorMessage = "Cannot connect to server. Please check your connection.";
       }
@@ -532,7 +528,7 @@ const AdminAnnouncement = () => {
 
       showNotification("File downloaded successfully!", "success");
     } catch (error) {
-      console.error("Error downloading file:", error);
+      console.error("❌ Error downloading file:", error);
       showNotification("Error downloading file", "error");
     }
   };

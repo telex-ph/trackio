@@ -1,17 +1,28 @@
 import React from "react";
-import { X, Calendar, Clock, User, FileText, Download, Eye, Pin, PinOff, Heart } from "lucide-react";
+import {
+  X,
+  Calendar,
+  Clock,
+  User,
+  FileText,
+  Download,
+  Eye,
+  Pin,
+  PinOff,
+  Heart,
+} from "lucide-react";
 import { DateTime } from "luxon";
 
-const AnnouncementDetailModal = ({ 
-  isOpen, 
-  onClose, 
+const AnnouncementDetailModal = ({
+  isOpen,
+  onClose,
   announcement,
   onTogglePin,
   pinnedCount,
   maxPinnedLimit,
   onLike,
   hasLiked,
-  currentUser
+  currentUser,
 }) => {
   if (!isOpen || !announcement) return null;
 
@@ -29,19 +40,27 @@ const AnnouncementDetailModal = ({
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case "High": return "bg-red-100 text-red-700 border-red-200";
-      case "Medium": return "bg-yellow-100 text-yellow-700 border-yellow-200";
-      case "Low": return "bg-green-100 text-green-700 border-green-200";
-      default: return "bg-gray-100 text-gray-700 border-gray-200";
+      case "High":
+        return "bg-red-100 text-red-700 border-red-200";
+      case "Medium":
+        return "bg-yellow-100 text-yellow-700 border-yellow-200";
+      case "Low":
+        return "bg-green-100 text-green-700 border-green-200";
+      default:
+        return "bg-gray-100 text-gray-700 border-gray-200";
     }
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "Completed": return "bg-green-100 text-green-700";
-      case "Cancelled": return "bg-red-100 text-red-600";
-      case "Scheduled": return "bg-blue-100 text-blue-600";
-      default: return "bg-gray-100 text-gray-600";
+      case "Completed":
+        return "bg-green-100 text-green-700";
+      case "Cancelled":
+        return "bg-red-100 text-red-600";
+      case "Scheduled":
+        return "bg-blue-100 text-blue-600";
+      default:
+        return "bg-gray-100 text-gray-600";
     }
   };
 
@@ -74,9 +93,14 @@ const AnnouncementDetailModal = ({
     }
   };
 
-  const isLiked = hasLiked && currentUser ? hasLiked(announcement, currentUser._id) : false;
-  const viewCount = Array.isArray(announcement.views) ? announcement.views.length : 0;
-  const likeCount = Array.isArray(announcement.acknowledgements) ? announcement.acknowledgements.length : 0;
+  const isLiked =
+    hasLiked && currentUser ? hasLiked(announcement, currentUser._id) : false;
+  const viewCount = Array.isArray(announcement.views)
+    ? announcement.views.length
+    : 0;
+  const likeCount = Array.isArray(announcement.acknowledgements)
+    ? announcement.acknowledgements.length
+    : 0;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -87,7 +111,9 @@ const AnnouncementDetailModal = ({
             <div className="p-2 bg-blue-100 rounded-lg">
               <FileText className="w-5 h-5 text-blue-600" />
             </div>
-            <h2 className="text-xl font-bold text-gray-800">Announcement Details</h2>
+            <h2 className="text-xl font-bold text-gray-800">
+              Announcement Details
+            </h2>
           </div>
           <button
             onClick={onClose}
@@ -114,27 +140,37 @@ const AnnouncementDetailModal = ({
                   >
                     {announcement.priority} Priority
                   </span>
-                  <span 
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(announcement.status)}`}
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
+                      announcement.status
+                    )}`}
                   >
                     {announcement.status}
                   </span>
                 </div>
               </div>
-              
+
               {/* Pin Button */}
               {onTogglePin && (
                 <button
                   onClick={() => onTogglePin(announcement)}
-                  disabled={!announcement.isPinned && pinnedCount && pinnedCount >= maxPinnedLimit}
+                  disabled={
+                    !announcement.isPinned &&
+                    pinnedCount &&
+                    pinnedCount >= maxPinnedLimit
+                  }
                   className={`px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all ${
-                    announcement.isPinned 
-                      ? 'bg-yellow-500 text-white hover:bg-yellow-600' 
-                      : 'bg-gray-500 text-white hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed'
+                    announcement.isPinned
+                      ? "bg-yellow-500 text-white hover:bg-yellow-600"
+                      : "bg-gray-500 text-white hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
                   }`}
                 >
-                  {announcement.isPinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
-                  {announcement.isPinned ? 'Unpin' : 'Pin'}
+                  {announcement.isPinned ? (
+                    <PinOff className="w-4 h-4" />
+                  ) : (
+                    <Pin className="w-4 h-4" />
+                  )}
+                  {announcement.isPinned ? "Unpin" : "Pin"}
                 </button>
               )}
             </div>
@@ -145,7 +181,9 @@ const AnnouncementDetailModal = ({
                 <User className="w-5 h-5 text-gray-600" />
                 <div>
                   <p className="text-sm text-gray-600">Posted By</p>
-                  <p className="font-medium text-gray-800">{announcement.postedBy}</p>
+                  <p className="font-medium text-gray-800">
+                    {announcement.postedBy}
+                  </p>
                 </div>
               </div>
 
@@ -177,15 +215,26 @@ const AnnouncementDetailModal = ({
                     <span className="text-sm font-medium">{viewCount}</span>
                   </div>
                   <button
-                    onClick={() => onLike && currentUser && !isLiked && onLike(announcement._id, currentUser._id)}
+                    onClick={() =>
+                      onLike &&
+                      currentUser &&
+                      !isLiked &&
+                      onLike(announcement._id, currentUser._id)
+                    }
                     disabled={isLiked || !currentUser}
                     className="flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Heart 
-                      className={`w-4 h-4 ${isLiked ? 'text-red-500 fill-current' : 'text-gray-600'}`} 
+                    <Heart
+                      className={`w-4 h-4 ${
+                        isLiked ? "text-red-500 fill-current" : "text-gray-600"
+                      }`}
                       fill={isLiked ? "currentColor" : "none"}
                     />
-                    <span className={`text-sm font-medium ${isLiked ? 'text-red-500' : 'text-gray-600'}`}>
+                    <span
+                      className={`text-sm font-medium ${
+                        isLiked ? "text-red-500" : "text-gray-600"
+                      }`}
+                    >
                       {likeCount}
                     </span>
                   </button>
@@ -219,7 +268,12 @@ const AnnouncementDetailModal = ({
                         {announcement.attachment.name}
                       </p>
                       <p className="text-sm text-gray-600">
-                        {((announcement.attachment.size || 0) / 1024 / 1024).toFixed(2)} MB
+                        {(
+                          (announcement.attachment.size || 0) /
+                          1024 /
+                          1024
+                        ).toFixed(2)}{" "}
+                        MB
                       </p>
                     </div>
                   </div>
@@ -239,20 +293,24 @@ const AnnouncementDetailModal = ({
               <div>
                 <p className="text-gray-600">Created</p>
                 <p className="font-medium text-gray-800">
-                  {announcement.createdAt ? 
-                    DateTime.fromISO(announcement.createdAt).toLocaleString(DateTime.DATETIME_MED) 
-                    : 'N/A'
-                  }
+                  {announcement.createdAt
+                    ? DateTime.fromISO(announcement.createdAt).toLocaleString(
+                        DateTime.DATETIME_MED
+                      )
+                    : "N/A"}
                 </p>
               </div>
-              {announcement.updatedAt && announcement.updatedAt !== announcement.createdAt && (
-                <div>
-                  <p className="text-gray-600">Last Updated</p>
-                  <p className="font-medium text-gray-800">
-                    {DateTime.fromISO(announcement.updatedAt).toLocaleString(DateTime.DATETIME_MED)}
-                  </p>
-                </div>
-              )}
+              {announcement.updatedAt &&
+                announcement.updatedAt !== announcement.createdAt && (
+                  <div>
+                    <p className="text-gray-600">Last Updated</p>
+                    <p className="font-medium text-gray-800">
+                      {DateTime.fromISO(announcement.updatedAt).toLocaleString(
+                        DateTime.DATETIME_MED
+                      )}
+                    </p>
+                  </div>
+                )}
             </div>
           </div>
         </div>

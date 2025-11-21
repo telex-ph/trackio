@@ -1,7 +1,7 @@
 import React from "react";
 import { Bell, X, CheckCircle, User, Calendar, Clock, Paperclip, FileText } from "lucide-react";
 import { DateTime } from "luxon";
-import FilePreview from "./FilePreview";
+import FilePreview from "../../components/modals/LikesModal";
 
 const AnnouncementPreview = ({ isOpen, onClose, onConfirm, formData, selectedFile }) => {
   if (!isOpen) return null;

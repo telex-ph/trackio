@@ -54,18 +54,18 @@ export const getRealUserData = () => {
     
     if (!user._id && !user.employeeId) {
       return {
-        userId: 'unknown_user',
-        employeeId: 'unknown_employee',
-        userName: 'User',
-        fullName: 'User'
+        userId: '',
+        employeeId: '',
+        userName: '',
+        fullName: ''
       };
     }
     
     const result = {
       userId: user._id || user.employeeId,
       employeeId: user.employeeId,
-      userName: user.email || user.name || 'User',
-      fullName: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User',
+      userName: user.email || user.name,
+      fullName: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
@@ -78,10 +78,10 @@ export const getRealUserData = () => {
   } catch (error) {
     console.error('❌ Error getting real user data:', error);
     return {
-      userId: 'unknown_user',
-      employeeId: 'unknown_employee', 
-      userName: 'User',
-      fullName: 'User'
+      userId: '',
+      employeeId: '', 
+      userName: '',
+      fullName: ''
     };
   }
 };
