@@ -81,12 +81,12 @@ const PresidentSidebar = ({
       label="Team"
       isCollapsed={isCollapsed}
     />
-    <SidebarLink
+    {/* <SidebarLink
       to="/president/ticket"
       icon={Ticket}
       label="Ticket"
       isCollapsed={isCollapsed}
-    />
+    /> */}
     {/* <SidebarLink
       to="/president/performance"
       icon={BarChart}
@@ -106,6 +106,7 @@ const PresidentSidebar = ({
       label="Agent Request"
       isCollapsed={isCollapsed}
     /> */}
+
     <CustomCollapse
       icon={<Clock className="w-5 h-5" />}
       label="Offenses"
@@ -133,6 +134,28 @@ const PresidentSidebar = ({
         label="Reported IR"
         isCollapsed={isCollapsed}
         badge={unreadOffenses}
+      />
+    </CustomCollapse>
+    <CustomCollapse
+      icon={<Clock className="w-5 h-5" />}
+      label="Ticket"
+      isCollapsed={isCollapsed}
+      open={activeDropdown === "tickets"}
+      onToggle={() =>
+        setActiveDropdown(activeDropdown === "tickets" ? null : "tickets")
+      }
+    >
+      <SidebarLink
+        to="/president/ticket/list"
+        icon={Calendar}
+        label="List"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to={`/president/ticket/analytics`}
+        icon={List}
+        label="Analytics"
+        isCollapsed={isCollapsed}
       />
     </CustomCollapse>
     <SidebarLink

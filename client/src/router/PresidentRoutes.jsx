@@ -29,12 +29,15 @@ import TeamLeaderCoaching from "../pages/team-leader/TeamLeaderCoaching";
 // Others
 import { Navigate } from "react-router-dom";
 import Roles from "../constants/roles";
+import TicketLayout from "../layout/TicketLayout";
+import SharedTicketList from "../pages/shared/SharedTicketList";
+import SharedTicketAnalytics from "../pages/shared/SharedTicketAnalytics";
 
 const PRESIDENT_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
   { path: "dashboard", element: <AdminDashboard /> },
   { path: "attendance", element: <SharedAttendance /> },
-  { path: "ticket", element: <SharedTicket /> },
+
   {
     path: "tracking",
     element: <TrackingLayout role={Roles.PRESIDENT} />,
@@ -75,6 +78,14 @@ const PRESIDENT_ROUTES = [
   {
     path: "createoffense",
     element: <HRReportedOffenses />,
+  },
+  {
+    path: "ticket",
+    element: <TicketLayout role={Roles.PRESIDENT} />,
+    children: [
+      { path: "list", element: <SharedTicketList /> },
+      { path: "analytics", element: <SharedTicketAnalytics /> },
+    ],
   },
   {
     path: "reported-ir",
