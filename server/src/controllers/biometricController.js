@@ -83,7 +83,9 @@ export const getEvents = async (req, res) => {
             const attendances = await Attendance.getById(userId, "asc");
             const attendance = attendances[0];
 
-            console.log(attendances);
+            console.log(
+              `List of attendances ${attendance} and ${attendance} was selected`
+            );
 
             // TODO: remove soon;
             await User.update(userId, "isValidEmployeeId", true);

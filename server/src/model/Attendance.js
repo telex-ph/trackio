@@ -150,7 +150,11 @@ class Attendance {
     if (!id) throw new Error("ID is required");
 
     const nowPH = DateTime.now().setZone("Asia/Manila");
-    const todayStartUTC = nowPH.startOf("day").toUTC().toJSDate();
+    const yesterdayStartUTC = nowPH
+      .minus({ days: 1 })
+      .startOf("day")
+      .toUTC()
+      .toJSDate();
     const todayEndUTC = nowPH.endOf("day").toUTC().toJSDate();
 
     const db = await connectDB();
@@ -163,7 +167,7 @@ class Attendance {
         {
           $match: {
             userId: new ObjectId(id),
-            shiftDate: { $gte: todayStartUTC, $lte: todayEndUTC },
+            shiftDate: { $gte: yesterdayStartUTC, $lte: todayEndUTC },
           },
         },
         { $sort: { shiftStart: sortOrder } },
