@@ -721,7 +721,7 @@ const HR_OffenseDetails = ({
               </div>
             </div>
           )}
-          {formData.status === "" && (
+          {formData.status === "Scheduled for hearing" && (
             <div>
               <button
                 onClick={() => setShowAfterHearingModal(true)}
