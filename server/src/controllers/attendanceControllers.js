@@ -32,7 +32,7 @@ export const addAttendance = async (userId) => {
     console.error("Error adding user's attendance:", error);
     return false;
   }
-}
+};
 
 export const getAttendances = async (req, res) => {
   const params = req.query;
@@ -52,7 +52,7 @@ export const getAttendances = async (req, res) => {
 export const getAttendance = async (req, res) => {
   try {
     const id = req.params.id;
-    const response = await Attendance.getById(id);
+    const response = await Attendance.getById(id, "desc");
     res.status(200).json(response);
   } catch (error) {
     console.error("Error fetching user attendance: ", error);
