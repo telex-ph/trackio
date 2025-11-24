@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import statusHandler from "./handlers/statusHandler.js";
 import offenseWatcher from "./handlers/offenseWatcher.js";
+import announcementWatcher from "./handlers/announcementWatcher.js";
 
 let io;
 
@@ -33,6 +34,7 @@ const socket = async (server, app) => {
   // Status watcher
   await statusHandler(io);
   await offenseWatcher(io);
+  await announcementWatcher(io);
 };
 
 export default socket;

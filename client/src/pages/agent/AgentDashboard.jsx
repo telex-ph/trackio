@@ -8,9 +8,11 @@ import {
   Pin,
   Menu,
   X,
+  Search,
 } from "lucide-react";
 import telexcover from "../../assets/background/telex-cover.jpg";
 import api from "../../utils/axios";
+import socket from "../../utils/socket"; // ADD SOCKET IMPORT
 
 import PunctualityChart from "../../components/charts/PunctualityChart";
 import PaydayCard from "../../components/cards/PaydayCard";
@@ -174,6 +176,7 @@ const AgentDashboard = () => {
   const [showPinLimitToast, setShowPinLimitToast] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [accountingPinned, setAccountingPinned] = useState(false);
   const [compliancePinned, setCompliancePinned] = useState(false);
@@ -239,6 +242,201 @@ const AgentDashboard = () => {
     };
 
     initializeUserData();
+  }, []);
+
+  // ✅ ADD SOCKET LISTENERS FOR REAL-TIME UPDATES
+  useEffect(() => {
+    if (!socket) {
+      console.log("❌ Socket not available for agent");
+      return;
+    }
+
+    console.log("🔄 Setting up socket listeners for agent...");
+
+    let dataLoaded = false;
+
+    // Listen for initial data from socket
+    const handleInitialData = (socketAnnouncements) => {
+      console.log("📥 Received initial agent data via socket:", socketAnnouncements?.length);
+      
+      if (Array.isArray(socketAnnouncements) && socketAnnouncements.length > 0) {
+        const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
+        
+        const processedAnnouncements = socketAnnouncements
+          .filter((ann) => ann && ann._id)
+          .map((announcement) => ({
+            ...announcement,
+            isPinned: pinnedAnnouncements[announcement._id] || announcement.isPinned || false,
+            views: Array.isArray(announcement.views) ? announcement.views : [],
+            acknowledgements: Array.isArray(announcement.acknowledgements) 
+              ? announcement.acknowledgements 
+              : [],
+          }))
+          .map(processAnnouncementData)
+          .filter((ann) => ann.status === "Active")
+          .sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+
+            const priorityOrder = { High: 3, Medium: 2, Low: 1 };
+            const priorityA = priorityOrder[a.priority] || 0;
+            const priorityB = priorityOrder[b.priority] || 0;
+
+            if (priorityB !== priorityA) {
+              return priorityB - priorityA;
+            }
+
+            return new Date(b.dateTime) - new Date(a.dateTime);
+          });
+
+        setAnnouncements(processedAnnouncements);
+        setIsLoadingAnnouncements(false);
+        dataLoaded = true;
+        console.log("✅ Socket data loaded successfully for agent");
+      }
+    };
+
+    // Listen for real-time updates (likes/views counts)
+    const handleAgentUpdate = (updateData) => {
+      console.log("📊 Real-time agent update:", updateData);
+      
+      setAnnouncements(prev => prev.map(ann => {
+        if (ann._id === updateData.announcementId) {
+          console.log("🔄 Updating agent announcement:", ann.title);
+          console.log("👀 New views:", updateData.views);
+          console.log("❤️ New likes:", updateData.likes);
+          
+          return {
+            ...ann,
+            // Update counts only (agents don't see user lists)
+            totalViews: updateData.views,
+            totalAcknowledgements: updateData.likes,
+          };
+        }
+        return ann;
+      }));
+    };
+
+    // Listen for new announcements
+    const handleNewAnnouncement = (newAnnouncement) => {
+      console.log("🆕 New announcement received via socket for agent");
+      
+      const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
+      const processedAnnouncement = processAnnouncementData({
+        ...newAnnouncement,
+        isPinned: pinnedAnnouncements[newAnnouncement._id] || false,
+        views: Array.isArray(newAnnouncement.views) ? newAnnouncement.views : [],
+        acknowledgements: Array.isArray(newAnnouncement.acknowledgements) 
+          ? newAnnouncement.acknowledgements 
+          : [],
+      });
+
+      if (processedAnnouncement && processedAnnouncement.status === "Active") {
+        setAnnouncements(prev => {
+          const exists = prev.find(a => a._id === processedAnnouncement._id);
+          if (exists) return prev;
+          
+          return [processedAnnouncement, ...prev].sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+
+            const priorityOrder = { High: 3, Medium: 2, Low: 1 };
+            const priorityA = priorityOrder[a.priority] || 0;
+            const priorityB = priorityOrder[b.priority] || 0;
+
+            if (priorityB !== priorityA) {
+              return priorityB - priorityA;
+            }
+
+            return new Date(b.dateTime) - new Date(a.dateTime);
+          });
+        });
+      }
+    };
+
+    // ✅ DAGDAG: LISTEN FOR CANCELLATION EVENTS
+    const handleAnnouncementCancelled = (data) => {
+      console.log("🔴 Real-time: Announcement cancelled", data.announcementId);
+      
+      setAnnouncements(prev => 
+        prev.filter(ann => ann._id !== data.announcementId)
+      );
+      
+      console.log("🗑️ Removed cancelled announcement from agent view");
+    };
+
+    // ✅ DAGDAG: LISTEN FOR REPOST EVENTS
+    const handleAnnouncementReposted = (data) => {
+      console.log("🟢 Real-time: Announcement reposted", data.announcementId);
+      
+      // Refresh data to get the reposted announcement
+      if (socket) {
+        socket.emit("getAgentData");
+      }
+      
+      // Alternative: Add the announcement directly if we have the data
+      if (data.announcementData) {
+        const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
+        const processedAnnouncement = processAnnouncementData({
+          ...data.announcementData,
+          isPinned: pinnedAnnouncements[data.announcementData._id] || false,
+          views: Array.isArray(data.announcementData.views) ? data.announcementData.views : [],
+          acknowledgements: Array.isArray(data.announcementData.acknowledgements) 
+            ? data.announcementData.acknowledgements 
+            : [],
+        });
+
+        if (processedAnnouncement && processedAnnouncement.status === "Active") {
+          setAnnouncements(prev => {
+            const exists = prev.find(a => a._id === processedAnnouncement._id);
+            if (exists) return prev;
+            
+            return [processedAnnouncement, ...prev].sort((a, b) => {
+              if (a.isPinned && !b.isPinned) return -1;
+              if (!a.isPinned && b.isPinned) return 1;
+
+              const priorityOrder = { High: 3, Medium: 2, Low: 1 };
+              const priorityA = priorityOrder[a.priority] || 0;
+              const priorityB = priorityOrder[b.priority] || 0;
+
+              if (priorityB !== priorityA) {
+                return priorityB - priorityA;
+              }
+
+              return new Date(b.dateTime) - new Date(a.dateTime);
+            });
+          });
+        }
+      }
+    };
+
+    // Register event listeners
+    socket.on("initialAgentData", handleInitialData);
+    socket.on("agentAnnouncementUpdate", handleAgentUpdate);
+    socket.on("newAnnouncement", handleNewAnnouncement);
+    socket.on("announcementCancelled", handleAnnouncementCancelled);
+    socket.on("announcementReposted", handleAnnouncementReposted);
+
+    // Request initial data via socket
+    socket.emit("getAgentData");
+
+    // Fallback to API if socket doesn't respond in 3 seconds
+    const fallbackTimeout = setTimeout(() => {
+      if (!dataLoaded) {
+        console.log("⏰ Socket timeout for agent, falling back to API...");
+        fetchAnnouncements();
+      }
+    }, 3000);
+
+    // Cleanup
+    return () => {
+      clearTimeout(fallbackTimeout);
+      socket.off("initialAgentData", handleInitialData);
+      socket.off("agentAnnouncementUpdate", handleAgentUpdate);
+      socket.off("newAnnouncement", handleNewAnnouncement);
+      socket.off("announcementCancelled", handleAnnouncementCancelled);
+      socket.off("announcementReposted", handleAnnouncementReposted);
+    };
   }, []);
 
   // Pinning functionality
@@ -408,9 +606,10 @@ const AgentDashboard = () => {
     }
   };
 
-  useEffect(() => {
-    fetchAnnouncements();
-  }, []);
+  // Remove the duplicate fetchAnnouncements call since we're using socket as primary
+  // useEffect(() => {
+  //   fetchAnnouncements();
+  // }, []);
 
   // File handling
   const handleFileDownload = (file) => {
@@ -494,22 +693,64 @@ const AgentDashboard = () => {
   const { accounting, compliance, technical, hr } =
     categorizeAnnouncements(announcements);
 
+  // FIXED: Search across ALL announcements and then categorize
+  const getFilteredAnnouncements = () => {
+    if (!searchTerm) return announcements;
+
+    return announcements.filter(announcement => 
+      announcement.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      announcement.agenda?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      announcement.postedBy?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      announcement.content?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  const filteredAnnouncements = getFilteredAnnouncements();
+
+  // FIXED: Get filtered announcements by department from the already filtered list
+  const getFilteredAnnouncementsByDepartment = (department) => {
+    const { accounting: filteredAccounting, compliance: filteredCompliance, technical: filteredTechnical, hr: filteredHr } = 
+      categorizeAnnouncements(filteredAnnouncements);
+
+    switch (department) {
+      case "technical":
+        return filteredTechnical;
+      case "compliance":
+        return filteredCompliance;
+      case "accounting":
+        return filteredAccounting;
+      case "hr":
+        return filteredHr;
+      default:
+        return [];
+    }
+  };
+
+  // FIXED: Check if any department has announcements after filtering
+  const hasFilteredAnnouncements = 
+    getFilteredAnnouncementsByDepartment("technical").length > 0 ||
+    getFilteredAnnouncementsByDepartment("compliance").length > 0 ||
+    getFilteredAnnouncementsByDepartment("accounting").length > 0 ||
+    getFilteredAnnouncementsByDepartment("hr").length > 0;
+
   if (!currentUser) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-        <span className="ml-2 text-gray-600">Loading user data...</span>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <span className="text-gray-600 text-lg">Loading user data...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* Mobile Menu Button */}
       <div className="lg:hidden fixed top-4 right-4 z-50">
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 bg-white rounded-lg shadow-lg border border-gray-200"
+          className="p-3 bg-white rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300"
         >
           {isMobileMenuOpen ? (
             <X className="w-5 h-5" />
@@ -539,8 +780,8 @@ const AgentDashboard = () => {
 
       {/* Pin Limit Toast - RESPONSIVE */}
       {showPinLimitToast && (
-        <div className="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 z-[10000] bg-yellow-500 text-white p-4 rounded-lg shadow-lg flex items-center gap-3 animate-in slide-in-from-right duration-300 max-w-md mx-auto sm:mx-0">
-          <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <div className="fixed top-4 left-2 right-2 sm:left-4 sm:right-auto z-[10000] bg-yellow-500 text-white p-3 sm:p-4 rounded-xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-top duration-300 max-w-sm mx-auto sm:mx-0">
+          <svg className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
             <path
               fillRule="evenodd"
               d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
@@ -548,86 +789,127 @@ const AgentDashboard = () => {
             />
           </svg>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm sm:text-base truncate">Pin Limit Reached</p>
-            <p className="text-xs sm:text-sm opacity-90 truncate">
+            <p className="font-semibold text-sm sm:text-base">Pin Limit Reached</p>
+            <p className="text-xs sm:text-sm opacity-90">
               Max {MAX_PINNED_PER_DEPARTMENT} pins per department
             </p>
           </div>
         </div>
       )}
 
-      {/* Main Content - RESPONSIVE LAYOUT */}
-      <div className={`flex flex-col lg:flex-row gap-2 sm:gap-4 p-1 lg:p-1 ${isMobileMenuOpen ? 'lg:flex-row' : ''}`}>
+      {/* Main Content - FIXED RESPONSIVE LAYOUT */}
+      <div className={`flex flex-col lg:flex-row gap-3 sm:gap-4 lg:gap-6 p-2 sm:p-4 lg:p-6 min-h-screen ${isMobileMenuOpen ? 'lg:flex-row' : ''}`}>
+        
         {/* Left Column - Main Content */}
-        <div className="flex-1 min-w-0 order-1 lg:order-1">
-          {/* Cover Image - RESPONSIVE */}
-          <div className="relative">
+        <div className="flex-1 min-w-0 order-1 lg:order-1 space-y-4 sm:space-y-6 overflow-hidden">
+          
+          {/* Cover Image - ULTRA RESPONSIVE */}
+          <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg">
             <img
-              className="w-full h-20 xs:h-24 sm:h-28 md:h-32 lg:h-40 xl:h-48 object-cover rounded-lg sm:rounded-xl lg:rounded-2xl shadow-sm sm:shadow-md"
+              className="w-full h-24 xs:h-28 sm:h-32 md:h-36 lg:h-44 xl:h-52 2xl:h-60 object-cover"
               src={telexcover}
               alt="Dashboard Cover"
             />
-          </div>
-
-          <div className="p-2 sm:p-4 lg:p-6">
-            {/* Top Cards Section - RESPONSIVE */}
-            <div className="flex flex-col xl:flex-row gap-2 sm:gap-4 lg:gap-6 mb-4 sm:mb-6">
-              <div className="flex-1 min-w-0">
-                <PaydayCard />
-              </div>
-              <div className="flex-1 min-w-0">
-                <PunctualityChart />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent flex items-center">
+              <div className="text-white p-4 sm:p-6 lg:p-8">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold mb-2">
+                  Welcome back, {currentUser.name}!
+                </h1>
+                <p className="text-sm sm:text-base lg:text-lg opacity-90">
+                  Stay updated with the latest announcements
+                </p>
               </div>
             </div>
+          </div>
 
-            {/* Announcements Section - RESPONSIVE */}
-            <div className="bg-gradient-to-br from-white via-gray-50/80 to-blue-50/30 rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 shadow-lg sm:shadow-xl lg:shadow-2xl border border-gray-200/60 relative overflow-hidden backdrop-blur-sm">
-              <div className="absolute top-0 left-0 w-full h-full">
-                <div className="absolute top-2 sm:top-4 lg:top-6 right-2 sm:right-4 lg:right-6 w-8 sm:w-12 lg:w-16 xl:w-24 h-8 sm:h-12 lg:h-16 xl:h-24 bg-gradient-to-r from-blue-400/15 to-purple-400/10 rounded-full blur-lg sm:blur-xl lg:blur-2xl animate-pulse"></div>
-                <div className="absolute bottom-2 sm:bottom-4 lg:bottom-8 left-2 sm:left-4 lg:left-8 w-6 sm:w-8 lg:w-12 xl:w-20 h-6 sm:h-8 lg:h-12 xl:h-20 bg-gradient-to-r from-green-400/10 to-teal-400/15 rounded-full blur-md sm:blur-lg lg:blur-xl animate-bounce"></div>
-              </div>
+          {/* Top Cards Section - RESPONSIVE GRID */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+            <div className="min-w-0">
+              <PaydayCard />
+            </div>
+            <div className="min-w-0">
+              <PunctualityChart />
+            </div>
+          </div>
 
-              <div className="relative z-10">
-                {/* Header Section - RESPONSIVE */}
-                <div className="mb-4 sm:mb-6 lg:mb-8">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 mb-3 sm:mb-4">
-                    <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
-                      <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg sm:rounded-xl lg:rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-md">
-                        <span className="text-sm sm:text-base lg:text-lg xl:text-xl">📢</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-base sm:text-lg lg:text-xl xl:text-2xl bg-gradient-to-r from-gray-800 via-gray-700 to-gray-900 bg-clip-text text-transparent leading-tight">
-                          Department Announcements
-                        </h3>
-                        <p className="text-xs sm:text-sm text-gray-500 font-medium truncate">
-                          Latest updates from different departments
-                        </p>
-                      </div>
+          {/* Announcements Section - FIXED SCROLLING */}
+          <div className="bg-gradient-to-br from-white via-gray-50/80 to-blue-50/30 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-xl border border-gray-200/60 relative overflow-hidden backdrop-blur-sm">
+            <div className="absolute top-0 left-0 w-full h-full">
+              <div className="absolute top-2 sm:top-4 lg:top-6 right-2 sm:right-4 lg:right-6 w-8 sm:w-12 lg:w-16 xl:w-24 h-8 sm:h-12 lg:h-16 xl:h-24 bg-gradient-to-r from-blue-400/15 to-purple-400/10 rounded-full blur-lg sm:blur-xl lg:blur-2xl animate-pulse"></div>
+              <div className="absolute bottom-2 sm:bottom-4 lg:bottom-8 left-2 sm:left-4 lg:left-8 w-6 sm:w-8 lg:w-12 xl:w-20 h-6 sm:h-8 lg:h-12 xl:h-20 bg-gradient-to-r from-green-400/10 to-teal-400/15 rounded-full blur-md sm:blur-lg lg:blur-xl animate-bounce"></div>
+            </div>
+
+            <div className="relative z-10">
+              {/* Header Section - RESPONSIVE */}
+              <div className="mb-4 sm:mb-6 lg:mb-8">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+                  <div className="flex items-center gap-3 sm:gap-4 lg:gap-6">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 xl:w-14 xl:h-14 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl sm:rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-lg">
+                      <span className="text-lg sm:text-xl lg:text-2xl xl:text-3xl">📢</span>
                     </div>
-                    <div className="flex items-center gap-2 self-start sm:self-auto">
-                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium flex items-center gap-1 whitespace-nowrap">
-                        <Pin className="w-3 h-3" />
-                        Max {MAX_PINNED_PER_DEPARTMENT}
-                      </span>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-lg sm:text-xl lg:text-2xl xl:text-3xl bg-gradient-to-r from-gray-800 via-gray-700 to-gray-900 bg-clip-text text-transparent leading-tight">
+                        Department Announcements
+                      </h3>
+                      <p className="text-xs sm:text-sm lg:text-base text-gray-500 font-medium mt-1">
+                        Latest updates from different departments
+                      </p>
                     </div>
                   </div>
-                  <div className="w-12 sm:w-16 lg:w-20 xl:w-32 h-0.5 sm:h-1 bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 rounded-full shadow-md"></div>
-                </div>
-
-                {/* Loading State - RESPONSIVE */}
-                {isLoadingAnnouncements ? (
-                  <div className="flex items-center justify-center py-6 sm:py-8">
-                    <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-blue-500"></div>
-                    <span className="ml-2 text-sm sm:text-base text-gray-600">
-                      Loading announcements...
+                  <div className="flex items-center gap-2 self-start sm:self-auto">
+                    <span className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs sm:text-sm font-medium flex items-center gap-1.5 whitespace-nowrap">
+                      <Pin className="w-3 h-3 sm:w-4 sm:h-4" />
+                      Max {MAX_PINNED_PER_DEPARTMENT}
+                    </span>
+                    <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium flex items-center gap-1">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      Live
                     </span>
                   </div>
-                ) : announcements.length > 0 ? (
-                  <div className="space-y-4 sm:space-y-6 lg:space-y-8">
-                    {/* TECHNICAL */}
+                </div>
+
+                {/* Search Section - IMPROVED */}
+                <div className="mb-4 sm:mb-6">
+                  <div className="relative max-w-md">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search all announcements..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 sm:py-3 border border-gray-300 rounded-xl sm:rounded-2xl text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80 backdrop-blur-sm"
+                    />
+                    {searchTerm && (
+                      <button
+                        onClick={() => setSearchTerm("")}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="w-16 sm:w-20 lg:w-24 xl:w-32 h-1 sm:h-1.5 bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 rounded-full shadow-lg"></div>
+              </div>
+
+              {/* Loading State - RESPONSIVE */}
+              {isLoadingAnnouncements ? (
+                <div className="flex flex-col items-center justify-center py-8 sm:py-12 lg:py-16">
+                  <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-blue-500 mb-4"></div>
+                  <span className="text-sm sm:text-base lg:text-lg text-gray-600">
+                    Loading announcements...
+                  </span>
+                </div>
+              ) : hasFilteredAnnouncements ? (
+                <div className="space-y-6 sm:space-y-8 lg:space-y-10 max-h-[60vh] lg:max-h-none overflow-y-auto pr-2 -mr-2 lg:mr-0 lg:overflow-visible">
+                  {/* Show all departments that have filtered announcements */}
+                  
+                  {/* TECHNICAL */}
+                  {getFilteredAnnouncementsByDepartment("technical").length > 0 && (
                     <DepartmentAnnouncementSection
                       title="Technical Announcements"
-                      announcements={technical}
+                      announcements={getFilteredAnnouncementsByDepartment("technical")}
                       onReadMore={handleReadMore}
                       onFileDownload={handleFileDownload}
                       onFileView={handleFileView}
@@ -635,7 +917,7 @@ const AgentDashboard = () => {
                       canPinMore={canPinMoreInDepartment(technical)}
                       showPinnedOnly={technicalPinned}
                       onTogglePinnedView={() => setTechnicalPinned(!technicalPinned)}
-                      pinnedCount={technical.filter((a) => a.isPinned).length}
+                      pinnedCount={getFilteredAnnouncementsByDepartment("technical").filter((a) => a.isPinned).length}
                       maxPinnedLimit={MAX_PINNED_PER_DEPARTMENT}
                       onLike={handleLike}
                       hasLiked={hasLiked}
@@ -643,11 +925,13 @@ const AgentDashboard = () => {
                       getViewCount={getViewCount}
                       getLikeCount={getLikeCount}
                     />
+                  )}
 
-                    {/* COMPLIANCE */}
+                  {/* COMPLIANCE */}
+                  {getFilteredAnnouncementsByDepartment("compliance").length > 0 && (
                     <DepartmentAnnouncementSection
                       title="Compliance Announcements"
-                      announcements={compliance}
+                      announcements={getFilteredAnnouncementsByDepartment("compliance")}
                       onReadMore={handleReadMore}
                       onFileDownload={handleFileDownload}
                       onFileView={handleFileView}
@@ -655,7 +939,7 @@ const AgentDashboard = () => {
                       canPinMore={canPinMoreInDepartment(compliance)}
                       showPinnedOnly={compliancePinned}
                       onTogglePinnedView={() => setCompliancePinned(!compliancePinned)}
-                      pinnedCount={compliance.filter((a) => a.isPinned).length}
+                      pinnedCount={getFilteredAnnouncementsByDepartment("compliance").filter((a) => a.isPinned).length}
                       maxPinnedLimit={MAX_PINNED_PER_DEPARTMENT}
                       onLike={handleLike}
                       hasLiked={hasLiked}
@@ -663,11 +947,13 @@ const AgentDashboard = () => {
                       getViewCount={getViewCount}
                       getLikeCount={getLikeCount}
                     />
+                  )}
 
-                    {/* ACCOUNTING */}
+                  {/* ACCOUNTING */}
+                  {getFilteredAnnouncementsByDepartment("accounting").length > 0 && (
                     <DepartmentAnnouncementSection
                       title="Accounting Announcements"
-                      announcements={accounting}
+                      announcements={getFilteredAnnouncementsByDepartment("accounting")}
                       onReadMore={handleReadMore}
                       onFileDownload={handleFileDownload}
                       onFileView={handleFileView}
@@ -675,7 +961,7 @@ const AgentDashboard = () => {
                       canPinMore={canPinMoreInDepartment(accounting)}
                       showPinnedOnly={accountingPinned}
                       onTogglePinnedView={() => setAccountingPinned(!accountingPinned)}
-                      pinnedCount={accounting.filter((a) => a.isPinned).length}
+                      pinnedCount={getFilteredAnnouncementsByDepartment("accounting").filter((a) => a.isPinned).length}
                       maxPinnedLimit={MAX_PINNED_PER_DEPARTMENT}
                       onLike={handleLike}
                       hasLiked={hasLiked}
@@ -683,11 +969,13 @@ const AgentDashboard = () => {
                       getViewCount={getViewCount}
                       getLikeCount={getLikeCount}
                     />
+                  )}
 
-                    {/* HR & ADMIN */}
+                  {/* HR & ADMIN */}
+                  {getFilteredAnnouncementsByDepartment("hr").length > 0 && (
                     <DepartmentAnnouncementSection
                       title="HR & Admin Announcements"
-                      announcements={hr}
+                      announcements={getFilteredAnnouncementsByDepartment("hr")}
                       onReadMore={handleReadMore}
                       onFileDownload={handleFileDownload}
                       onFileView={handleFileView}
@@ -695,7 +983,7 @@ const AgentDashboard = () => {
                       canPinMore={canPinMoreInDepartment(hr)}
                       showPinnedOnly={hrPinned}
                       onTogglePinnedView={() => setHrPinned(!hrPinned)}
-                      pinnedCount={hr.filter((a) => a.isPinned).length}
+                      pinnedCount={getFilteredAnnouncementsByDepartment("hr").filter((a) => a.isPinned).length}
                       maxPinnedLimit={MAX_PINNED_PER_DEPARTMENT}
                       onLike={handleLike}
                       hasLiked={hasLiked}
@@ -703,34 +991,45 @@ const AgentDashboard = () => {
                       getViewCount={getViewCount}
                       getLikeCount={getLikeCount}
                     />
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 sm:py-12 lg:py-16">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 mx-auto mb-4 sm:mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+                    <Bell className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-gray-400" />
                   </div>
-                ) : (
-                  <div className="text-center py-6 sm:py-8">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                      <Bell className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
-                    </div>
-                    <h4 className="text-base sm:text-lg font-semibold text-gray-600 mb-2">
-                      No Announcements
-                    </h4>
-                    <p className="text-xs sm:text-sm text-gray-500 max-w-md mx-auto">
-                      There are no active announcements at the moment.
-                    </p>
-                  </div>
-                )}
+                  <h4 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-600 mb-2 sm:mb-3">
+                    {searchTerm ? "No Matching Announcements" : "No Announcements Found"}
+                  </h4>
+                  <p className="text-sm sm:text-base text-gray-500 max-w-md mx-auto px-4">
+                    {searchTerm
+                      ? "No announcements match your search criteria. Try different keywords."
+                      : "There are no active announcements at the moment."
+                    }
+                  </p>
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm("")}
+                      className="mt-4 px-4 sm:px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm sm:text-base"
+                    >
+                      Clear Search
+                    </button>
+                  )}
+                </div>
+              )}
 
-                {/* Footer Section - RESPONSIVE */}
-                <div className="mt-4 sm:mt-6 lg:mt-8 pt-3 sm:pt-4 lg:pt-6 border-t border-gray-200/60">
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
-                      <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                      <span className="font-medium">Live updates enabled</span>
-                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium whitespace-nowrap">
-                        Total: {announcements.length}
-                      </span>
-                    </div>
-                    <div className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
-                      Max {MAX_PINNED_PER_DEPARTMENT} pins per department
-                    </div>
+              {/* Footer Section - RESPONSIVE */}
+              <div className="mt-6 sm:mt-8 lg:mt-10 pt-4 sm:pt-6 lg:pt-8 border-t border-gray-200/60">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+                  <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
+                    <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-green-400 rounded-full animate-pulse"></div>
+                    <span className="font-medium">Real-time updates enabled</span>
+                    <span className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium whitespace-nowrap">
+                      Total: {filteredAnnouncements.length}
+                    </span>
+                  </div>
+                  <div className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
+                    Max {MAX_PINNED_PER_DEPARTMENT} pins per department
                   </div>
                 </div>
               </div>
@@ -738,9 +1037,11 @@ const AgentDashboard = () => {
           </div>
         </div>
 
-        {/* Right Column - Daily Records Card - RESPONSIVE */}
-        <div className={`w-full lg:w-80 xl:w-96 p-2 sm:p-3 lg:p-2 flex-shrink-0 order-2 lg:order-2 ${isMobileMenuOpen ? 'block' : 'hidden lg:block'}`}>
-          <DailyRecordsCard />
+        {/* Right Column - Daily Records Card - FIXED RESPONSIVE */}
+        <div className={`w-full lg:w-80 xl:w-96 2xl:w-[28rem] p-2 sm:p-3 lg:p-4 flex-shrink-0 order-2 lg:order-2 ${isMobileMenuOpen ? 'block' : 'hidden lg:block'}`}>
+          <div className="sticky top-4">
+            <DailyRecordsCard />
+          </div>
         </div>
       </div>
     </div>

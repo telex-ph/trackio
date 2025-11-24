@@ -88,8 +88,8 @@ const FileAttachment = ({ file, onDownload, onView }) => {
 const AnnouncementCard = ({ 
     announcement, 
     onReadMore, 
-    onFileDownload, 
-    onFileView,
+    // onFileDownload, 
+    // onFileView,
     onTogglePin,
     canPinMore,
     onLike,
@@ -269,10 +269,10 @@ const AnnouncementCard = ({
           {/* Posted By */}
           <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
             <User className="w-3 h-3" />
-            <span className="font-medium">By {announcement.postedBy}</span>
+            <span className="font-medium">By: {announcement.postedBy}</span>
           </div>
 
-          {/* File Attachment */}
+          {/* File Attachment
           {announcement.attachment && !announcement.attachment.type.startsWith('image/') && (
             <div className="mb-3">
               <FileAttachment
@@ -281,7 +281,7 @@ const AnnouncementCard = ({
                 onView={onFileView}
               />
             </div>
-          )}
+          )} */}
           
           {/* Footer with Stats and Actions */}
           <div className="flex items-center justify-between mt-auto">
@@ -289,7 +289,7 @@ const AnnouncementCard = ({
               {/* Views */}
               <div className="flex items-center gap-1 text-gray-600 text-sm" title={`${viewCount} views`}>
                 <Eye className="w-4 h-4" />
-                <span>{viewCount}</span>
+                <span>{viewCount} views</span>
               </div>
               
               {/* Likes Button */}
@@ -319,8 +319,7 @@ const AnnouncementCard = ({
                   fill={isLiked ? "currentColor" : "none"}
                 />
                 <span className={isLiked ? 'text-red-500 font-medium' : 'text-gray-600'}>
-                  {likeCount}
-                </span>
+                  {likeCount} likes</span>
               </button>
             </div>
 

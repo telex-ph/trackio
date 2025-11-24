@@ -19,6 +19,7 @@ import {
 import { DateTime } from "luxon";
 import { useStore } from "../../store/useStore";
 import api from "../../utils/axios";
+import socket from "../../utils/socket";
 
 import Notification from "../../components/announcement/Notification";
 import FileAttachment from "../../components/announcement/FileAttachment";
@@ -36,7 +37,7 @@ const AdminAnnouncement = () => {
 
   // Filter states - SEARCH ONLY
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('active'); // 'active' or 'inactive'
+  const [activeTab, setActiveTab] = useState('active');
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -65,7 +66,6 @@ const AdminAnnouncement = () => {
   });
 
   const user = useStore((state) => state.user);
-  console.log (user)
 
   const getUserFullName = useCallback(() => {
     if (user && user.firstName && user.lastName) {
@@ -106,12 +106,215 @@ const AdminAnnouncement = () => {
     };
   });
 
+  // ✅ FIXED: BETTER ERROR HANDLING
+  const fetchAnnouncements = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      console.log("🔄 Fetching announcements from database...");
+      const response = await api.get("/announcements");
+      
+      // ✅ CHECK IF RESPONSE IS VALID
+      if (response.data && Array.isArray(response.data)) {
+        console.log("✅ Successfully loaded", response.data.length, "announcements");
+        
+        const sortedAll = response.data.sort((a, b) => {
+          const priorityA = a.priority === "High" ? 3 : a.priority === "Medium" ? 2 : 1;
+          const priorityB = b.priority === "High" ? 3 : b.priority === "Medium" ? 2 : 1;
+
+          if (priorityB !== priorityA) {
+            return priorityB - priorityA;
+          }
+
+          return DateTime.fromISO(b.dateTime).toMillis() - DateTime.fromISO(a.dateTime).toMillis();
+        });
+
+        setAnnouncements(sortedAll);
+      } else {
+        // Only show error if no data at all
+        console.warn("⚠️ No data received from API");
+        setAnnouncements([]);
+      }
+      
+    } catch (err) {
+      console.error("❌ API Error:", err);
+      
+      // ✅ ONLY SHOW ERROR FOR REAL FAILURES
+      if (err.response?.status >= 400 || err.message?.includes("Network")) {
+        setError("Failed to load announcements. Using real-time data only.");
+      } else {
+        console.log("⚠️ Non-critical error, continuing...");
+      }
+      setAnnouncements([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // ✅ IMPROVED SOCKET LISTENERS FOR BETTER REAL-TIME SYNC
+  useEffect(() => {
+    if (!socket) {
+      console.log("❌ Socket not available, using API only");
+      fetchAnnouncements();
+      return;
+    }
+
+    console.log("🔄 Setting up socket listeners for admin...");
+
+    let dataLoaded = false;
+
+    // Listen for initial data from socket
+    const handleInitialData = (socketAnnouncements) => {
+      console.log("📥 Received initial admin data via socket:", socketAnnouncements?.length);
+      
+      if (Array.isArray(socketAnnouncements) && socketAnnouncements.length > 0) {
+        const sortedAll = socketAnnouncements.sort((a, b) => {
+          const priorityA = a.priority === "High" ? 3 : a.priority === "Medium" ? 2 : 1;
+          const priorityB = b.priority === "High" ? 3 : b.priority === "Medium" ? 2 : 1;
+
+          if (priorityB !== priorityA) {
+            return priorityB - priorityA;
+          }
+          return DateTime.fromISO(b.dateTime).toMillis() - DateTime.fromISO(a.dateTime).toMillis();
+        });
+
+        setAnnouncements(sortedAll);
+        setIsLoading(false);
+        dataLoaded = true;
+        console.log("✅ Socket data loaded successfully");
+      }
+    };
+
+    // ✅ IMPROVED: REAL-TIME LIKES/VIEWS UPDATES
+    const handleAdminUpdate = (detailedStats) => {
+      console.log("📈 Real-time admin stats update:", detailedStats);
+      
+      setAnnouncements(prev => prev.map(ann => {
+        if (ann._id === detailedStats.announcementId) {
+          console.log("🔄 Updating announcement:", ann.title);
+          console.log("👀 New views count:", detailedStats.totalViews);
+          console.log("❤️ New likes count:", detailedStats.totalLikes);
+          
+          return {
+            ...ann,
+            views: detailedStats.viewedBy || ann.views,
+            acknowledgements: detailedStats.likedBy || ann.acknowledgements,
+          };
+        }
+        return ann;
+      }));
+    };
+
+    // Listen for new announcements
+    const handleNewAnnouncement = (newAnnouncement) => {
+      console.log("🆕 New announcement received via socket");
+      
+      setAnnouncements(prev => {
+        const exists = prev.find(a => a._id === newAnnouncement._id);
+        if (exists) return prev;
+        
+        return [newAnnouncement, ...prev].sort((a, b) => {
+          const priorityA = a.priority === "High" ? 3 : a.priority === "Medium" ? 2 : 1;
+          const priorityB = b.priority === "High" ? 3 : b.priority === "Medium" ? 2 : 1;
+
+          if (priorityB !== priorityA) {
+            return priorityB - priorityA;
+          }
+          return DateTime.fromISO(b.dateTime).toMillis() - DateTime.fromISO(a.dateTime).toMillis();
+        });
+      });
+      
+      showNotification("New announcement posted!", "success");
+    };
+
+    // Listen for announcement updates
+    const handleAnnouncementUpdated = (updatedAnnouncement) => {
+      console.log("📝 Announcement updated via socket");
+      
+      setAnnouncements(prev => prev.map(ann => 
+        ann._id === updatedAnnouncement._id ? updatedAnnouncement : ann
+      ));
+    };
+
+    // ✅ IMPROVED: REAL-TIME CANCELLATION SYNC WITH STATUS UPDATE
+    const handleAnnouncementCancelled = (data) => {
+      console.log("🔴 Real-time cancellation sync:", data.announcementId);
+      setAnnouncements(prev => 
+        prev.map(ann => 
+          ann._id === data.announcementId 
+            ? { 
+                ...ann, 
+                status: "Inactive", 
+                cancelledAt: data.cancelledAt, 
+                cancelledBy: data.cancelledBy 
+              }
+            : ann
+        )
+      );
+    };
+
+    // ✅ IMPROVED: REAL-TIME REPOST SYNC WITH STATUS UPDATE
+    const handleAnnouncementReposted = (data) => {
+      console.log("🟢 Real-time repost sync:", data.announcementId);
+      setAnnouncements(prev => 
+        prev.map(ann => 
+          ann._id === data.announcementId 
+            ? { 
+                ...ann, 
+                status: "Active", 
+                cancelledAt: null, 
+                cancelledBy: null 
+              }
+            : ann
+        )
+      );
+    };
+
+    // Register event listeners
+    socket.on("initialAdminData", handleInitialData);
+    socket.on("adminAnnouncementUpdate", handleAdminUpdate);
+    socket.on("newAnnouncement", handleNewAnnouncement);
+    socket.on("announcementUpdated", handleAnnouncementUpdated);
+    socket.on("announcementCancelled", handleAnnouncementCancelled);
+    socket.on("announcementReposted", handleAnnouncementReposted);
+
+    // Request initial data via socket
+    socket.emit("getAdminData");
+
+    // Fallback to API if socket doesn't respond in 3 seconds
+    const fallbackTimeout = setTimeout(() => {
+      if (!dataLoaded) {
+        console.log("⏰ Socket timeout, falling back to API...");
+        fetchAnnouncements();
+      }
+    }, 3000);
+
+    // Cleanup
+    return () => {
+      clearTimeout(fallbackTimeout);
+      socket.off("initialAdminData", handleInitialData);
+      socket.off("adminAnnouncementUpdate", handleAdminUpdate);
+      socket.off("newAnnouncement", handleNewAnnouncement);
+      socket.off("announcementUpdated", handleAnnouncementUpdated);
+      socket.off("announcementCancelled", handleAnnouncementCancelled);
+      socket.off("announcementReposted", handleAnnouncementReposted);
+    };
+  }, [fetchAnnouncements]);
+
+  useEffect(() => {
+    const userName = getUserFullName();
+    setFormData(prev => ({
+      ...prev,
+      postedBy: userName
+    }));
+  }, [getUserFullName]);
+
   const filteredAnnouncements = useMemo(() => {
     return announcements.filter(announcement => {
       const searchMatch = searchTerm === '' || 
-        announcement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        announcement.agenda.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        announcement.postedBy.toLowerCase().includes(searchTerm.toLowerCase());
+        announcement.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        announcement.agenda?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        announcement.postedBy?.toLowerCase().includes(searchTerm.toLowerCase());
       
       return searchMatch;
     });
@@ -134,365 +337,340 @@ const AdminAnnouncement = () => {
     setNotification({ message, type, isVisible: true });
   };
 
-  const fetchAnnouncements = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+  const handleViewDetails = async (announcement) => {
     try {
-      console.log("🔄 Fetching announcements from database...");
-      const response = await api.get("/announcements");
-      console.log("📊 Database response:", response.data);
-      
-      if (!response.data) {
-        throw new Error("No data received from server");
-      }
-      
-      const allAnnouncements = Array.isArray(response.data) ? response.data : [];
-      console.log("📈 Total announcements from database:", allAnnouncements.length);
-
-      // ✅ REMOVED FILTER - GET ALL ANNOUNCEMENTS INCLUDING INACTIVE
-      const sortedAll = allAnnouncements.sort((a, b) => {
-        const priorityA = a.priority === "High" ? 3 : a.priority === "Medium" ? 2 : 1;
-        const priorityB = b.priority === "High" ? 3 : b.priority === "Medium" ? 2 : 1;
-
-        if (priorityB !== priorityA) {
-          return priorityB - priorityA;
-        }
-
-        return DateTime.fromISO(b.dateTime).toMillis() - DateTime.fromISO(a.dateTime).toMillis();
-      });
-
-      setAnnouncements(sortedAll);
-      
-    } catch (err) {
-      console.error("❌ Error fetching announcements:", err);
-      console.error("📋 Error details:", err.response?.data);
-      
-      let errorMessage = "Failed to load announcements from database.";
-      
-      if (err.response?.status === 404) {
-        errorMessage = "No announcements found in database.";
-      } else if (err.response?.status === 500) {
-        errorMessage = "Database server error.";
-      } else if (err.message?.includes("Network Error")) {
-        errorMessage = "Cannot connect to database server.";
-      }
-      
-      setError(errorMessage);
-      setAnnouncements([]);
-
-    } finally {
-      setIsLoading(false);
-    }
-    }, 
-    []);
-
-    useEffect(() => {
-      fetchAnnouncements();
-    }, [fetchAnnouncements]);
-
-    useEffect(() => {
-        const userName = getUserFullName();
-          setFormData(prev => ({
-            ...prev,
-            postedBy: userName
-          }));
-      }, [getUserFullName]);
-
-        const handleViewDetails = async (announcement) => {
-          try {
-            setAnnouncements(prev => 
-              prev.map(a => 
-                a._id === announcement._id 
-                  ? { ...a, isLoadingViews: true }
-                  : a
-              )
+      setAnnouncements(prev => 
+        prev.map(a => 
+          a._id === announcement._id 
+            ? { ...a, isLoadingViews: true }
+            : a
+        )
       );
 
       const viewsData = Array.isArray(announcement.views) ? announcement.views : [];
       setSelectedAnnouncementViews(viewsData);
       setSelectedAnnouncementTitle(announcement.title);
       setIsViewsModalOpen(true);
-      } 
-      catch (error) 
-      {
-        console.error("❌ Error fetching view details:", error);
-        showNotification("Failed to load view details", "error");
-      } finally 
-      {
-        setAnnouncements(prev => 
-          prev.map(a => 
-            a._id === announcement._id 
-              ? { ...a, isLoadingViews: false }
-              : a
-            )
-          );
-        }
-      };
+    } catch (error) {
+      console.error("❌ Error fetching view details:", error);
+      showNotification("Failed to load view details", "error");
+    } finally {
+      setAnnouncements(prev => 
+        prev.map(a => 
+          a._id === announcement._id 
+            ? { ...a, isLoadingViews: false }
+            : a
+        )
+      );
+    }
+  };
 
-      const handleLikeDetails = async (announcement) => {
-        try {
-          setAnnouncements(prev => 
-            prev.map(a => 
-              a._id === announcement._id 
-                ? { ...a, isLoadingLikes: true }
-                : a
-            )
-          );
+  const handleLikeDetails = async (announcement) => {
+    try {
+      setAnnouncements(prev => 
+        prev.map(a => 
+          a._id === announcement._id 
+            ? { ...a, isLoadingLikes: true }
+            : a
+        )
+      );
 
       const likesData = Array.isArray(announcement.acknowledgements) ? announcement.acknowledgements : [];
       setSelectedAnnouncementLikes(likesData);
       setSelectedAnnouncementTitle(announcement.title);
       setIsLikesModalOpen(true);
-      } 
-      catch (error) 
-      {
-        console.error("❌ Error fetching like details:", error);
-        showNotification("Failed to load like details", "error");
-
-      } 
-      finally 
-      {
+    } catch (error) {
+      console.error("❌ Error fetching like details:", error);
+      showNotification("Failed to load like details", "error");
+    } finally {
       setAnnouncements(prev => 
         prev.map(a => 
           a._id === announcement._id 
             ? { ...a, isLoadingLikes: false }
             : a
-            )
-          );
-        }
+        )
+      );
+    }
+  };
+
+  const handleInputChange = (field, value) => {
+    if (field === "postedBy") return;
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleFileUpload = (file) => {
+    if (file && file.size <= 10 * 1024 * 1024) {
+      setSelectedFile(file);
+    } else {
+      showNotification("File size must be less than 10MB", "error");
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileUpload(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const resetForm = () => {
+    const currentDT = getCurrentDateTime();
+    const userName = getUserFullName();
+
+    setFormData({
+      title: "",
+      dateTime: "",
+      postedBy: userName,
+      agenda: "",
+      priority: "Medium",
+      dateInput: currentDT.dateInput,
+      timeInput: currentDT.timeInput,
+    });
+
+    setSelectedFile(null);
+    setIsEditMode(false);
+    setEditingId(null);
+  };
+
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handlePreview = () => {
+    if (!formData.title || 
+        !formData.dateInput || 
+        !formData.timeInput || 
+        !formData.postedBy || 
+        !formData.agenda) {
+      showNotification("Please fill in all required fields", "error");
+      return;
+    }
+
+    const combinedDateTime = DateTime.fromISO(`${formData.dateInput}T${formData.timeInput}`);
+    if (!combinedDateTime.isValid) {
+      showNotification("Invalid date or time. Please check your input.", "error");
+      return;
+    }
+
+    setIsPreviewModalOpen(true);
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const combinedDateTime = DateTime.fromISO(`${formData.dateInput}T${formData.timeInput}`);
+
+      if (!combinedDateTime.isValid) {
+        showNotification("Invalid date or time format", "error");
+        return;
+      }
+
+      const payload = {
+        title: formData.title,
+        postedBy: formData.postedBy,
+        agenda: formData.agenda,
+        priority: formData.priority,
+        dateTime: combinedDateTime.toISO(),
       };
 
-      const handleInputChange = (field, value) => {
-        if (field === "postedBy") return;
-        setFormData((prev) => ({ ...prev, [field]: value }));
-      };
-
-      const handleFileUpload = (file) => {
-        if (file && file.size <= 10 * 1024 * 1024) {
-          setSelectedFile(file);
-        } else {
-          showNotification("File size must be less than 10MB", "error");
-        }
-      };
-
-          const handleDrop = (e) => {
-            e.preventDefault();
-            setIsDragOver(false);
-            const file = e.dataTransfer.files[0];
-            if (file) handleFileUpload(file);
-          };
-
-          const handleDragOver = (e) => {
-            e.preventDefault();
-            setIsDragOver(true);
-          };
-
-          const handleDragLeave = () => {
-            setIsDragOver(false);
-          };
-
-          const resetForm = () => {
-          const currentDT = getCurrentDateTime();
-          const userName = getUserFullName();
-
-            setFormData({
-              title: "",
-              dateTime: "",
-              postedBy: userName,
-              agenda: "",
-              priority: "Medium",
-              dateInput: currentDT.dateInput,
-              timeInput: currentDT.timeInput,
-            });
-
-            setSelectedFile(null);
-            setIsEditMode(false);
-            setEditingId(null);
-          };
-
-          const fileToBase64 = (file) => {
-            return new Promise((resolve, reject) => {
-
-          const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = (error) => reject(error);
-          });
-        };
-
-        const handlePreview = () => {
-          if (!formData.title || 
-              !formData.dateInput || 
-              !formData.timeInput || 
-              !formData.postedBy || 
-              !formData.agenda) 
-            {
-              showNotification("Please fill in all required fields", "error");
-
-              return;
-            }
-
-        const combinedDateTime = DateTime.fromISO(`${formData.dateInput}T${formData.timeInput}`);
-           if (!combinedDateTime.isValid) 
-            {
-              showNotification("Invalid date or time. Please check your input.", "error");
-
-              return;
-            }
-
-          setIsPreviewModalOpen(true);
-        };
-
-        const handleSubmit = async () => {
+      if (selectedFile) {
+        if (selectedFile instanceof File) {
           try {
-            const combinedDateTime = DateTime.fromISO(`${formData.dateInput}T${formData.timeInput}`);
+            const base64File = await fileToBase64(selectedFile);
+            payload.attachment = {
+              name: selectedFile.name,
+              size: selectedFile.size,
+              type: selectedFile.type,
+              data: base64File,
+            };
+          } catch (error) {
+            console.error("Error converting file to base64:", error);
+            showNotification("Error processing file attachment", "error");
+            return;
+          }
+        } else {
+          payload.attachment = selectedFile;
+        }
+      }
 
-            if (!combinedDateTime.isValid) {
-              showNotification("Invalid date or time format", "error");
+      let response;
+      if (isEditMode) {
+        console.log("✏️ Updating announcement:", editingId);
+        response = await api.put(`/announcements/${editingId}`, payload);
 
-              return;
-            }
+        if (response.status === 200) {
+          showNotification("Announcement updated successfully!", "success");
+          if (socket) {
+            socket.emit("announcementUpdated", { ...payload, _id: editingId, status: "Active" });
+          }
+        } else {
+          throw new Error(`Update failed with status: ${response.status}`);
+        }
+      } else {
+        console.log("📝 Creating new announcement");
+        response = await api.post(`/announcements`, { ...payload, status: "Active" });
 
-          const payload = {
-            title: formData.title,
-            postedBy: formData.postedBy,
-            agenda: formData.agenda,
-            priority: formData.priority,
-            dateTime: combinedDateTime.toISO(),
-          };
+        if (response.status === 201) {
+          showNotification("Announcement posted successfully!", "success");
+          if (socket && response.data) {
+            socket.emit("newAnnouncement", response.data);
+          }
+        } else {
+          throw new Error(`Creation failed with status: ${response.status}`);
+        }
+      }
+      resetForm();
+      setIsPreviewModalOpen(false);
 
-              if (selectedFile) {
-                if (selectedFile instanceof File) {
-                  try {
-                    const base64File = await fileToBase64(selectedFile);
-                    payload.attachment = {
-                      name: selectedFile.name,
-                      size: selectedFile.size,
-                      type: selectedFile.type,
-                      data: base64File,
-                    };
-                  } catch (error) {
-                    console.error("Error converting file to base64:", error);
-                    showNotification("Error processing file attachment", "error");
-                    return;
-                  }
-                } else 
-                  {
-                  payload.attachment = selectedFile;
-                  }
-                }
-      
-          let response;
-          if (isEditMode) {
-            console.log("✏️ Updating announcement:", editingId);
-            response = await api.put(`/announcements/${editingId}`, payload);
+      // Refresh data
+      if (socket) {
+        socket.emit("getAdminData");
+      }
+
+    } catch (error) {
+      console.error("❌ Error submitting announcement:", error);
+      showNotification(`Failed to ${isEditMode ? "update" : "create"} announcement. Please try again.`, "error");
+    }
+  };
+
+  const handleEdit = (announcement) => {
+    setIsEditMode(true);
+    setEditingId(announcement._id);
+
+    const dt = DateTime.fromISO(announcement.dateTime);
+    const userName = getUserFullName();
+
+    setFormData({
+      title: announcement.title,
+      dateTime: announcement.dateTime,
+      postedBy: userName,
+      agenda: announcement.agenda,
+      priority: announcement.priority,
+      dateInput: dt.toISODate(),
+      timeInput: dt.toFormat("HH:mm"),
+    });
+
+    if (announcement.attachment) {
+      setSelectedFile(announcement.attachment);
+    } else {
+      setSelectedFile(null);
+    }
+  };
+
+  const handleCancelClick = (id) => {
+    setItemToCancel(id);
+    setIsConfirmationModalOpen(true);
+  };
+
+  // ✅ UPDATED: CANCELLATION WITH REAL-TIME SOCKET EVENTS AND PROPER STATUS SYNC
+  const handleConfirmCancel = async () => {
+    try {
+      const announcementToCancel = announcements.find(a => a._id === itemToCancel);
+      if (!announcementToCancel) {
+        showNotification("Announcement not found", "error");
+        return;
+      }
+
+      console.log("🗑️ Cancelling announcement:", itemToCancel);
+
+      const payload = {
+        status: "Inactive",
+        cancelledAt: new Date().toISOString(),
+        cancelledBy: getUserFullName(),
+        updatedAt: new Date().toISOString()
+      };
+
+      let response;
+      try {
+        response = await api.patch(`/announcements/${itemToCancel}`, payload);
+        console.log("✅ PATCH response:", response.data);
         
-                  if (response.status === 200) {
-                    showNotification("Announcement updated successfully!", "success");
-                  } else {
-                    throw new Error(`Update failed with status: ${response.status}`);
-                  }
-                  } 
-                  else {
-                    console.log("📝 Creating new announcement");
-                    // ✅ LAGING ACTIVE KAPAG PINOPOST
-                    response = await api.post(`/announcements`, { ...payload, status: "Active" });
-                  
-                  if (response.status === 201) {
-                    showNotification("Announcement posted successfully!", "success");
-                  } else {
-                    throw new Error(`Creation failed with status: ${response.status}`);
-                  }
-                  }
-                  resetForm();
-                  setIsPreviewModalOpen(false);
-    
-                  await fetchAnnouncements();
-      
-                  } catch (error) {
-                    console.error("❌ Error submitting announcement:", error);
-                    showNotification(`Failed to ${isEditMode ? "update" :
-                    "create"} announcement. Please try again.`, "error");
-                  }
-                };
-
-          const handleEdit = (announcement) => {
-            setIsEditMode(true);
-            setEditingId(announcement._id);
-
-          const dt = DateTime.fromISO(announcement.dateTime);
-          const userName = getUserFullName();
-    
-            setFormData({
-              title: announcement.title,
-              dateTime: announcement.dateTime,
-              postedBy: userName,
-              agenda: announcement.agenda,
-              priority: announcement.priority,
-              dateInput: dt.toISODate(),
-              timeInput: dt.toFormat("HH:mm"),
-            });
-    
-            if (announcement.attachment) {
-              setSelectedFile(announcement.attachment);
-            } else {
-              setSelectedFile(null);
-            }
+        // ✅ CRITICAL: Update local state immediately for better UX
+        setAnnouncements(prev => 
+          prev.map(ann => 
+            ann._id === itemToCancel 
+              ? { ...ann, ...payload }
+              : ann
+          )
+        );
+        
+        if (socket) {
+          const updatedAnnouncement = { 
+            ...announcementToCancel, 
+            ...payload,
+            _id: itemToCancel
           };
-
-          const handleCancelClick = (id) => {
-            setItemToCancel(id);
-            setIsConfirmationModalOpen(true);
-          };
-
-          const handleConfirmCancel = async () => {
-            try {
-            const announcementToCancel = announcements.find(a => a._id === itemToCancel);
-            if (!announcementToCancel) {
-              showNotification("Announcement not found", "error");
-              return;
-            }
-
-          console.log("🗑️ Cancelling announcement:", itemToCancel);
-      
-          const payload = {
-            status: "Inactive",  // ✅ PALITAN NG INACTIVE
-            cancelledAt: new Date().toISOString(),
+          
+          // Emit to admin for real-time update
+          socket.emit("announcementUpdated", updatedAnnouncement);
+          
+          // ✅ CRITICAL: Emit specific event for agents
+          socket.emit("announcementCancelled", {
+            announcementId: itemToCancel,
             cancelledBy: getUserFullName(),
-            updatedAt: new Date().toISOString()
-          };
-
-          let response;
-            try {
-              response = await api.patch(`/announcements/${itemToCancel}`, payload);
-              console.log("✅ PATCH response:", response.data);
-            } catch (patchError) {
-              console.log("🔄 PATCH failed, trying PUT:", patchError);
-        
-          const putPayload = {
-            ...announcementToCancel,
-            status: "Inactive",  // ✅ PALITAN NG INACTIVE
-            cancelledAt: new Date().toISOString(),
-            cancelledBy: getUserFullName(),
-            updatedAt: new Date().toISOString()
-          };
-        
+            cancelledAt: payload.cancelledAt,
+            announcementData: updatedAnnouncement // Include full data for agents
+          });
+          
+          console.log("📢 Emitted cancellation events");
+        }
+      } catch (patchError) {
+        console.log("🔄 PATCH failed, trying PUT:", patchError);
+        const putPayload = {
+          ...announcementToCancel,
+          status: "Inactive",
+          cancelledAt: new Date().toISOString(),
+          cancelledBy: getUserFullName(),
+          updatedAt: new Date().toISOString()
+        };
         delete putPayload._id;
         delete putPayload.__v;
-        
         response = await api.put(`/announcements/${itemToCancel}`, putPayload);
         console.log("✅ PUT response:", response.data);
+        
+        // ✅ CRITICAL: Update local state immediately
+        setAnnouncements(prev => 
+          prev.map(ann => 
+            ann._id === itemToCancel 
+              ? { ...ann, ...putPayload }
+              : ann
+          )
+        );
+        
+        if (socket) {
+          // Emit to admin for real-time update
+          socket.emit("announcementUpdated", putPayload);
+          
+          // ✅ CRITICAL: Emit specific event for agents
+          socket.emit("announcementCancelled", {
+            announcementId: itemToCancel,
+            cancelledBy: getUserFullName(),
+            cancelledAt: putPayload.cancelledAt,
+            announcementData: putPayload
+          });
+        }
       }
 
       showNotification("Announcement cancelled successfully!", "success");
       
-      // Refresh announcements
-      await fetchAnnouncements();
-      
+      // ✅ Switch to inactive tab to show the cancelled announcement
+      setActiveTab('inactive');
+
     } catch (error) {
       console.error("❌ Error cancelling announcement:", error);
-      console.error("📋 Error response:", error.response?.data);
-      
       let errorMessage = "Failed to cancel announcement. Please try again.";
       if (error.response?.status === 404) {
         errorMessage = "Announcement not found in database.";
@@ -501,7 +679,6 @@ const AdminAnnouncement = () => {
       } else if (error.message?.includes("Network Error")) {
         errorMessage = "Cannot connect to server. Please check your connection.";
       }
-      
       showNotification(errorMessage, "error");
     } finally {
       setIsConfirmationModalOpen(false);
@@ -509,12 +686,12 @@ const AdminAnnouncement = () => {
     }
   };
 
-  // NEW: Repost functionality
   const handleRepostClick = (id) => {
     setItemToRepost(id);
     setIsRepostModalOpen(true);
   };
 
+  // ✅ UPDATED: REPOSTING WITH REAL-TIME SOCKET EVENTS AND PROPER STATUS SYNC
   const handleConfirmRepost = async () => {
     try {
       const announcementToRepost = announcements.find(a => a._id === itemToRepost);
@@ -524,9 +701,9 @@ const AdminAnnouncement = () => {
       }
 
       console.log("🔄 Reposting announcement:", itemToRepost);
-      
+
       const payload = {
-        status: "Active",  // ✅ BALIK SA ACTIVE
+        status: "Active",
         updatedAt: new Date().toISOString(),
         cancelledAt: null,
         cancelledBy: null
@@ -536,33 +713,80 @@ const AdminAnnouncement = () => {
       try {
         response = await api.patch(`/announcements/${itemToRepost}`, payload);
         console.log("✅ PATCH response:", response.data);
+        
+        // ✅ CRITICAL: Update local state immediately for better UX
+        setAnnouncements(prev => 
+          prev.map(ann => 
+            ann._id === itemToRepost 
+              ? { ...ann, ...payload }
+              : ann
+          )
+        );
+        
+        if (socket) {
+          const updatedAnnouncement = { 
+            ...announcementToRepost, 
+            ...payload,
+            _id: itemToRepost
+          };
+          
+          // Emit to admin for real-time update
+          socket.emit("announcementUpdated", updatedAnnouncement);
+          
+          // ✅ CRITICAL: Emit specific event for agents with full data
+          socket.emit("announcementReposted", {
+            announcementId: itemToRepost,
+            repostedBy: getUserFullName(),
+            repostedAt: payload.updatedAt,
+            announcementData: updatedAnnouncement // Include full data for agents
+          });
+          
+          console.log("📢 Emitted repost events");
+        }
       } catch (patchError) {
         console.log("🔄 PATCH failed, trying PUT:", patchError);
-  
         const putPayload = {
           ...announcementToRepost,
-          status: "Active",  // ✅ BALIK SA ACTIVE
+          status: "Active",
           updatedAt: new Date().toISOString(),
           cancelledAt: null,
           cancelledBy: null
         };
-      
         delete putPayload._id;
         delete putPayload.__v;
-        
         response = await api.put(`/announcements/${itemToRepost}`, putPayload);
         console.log("✅ PUT response:", response.data);
+        
+        // ✅ CRITICAL: Update local state immediately
+        setAnnouncements(prev => 
+          prev.map(ann => 
+            ann._id === itemToRepost 
+              ? { ...ann, ...putPayload }
+              : ann
+          )
+        );
+        
+        if (socket) {
+          // Emit to admin for real-time update
+          socket.emit("announcementUpdated", putPayload);
+          
+          // ✅ CRITICAL: Emit specific event for agents with full data
+          socket.emit("announcementReposted", {
+            announcementId: itemToRepost,
+            repostedBy: getUserFullName(),
+            repostedAt: putPayload.updatedAt,
+            announcementData: putPayload
+          });
+        }
       }
 
       showNotification("Announcement reposted successfully!", "success");
       
-      // Refresh announcements
-      await fetchAnnouncements();
-      
+      // ✅ Switch to active tab to show the reposted announcement
+      setActiveTab('active');
+
     } catch (error) {
       console.error("❌ Error reposting announcement:", error);
-      console.error("📋 Error response:", error.response?.data);
-      
       let errorMessage = "Failed to repost announcement. Please try again.";
       if (error.response?.status === 404) {
         errorMessage = "Announcement not found in database.";
@@ -571,7 +795,6 @@ const AdminAnnouncement = () => {
       } else if (error.message?.includes("Network Error")) {
         errorMessage = "Cannot connect to server. Please check your connection.";
       }
-      
       showNotification(errorMessage, "error");
     } finally {
       setIsRepostModalOpen(false);
@@ -655,14 +878,8 @@ const AdminAnnouncement = () => {
     
     const diff = DateTime.local().diff(combinedDateTime, ["years", "months", "days", "hours", "minutes", "seconds"]);
 
-    if (diff.years > 0) 
-    return `${Math.floor(diff.years)} 
-    year${Math.floor(diff.years) > 1 ? "s" : ""} ago`;
-
-    if (diff.months > 0) 
-    return `${Math.floor(diff.months)} 
-    month${Math.floor(diff.months) > 1 ? "s" : ""} ago`;
-
+    if (diff.years > 0) return `${Math.floor(diff.years)} year${Math.floor(diff.years) > 1 ? "s" : ""} ago`;
+    if (diff.months > 0) return `${Math.floor(diff.months)} month${Math.floor(diff.months) > 1 ? "s" : ""} ago`;
     if (diff.days > 0) return `${Math.floor(diff.days)} day${Math.floor(diff.days) > 1 ? "s" : ""} ago`;
     if (diff.hours > 0) return `${Math.floor(diff.hours)} hour${Math.floor(diff.hours) > 1 ? "s" : ""} ago`;
     if (diff.minutes > 0) return `${Math.floor(diff.minutes)} minute${Math.floor(diff.minutes) > 1 ? "s" : ""} ago`;
@@ -729,9 +946,13 @@ const AdminAnnouncement = () => {
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center gap-2">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Announcements</h2>
+            <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              Real-time
+            </span>
           </div>
         </div>
-        <p className="text-gray-600 text-sm">Manage and view all company announcements.</p>
+        <p className="text-gray-600 text-sm">Manage and view all company announcements with real-time updates.</p>
       </section>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 px-2 gap-4 mb-8">

@@ -165,7 +165,7 @@ const AnnouncementDetailModal = ({
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={onClose} />
           
           {/* Modal Content */}
-          <div className="fixed inset-2 sm:inset-4 bg-white rounded-xl sm:rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden">
+          <div className="fixed inset-2 sm:inset-0 bg-white z-50 flex flex-col overflow-hidden">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-6 border-b border-gray-200 bg-white shrink-0 gap-3 sm:gap-0">
               <div className="flex items-center gap-3">
