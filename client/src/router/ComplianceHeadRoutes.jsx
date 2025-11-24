@@ -26,6 +26,9 @@ import SharedSettings from "../pages/shared/SharedSettings";
 import SharedTeamViewMembers from "../pages/shared/SharedTeamViewMembers";
 import AdminAccountManagement from "../pages/admin/AdminAccountManagement";
 import SharedTicket from "../pages/shared/SharedTicket";
+import SharedTicketList from "../pages/shared/SharedTicketList";
+import SharedTicketAnalytics from "../pages/shared/SharedTicketAnalytics";
+import TicketLayout from "../layout/TicketLayout";
 
 const COMPLIANCE_HEAD_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -71,6 +74,14 @@ const COMPLIANCE_HEAD_ROUTES = [
   {
     path: "createoffense",
     element: <HRReportedOffenses />,
+  },
+  {
+    path: "ticket",
+    element: <TicketLayout role={Roles.COMPLIANCE} />,
+    children: [
+      { path: "list", element: <SharedTicketList /> },
+      { path: "analytics", element: <SharedTicketAnalytics /> },
+    ],
   },
 ];
 
