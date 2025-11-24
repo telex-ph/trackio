@@ -83,6 +83,8 @@ export const getEvents = async (req, res) => {
             const attendances = await Attendance.getById(userId, "asc");
             const attendance = attendances[0];
 
+            console.log(attendances);
+
             // TODO: remove soon;
             await User.update(userId, "isValidEmployeeId", true);
 
@@ -92,8 +94,10 @@ export const getEvents = async (req, res) => {
               const totalBreak = attendance.totalBreak || 0;
               const status = attendance.status;
 
-              const shiftEnd = DateTime.fromJSDate(attendance.shiftEnd).toUTC();
-              const nowTime = DateTime.utc();
+              const shiftEnd = DateTime.fromJSDate(attendance.shiftEnd, {
+                zone: "utc",
+              });
+              const nowTime = DateTime.now().toUTC();
 
               console.log(
                 `Name: ${ac.name} ID: ${userId} shiftEnd: ${shiftEnd} nowTime: ${nowTime}`

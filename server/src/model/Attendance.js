@@ -150,8 +150,8 @@ class Attendance {
     if (!id) throw new Error("ID is required");
 
     const nowPH = DateTime.now().setZone("Asia/Manila");
-    const todayStart = nowPH.startOf("day").toJSDate();
-    const todayEnd = nowPH.endOf("day").toJSDate();
+    const todayStart = nowPH.startOf("day").toUTC().toJSDate();
+    const todayEnd = nowPH.endOf("day").toUTC().toJSDate();
 
     const db = await connectDB();
     const collection = db.collection(this.#collection);
