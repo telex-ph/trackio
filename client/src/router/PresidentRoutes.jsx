@@ -19,7 +19,7 @@ import SharedTeamViewMembers from "../pages/shared/SharedTeamViewMembers";
 import SharedTicket from "../pages/shared/SharedTicket";
 
 // Human Resources
-import HROffenses from "../pages/hr/HROffenses";
+import HROffenses from "../pages/hr/HROffense";
 import HRReportedOffenses from "../pages/hr/HRReportedOffenses";
 
 // Team Leader Routes

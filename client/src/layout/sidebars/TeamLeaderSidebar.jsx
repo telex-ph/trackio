@@ -18,7 +18,7 @@ const TeamLeaderSidebar = ({
   isCollapsed,
   activeDropdown,
   setActiveDropdown,
-  unreadOffenses, // <-- add prop
+  unreadOffenses,
 }) => (
   <div className="space-y-1">
     <SidebarLink

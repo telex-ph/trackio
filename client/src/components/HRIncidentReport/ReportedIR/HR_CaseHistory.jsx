@@ -8,11 +8,11 @@ const HR_CaseHistory = ({
   onDateReset,
   isLoading,
   formatDisplayDate,
-  base64ToBlobUrl,
   today,
+  onView
 }) => {
   return (
-    <div className="rounded-md p-6 sm:p-8 border border-light">
+    <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-green-100 rounded-lg">
@@ -78,13 +78,11 @@ const HR_CaseHistory = ({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-gray-200 text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                <th className="p-4 whitespace-nowrap">Date</th>
-                <th className="p-4 whitespace-nowrap">Offense Type</th>
-                <th className="p-4 whitespace-nowrap">Level</th>
+                <th className="p-4 whitespace-nowrap">Date Created</th>
+                <th className="p-4 whitespace-nowrap">Category</th>
+                <th className="p-4 whitespace-nowrap">Respondant</th>
                 <th className="p-4 whitespace-nowrap">Status</th>
-                <th className="p-4 whitespace-nowrap">Action Taken</th>
-                <th className="p-4 whitespace-nowrap">Evidence</th>
-                <th className="p-4 whitespace-nowrap">Remarks</th>
+                <th className="p-4 whitespace-nowrap">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -99,69 +97,44 @@ const HR_CaseHistory = ({
                       {formatDisplayDate(off.dateOfOffense)}
                     </td>
                     <td className="p-4 text-sm text-gray-600">
-                      {off.offenseType}
+                      {off.offenseCategory}
                     </td>
                     <td className="p-4 text-sm text-gray-600">
-                      {off.offenseLevel || "N/A"}
+                      {off.agentName || "N/A"}
                     </td>
                     <td className="p-4">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          off.status === "Closed"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-200 text-gray-600"
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          {
+                            "Pending Review":
+                              "bg-amber-100 text-amber-700 border border-amber-200",
+                            NTE: "bg-blue-100 text-blue-700 border border-blue-200",
+                            Invalid:
+                              "bg-red-100 text-red-700 border border-red-200",
+                            "Respondent Explained":
+                              "bg-purple-100 text-purple-700 border border-purple-200",
+                            "Scheduled for hearing":
+                              "bg-indigo-100 text-indigo-700 border border-indigo-200",
+                            "After Hearing":
+                              "bg-teal-100 text-teal-700 border border-teal-200",
+                            Acknowledged:
+                              "bg-green-100 text-green-700 border border-green-200",
+                          }[off.status] ||
+                          "bg-gray-100 text-gray-700 border border-gray-200"
                         }`}
                       >
                         {off.status}
                       </span>
                     </td>
-                    <td className="p-4 text-sm text-gray-600">
-                      {off.actionTaken}
-                    </td>
-
-                    {/* Evidence Column with icons */}
-                    <td className="p-4 text-sm text-gray-600">
-                      {off.evidence && off.evidence.length > 0 ? (
-                        <div className="flex flex-col items-start gap-2">
-                          {off.evidence.map((ev, idx) => {
-                            const viewUrl = base64ToBlobUrl(ev.data, ev.type);
-                            return (
-                              <div
-                                key={idx}
-                                className="flex items-center gap-2"
-                              >
-                                <span className="truncate" title={ev.fileName}>
-                                  {ev.fileName}
-                                </span>
-                                <a
-                                  href={viewUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="p-1 text-gray-500 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
-                                  title="View"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </a>
-                                <a
-                                  href={ev.data}
-                                  download={ev.fileName}
-                                  className="p-1 text-gray-500 hover:text-green-600 rounded-md hover:bg-green-50 transition-colors"
-                                  title="Download"
-                                >
-                                  <Download className="w-4 h-4" />
-                                </a>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
                     {/* End of Evidence Column */}
 
                     <td className="p-4 text-sm text-gray-600">
-                      {off.remarks || "—"}
+                      <button
+                        onClick={() => off && off._id && onView(off)}
+                        className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
+                      >
+                        View
+                      </button>
                     </td>
                   </tr>
                 ))}
