@@ -83,10 +83,6 @@ export const getEvents = async (req, res) => {
             const attendances = await Attendance.getById(userId, "asc");
             const attendance = attendances[0];
 
-            console.log(
-              `List of attendances ${attendance} and ${attendance} was selected`
-            );
-
             // TODO: remove soon;
             await User.update(userId, "isValidEmployeeId", true);
 
@@ -103,6 +99,9 @@ export const getEvents = async (req, res) => {
 
               console.log(
                 `Name: ${ac.name} ID: ${userId} shiftEnd: ${shiftEnd} nowTime: ${nowTime}`
+              );
+              console.log(
+                `List of attendances of ${ac.name}: ${attendance} and ${attendance} was selected`
               );
 
               if (shiftEnd < nowTime) {
