@@ -101,7 +101,9 @@ export const getEvents = async (req, res) => {
                 `Name: ${ac.name} ID: ${userId} shiftEnd: ${shiftEnd} nowTime: ${nowTime}`
               );
               console.log(
-                `List of attendances of ${ac.name}: ${attendance} and ${attendance} was selected`
+                `List of attendances of ${
+                  ac.name
+                }: ${attendance} and ${JSON.stringify(attendance)} was selected`
               );
 
               if (shiftEnd < nowTime) {
