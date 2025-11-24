@@ -3,51 +3,89 @@ import api from "../../utils/axios";
 export const offenseBadge = (set) => ({
   unreadOffensesHR: 0,
   unreadOffensesRespondent: 0,
+  unreadOffensesReporter: 0, // for Reporter side
 
-  // ✅ Fetch unread offenses for HR (isReadByHR: false)
-  fetchUnreadOffensesHR: async () => {
-    try {
-      const { data } = await api.get("/offenses");
-      const unreadCount = data.filter((o) => !o.isReadByHR).length;
-      set({ unreadOffensesHR: unreadCount });
-    } catch (error) {
-      console.error("Error fetching unread offenses (HR):", error);
-    }
-  },
-
-  // ✅ Fetch unread offenses for Team Leader & Agent (isReadByRespondant: false)
-  fetchUnreadOffensesRespondent: async (employeeId) => {
-    if (!employeeId) return; // Skip if no ID available
+  fetchUnreadOffenses: async ({ role, employeeId }) => {
     try {
       const { data } = await api.get("/offenses");
 
-      const unreadCount = data.filter(
-        (o) =>
-          // Must have the field
-          Object.prototype.hasOwnProperty.call(o, "isReadByRespondant") &&
-          // Unread by respondent
-          o.isReadByRespondant === false &&
-          // Belongs to current user
-          o.employeeId === employeeId
-      ).length;
+      let unreadHR = 0;
+      let unreadRespondent = 0;
+      let unreadReporter = 0;
 
-      set({ unreadOffensesRespondent: unreadCount });
+      data.forEach((o) => {
+        const status = o.status;
+
+        // ---------- HR logic ----------
+        if (role === "HR") {
+          if (
+            ["Pending Review", "Respondent Explained", "Acknowledged"].includes(
+              status
+            )
+          ) {
+            if (!o.isReadByHR) unreadHR++;
+          } else if (
+            ["NTE", "Scheduled for hearing", "After Hearing"].includes(status)
+          ) {
+            if (!o.isReadByRespondant) unreadRespondent++;
+          } else if (status === "Invalid") {
+            if (!o.isReadByReporter) unreadReporter++;
+          }
+        }
+
+        // ---------- Respondent logic ----------
+        if (role === "RESPONDENT") {
+          if (
+            ["NTE", "Scheduled for hearing", "After Hearing"].includes(status)
+          ) {
+            if (!o.isReadByRespondant && o.employeeId === employeeId) unreadRespondent++;
+          } else if (status === "Invalid") {
+            if (!o.isReadByReporter) unreadReporter++;
+          } else if (
+            ["Pending Review", "Respondent Explained", "Acknowledged"].includes(
+              status
+            )
+          ) {
+            if (!o.isReadByHR) unreadHR++;
+          }
+        }
+
+        // ---------- Reporter logic ----------
+        if (role === "REPORTER") {
+          if (status === "Invalid") {
+            if (!o.isReadByReporter) unreadReporter++;
+          } else if (
+            ["Pending Review", "Respondent Explained", "Acknowledged"].includes(
+              status
+            )
+          ) {
+            if (!o.isReadByHR) unreadHR++;
+          } else if (
+            ["NTE", "Scheduled for hearing", "After Hearing"].includes(status)
+          ) {
+            if (!o.isReadByRespondant) unreadRespondent++;
+          }
+        }
+      });
+
+      set({
+        unreadOffensesHR: unreadHR,
+        unreadOffensesRespondent: unreadRespondent,
+        unreadOffensesReporter: unreadReporter,
+      });
     } catch (error) {
-      console.error("Error fetching unread offenses (TL/AGENT):", error);
+      console.error("Error fetching unread offenses:", error);
     }
   },
 
-  // ✅ Decrease counts when read
   decrementUnreadOffensesHR: () =>
-    set((state) => ({
-      unreadOffensesHR: Math.max(state.unreadOffensesHR - 1, 0),
-    })),
-
+    set((state) => ({ unreadOffensesHR: Math.max(state.unreadOffensesHR - 1, 0) })),
   decrementUnreadOffensesRespondent: () =>
     set((state) => ({
-      unreadOffensesRespondent: Math.max(
-        state.unreadOffensesRespondent - 1,
-        0
-      ),
+      unreadOffensesRespondent: Math.max(state.unreadOffensesRespondent - 1, 0),
+    })),
+  decrementUnreadOffensesReporter: () =>
+    set((state) => ({
+      unreadOffensesReporter: Math.max(state.unreadOffensesReporter - 1, 0),
     })),
 });

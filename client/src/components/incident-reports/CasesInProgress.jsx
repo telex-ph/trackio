@@ -8,6 +8,7 @@ import {
   Eye,
   Hash,
   Download,
+  User,
 } from "lucide-react";
 import { DateTime } from "luxon";
 const CasesInProgress = ({
@@ -166,6 +167,11 @@ const CasesInProgress = ({
               <div className="space-y-3 mb-4">
                 {/* Card Body Content */}
                 <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
+                  <User className="w-3 h-3 sm:w-4 sm:h-4" />
+                  Respondant:{" "}
+                  <span className="font-medium">{off.agentName}</span>
+                </p>
+                <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
                   <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
                   Category:{" "}
                   <span className="font-medium">{off.offenseCategory}</span>
@@ -243,50 +249,7 @@ const CasesInProgress = ({
                     </div>
                   </div>
                 )}
-                {off.fileNTE?.length > 0 && (
-                  <div className="bg-purple-50 rounded-xl p-3 sm:p-4 border-l-4 border-purple-500">
-                    <div className="flex items-center gap-2 mb-2">
-                      <FileText className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                      <span className="font-semibold text-gray-800 text-sm">
-                        Notice to explain:
-                      </span>
-                    </div>
-                    <div className="space-y-2">
-                      {off.fileNTE.map((ev, idx) => {
-                        const viewUrl = base64ToBlobUrl(ev.data, ev.type);
-                        return (
-                          <div
-                            key={idx}
-                            className="flex items-center justify-between gap-2 w-full p-2 bg-white border border-purple-100 rounded-lg mt-1"
-                          >
-                            <span className="text-purple-700 truncate text-xs font-medium">
-                              {ev.fileName}
-                            </span>
-                            <div className="flex items-center gap-1 flex-shrink-0">
-                              <a
-                                href={viewUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-1 text-gray-500 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
-                              >
-                                <Eye className="w-3.5 h-3.5" />
-                              </a>
-                              <a
-                                href={ev.data}
-                                download={ev.fileName}
-                                className="p-1 text-gray-500 hover:text-green-600 rounded-md hover:bg-green-50 transition-colors"
-                              >
-                                <Download className="w-3.5 h-3.5" />
-                              </a>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
               </div>
-
               <div className="flex gap-3">
                 <button
                   onClick={() => off && off._id && onView(off)}

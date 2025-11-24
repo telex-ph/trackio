@@ -161,6 +161,7 @@ const OffenseDetails = ({
             "Respondent Explained",
             "Scheduled for hearing",
             "Respondent Explained",
+            "Acknowledged",
           ].includes(formData.status) && (
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -172,7 +173,98 @@ const OffenseDetails = ({
             </div>
           )}
 
-          {formData.status === "Invalid" ? (
+          {formData.fileMOM &&
+            formData.fileMOM.length > 0 &&
+            formData.fileNDA.length > 0 && (
+              <div>
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  Minutes of the meeting
+                </label>
+                <div className="border-2 border-dashed rounded-2xl p-4 mb-4 border-blue-400 bg-blue-50">
+                  {formData.fileMOM.slice(0, 1).map((mom, idx) => {
+                    const viewUrl = base64ToBlobUrl(mom.data, mom.type);
+                    return (
+                      <div key={idx} className="flex flex-col gap-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                          <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
+                            {mom.fileName}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={viewUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View
+                          </a>
+                          <a
+                            href={mom.data}
+                            download={mom.fileName}
+                            className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                          >
+                            <Download className="w-4 h-4" />
+                            Download
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  Notice of Disciplinary Action
+                </label>
+                <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
+                  {formData.fileNDA.slice(0, 1).map((nda, idx) => {
+                    const viewUrl = base64ToBlobUrl(nda.data, nda.type);
+                    return (
+                      <div key={idx} className="flex flex-col gap-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                          <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
+                            {nda.fileName}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={viewUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View
+                          </a>
+                          <a
+                            href={nda.data}
+                            download={nda.fileName}
+                            className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                          >
+                            <Download className="w-4 h-4" />
+                            Download
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          {formData.isAcknowledged === true && (
+            <div className="space-y-2">
+              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                Acknowledgement
+              </label>
+              <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 text-gray-800 text-sm sm:text-base overflow-y-auto">
+                {formData.ackMessage || "No acknowledgement"}
+              </p>
+            </div>
+          )}
+
+          {formData.status === "Invalid" && (
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                 Invalid Reason
@@ -181,7 +273,7 @@ const OffenseDetails = ({
                 {formData.invalidReason}
               </p>
             </div>
-          ) : null}
+          )}
 
           {/* End of Evidence Section */}
 
@@ -193,14 +285,14 @@ const OffenseDetails = ({
             >
               Close
             </button>
-            {formData.isReadByHR ? (
+            {formData.isReadByHR && (
               <button
                 onClick={onDelete}
                 className="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
               >
                 Delete
               </button>
-            ) : null}
+            )}
           </div>
         </div>
       ) : (

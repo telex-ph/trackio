@@ -325,6 +325,7 @@ const HRReportedOffenses = () => {
         ...formData,
         isAcknowledged: false,
         status: "After Hearing",
+        isReadByRespondant: false,
         afterHearingDateTime: now.toISOString(),
       };
 
@@ -417,11 +418,8 @@ const HRReportedOffenses = () => {
   const filteredOffenses = offenses.filter(
     (off) =>
       ![
-        "Action Taken",
-        "Escalated",
-        "Closed",
-        "Rejected",
-        "Escalated to Compliance",
+        "Invalid",
+        "Acknowledged",
       ].includes(off.status) &&
       [
         off.agentName,
@@ -442,11 +440,7 @@ const HRReportedOffenses = () => {
   // Filter for "Case History"
   const resolvedOffenses = offenses.filter((off) => {
     const isResolved = [
-      "Action Taken",
-      "Escalated",
-      "Closed",
-      "Rejected",
-      "Escalated to Compliance",
+      "Acknowledged",
     ].includes(off.status);
     if (!isResolved) return false;
 
@@ -551,8 +545,8 @@ const HRReportedOffenses = () => {
         onDateReset={handleHistoryDateReset}
         isLoading={isLoading}
         formatDisplayDate={formatDisplayDate}
-        base64ToBlobUrl={base64ToBlobUrl}
         today={today}
+        onView={handleView}
       />
     </div>
   );

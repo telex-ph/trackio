@@ -18,13 +18,11 @@ import SharedViewSchedule from "../pages/shared/SharedViewSchedule";
 import { Navigate } from "react-router-dom";
 import Roles from "../constants/roles";
 
-// Human Resources
-import HROffenses from "../pages/hr/HROffenses";
-import HRReportedOffenses from "../pages/hr/HRReportedOffenses";
-
 import SharedSettings from "../pages/shared/SharedSettings";
 import AdminAccountManagement from "../pages/admin/AdminAccountManagement";
 import SharedTicket from "../pages/shared/SharedTicket";
+import TeamLeaderOffenses from "../pages/team-leader/TeamLeaderOffenses";
+import TeamLeaderCreateOffenses from "../pages/team-leader/TeamLeaderCreateOffense";
 
 const COMPLIANCE_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -61,11 +59,11 @@ const COMPLIANCE_ROUTES = [
   { path: "account-settings", element: <SharedSettings /> },
   {
     path: "offenses",
-    element: <HROffenses />,
+    element: <TeamLeaderOffenses />,
   },
   {
     path: "createoffense",
-    element: <HRReportedOffenses />,
+    element: <TeamLeaderCreateOffenses />,
   },
 ];
 

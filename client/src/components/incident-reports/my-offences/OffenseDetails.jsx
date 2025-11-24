@@ -3,11 +3,19 @@ import { Calendar, X, FileText, Eye, Download } from "lucide-react";
 
 const OffenseDetails = ({
   isViewMode,
+  resetForm,
   formData,
-  onClose,
-  onDelete,
   formatDisplayDate,
   base64ToBlobUrl,
+  handleInputChange,
+  originalExplanation,
+  respondentHasExplanation,
+  handleSubmit,
+  showAcknowledgeModal,
+  setShowAcknowledgeModal,
+  ackMessage,
+  setAckMessage,
+  handleAcknowledge
 }) => {
   return (
     <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
@@ -22,7 +30,7 @@ const OffenseDetails = ({
         </div>
         {isViewMode && (
           <button
-            onClick={onClose}
+            onClick={resetForm}
             className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
           >
             <X className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -32,23 +40,33 @@ const OffenseDetails = ({
 
       {isViewMode ? (
         <div className="space-y-6">
-          {/* Agent Name */}
-          <div className="space-y-2">
-            <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-              Agent Name
-            </label>
-            <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
-              {formData.agentName}
-            </p>
-          </div>
-          {/* Category & Date */}
+          {/* Agent Name & Category */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="space-y-2">
+              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                Respondant
+              </label>
+              <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
+                {formData.agentName}
+              </p>
+            </div>
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                 Offense Category
               </label>
               <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
                 {formData.offenseCategory || "N/A"}
+              </p>
+            </div>
+          </div>
+          {/* Level & Date */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="space-y-2">
+              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                Offense Level
+              </label>
+              <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
+                {formData.offenseLevel || "Coming Soon!"}
               </p>
             </div>
             <div className="space-y-2">
@@ -116,11 +134,12 @@ const OffenseDetails = ({
               </div>
             </div>
           )}
-          {formData.fileNTE && formData.fileNTE.length > 0 && (
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Notice to explain
-              </label>
+
+          <div className="space-y-2">
+            <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+              Notice to explain
+            </label>
+            {formData.fileNTE.length > 0 ? (
               <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
                 {formData.fileNTE.slice(0, 1).map((nte, idx) => {
                   const viewUrl = base64ToBlobUrl(nte.data, nte.type);
@@ -155,57 +174,193 @@ const OffenseDetails = ({
                   );
                 })}
               </div>
-            </div>
-          )}
-          {[
-            "Respondent Explained",
-            "Scheduled for hearing",
-            "Respondent Explained",
-          ].includes(formData.status) && (
+            ) : null}
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+              Explanation
+            </label>
+            <textarea
+              onChange={(e) =>
+                handleInputChange("respondantExplanation", e.target.value)
+              }
+              placeholder="Your explanation..."
+              className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl 
+                    h-24 sm:h-32 focus:border-red-500 focus:bg-white transition-all duration-300 
+                  text-gray-800 placeholder-gray-400 resize-none text-sm sm:text-base"
+              disabled={!!originalExplanation}
+              value={formData.respondantExplanation || ""}
+            />
+          </div>
+          {formData.fileMOM &&
+            formData.fileMOM.length > 0 &&
+            formData.fileNDA.length > 0 && (
+              <div>
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  Minutes of the meeting
+                </label>
+                <div className="border-2 border-dashed rounded-2xl p-4 mb-4 border-blue-400 bg-blue-50">
+                  {formData.fileMOM.slice(0, 1).map((mom, idx) => {
+                    const viewUrl = base64ToBlobUrl(mom.data, mom.type);
+                    return (
+                      <div key={idx} className="flex flex-col gap-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                          <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
+                            {mom.fileName}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={viewUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View
+                          </a>
+                          <a
+                            href={mom.data}
+                            download={mom.fileName}
+                            className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                          >
+                            <Download className="w-4 h-4" />
+                            Download
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  Notice of Disciplinary Action
+                </label>
+                <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
+                  {formData.fileNDA.slice(0, 1).map((nda, idx) => {
+                    const viewUrl = base64ToBlobUrl(nda.data, nda.type);
+                    return (
+                      <div key={idx} className="flex flex-col gap-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                          <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
+                            {nda.fileName}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={viewUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View
+                          </a>
+                          <a
+                            href={nda.data}
+                            download={nda.fileName}
+                            className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                          >
+                            <Download className="w-4 h-4" />
+                            Download
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          {formData.status === "Acknowledged" && (
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Explanation
+                Acknowledgement
               </label>
               <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 text-gray-800 text-sm sm:text-base overflow-y-auto">
-                {formData.respondantExplanation || "No explanation"}
+                {formData.ackMessage || "No acknowledgement"}
               </p>
             </div>
           )}
-
-          {formData.status === "Invalid" ? (
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Invalid Reason
-              </label>
-              <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 text-gray-800 text-sm sm:text-base overflow-y-auto">
-                {formData.invalidReason}
-              </p>
-            </div>
-          ) : null}
-
-          {/* End of Evidence Section */}
-
           {/* Buttons */}
           <div className="flex gap-4">
+            {!respondentHasExplanation && (
+              <button
+                onClick={handleSubmit}
+                className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
+              >
+                Submit
+              </button>
+            )}
+            {formData.status === "After Hearing" && (
+              <button
+                onClick={() => setShowAcknowledgeModal(true)}
+                className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
+              >
+                Acknowledge
+              </button>
+            )}
             <button
-              onClick={onClose}
+              onClick={resetForm}
               className="flex-1 bg-gray-200 text-gray-800 p-3 sm:p-4 rounded-2xl hover:bg-gray-300 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
             >
               Close
             </button>
-            {formData.isReadByHR ? (
-              <button
-                onClick={onDelete}
-                className="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
-              >
-                Delete
-              </button>
-            ) : null}
           </div>
         </div>
       ) : (
         <div className="flex items-center justify-center py-10 text-gray-500 italic">
           Select an offense from the list to view details.
+        </div>
+      )}
+      {showAcknowledgeModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-gray-900">
+                Acknowledge Action
+              </h2>
+              <button
+                onClick={() => setShowAcknowledgeModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Message */}
+            <p className="text-gray-700 mb-4">
+              Please provide a message or note as part of your acknowledgement.
+            </p>
+
+            {/* Textarea */}
+            <textarea
+              className="w-full border border-gray-300 rounded-xl p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              rows={4}
+              value={ackMessage}
+              onChange={(e) => setAckMessage(e.target.value)}
+              placeholder="Enter your acknowledgement message..."
+            />
+
+            {/* Buttons */}
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors"
+                onClick={() => setShowAcknowledgeModal(false)}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
+                disabled={!ackMessage.trim()}
+                onClick={() => handleAcknowledge(ackMessage)}
+              >
+                Acknowledge
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
