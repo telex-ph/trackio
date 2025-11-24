@@ -100,10 +100,16 @@ export const getEvents = async (req, res) => {
               console.log(
                 `Name: ${ac.name} ID: ${userId} shiftEnd: ${shiftEnd} nowTime: ${nowTime}`
               );
+              // TODO: remove soon;
               console.log(
-                `List of attendances of ${
-                  ac.name
-                }: ${attendance} and ${JSON.stringify(attendance)} was selected`
+                `Attendance selection for ${ac.name}: ` +
+                  `List: [${attendances
+                    .map((a) => a._id.toString())
+                    .join(", ")}] ` +
+                  `| Selected -> ID: ${attendance._id.toString()}, ` +
+                  `shiftDate: ${attendance.shiftDate}, ` +
+                  `shiftStart: ${attendance.shiftStart}, ` +
+                  `shiftEnd: ${attendance.shiftEnd}`
               );
 
               if (shiftEnd < nowTime) {
