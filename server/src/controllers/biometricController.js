@@ -81,7 +81,17 @@ export const getEvents = async (req, res) => {
           if (user) {
             const userId = user._id.toString();
             const attendances = await Attendance.getById(userId, "desc");
-            const attendance = attendances[0];
+            const attendance =
+              attendances.find((a) => {
+                const shiftStart = DateTime.fromJSDate(a.shiftStart, {
+                  zone: "utc",
+                });
+                const shiftEnd = DateTime.fromJSDate(a.shiftEnd, {
+                  zone: "utc",
+                });
+                const nowTime = DateTime.now().toUTC();
+                return shiftEnd > nowTime || shiftStart <= nowTime;
+              }) || attendances[0];
 
             // TODO: remove soon;
             await User.update(userId, "isValidEmployeeId", true);

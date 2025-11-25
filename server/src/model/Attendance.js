@@ -150,24 +150,22 @@ class Attendance {
     if (!id) throw new Error("ID is required");
 
     const nowPH = DateTime.now().setZone("Asia/Manila");
-    const yesterdayStartUTC = nowPH
-      .minus({ days: 1 })
-      .startOf("day")
-      .toUTC()
-      .toJSDate();
-    const todayEndUTC = nowPH.endOf("day").toUTC().toJSDate();
+
+    const windowStartUTC = nowPH.minus({ hours: 12 }).toUTC().toJSDate();
+    const windowEndUTC = nowPH.plus({ hours: 12 }).toUTC().toJSDate();
 
     const db = await connectDB();
     const collection = db.collection(this.#collection);
 
     const sortOrder = sort === "asc" ? 1 : -1;
 
+    // Fetch attendances in the safe window
     const attendances = await collection
       .aggregate([
         {
           $match: {
             userId: new ObjectId(id),
-            shiftDate: { $gte: yesterdayStartUTC, $lte: todayEndUTC },
+            shiftStart: { $gte: windowStartUTC, $lte: windowEndUTC },
           },
         },
         { $sort: { shiftStart: sortOrder } },
@@ -183,7 +181,17 @@ class Attendance {
       ])
       .toArray();
 
-    return attendances;
+    const ongoingAttendance = attendances.find((a) => {
+      const shiftStart = DateTime.fromJSDate(a.shiftStart, { zone: "utc" });
+      const shiftEnd = DateTime.fromJSDate(a.shiftEnd, { zone: "utc" });
+      const nowTime = DateTime.now().toUTC();
+
+      // Pick shifts that are ongoing or in the future
+      return shiftEnd > nowTime || shiftStart <= nowTime;
+    });
+
+    // If none found, fallback to latest one
+    return ongoingAttendance ? [ongoingAttendance] : attendances;
   }
 
   /**
