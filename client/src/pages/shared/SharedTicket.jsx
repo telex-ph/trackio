@@ -89,7 +89,7 @@ const TicketsTable = () => {
 
     setIsLoading(true);
     try {
-      const url = `https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/${user.email}`;
+      const url = `https://ticketing-system-2u0k.onrender.com/api/ittickets/trackio/${user.email}`;
 
       const response = await axios.get(url, {
         headers: {
@@ -105,7 +105,7 @@ const TicketsTable = () => {
       const ticketsWithDetails = await Promise.all(
         documents.map(async (ticket) => {
           try {
-            const detailUrl = `https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/overview/${user.email}/${ticket.ticketNo}`;
+            const detailUrl = `https://ticketing-system-2u0k.onrender.com/api/ittickets/trackio/overview/${user.email}/${ticket.ticketNo}`;
             const detailResponse = await axios.get(detailUrl, {
               headers: {
                 "Content-Type": "application/json",
@@ -179,7 +179,7 @@ const TicketsTable = () => {
     setTicketDetails(null);
 
     try {
-      const url = `https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/overview/${user.email}/${selectedTicket.ticketNo}`;
+      const url = `https://ticketing-system-2u0k.onrender.com/api/ittickets/trackio/overview/${user.email}/${selectedTicket.ticketNo}`;
       const response = await axios.get(url, {
         headers: {
           "Content-Type": "application/json",
@@ -210,7 +210,7 @@ const TicketsTable = () => {
       }
 
       // Fetch comments to check if agent already confirmed
-      const commentsUrl = `https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/comments/${user.email}/${selectedTicket.ticketNo}`;
+      const commentsUrl = `https://ticketing-system-2u0k.onrender.com/api/ittickets/trackio/comments/${user.email}/${selectedTicket.ticketNo}`;
       const commentsResponse = await axios.get(commentsUrl, {
         headers: {
           "Content-Type": "application/json",
@@ -256,7 +256,7 @@ const TicketsTable = () => {
 
     setIsCommentsLoading(true);
     try {
-      const url = `https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/comments/${user.email}/${selectedTicket.ticketNo}`;
+      const url = `https://ticketing-system-2u0k.onrender.com/api/ittickets/trackio/comments/${user.email}/${selectedTicket.ticketNo}`;
 
       const response = await axios.get(url, {
         headers: {
@@ -429,7 +429,7 @@ const TicketsTable = () => {
       console.log("Sending ticket data:", ticketData);
 
       const response = await axios.post(
-        "https://ticketing-system-eight-kappa.vercel.app/api/ittickets",
+        "https://ticketing-system-2u0k.onrender.com/api/ittickets",
         ticketData,
         {
           headers: {
@@ -480,7 +480,7 @@ const TicketsTable = () => {
     setIsSubmittingComment(true);
     try {
       const url =
-        "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/itTicketComment";
+        "https://ticketing-system-2u0k.onrender.com/api/ittickets/trackio/itTicketComment";
       const payload = {
         email: user.email,
         ticketNum: selectedTicket.ticketNo,
@@ -511,7 +511,7 @@ const TicketsTable = () => {
 
     try {
       const url =
-        "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/updateComment";
+        "https://ticketing-system-2u0k.onrender.com/api/ittickets/trackio/updateComment";
 
       const payload = {
         email: user.email,
@@ -555,7 +555,7 @@ const TicketsTable = () => {
     try {
       // Step 1: Confirm the resolution via PATCH API
       const confirmUrl =
-        "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/confirmation";
+        "https://ticketing-system-2u0k.onrender.com/api/ittickets/trackio/confirmation";
       const confirmPayload = {
         email: user.email,
         updateTicketNo: ticketDetails.ticketNo,
@@ -620,7 +620,7 @@ const TicketsTable = () => {
     setIsRejecting(true);
     try {
       const rejectUrl =
-        "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/confirmation";
+        "https://ticketing-system-2u0k.onrender.com/api/ittickets/trackio/confirmation";
 
       const rejectPayload = {
         email: user.email,
