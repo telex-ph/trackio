@@ -244,7 +244,7 @@ const AgentDashboard = () => {
     initializeUserData();
   }, []);
 
-  // ✅ FIXED SOCKET LISTENERS FOR REAL-TIME UPDATES - NO DUPLICATES
+  // ✅ FIXED SOCKET LISTENERS FOR REAL-TIME UPDATES - INCLUDES EDIT LISTENER
   useEffect(() => {
     if (!socket) {
       console.log("❌ Socket not available for agent");
@@ -391,12 +391,68 @@ const AgentDashboard = () => {
       console.log("🗑️ Removed cancelled announcement from agent view");
     };
 
+    // ✅ NEW: REAL-TIME EDIT HANDLER - FOR ADMIN EDITS
+    const handleAnnouncementUpdated = (updatedAnnouncement) => {
+      console.log("📝 Real-time: Announcement updated", updatedAnnouncement._id, updatedAnnouncement.title);
+      
+      // ✅ CHECK IF ANNOUNCEMENT IS ACTIVE
+      if (updatedAnnouncement.status !== "Active") {
+        console.log("❌ Ignoring inactive updated announcement");
+        return;
+      }
+
+      console.log("✅ Processing real-time announcement update");
+
+      const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
+      const processedAnnouncement = processAnnouncementData({
+        ...updatedAnnouncement,
+        isPinned: pinnedAnnouncements[updatedAnnouncement._id] || false,
+        views: Array.isArray(updatedAnnouncement.views) ? updatedAnnouncement.views : [],
+        acknowledgements: Array.isArray(updatedAnnouncement.acknowledgements) 
+          ? updatedAnnouncement.acknowledgements 
+          : [],
+      });
+
+      if (!processedAnnouncement) {
+        console.log("❌ Failed to process updated announcement");
+        return;
+      }
+
+      setAnnouncements(prev => {
+        // ✅ REMOVE EXISTING AND ADD UPDATED ANNOUNCEMENT
+        const filtered = prev.filter(a => a._id !== processedAnnouncement._id);
+        const updated = [processedAnnouncement, ...filtered];
+        
+        // ✅ SORT THE ANNOUNCEMENTS
+        return updated.sort((a, b) => {
+          if (a.isPinned && !b.isPinned) return -1;
+          if (!a.isPinned && b.isPinned) return 1;
+
+          const priorityOrder = { High: 3, Medium: 2, Low: 1 };
+          const priorityA = priorityOrder[a.priority] || 0;
+          const priorityB = priorityOrder[b.priority] || 0;
+
+          if (priorityB !== priorityA) {
+            return priorityB - priorityA;
+          }
+
+          return new Date(b.dateTime) - new Date(a.dateTime);
+        });
+      });
+
+      console.log("✅ Announcement updated in real-time:", processedAnnouncement.title);
+    };
+
     // Register event listeners
     socket.on("initialAgentData", handleInitialData);
     socket.on("agentAnnouncementUpdate", handleAgentUpdate);
     socket.on("newAnnouncement", handleNewAnnouncement);
     socket.on("announcementCancelled", handleAnnouncementCancelled);
     socket.on("announcementReposted", handleAnnouncementReposted);
+    
+    // ✅ REGISTER THE EDIT LISTENER
+    socket.on("announcementUpdated", handleAnnouncementUpdated);
+    socket.on("updatedAnnouncement", handleAnnouncementUpdated); // Alternative event name
 
     // Request initial data via socket
     socket.emit("getAgentData");
@@ -417,6 +473,10 @@ const AgentDashboard = () => {
       socket.off("newAnnouncement", handleNewAnnouncement);
       socket.off("announcementCancelled", handleAnnouncementCancelled);
       socket.off("announcementReposted", handleAnnouncementReposted);
+      
+      // ✅ CLEANUP EDIT LISTENERS
+      socket.off("announcementUpdated", handleAnnouncementUpdated);
+      socket.off("updatedAnnouncement", handleAnnouncementUpdated);
     };
   }, []);
 

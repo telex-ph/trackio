@@ -473,6 +473,7 @@ const AdminAnnouncement = () => {
     setIsPreviewModalOpen(true);
   };
 
+  // ✅ FIXED: COMPLETE HANDLE SUBMIT WITH PROPER SOCKET EMISSION
   const handleSubmit = async () => {
     try {
       const combinedDateTime = DateTime.fromISO(`${formData.dateInput}T${formData.timeInput}`);
@@ -488,6 +489,7 @@ const AdminAnnouncement = () => {
         agenda: formData.agenda,
         priority: formData.priority,
         dateTime: combinedDateTime.toISO(),
+        status: "Active"
       };
 
       if (selectedFile) {
@@ -517,15 +519,31 @@ const AdminAnnouncement = () => {
 
         if (response.status === 200) {
           showNotification("Announcement updated successfully!", "success");
+          
+          // ✅ FIXED: COMPLETE ANNOUNCEMENT DATA FOR SOCKET
+          const updatedAnnouncement = {
+            ...response.data,
+            _id: editingId,
+            status: "Active",
+            // ✅ ENSURE ALL REQUIRED FIELDS ARE INCLUDED
+            views: response.data.views || [],
+            acknowledgements: response.data.acknowledgements || [],
+            isPinned: response.data.isPinned || false
+          };
+          
           if (socket) {
-            socket.emit("announcementUpdated", { ...payload, _id: editingId, status: "Active" });
+            // ✅ EMIT MULTIPLE EVENTS FOR COMPATIBILITY
+            console.log("📢 Emitting announcement update via socket");
+            socket.emit("announcementUpdated", updatedAnnouncement);
+            socket.emit("updatedAnnouncement", updatedAnnouncement); // Alternative event
+            socket.emit("newAnnouncement", updatedAnnouncement); // Fallback for agents
           }
         } else {
           throw new Error(`Update failed with status: ${response.status}`);
         }
       } else {
         console.log("📝 Creating new announcement");
-        response = await api.post(`/announcements`, { ...payload, status: "Active" });
+        response = await api.post(`/announcements`, payload);
 
         if (response.status === 201) {
           showNotification("Announcement posted successfully!", "success");
@@ -536,12 +554,14 @@ const AdminAnnouncement = () => {
           throw new Error(`Creation failed with status: ${response.status}`);
         }
       }
+      
       resetForm();
       setIsPreviewModalOpen(false);
 
-      // Refresh data
+      // ✅ Force refresh data
       if (socket) {
         socket.emit("getAdminData");
+        socket.emit("getAgentData"); // Force agent refresh
       }
 
     } catch (error) {
@@ -579,18 +599,61 @@ const AdminAnnouncement = () => {
     setIsConfirmationModalOpen(true);
   };
 
-    const handleConfirmCancel = async () => {
+  const handleConfirmCancel = async () => {
+    try {
+      const announcementToCancel = announcements.find(a => a._id === itemToCancel);
+      if (!announcementToCancel) {
+        showNotification("Announcement not found", "error");
+        return;
+      }
+
+      console.log("🗑️ Cancelling announcement:", itemToCancel);
+
+      // ✅ RESET LIKES AND VIEWS WHEN CANCELLING
+      const payload = {
+        status: "Inactive",
+        cancelledAt: new Date().toISOString(),
+        cancelledBy: getUserFullName(),
+        updatedAt: new Date().toISOString(),
+        // ✅ RESET LIKES AND VIEWS
+        views: [],
+        acknowledgements: []
+      };
+
+      let response;
       try {
-        const announcementToCancel = announcements.find(a => a._id === itemToCancel);
-        if (!announcementToCancel) {
-          showNotification("Announcement not found", "error");
-          return;
+        response = await api.patch(`/announcements/${itemToCancel}`, payload);
+        console.log("✅ PATCH response:", response.data);
+        
+        // ✅ CRITICAL: Update local state immediately for better UX
+        setAnnouncements(prev => 
+          prev.map(ann => 
+            ann._id === itemToCancel 
+              ? { 
+                  ...ann, 
+                  ...payload,
+                  // ✅ ENSURE LIKES/VIEWS ARE RESET IN FRONTEND
+                  views: [],
+                  acknowledgements: []
+                }
+              : ann
+          )
+        );
+        
+        if (socket) {
+          // ✅ CORRECT EVENT NAME: manualAnnouncementCancelled
+          socket.emit("manualAnnouncementCancelled", {
+            announcementId: itemToCancel,
+            cancelledBy: getUserFullName(),
+            cancelledAt: payload.cancelledAt
+          });
+          
+          console.log("📢 Emitted manual cancellation event");
         }
-
-        console.log("🗑️ Cancelling announcement:", itemToCancel);
-
-        // ✅ RESET LIKES AND VIEWS WHEN CANCELLING
-        const payload = {
+      } catch (patchError) {
+        console.log("🔄 PATCH failed, trying PUT:", patchError);
+        const putPayload = {
+          ...announcementToCancel,
           status: "Inactive",
           cancelledAt: new Date().toISOString(),
           cancelledBy: getUserFullName(),
@@ -599,107 +662,64 @@ const AdminAnnouncement = () => {
           views: [],
           acknowledgements: []
         };
-
-        let response;
-        try {
-          response = await api.patch(`/announcements/${itemToCancel}`, payload);
-          console.log("✅ PATCH response:", response.data);
-          
-          // ✅ CRITICAL: Update local state immediately for better UX
-          setAnnouncements(prev => 
-            prev.map(ann => 
-              ann._id === itemToCancel 
-                ? { 
-                    ...ann, 
-                    ...payload,
-                    // ✅ ENSURE LIKES/VIEWS ARE RESET IN FRONTEND
-                    views: [],
-                    acknowledgements: []
-                  }
-                : ann
-            )
-          );
-          
-          if (socket) {
-            // ✅ CORRECT EVENT NAME: manualAnnouncementCancelled
-            socket.emit("manualAnnouncementCancelled", {
-              announcementId: itemToCancel,
-              cancelledBy: getUserFullName(),
-              cancelledAt: payload.cancelledAt
-            });
-            
-            console.log("📢 Emitted manual cancellation event");
-          }
-        } catch (patchError) {
-          console.log("🔄 PATCH failed, trying PUT:", patchError);
-          const putPayload = {
-            ...announcementToCancel,
-            status: "Inactive",
-            cancelledAt: new Date().toISOString(),
-            cancelledBy: getUserFullName(),
-            updatedAt: new Date().toISOString(),
-            // ✅ RESET LIKES AND VIEWS
-            views: [],
-            acknowledgements: []
-          };
-          delete putPayload._id;
-          delete putPayload.__v;
-          response = await api.put(`/announcements/${itemToCancel}`, putPayload);
-          console.log("✅ PUT response:", response.data);
-          
-          // ✅ CRITICAL: Update local state immediately
-          setAnnouncements(prev => 
-            prev.map(ann => 
-              ann._id === itemToCancel 
-                ? { 
-                    ...ann, 
-                    ...putPayload,
-                    // ✅ ENSURE LIKES/VIEWS ARE RESET IN FRONTEND
-                    views: [],
-                    acknowledgements: []
-                  }
-                : ann
-            )
-          );
-          
-          if (socket) {
-            // ✅ CORRECT EVENT NAME: manualAnnouncementCancelled
-            socket.emit("manualAnnouncementCancelled", {
-              announcementId: itemToCancel,
-              cancelledBy: getUserFullName(),
-              cancelledAt: putPayload.cancelledAt
-            });
-          }
-        }
-
-        showNotification("Announcement cancelled successfully! Likes and views have been reset.", "success");
+        delete putPayload._id;
+        delete putPayload.__v;
+        response = await api.put(`/announcements/${itemToCancel}`, putPayload);
+        console.log("✅ PUT response:", response.data);
         
-        // ✅ Switch to inactive tab to show the cancelled announcement
-        setActiveTab('inactive');
-
-      } catch (error) {
-        console.error("❌ Error cancelling announcement:", error);
-        let errorMessage = "Failed to cancel announcement. Please try again.";
-        if (error.response?.status === 404) {
-          errorMessage = "Announcement not found in database.";
-        } else if (error.response?.status === 500) {
-          errorMessage = "Server error. Please try again later.";
-        } else if (error.message?.includes("Network Error")) {
-          errorMessage = "Cannot connect to server. Please check your connection.";
+        // ✅ CRITICAL: Update local state immediately
+        setAnnouncements(prev => 
+          prev.map(ann => 
+            ann._id === itemToCancel 
+              ? { 
+                  ...ann, 
+                  ...putPayload,
+                  // ✅ ENSURE LIKES/VIEWS ARE RESET IN FRONTEND
+                  views: [],
+                  acknowledgements: []
+                }
+              : ann
+          )
+        );
+        
+        if (socket) {
+          // ✅ CORRECT EVENT NAME: manualAnnouncementCancelled
+          socket.emit("manualAnnouncementCancelled", {
+            announcementId: itemToCancel,
+            cancelledBy: getUserFullName(),
+            cancelledAt: putPayload.cancelledAt
+          });
         }
-        showNotification(errorMessage, "error");
-      } finally {
-        setIsConfirmationModalOpen(false);
-        setItemToCancel(null);
       }
-    };
 
-    const handleRepostClick = (id) => {
-      setItemToRepost(id);
-      setIsRepostModalOpen(true);
-    };
+      showNotification("Announcement cancelled successfully! Likes and views have been reset.", "success");
+      
+      // ✅ Switch to inactive tab to show the cancelled announcement
+      setActiveTab('inactive');
 
-    // ✅ COMPLETELY FIXED: REPOSTING WITH NO DUPLICATES
+    } catch (error) {
+      console.error("❌ Error cancelling announcement:", error);
+      let errorMessage = "Failed to cancel announcement. Please try again.";
+      if (error.response?.status === 404) {
+        errorMessage = "Announcement not found in database.";
+      } else if (error.response?.status === 500) {
+        errorMessage = "Server error. Please try again later.";
+      } else if (error.message?.includes("Network Error")) {
+        errorMessage = "Cannot connect to server. Please check your connection.";
+      }
+      showNotification(errorMessage, "error");
+    } finally {
+      setIsConfirmationModalOpen(false);
+      setItemToCancel(null);
+    }
+  };
+
+  const handleRepostClick = (id) => {
+    setItemToRepost(id);
+    setIsRepostModalOpen(true);
+  };
+
+  // ✅ COMPLETELY FIXED: REPOSTING WITH NO DUPLICATES
   const handleConfirmRepost = async () => {
     try {
       const announcementToRepost = announcements.find(a => a._id === itemToRepost);

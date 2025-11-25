@@ -95,8 +95,9 @@ export default async function announcementWatcher(io) {
           
         } else {
           // Other updates (title, content, etc.)
-          console.log("📄 Content update detected");
+          console.log("📄 Content update detected - emitting announcementUpdated");
           io.emit("announcementUpdated", updatedAnnouncement);
+          io.emit("updatedAnnouncement", updatedAnnouncement); // Alternative event name
         }
       }
 
@@ -108,7 +109,7 @@ export default async function announcementWatcher(io) {
       }
     });
 
-    // Handle initial data requests
+    // Handle initial data requests and manual events
     io.on("connection", async (socket) => {
       console.log("👤 User connected via socket:", socket.id);
       
@@ -132,10 +133,20 @@ export default async function announcementWatcher(io) {
         console.log("📢 Manual cancellation broadcasted to all agents");
       });
 
-      // Listen for manual announcement updates
+      // ✅ LISTEN FOR MANUAL ANNOUNCEMENT UPDATES FROM ADMIN
       socket.on("announcementUpdated", (data) => {
-        console.log("📝 Manual announcement update:", data._id);
+        console.log("📝 Manual announcement update from admin:", data._id, data.title);
+        // Broadcast to ALL agents and other admins
         socket.broadcast.emit("announcementUpdated", data);
+        socket.broadcast.emit("updatedAnnouncement", data); // Alternative event
+        console.log("📢 Manual update broadcasted to all clients");
+      });
+
+      // ✅ LISTEN FOR ALTERNATIVE UPDATE EVENT NAME
+      socket.on("updatedAnnouncement", (data) => {
+        console.log("📝 Alternative update event from admin:", data._id, data.title);
+        socket.broadcast.emit("announcementUpdated", data);
+        socket.broadcast.emit("updatedAnnouncement", data);
       });
 
       socket.on("newAnnouncement", (data) => {
@@ -143,12 +154,18 @@ export default async function announcementWatcher(io) {
         socket.broadcast.emit("newAnnouncement", data);
       });
 
+      // ✅ NEW: LISTEN FOR REFRESH REQUESTS
+      socket.on("refreshAnnouncements", () => {
+        console.log("🔄 Refresh requested, broadcasting to all clients");
+        socket.broadcast.emit("refreshData");
+      });
+
       socket.on("disconnect", () => {
         console.log("👤 User disconnected:", socket.id);
       });
     });
 
-    console.log("✅ Announcement watcher started - Real-time cancellation/repost enabled");
+    console.log("✅ Announcement watcher started - Real-time updates enabled for edits");
   } catch (err) {
     console.error("❌ Error in announcementWatcher:", err);
   }
