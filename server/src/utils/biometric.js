@@ -4,7 +4,7 @@ import { STATUS } from "../../constants/status.js";
 import Schedules from "../model/Schedule.js";
 
 export const biometricIn = async (userId, employeeId) => {
-  const TARDINESS_TOLERANCE_HOURS = 2;
+  const TARDINESS_TOLERANCE_HOURS = 4;
   const EARLY_GRACE_HOURS = 4;
 
   const timeIn = DateTime.utc();
