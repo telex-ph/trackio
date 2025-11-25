@@ -42,21 +42,34 @@ export default async function announcementWatcher(io) {
               announcementId: updatedAnnouncement._id.toString(),
               cancelledBy: updatedFields.cancelledBy || "Admin",
               cancelledAt: updatedFields.cancelledAt || new Date().toISOString(),
-              announcementData: updatedAnnouncement
             });
           } else if (updatedFields.status === "Active") {
             // ANNOUNCEMENT REPOSTED
             console.log("🟢 Announcement reposted via socket");
-            io.emit("announcementReposted", {
-              announcementId: updatedAnnouncement._id.toString(),
-              repostedBy: updatedFields.cancelledBy || "Admin", 
-              repostedAt: updatedFields.updatedAt || new Date().toISOString(),
-              announcementData: updatedAnnouncement
-            });
+            
+            // ✅ FIXED: Send the FULL announcement data, not just ID
+            io.emit("announcementReposted", updatedAnnouncement);
             
             // Also send as new announcement for agents
             io.emit("newAnnouncement", updatedAnnouncement);
           }
+        }
+        
+        // ✅ NEW: DETECT REPOST SPECIFIC FIELDS
+        else if (updatedFields.repostedAt !== undefined || updatedFields.repostedBy !== undefined) {
+          console.log("🟢 Repost detected via repost fields");
+          io.emit("announcementReposted", updatedAnnouncement);
+          io.emit("newAnnouncement", updatedAnnouncement);
+        }
+        
+        // ✅ NEW: DETECT CANCELLATION SPECIFIC FIELDS  
+        else if (updatedFields.cancelledAt !== undefined || updatedFields.cancelledBy !== undefined) {
+          console.log("🔴 Cancellation detected via cancel fields");
+          io.emit("announcementCancelled", {
+            announcementId: updatedAnnouncement._id.toString(),
+            cancelledBy: updatedFields.cancelledBy || "Admin",
+            cancelledAt: updatedFields.cancelledAt || new Date().toISOString(),
+          });
         }
         
         // Check if likes (acknowledgements) or views were updated
@@ -88,7 +101,9 @@ export default async function announcementWatcher(io) {
 
       if (change.operationType === "delete") {
         console.log("🗑️ Deleted announcement:", change.documentKey._id);
-        io.emit("announcementDeleted", change.documentKey._id);
+        io.emit("announcementDeleted", {
+          announcementId: change.documentKey._id.toString()
+        });
       }
     });
 
@@ -108,20 +123,20 @@ export default async function announcementWatcher(io) {
         socket.emit("initialAgentData", announcements);
       });
 
-      // LISTEN FOR CANCELLATION EVENT FROM ADMIN
-      socket.on("announcementCancelled", (data) => {
-        console.log("🔴 Admin cancelled announcement:", data.announcementId);
+      // ✅ IMPROVED: LISTEN FOR MANUAL CANCELLATION EVENT FROM ADMIN
+      socket.on("manualAnnouncementCancelled", (data) => {
+        console.log("🔴 Manual cancellation from admin:", data.announcementId);
         // Broadcast to ALL agents
         socket.broadcast.emit("announcementCancelled", data);
-        console.log("📢 Announcement cancellation broadcasted to all agents");
+        console.log("📢 Manual cancellation broadcasted to all agents");
       });
 
-      // LISTEN FOR REPOST EVENT FROM ADMIN
-      socket.on("announcementReposted", (data) => {
-        console.log("🟢 Admin reposted announcement:", data.announcementId);
+      // ✅ IMPROVED: LISTEN FOR MANUAL REPOST EVENT FROM ADMIN
+      socket.on("manualAnnouncementReposted", (data) => {
+        console.log("🟢 Manual repost from admin:", data.announcementId);
         // Broadcast to ALL agents
         socket.broadcast.emit("announcementReposted", data);
-        console.log("📢 Announcement repost broadcasted to all agents");
+        console.log("📢 Manual repost broadcasted to all agents");
       });
 
       // Listen for manual announcement updates
@@ -133,6 +148,10 @@ export default async function announcementWatcher(io) {
       socket.on("newAnnouncement", (data) => {
         console.log("🆕 Manual new announcement:", data.title);
         socket.broadcast.emit("newAnnouncement", data);
+      });
+
+      socket.on("disconnect", () => {
+        console.log("👤 User disconnected:", socket.id);
       });
     });
 

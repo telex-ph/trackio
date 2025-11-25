@@ -236,11 +236,51 @@ const AdminAnnouncement = () => {
       ));
     };
 
+    // ✅ NEW: LISTEN FOR CANCELLATION CONFIRMATION
+    const handleAnnouncementCancelled = (data) => {
+      console.log("🔴 Cancellation confirmed via socket:", data.announcementId);
+      
+      setAnnouncements(prev => 
+        prev.map(ann => 
+          ann._id === data.announcementId 
+            ? { 
+                ...ann, 
+                status: "Inactive",
+                cancelledBy: data.cancelledBy,
+                cancelledAt: data.cancelledAt,
+                views: [],
+                acknowledgements: []
+              }
+            : ann
+        )
+      );
+    };
+
+    // ✅ NEW: LISTEN FOR REPOST CONFIRMATION
+    const handleAnnouncementReposted = (repostedAnnouncement) => {
+      console.log("🟢 Repost confirmed via socket:", repostedAnnouncement._id);
+      
+      setAnnouncements(prev => 
+        prev.map(ann => 
+          ann._id === repostedAnnouncement._id 
+            ? { 
+                ...repostedAnnouncement,
+                status: "Active",
+                views: [],
+                acknowledgements: []
+              }
+            : ann
+        )
+      );
+    };
+
     // Register event listeners
     socket.on("initialAdminData", handleInitialData);
     socket.on("adminAnnouncementUpdate", handleAdminUpdate);
     socket.on("newAnnouncement", handleNewAnnouncement);
     socket.on("announcementUpdated", handleAnnouncementUpdated);
+    socket.on("announcementCancelled", handleAnnouncementCancelled);
+    socket.on("announcementReposted", handleAnnouncementReposted);
 
     // Request initial data via socket
     socket.emit("getAdminData");
@@ -260,6 +300,8 @@ const AdminAnnouncement = () => {
       socket.off("adminAnnouncementUpdate", handleAdminUpdate);
       socket.off("newAnnouncement", handleNewAnnouncement);
       socket.off("announcementUpdated", handleAnnouncementUpdated);
+      socket.off("announcementCancelled", handleAnnouncementCancelled);
+      socket.off("announcementReposted", handleAnnouncementReposted);
     };
   }, [fetchAnnouncements]);
 
@@ -537,7 +579,7 @@ const AdminAnnouncement = () => {
     setIsConfirmationModalOpen(true);
   };
 
-  // ✅ UPDATED: CANCELLATION WITH LIKES/VIEWS RESET AND REAL-TIME REMOVAL
+  // ✅ UPDATED: CANCELLATION WITH CORRECT SOCKET EMISSION
   const handleConfirmCancel = async () => {
     try {
       const announcementToCancel = announcements.find(a => a._id === itemToCancel);
@@ -580,14 +622,14 @@ const AdminAnnouncement = () => {
         );
         
         if (socket) {
-          // ✅ CRITICAL: Emit specific event for AGENTS to REMOVE from their dashboard
-          socket.emit("announcementCancelled", {
+          // ✅ CORRECT EVENT NAME: manualAnnouncementCancelled
+          socket.emit("manualAnnouncementCancelled", {
             announcementId: itemToCancel,
             cancelledBy: getUserFullName(),
             cancelledAt: payload.cancelledAt
           });
           
-          console.log("📢 Emitted cancellation event - Announcement removed from agent dashboard");
+          console.log("📢 Emitted manual cancellation event");
         }
       } catch (patchError) {
         console.log("🔄 PATCH failed, trying PUT:", patchError);
@@ -622,8 +664,8 @@ const AdminAnnouncement = () => {
         );
         
         if (socket) {
-          // ✅ CRITICAL: Emit specific event for AGENTS to REMOVE from their dashboard
-          socket.emit("announcementCancelled", {
+          // ✅ CORRECT EVENT NAME: manualAnnouncementCancelled
+          socket.emit("manualAnnouncementCancelled", {
             announcementId: itemToCancel,
             cancelledBy: getUserFullName(),
             cancelledAt: putPayload.cancelledAt
@@ -658,7 +700,7 @@ const AdminAnnouncement = () => {
     setIsRepostModalOpen(true);
   };
 
-  // ✅ UPDATED: REPOSTING WITH FRESH LIKES/VIEWS
+  // ✅ UPDATED: REPOSTING WITH CORRECT SOCKET EMISSION
   const handleConfirmRepost = async () => {
     try {
       const announcementToRepost = announcements.find(a => a._id === itemToRepost);
@@ -700,14 +742,14 @@ const AdminAnnouncement = () => {
         );
         
         if (socket) {
-          // ✅ CRITICAL: Emit as new announcement for agents
-          socket.emit("newAnnouncement", { 
+          // ✅ CORRECT EVENT NAME: manualAnnouncementReposted
+          socket.emit("manualAnnouncementReposted", { 
             ...announcementToRepost, 
             ...payload,
             _id: itemToRepost
           });
           
-          console.log("📢 Emitted repost event - Announcement added to agent dashboard");
+          console.log("📢 Emitted manual repost event");
         }
       } catch (patchError) {
         console.log("🔄 PATCH failed, trying PUT:", patchError);
@@ -742,8 +784,8 @@ const AdminAnnouncement = () => {
         );
         
         if (socket) {
-          // ✅ CRITICAL: Emit as new announcement for agents
-          socket.emit("newAnnouncement", putPayload);
+          // ✅ CORRECT EVENT NAME: manualAnnouncementReposted
+          socket.emit("manualAnnouncementReposted", putPayload);
         }
       }
 

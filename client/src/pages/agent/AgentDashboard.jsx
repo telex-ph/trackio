@@ -317,9 +317,9 @@ const AgentDashboard = () => {
       }));
     };
 
-    // Listen for new announcements
+    // ✅ IMPROVED: NEW ANNOUNCEMENT HANDLER (INCLUDES REPOSTS)
     const handleNewAnnouncement = (newAnnouncement) => {
-      console.log("🆕 New announcement received via socket for agent");
+      console.log("🆕 New/Reposted announcement received via socket for agent");
       
       // ✅ CHECK IF ANNOUNCEMENT IS ACTIVE
       if (newAnnouncement.status !== "Active") {
@@ -339,10 +339,14 @@ const AgentDashboard = () => {
 
       if (processedAnnouncement) {
         setAnnouncements(prev => {
-          const exists = prev.find(a => a._id === processedAnnouncement._id);
-          if (exists) return prev;
+          // Remove existing announcement with same ID first (for reposts)
+          const filtered = prev.filter(a => a._id !== processedAnnouncement._id);
           
-          return [processedAnnouncement, ...prev].sort((a, b) => {
+          // Add the new/reposted announcement
+          const updated = [processedAnnouncement, ...filtered];
+          
+          // Sort the announcements
+          return updated.sort((a, b) => {
             if (a.isPinned && !b.isPinned) return -1;
             if (!a.isPinned && b.isPinned) return 1;
 
@@ -372,25 +376,51 @@ const AgentDashboard = () => {
       console.log("🗑️ Removed cancelled announcement from agent view");
     };
 
-    // ✅ LISTEN FOR REPOST EVENTS (via newAnnouncement event)
-    const handleAnnouncementReposted = (data) => {
-      console.log("🟢 Real-time: Announcement reposted", data.announcementId);
+    // ✅ IMPROVED: REPOST HANDLER (NOW RECEIVES FULL ANNOUNCEMENT DATA)
+    const handleAnnouncementReposted = (repostedAnnouncement) => {
+      console.log("🟢 Real-time: Announcement reposted", repostedAnnouncement._id);
       
-      // Refresh data to get the reposted announcement
-      if (socket) {
-        socket.emit("getAgentData");
+      // ✅ CHECK IF ANNOUNCEMENT IS ACTIVE
+      if (repostedAnnouncement.status !== "Active") {
+        console.log("❌ Ignoring inactive reposted announcement");
+        return;
       }
-    };
 
-    // ✅ LISTEN FOR MANUAL CANCELLATION FROM ADMIN
-    const handleManualCancellation = (data) => {
-      console.log("🔴 Manual cancellation from admin:", data.announcementId);
-      
-      setAnnouncements(prev => 
-        prev.filter(ann => ann._id !== data.announcementId)
-      );
-      
-      console.log("🗑️ Removed manually cancelled announcement");
+      const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
+      const processedAnnouncement = processAnnouncementData({
+        ...repostedAnnouncement,
+        isPinned: pinnedAnnouncements[repostedAnnouncement._id] || false,
+        views: Array.isArray(repostedAnnouncement.views) ? repostedAnnouncement.views : [],
+        acknowledgements: Array.isArray(repostedAnnouncement.acknowledgements) 
+          ? repostedAnnouncement.acknowledgements 
+          : [],
+      });
+
+      if (processedAnnouncement) {
+        setAnnouncements(prev => {
+          // Remove existing announcement with same ID first
+          const filtered = prev.filter(a => a._id !== processedAnnouncement._id);
+          
+          // Add the reposted announcement at the beginning
+          const updated = [processedAnnouncement, ...filtered];
+          
+          // Sort the announcements
+          return updated.sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+
+            const priorityOrder = { High: 3, Medium: 2, Low: 1 };
+            const priorityA = priorityOrder[a.priority] || 0;
+            const priorityB = priorityOrder[b.priority] || 0;
+
+            if (priorityB !== priorityA) {
+              return priorityB - priorityA;
+            }
+
+            return new Date(b.dateTime) - new Date(a.dateTime);
+          });
+        });
+      }
     };
 
     // Register event listeners
@@ -399,7 +429,6 @@ const AgentDashboard = () => {
     socket.on("newAnnouncement", handleNewAnnouncement);
     socket.on("announcementCancelled", handleAnnouncementCancelled);
     socket.on("announcementReposted", handleAnnouncementReposted);
-    socket.on("announcementCancelled", handleManualCancellation); // For manual admin cancellation
 
     // Request initial data via socket
     socket.emit("getAgentData");
@@ -420,7 +449,6 @@ const AgentDashboard = () => {
       socket.off("newAnnouncement", handleNewAnnouncement);
       socket.off("announcementCancelled", handleAnnouncementCancelled);
       socket.off("announcementReposted", handleAnnouncementReposted);
-      socket.off("announcementCancelled", handleManualCancellation);
     };
   }, []);
 
