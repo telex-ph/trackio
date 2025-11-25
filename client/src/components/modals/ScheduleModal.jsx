@@ -10,6 +10,7 @@ import SCHEDULE from "../../constants/schedule";
 import Spinner from "../../assets/loaders/Spinner";
 import { useStore } from "../../store/useStore";
 import WarningDeletion from "../../assets/illustrations/WarningDeletion";
+import { DateTime } from "luxon";
 
 const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
   const { id } = useParams();
@@ -21,9 +22,8 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
   const [type, setType] = useState(SCHEDULE.WORK_DAY);
   const [shiftStart, setShiftStart] = useState("");
   const [shiftEnd, setShiftEnd] = useState("");
-  const [mealStart, setMealStart] = useState("");
-  const [mealEnd, setMealEnd] = useState("");
   const [notes, setNotes] = useState("");
+  const [shiftHour, setShiftHour] = useState(0);
   const [isNightShift, setIsNightShift] = useState(false);
 
   useEffect(() => {
@@ -31,48 +31,33 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
 
     const start = toDateTimeFromTimeString(shiftStart);
     const end = toDateTimeFromTimeString(shiftEnd);
-
     if (end <= start) {
       setIsNightShift(true);
     } else {
       setIsNightShift(false);
     }
+
+    // Hour shift calculation
+    const startDate = DateTime.fromISO(shiftStart);
+    const endDate = DateTime.fromISO(shiftEnd);
+
+    const diff =
+      endDate < startDate
+        ? endDate.plus({ days: 1 }).diff(startDate, "hours").hours
+        : endDate.diff(startDate, "hours").hours;
+    setShiftHour(Math.floor(diff));
   }, [shiftStart, shiftEnd]);
 
   const handleUpsert = async () => {
-    const formattedShiftStart = toDateTimeFromTimeString(shiftStart);
+    let formattedShiftStart = toDateTimeFromTimeString(shiftStart);
     let formattedShiftEnd = toDateTimeFromTimeString(shiftEnd);
-    let formattedMealStart = toDateTimeFromTimeString(mealStart);
-    let formattedMealEnd = toDateTimeFromTimeString(mealEnd);
 
     // Adjust times for night shift
-    if (isNightShift) {
+    if (isNightShift && formattedShiftEnd <= formattedShiftStart) {
       formattedShiftEnd = formattedShiftEnd.plus({ days: 1 });
-
-      if (formattedMealStart < formattedShiftStart) {
-        formattedMealStart = formattedMealStart.plus({ days: 1 });
-      }
-      if (formattedMealEnd < formattedShiftStart) {
-        formattedMealEnd = formattedMealEnd.plus({ days: 1 });
-      }
     }
 
     // ---- VALIDATION ----
-    if (type === SCHEDULE.WORK_DAY) {
-      if (formattedMealEnd <= formattedMealStart) {
-        toast.error("Meal end time must be after meal start time.");
-        return;
-      }
-
-      if (
-        formattedMealStart < formattedShiftStart ||
-        formattedMealEnd > formattedShiftEnd
-      ) {
-        toast.error("Meal time must be within the shift hours.");
-        return;
-      }
-    }
-
     if (!selectedDates?.length) {
       toast.error("No dates selected.");
       return;
@@ -82,8 +67,6 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
       date,
       shiftStart: formattedShiftStart,
       shiftEnd: formattedShiftEnd,
-      mealStart: formattedMealStart,
-      mealEnd: formattedMealEnd,
       notes: notes || null,
     }));
 
@@ -96,9 +79,7 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
         updatedBy: user._id,
       });
       toast.success("Schedules have been saved successfully.");
-      if (fetchSchedules) {
-        fetchSchedules();
-      }
+      if (fetchSchedules) fetchSchedules();
       onClose();
     } catch (error) {
       console.error(error);
@@ -195,10 +176,15 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
                 <div>
                   <label
                     htmlFor="shiftHour"
-                    className="block text-sm font-medium mb-1"
+                    className="flex items-center justify-between text-sm font-medium mb-1"
                   >
-                    Working Hours
+                    <p>Working Hours</p>
+                    <p className="font-bold">{shiftHour}-hour shift</p>
                   </label>
+                  <p className="text-right text-xs! italic">
+                    {shiftHour > 9 &&
+                      `Luh, ${shiftHour}-hour shift? Android ka ba?`}
+                  </p>
                   <div className="flex gap-3 items-center">
                     <input
                       type="time"
@@ -220,7 +206,7 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
               )}
 
               {/* Meal Break */}
-              {type === SCHEDULE.WORK_DAY && (
+              {/* {type === SCHEDULE.WORK_DAY && (
                 <div>
                   <label
                     htmlFor="mealBreak"
@@ -246,7 +232,7 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
                     />
                   </div>
                 </div>
-              )}
+              )} */}
 
               {/* Notes */}
               <div>
