@@ -131,7 +131,7 @@ const SharedTicketAnalytics = ({ email }) => {
     setLoading(true);
     try {
       // API endpoint from the original code
-      const baseUrl = `https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/analytics/heyjena@telexph.com`;
+      const baseUrl = `https://ticketing-system-2u0k.onrender.com/api/ittickets/trackio/analytics/heyjena@telexph.com`;
 
       // Construct the URL with date range parameters
       const url =

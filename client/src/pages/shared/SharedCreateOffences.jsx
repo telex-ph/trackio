@@ -15,26 +15,27 @@ import { useStore } from "../../store/useStore";
 // -----------------------------
 // Helper Utilities
 // -----------------------------
-const fileToBase64 = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = (error) => reject(error);
-  });
-
-const base64ToBlobUrl = (base64, type) => {
+const base64ToBlobUrl = (base64) => {
   try {
-    const base64Data = base64.split(",")[1];
-    if (!base64Data) return base64;
+    // Fix wrong MIME type
+    base64 = base64.replace("image/pndg", "image/png");
 
-    const binary = atob(base64Data);
+    const [prefix, data] = base64.split(",");
+    if (!data) return base64;
+
+    const mime = prefix.match(/data:(.*);base64/)[1];
+
+    const binary = atob(data);
     const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
 
-    const blob = new Blob([bytes], { type });
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], { type: mime });
     return URL.createObjectURL(blob);
-  } catch {
+  } catch (err) {
+    console.error("Failed to convert base64:", err);
     return base64;
   }
 };
@@ -196,28 +197,34 @@ const SharedCreateOffences = () => {
     }
 
     try {
-      const payload = { ...formData };
-      delete payload.isRead;
+      const formDataToSend = new FormData();
+      formDataToSend.append("agentName", formData.agentName);
+      formDataToSend.append("employeeId", formData.employeeId || "");
+      formDataToSend.append("agentRole", formData.agentRole || "");
+      formDataToSend.append("offenseCategory", formData.offenseCategory);
+      formDataToSend.append("offenseLevel", formData.offenseLevel || "");
+      formDataToSend.append("dateOfOffense", formData.dateOfOffense);
+      formDataToSend.append("status", formData.status || "");
+      formDataToSend.append("remarks", formData.remarks || "");
 
       if (selectedFile) {
-        const base64File = await fileToBase64(selectedFile);
-        payload.evidence = [
-          {
-            fileName: selectedFile.name,
-            size: selectedFile.size,
-            type: selectedFile.type,
-            data: base64File,
-          },
-        ];
+        formDataToSend.append("files", selectedFile); // <-- this matches backend multer
       }
 
       if (panelMode === "edit") {
-        await api.put(`/offenses/${editingId}`, payload);
-        showNotification("Offense updated!", "success");
+        await api.put(`/offenses/${editingId}`, formDataToSend, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
       } else {
-        await api.post("/offenses", payload);
-        showNotification("Offense created!", "success");
+        await api.post("/offenses", formDataToSend, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
       }
+
+      showNotification(
+        panelMode === "edit" ? "Offense updated!" : "Offense created!",
+        "success"
+      );
 
       resetFormAndPanel();
       fetchTeamOffenses();
@@ -227,9 +234,9 @@ const SharedCreateOffences = () => {
     }
   }, [
     formData,
+    selectedFile,
     panelMode,
     editingId,
-    selectedFile,
     resetFormAndPanel,
     fetchTeamOffenses,
     showNotification,
@@ -252,7 +259,7 @@ const SharedCreateOffences = () => {
       respondantExplanation: off.respondantExplanation || "",
       fileMOM: off.fileMOM || [],
       fileNDA: off.fileNDA || [],
-      isAcknowledged: off.isAcknowledged
+      isAcknowledged: off.isAcknowledged,
     });
 
     setEditingId(off._id);
