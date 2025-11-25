@@ -61,7 +61,7 @@ const Login = () => {
     try {
       setLoading(true);
       e.preventDefault();
-      login(data);
+      await login(data);
     } catch (error) {
       console.error(error);
     } finally {
