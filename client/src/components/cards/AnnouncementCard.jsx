@@ -95,6 +95,7 @@ const AnnouncementCard = ({
     onLike,
     hasLiked,
     currentUserId,
+    socket, // ADD SOCKET PROP HERE
 }) => {
     const formatDisplayDate = (isoDateStr) => {
       if (!isoDateStr) return "";
@@ -180,6 +181,49 @@ const AnnouncementCard = ({
     
     const isLiked = hasLiked(announcement, currentUserId);
     const isAnnouncementUrgent = isUrgent();
+
+    // Handle Read More with socket view emission
+    const handleReadMore = () => {
+      console.log('📖 Read More clicked for announcement:', announcement._id);
+      
+      // Emit view event via socket when user clicks Read More
+      if (socket && currentUserId) {
+        const viewData = {
+          announcementId: announcement._id,
+          userId: currentUserId
+        };
+        console.log('🔌 Emitting view from AnnouncementCard:', viewData);
+        socket.emit('view-announcement', viewData);
+        socket.emit('add-view', viewData);
+      }
+      
+      // Call the original onReadMore function
+      onReadMore(announcement);
+    };
+
+    // Handle Like with socket emission
+    const handleLike = (e) => {
+      e.stopPropagation();
+      
+      if (!currentUserId) return;
+      
+      console.log('❤️ Like clicked for announcement:', announcement._id);
+      
+      // Emit like event via socket
+      if (socket) {
+        const likeData = {
+          announcementId: announcement._id,
+          userId: currentUserId,
+          liked: !isLiked
+        };
+        console.log('🔌 Emitting like from AnnouncementCard:', likeData);
+        socket.emit('like-announcement', likeData);
+        socket.emit('toggle-like', likeData);
+      }
+      
+      // Call the original onLike function
+      onLike(announcement._id, currentUserId);
+    };
 
     return (
       <div className={`group bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden h-full flex flex-col relative`}>
@@ -294,12 +338,7 @@ const AnnouncementCard = ({
               
               {/* Likes Button */}
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (currentUserId) {
-                    onLike(announcement._id, currentUserId);
-                  }
-                }}
+                onClick={handleLike}
                 disabled={!currentUserId}
                 className="flex items-center gap-1 text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed group/like"
                 title={
@@ -325,7 +364,7 @@ const AnnouncementCard = ({
 
             {/* Read More Button */}
             <button
-              onClick={() => onReadMore(announcement)}
+              onClick={handleReadMore}
               className="w-auto bg-gradient-to-r from-[#ff0b0b] via-[#c11112] to-[#60020c] text-white py-2 px-4 rounded-[20px] text-sm font-medium hover:from-[#c11112] hover:via-[#ff0b0b] hover:to-[#c11112] transition-all duration-300 hover:shadow-lg flex items-center gap-2 group/readmore"
             >
               <span>Read More</span>

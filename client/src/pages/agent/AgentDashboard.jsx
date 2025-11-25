@@ -244,7 +244,7 @@ const AgentDashboard = () => {
     initializeUserData();
   }, []);
 
-  // ✅ IMPROVED SOCKET LISTENERS FOR REAL-TIME UPDATES
+  // ✅ FIXED SOCKET LISTENERS FOR REAL-TIME UPDATES - NO DUPLICATES
   useEffect(() => {
     if (!socket) {
       console.log("❌ Socket not available for agent");
@@ -317,51 +317,66 @@ const AgentDashboard = () => {
       }));
     };
 
-    // ✅ IMPROVED: NEW ANNOUNCEMENT HANDLER (INCLUDES REPOSTS)
-    const handleNewAnnouncement = (newAnnouncement) => {
-      console.log("🆕 New/Reposted announcement received via socket for agent");
+    // ✅ FIXED: UNIFIED ANNOUNCEMENT HANDLER - PREVENTS DUPLICATES
+    const handleUnifiedAnnouncement = (announcementData, source) => {
+      console.log(`📥 ${source}:`, announcementData._id, announcementData.title);
       
       // ✅ CHECK IF ANNOUNCEMENT IS ACTIVE
-      if (newAnnouncement.status !== "Active") {
-        console.log("❌ Ignoring inactive announcement");
+      if (announcementData.status !== "Active") {
+        console.log("❌ Ignoring inactive announcement from", source);
         return;
       }
 
       const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
       const processedAnnouncement = processAnnouncementData({
-        ...newAnnouncement,
-        isPinned: pinnedAnnouncements[newAnnouncement._id] || false,
-        views: Array.isArray(newAnnouncement.views) ? newAnnouncement.views : [],
-        acknowledgements: Array.isArray(newAnnouncement.acknowledgements) 
-          ? newAnnouncement.acknowledgements 
+        ...announcementData,
+        isPinned: pinnedAnnouncements[announcementData._id] || false,
+        views: Array.isArray(announcementData.views) ? announcementData.views : [],
+        acknowledgements: Array.isArray(announcementData.acknowledgements) 
+          ? announcementData.acknowledgements 
           : [],
       });
 
-      if (processedAnnouncement) {
-        setAnnouncements(prev => {
-          // Remove existing announcement with same ID first (for reposts)
-          const filtered = prev.filter(a => a._id !== processedAnnouncement._id);
-          
-          // Add the new/reposted announcement
-          const updated = [processedAnnouncement, ...filtered];
-          
-          // Sort the announcements
-          return updated.sort((a, b) => {
-            if (a.isPinned && !b.isPinned) return -1;
-            if (!a.isPinned && b.isPinned) return 1;
-
-            const priorityOrder = { High: 3, Medium: 2, Low: 1 };
-            const priorityA = priorityOrder[a.priority] || 0;
-            const priorityB = priorityOrder[b.priority] || 0;
-
-            if (priorityB !== priorityA) {
-              return priorityB - priorityA;
-            }
-
-            return new Date(b.dateTime) - new Date(a.dateTime);
-          });
-        });
+      if (!processedAnnouncement) {
+        console.log("❌ Failed to process announcement from", source);
+        return;
       }
+
+      setAnnouncements(prev => {
+        // ✅ CRITICAL: Remove existing announcement with same ID first
+        const filtered = prev.filter(a => a._id !== processedAnnouncement._id);
+        
+        // ✅ Add the new/reposted announcement at the beginning
+        const updated = [processedAnnouncement, ...filtered];
+        
+        // ✅ Sort the announcements
+        return updated.sort((a, b) => {
+          if (a.isPinned && !b.isPinned) return -1;
+          if (!a.isPinned && b.isPinned) return 1;
+
+          const priorityOrder = { High: 3, Medium: 2, Low: 1 };
+          const priorityA = priorityOrder[a.priority] || 0;
+          const priorityB = priorityOrder[b.priority] || 0;
+
+          if (priorityB !== priorityA) {
+            return priorityB - priorityA;
+          }
+
+          return new Date(b.dateTime) - new Date(a.dateTime);
+        });
+      });
+
+      console.log(`✅ ${source} processed successfully - Announcement:`, processedAnnouncement.title);
+    };
+
+    // ✅ FIXED: NEW ANNOUNCEMENT HANDLER
+    const handleNewAnnouncement = (newAnnouncement) => {
+      handleUnifiedAnnouncement(newAnnouncement, "NEW ANNOUNCEMENT");
+    };
+
+    // ✅ FIXED: REPOST HANDLER
+    const handleAnnouncementReposted = (repostedAnnouncement) => {
+      handleUnifiedAnnouncement(repostedAnnouncement, "REPOST");
     };
 
     // ✅ CRITICAL: LISTEN FOR CANCELLATION EVENTS - REAL-TIME REMOVAL
@@ -374,53 +389,6 @@ const AgentDashboard = () => {
       );
       
       console.log("🗑️ Removed cancelled announcement from agent view");
-    };
-
-    // ✅ IMPROVED: REPOST HANDLER (NOW RECEIVES FULL ANNOUNCEMENT DATA)
-    const handleAnnouncementReposted = (repostedAnnouncement) => {
-      console.log("🟢 Real-time: Announcement reposted", repostedAnnouncement._id);
-      
-      // ✅ CHECK IF ANNOUNCEMENT IS ACTIVE
-      if (repostedAnnouncement.status !== "Active") {
-        console.log("❌ Ignoring inactive reposted announcement");
-        return;
-      }
-
-      const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
-      const processedAnnouncement = processAnnouncementData({
-        ...repostedAnnouncement,
-        isPinned: pinnedAnnouncements[repostedAnnouncement._id] || false,
-        views: Array.isArray(repostedAnnouncement.views) ? repostedAnnouncement.views : [],
-        acknowledgements: Array.isArray(repostedAnnouncement.acknowledgements) 
-          ? repostedAnnouncement.acknowledgements 
-          : [],
-      });
-
-      if (processedAnnouncement) {
-        setAnnouncements(prev => {
-          // Remove existing announcement with same ID first
-          const filtered = prev.filter(a => a._id !== processedAnnouncement._id);
-          
-          // Add the reposted announcement at the beginning
-          const updated = [processedAnnouncement, ...filtered];
-          
-          // Sort the announcements
-          return updated.sort((a, b) => {
-            if (a.isPinned && !b.isPinned) return -1;
-            if (!a.isPinned && b.isPinned) return 1;
-
-            const priorityOrder = { High: 3, Medium: 2, Low: 1 };
-            const priorityA = priorityOrder[a.priority] || 0;
-            const priorityB = priorityOrder[b.priority] || 0;
-
-            if (priorityB !== priorityA) {
-              return priorityB - priorityA;
-            }
-
-            return new Date(b.dateTime) - new Date(a.dateTime);
-          });
-        });
-      }
     };
 
     // Register event listeners

@@ -25,13 +25,11 @@ export default async function announcementWatcher(io) {
         
         console.log("📝 Updated announcement:", updatedAnnouncement?.title);
         
-        // ✅ DETECT STATUS CHANGES (CANCELLATION/REPOST)
         const updateDescription = change.updateDescription || {};
         const updatedFields = updateDescription.updatedFields || {};
         
         console.log("📊 Updated fields:", Object.keys(updatedFields));
         
-        // Check if STATUS was changed (cancellation or repost)
         if (updatedFields.status !== undefined) {
           console.log("🔄 Status change detected:", updatedFields.status);
           
@@ -44,25 +42,28 @@ export default async function announcementWatcher(io) {
               cancelledAt: updatedFields.cancelledAt || new Date().toISOString(),
             });
           } else if (updatedFields.status === "Active") {
-            // ANNOUNCEMENT REPOSTED
-            console.log("🟢 Announcement reposted via socket");
+            // ANNOUNCEMENT STATUS CHANGED TO ACTIVE
+            console.log("🟢 Announcement status changed to Active");
             
-            // ✅ FIXED: Send the FULL announcement data, not just ID
-            io.emit("announcementReposted", updatedAnnouncement);
+            const wasPreviouslyInactive = updatedAnnouncement.cancelledAt || 
+                                        updatedAnnouncement.cancelledBy ||
+                                        (change.updateDescription && 
+                                         change.updateDescription.updatedFields && 
+                                         change.updateDescription.updatedFields.cancelledAt === null);
             
-            // Also send as new announcement for agents
-            io.emit("newAnnouncement", updatedAnnouncement);
+            if (wasPreviouslyInactive) {
+              // ✅ THIS IS A REPOST (was previously cancelled)
+              console.log("✅ Detected as REPOST - emitting announcementReposted only");
+              io.emit("announcementReposted", updatedAnnouncement);
+            } else {
+              // ✅ THIS IS A NEW ACTIVATION (not previously cancelled)
+              console.log("✅ Detected as NEW ACTIVATION - emitting newAnnouncement");
+              io.emit("newAnnouncement", updatedAnnouncement);
+            }
           }
         }
         
-        // ✅ NEW: DETECT REPOST SPECIFIC FIELDS
-        else if (updatedFields.repostedAt !== undefined || updatedFields.repostedBy !== undefined) {
-          console.log("🟢 Repost detected via repost fields");
-          io.emit("announcementReposted", updatedAnnouncement);
-          io.emit("newAnnouncement", updatedAnnouncement);
-        }
-        
-        // ✅ NEW: DETECT CANCELLATION SPECIFIC FIELDS  
+        // ✅ DETECT CANCELLATION SPECIFIC FIELDS  
         else if (updatedFields.cancelledAt !== undefined || updatedFields.cancelledBy !== undefined) {
           console.log("🔴 Cancellation detected via cancel fields");
           io.emit("announcementCancelled", {
@@ -123,20 +124,12 @@ export default async function announcementWatcher(io) {
         socket.emit("initialAgentData", announcements);
       });
 
-      // ✅ IMPROVED: LISTEN FOR MANUAL CANCELLATION EVENT FROM ADMIN
+      // ✅ LISTEN FOR MANUAL CANCELLATION EVENT FROM ADMIN
       socket.on("manualAnnouncementCancelled", (data) => {
         console.log("🔴 Manual cancellation from admin:", data.announcementId);
         // Broadcast to ALL agents
         socket.broadcast.emit("announcementCancelled", data);
         console.log("📢 Manual cancellation broadcasted to all agents");
-      });
-
-      // ✅ IMPROVED: LISTEN FOR MANUAL REPOST EVENT FROM ADMIN
-      socket.on("manualAnnouncementReposted", (data) => {
-        console.log("🟢 Manual repost from admin:", data.announcementId);
-        // Broadcast to ALL agents
-        socket.broadcast.emit("announcementReposted", data);
-        console.log("📢 Manual repost broadcasted to all agents");
       });
 
       // Listen for manual announcement updates

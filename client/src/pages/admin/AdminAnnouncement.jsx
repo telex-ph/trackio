@@ -579,62 +579,18 @@ const AdminAnnouncement = () => {
     setIsConfirmationModalOpen(true);
   };
 
-  // ✅ UPDATED: CANCELLATION WITH CORRECT SOCKET EMISSION
-  const handleConfirmCancel = async () => {
-    try {
-      const announcementToCancel = announcements.find(a => a._id === itemToCancel);
-      if (!announcementToCancel) {
-        showNotification("Announcement not found", "error");
-        return;
-      }
-
-      console.log("🗑️ Cancelling announcement:", itemToCancel);
-
-      // ✅ RESET LIKES AND VIEWS WHEN CANCELLING
-      const payload = {
-        status: "Inactive",
-        cancelledAt: new Date().toISOString(),
-        cancelledBy: getUserFullName(),
-        updatedAt: new Date().toISOString(),
-        // ✅ RESET LIKES AND VIEWS
-        views: [],
-        acknowledgements: []
-      };
-
-      let response;
+    const handleConfirmCancel = async () => {
       try {
-        response = await api.patch(`/announcements/${itemToCancel}`, payload);
-        console.log("✅ PATCH response:", response.data);
-        
-        // ✅ CRITICAL: Update local state immediately for better UX
-        setAnnouncements(prev => 
-          prev.map(ann => 
-            ann._id === itemToCancel 
-              ? { 
-                  ...ann, 
-                  ...payload,
-                  // ✅ ENSURE LIKES/VIEWS ARE RESET IN FRONTEND
-                  views: [],
-                  acknowledgements: []
-                }
-              : ann
-          )
-        );
-        
-        if (socket) {
-          // ✅ CORRECT EVENT NAME: manualAnnouncementCancelled
-          socket.emit("manualAnnouncementCancelled", {
-            announcementId: itemToCancel,
-            cancelledBy: getUserFullName(),
-            cancelledAt: payload.cancelledAt
-          });
-          
-          console.log("📢 Emitted manual cancellation event");
+        const announcementToCancel = announcements.find(a => a._id === itemToCancel);
+        if (!announcementToCancel) {
+          showNotification("Announcement not found", "error");
+          return;
         }
-      } catch (patchError) {
-        console.log("🔄 PATCH failed, trying PUT:", patchError);
-        const putPayload = {
-          ...announcementToCancel,
+
+        console.log("🗑️ Cancelling announcement:", itemToCancel);
+
+        // ✅ RESET LIKES AND VIEWS WHEN CANCELLING
+        const payload = {
           status: "Inactive",
           cancelledAt: new Date().toISOString(),
           cancelledBy: getUserFullName(),
@@ -643,64 +599,107 @@ const AdminAnnouncement = () => {
           views: [],
           acknowledgements: []
         };
-        delete putPayload._id;
-        delete putPayload.__v;
-        response = await api.put(`/announcements/${itemToCancel}`, putPayload);
-        console.log("✅ PUT response:", response.data);
-        
-        // ✅ CRITICAL: Update local state immediately
-        setAnnouncements(prev => 
-          prev.map(ann => 
-            ann._id === itemToCancel 
-              ? { 
-                  ...ann, 
-                  ...putPayload,
-                  // ✅ ENSURE LIKES/VIEWS ARE RESET IN FRONTEND
-                  views: [],
-                  acknowledgements: []
-                }
-              : ann
-          )
-        );
-        
-        if (socket) {
-          // ✅ CORRECT EVENT NAME: manualAnnouncementCancelled
-          socket.emit("manualAnnouncementCancelled", {
-            announcementId: itemToCancel,
+
+        let response;
+        try {
+          response = await api.patch(`/announcements/${itemToCancel}`, payload);
+          console.log("✅ PATCH response:", response.data);
+          
+          // ✅ CRITICAL: Update local state immediately for better UX
+          setAnnouncements(prev => 
+            prev.map(ann => 
+              ann._id === itemToCancel 
+                ? { 
+                    ...ann, 
+                    ...payload,
+                    // ✅ ENSURE LIKES/VIEWS ARE RESET IN FRONTEND
+                    views: [],
+                    acknowledgements: []
+                  }
+                : ann
+            )
+          );
+          
+          if (socket) {
+            // ✅ CORRECT EVENT NAME: manualAnnouncementCancelled
+            socket.emit("manualAnnouncementCancelled", {
+              announcementId: itemToCancel,
+              cancelledBy: getUserFullName(),
+              cancelledAt: payload.cancelledAt
+            });
+            
+            console.log("📢 Emitted manual cancellation event");
+          }
+        } catch (patchError) {
+          console.log("🔄 PATCH failed, trying PUT:", patchError);
+          const putPayload = {
+            ...announcementToCancel,
+            status: "Inactive",
+            cancelledAt: new Date().toISOString(),
             cancelledBy: getUserFullName(),
-            cancelledAt: putPayload.cancelledAt
-          });
+            updatedAt: new Date().toISOString(),
+            // ✅ RESET LIKES AND VIEWS
+            views: [],
+            acknowledgements: []
+          };
+          delete putPayload._id;
+          delete putPayload.__v;
+          response = await api.put(`/announcements/${itemToCancel}`, putPayload);
+          console.log("✅ PUT response:", response.data);
+          
+          // ✅ CRITICAL: Update local state immediately
+          setAnnouncements(prev => 
+            prev.map(ann => 
+              ann._id === itemToCancel 
+                ? { 
+                    ...ann, 
+                    ...putPayload,
+                    // ✅ ENSURE LIKES/VIEWS ARE RESET IN FRONTEND
+                    views: [],
+                    acknowledgements: []
+                  }
+                : ann
+            )
+          );
+          
+          if (socket) {
+            // ✅ CORRECT EVENT NAME: manualAnnouncementCancelled
+            socket.emit("manualAnnouncementCancelled", {
+              announcementId: itemToCancel,
+              cancelledBy: getUserFullName(),
+              cancelledAt: putPayload.cancelledAt
+            });
+          }
         }
+
+        showNotification("Announcement cancelled successfully! Likes and views have been reset.", "success");
+        
+        // ✅ Switch to inactive tab to show the cancelled announcement
+        setActiveTab('inactive');
+
+      } catch (error) {
+        console.error("❌ Error cancelling announcement:", error);
+        let errorMessage = "Failed to cancel announcement. Please try again.";
+        if (error.response?.status === 404) {
+          errorMessage = "Announcement not found in database.";
+        } else if (error.response?.status === 500) {
+          errorMessage = "Server error. Please try again later.";
+        } else if (error.message?.includes("Network Error")) {
+          errorMessage = "Cannot connect to server. Please check your connection.";
+        }
+        showNotification(errorMessage, "error");
+      } finally {
+        setIsConfirmationModalOpen(false);
+        setItemToCancel(null);
       }
+    };
 
-      showNotification("Announcement cancelled successfully! Likes and views have been reset.", "success");
-      
-      // ✅ Switch to inactive tab to show the cancelled announcement
-      setActiveTab('inactive');
+    const handleRepostClick = (id) => {
+      setItemToRepost(id);
+      setIsRepostModalOpen(true);
+    };
 
-    } catch (error) {
-      console.error("❌ Error cancelling announcement:", error);
-      let errorMessage = "Failed to cancel announcement. Please try again.";
-      if (error.response?.status === 404) {
-        errorMessage = "Announcement not found in database.";
-      } else if (error.response?.status === 500) {
-        errorMessage = "Server error. Please try again later.";
-      } else if (error.message?.includes("Network Error")) {
-        errorMessage = "Cannot connect to server. Please check your connection.";
-      }
-      showNotification(errorMessage, "error");
-    } finally {
-      setIsConfirmationModalOpen(false);
-      setItemToCancel(null);
-    }
-  };
-
-  const handleRepostClick = (id) => {
-    setItemToRepost(id);
-    setIsRepostModalOpen(true);
-  };
-
-  // ✅ UPDATED: REPOSTING WITH CORRECT SOCKET EMISSION
+    // ✅ COMPLETELY FIXED: REPOSTING WITH NO DUPLICATES
   const handleConfirmRepost = async () => {
     try {
       const announcementToRepost = announcements.find(a => a._id === itemToRepost);
@@ -741,16 +740,9 @@ const AdminAnnouncement = () => {
           )
         );
         
-        if (socket) {
-          // ✅ CORRECT EVENT NAME: manualAnnouncementReposted
-          socket.emit("manualAnnouncementReposted", { 
-            ...announcementToRepost, 
-            ...payload,
-            _id: itemToRepost
-          });
-          
-          console.log("📢 Emitted manual repost event");
-        }
+        // ✅ NO SOCKET EMISSION - Let database change stream handle it
+        console.log("📢 No socket emission - letting database change stream handle real-time update");
+        
       } catch (patchError) {
         console.log("🔄 PATCH failed, trying PUT:", patchError);
         const putPayload = {
@@ -783,10 +775,8 @@ const AdminAnnouncement = () => {
           )
         );
         
-        if (socket) {
-          // ✅ CORRECT EVENT NAME: manualAnnouncementReposted
-          socket.emit("manualAnnouncementReposted", putPayload);
-        }
+        // ✅ NO SOCKET EMISSION - Let database change stream handle it
+        console.log("📢 No socket emission - letting database change stream handle real-time update");
       }
 
       showNotification("Announcement reposted successfully! Ready for new likes and views.", "success");
@@ -1153,7 +1143,9 @@ const AdminAnnouncement = () => {
 
         {/* RIGHT COLUMN - ANNOUNCEMENTS MANAGEMENT WITH TABS */}
         <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl p-4 sm:p-6 border border-white/20">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+          {/* IMPROVED HEADER LAYOUT */}
+          <div className="flex flex-col gap-3 mb-4">
+            {/* TITLE SECTION */}
             <div className="flex items-center gap-2">
               <div className="p-2 bg-blue-100 rounded-lg">
                 <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
@@ -1163,24 +1155,25 @@ const AdminAnnouncement = () => {
               </h3>
             </div>
             
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-              {/* SEARCH SECTION */}
-              <div className="flex items-center gap-1 flex-wrap">
-                <div className="relative">
+            {/* SEARCH AND TABS SECTION - IMPROVED LAYOUT */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
+              {/* SEARCH SECTION - IMPROVED */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:flex-none">
                   <Search className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 transform -translate-y-1/2" />
                   <input
                     type="text"
                     placeholder="Search announcements..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-7 pr-2 py-1 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white w-32"
+                    className="pl-7 pr-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white w-full sm:w-40"
                   />
                 </div>
                 
                 {searchTerm !== '' && (
                   <button
                     onClick={clearFilters}
-                    className="px-2 py-1 text-xs text-gray-600 hover:text-gray-800 transition-colors flex items-center gap-1"
+                    className="px-2 py-1.5 text-xs text-gray-600 hover:text-gray-800 transition-colors flex items-center gap-1 whitespace-nowrap"
                   >
                     <X className="w-3 h-3" />
                     Clear
@@ -1188,11 +1181,11 @@ const AdminAnnouncement = () => {
                 )}
               </div>
               
-              {/* TABS */}
-              <div className="flex bg-gray-100 rounded-lg p-1">
+              {/* TABS - IMPROVED WITH SLIMMER DESIGN */}
+              <div className="flex bg-gray-100 rounded-lg p-0.5 w-full sm:w-auto">
                 <button
                   onClick={() => setActiveTab('active')}
-                  className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex-1 sm:flex-none ${
                     activeTab === 'active' 
                       ? 'bg-white text-blue-600 shadow-sm' 
                       : 'text-gray-600 hover:text-gray-800'
@@ -1202,7 +1195,7 @@ const AdminAnnouncement = () => {
                 </button>
                 <button
                   onClick={() => setActiveTab('inactive')}
-                  className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex-1 sm:flex-none ${
                     activeTab === 'inactive' 
                       ? 'bg-white text-red-600 shadow-sm' 
                       : 'text-gray-600 hover:text-gray-800'

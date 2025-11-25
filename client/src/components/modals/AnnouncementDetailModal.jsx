@@ -247,7 +247,7 @@ const AnnouncementDetailModal = ({
                       {announcement.title}
                     </h1>
 
-                    <div className="flex flex-col xs:flex-row items-start xs:items-center gap-3 xs:gap-6">
+                    <div className="flex flex-row xs:flex-row items-start xs:items-center gap-3 xs:gap-6">
                       <div className="flex items-center gap-2 text-gray-600">
                         <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
                         <span className="font-medium text-base sm:text-lg">{viewCount} Views</span>
@@ -268,7 +268,7 @@ const AnnouncementDetailModal = ({
                           className={`font-medium text-base sm:text-lg transition-colors ${
                             isLiked ? "text-red-500" : "text-gray-600"
                           }`} > 
-                          {likeCount} Like{likeCount !== 1 ? 's' : ''}
+                          {likeCount} Likes{likeCount !== 1 ? 's' : ''}
                         </span>
                       </button>
                     </div>
