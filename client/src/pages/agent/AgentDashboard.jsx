@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import telexcover from "../../assets/background/telex-cover.jpg";
 import api from "../../utils/axios";
-import socket from "../../utils/socket"; // ADD SOCKET IMPORT
+import socket from "../../utils/socket";
 
 import PunctualityChart from "../../components/charts/PunctualityChart";
 import PaydayCard from "../../components/cards/PaydayCard";
@@ -244,10 +244,11 @@ const AgentDashboard = () => {
     initializeUserData();
   }, []);
 
-  // ✅ ADD SOCKET LISTENERS FOR REAL-TIME UPDATES
+  // ✅ IMPROVED SOCKET LISTENERS FOR REAL-TIME UPDATES
   useEffect(() => {
     if (!socket) {
       console.log("❌ Socket not available for agent");
+      fetchAnnouncements();
       return;
     }
 
@@ -263,7 +264,7 @@ const AgentDashboard = () => {
         const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
         
         const processedAnnouncements = socketAnnouncements
-          .filter((ann) => ann && ann._id)
+          .filter((ann) => ann && ann._id && ann.status === "Active") // ✅ ONLY ACTIVE ANNOUNCEMENTS
           .map((announcement) => ({
             ...announcement,
             isPinned: pinnedAnnouncements[announcement._id] || announcement.isPinned || false,
@@ -273,7 +274,6 @@ const AgentDashboard = () => {
               : [],
           }))
           .map(processAnnouncementData)
-          .filter((ann) => ann.status === "Active")
           .sort((a, b) => {
             if (a.isPinned && !b.isPinned) return -1;
             if (!a.isPinned && b.isPinned) return 1;
@@ -321,6 +321,12 @@ const AgentDashboard = () => {
     const handleNewAnnouncement = (newAnnouncement) => {
       console.log("🆕 New announcement received via socket for agent");
       
+      // ✅ CHECK IF ANNOUNCEMENT IS ACTIVE
+      if (newAnnouncement.status !== "Active") {
+        console.log("❌ Ignoring inactive announcement");
+        return;
+      }
+
       const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
       const processedAnnouncement = processAnnouncementData({
         ...newAnnouncement,
@@ -331,7 +337,7 @@ const AgentDashboard = () => {
           : [],
       });
 
-      if (processedAnnouncement && processedAnnouncement.status === "Active") {
+      if (processedAnnouncement) {
         setAnnouncements(prev => {
           const exists = prev.find(a => a._id === processedAnnouncement._id);
           if (exists) return prev;
@@ -354,10 +360,11 @@ const AgentDashboard = () => {
       }
     };
 
-    // ✅ DAGDAG: LISTEN FOR CANCELLATION EVENTS
+    // ✅ CRITICAL: LISTEN FOR CANCELLATION EVENTS - REAL-TIME REMOVAL
     const handleAnnouncementCancelled = (data) => {
       console.log("🔴 Real-time: Announcement cancelled", data.announcementId);
       
+      // ✅ IMMEDIATELY REMOVE FROM AGENT DASHBOARD
       setAnnouncements(prev => 
         prev.filter(ann => ann._id !== data.announcementId)
       );
@@ -365,7 +372,7 @@ const AgentDashboard = () => {
       console.log("🗑️ Removed cancelled announcement from agent view");
     };
 
-    // ✅ DAGDAG: LISTEN FOR REPOST EVENTS
+    // ✅ LISTEN FOR REPOST EVENTS (via newAnnouncement event)
     const handleAnnouncementReposted = (data) => {
       console.log("🟢 Real-time: Announcement reposted", data.announcementId);
       
@@ -373,41 +380,17 @@ const AgentDashboard = () => {
       if (socket) {
         socket.emit("getAgentData");
       }
+    };
+
+    // ✅ LISTEN FOR MANUAL CANCELLATION FROM ADMIN
+    const handleManualCancellation = (data) => {
+      console.log("🔴 Manual cancellation from admin:", data.announcementId);
       
-      // Alternative: Add the announcement directly if we have the data
-      if (data.announcementData) {
-        const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
-        const processedAnnouncement = processAnnouncementData({
-          ...data.announcementData,
-          isPinned: pinnedAnnouncements[data.announcementData._id] || false,
-          views: Array.isArray(data.announcementData.views) ? data.announcementData.views : [],
-          acknowledgements: Array.isArray(data.announcementData.acknowledgements) 
-            ? data.announcementData.acknowledgements 
-            : [],
-        });
-
-        if (processedAnnouncement && processedAnnouncement.status === "Active") {
-          setAnnouncements(prev => {
-            const exists = prev.find(a => a._id === processedAnnouncement._id);
-            if (exists) return prev;
-            
-            return [processedAnnouncement, ...prev].sort((a, b) => {
-              if (a.isPinned && !b.isPinned) return -1;
-              if (!a.isPinned && b.isPinned) return 1;
-
-              const priorityOrder = { High: 3, Medium: 2, Low: 1 };
-              const priorityA = priorityOrder[a.priority] || 0;
-              const priorityB = priorityOrder[b.priority] || 0;
-
-              if (priorityB !== priorityA) {
-                return priorityB - priorityA;
-              }
-
-              return new Date(b.dateTime) - new Date(a.dateTime);
-            });
-          });
-        }
-      }
+      setAnnouncements(prev => 
+        prev.filter(ann => ann._id !== data.announcementId)
+      );
+      
+      console.log("🗑️ Removed manually cancelled announcement");
     };
 
     // Register event listeners
@@ -416,6 +399,7 @@ const AgentDashboard = () => {
     socket.on("newAnnouncement", handleNewAnnouncement);
     socket.on("announcementCancelled", handleAnnouncementCancelled);
     socket.on("announcementReposted", handleAnnouncementReposted);
+    socket.on("announcementCancelled", handleManualCancellation); // For manual admin cancellation
 
     // Request initial data via socket
     socket.emit("getAgentData");
@@ -436,6 +420,7 @@ const AgentDashboard = () => {
       socket.off("newAnnouncement", handleNewAnnouncement);
       socket.off("announcementCancelled", handleAnnouncementCancelled);
       socket.off("announcementReposted", handleAnnouncementReposted);
+      socket.off("announcementCancelled", handleManualCancellation);
     };
   }, []);
 
@@ -569,7 +554,7 @@ const AgentDashboard = () => {
       const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
 
       const processedAnnouncements = response.data
-        .filter((ann) => ann && ann._id)
+        .filter((ann) => ann && ann._id && ann.status === "Active") // ✅ ONLY ACTIVE ANNOUNCEMENTS
         .map((announcement) => ({
           ...announcement,
           isPinned:
@@ -582,7 +567,6 @@ const AgentDashboard = () => {
             : [],
         }))
         .map(processAnnouncementData)
-        .filter((ann) => ann.status === "Active")
         .sort((a, b) => {
           if (a.isPinned && !b.isPinned) return -1;
           if (!a.isPinned && b.isPinned) return 1;
@@ -605,11 +589,6 @@ const AgentDashboard = () => {
       setIsLoadingAnnouncements(false);
     }
   };
-
-  // Remove the duplicate fetchAnnouncements call since we're using socket as primary
-  // useEffect(() => {
-  //   fetchAnnouncements();
-  // }, []);
 
   // File handling
   const handleFileDownload = (file) => {

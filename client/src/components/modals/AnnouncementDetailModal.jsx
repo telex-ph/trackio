@@ -218,24 +218,23 @@ const AnnouncementDetailModal = ({
                     <img
                       src={announcement.attachment.data}
                       alt={announcement.title}
-                      className="w-full h-full object-cover cursor-zoom-in hover:opacity-90 transition-opacity"
+                      className="w-full h-full object-contain cursor-zoom-in hover:opacity-90 transition-opacity"
                       onClick={openImageViewer}
                     />
                     
-                    {/* Download button for image */}
+                    {/* Small Download button for image */}
                     <button
                       onClick={() => handleFileDownload(announcement.attachment)}
-                      className="absolute top-2 right-2 sm:top-4 sm:right-4 p-2 sm:p-3 bg-black/80 text-white rounded-full hover:bg-black transition-all"
+                      className="absolute top-2 right-2 sm:top-4 sm:right-4 p-2 bg-black/70 text-white rounded-full hover:bg-black transition-all backdrop-blur-sm"
                       title="Download image"
                     >
-                      <Download className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <Download className="w-4 h-4" />
                     </button>
 
                     {/* Click to zoom indicator */}
-                    <div className="absolute bottom-2 left-2 sm:bottom-4 sm:left-4 bg-black/80 text-white px-2 py-1 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm flex items-center gap-1 sm:gap-2">
-                      <ZoomIn className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="hidden xs:inline">Click to view full screen</span>
-                      <span className="xs:hidden">Full screen</span>
+                    <div className="absolute bottom-2 left-2 sm:bottom-4 sm:left-4 bg-black/70 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1 backdrop-blur-sm">
+                      <ZoomIn className="w-3 h-3" />
+                      <span>Click to view</span>
                     </div>
                   </div>
                 )}
@@ -382,46 +381,46 @@ const AnnouncementDetailModal = ({
         </>
       )}
 
-      {/* Full Screen Image Viewer - WITH PROPER BACKGROUND */}
+      {/* Full Screen Image Viewer - STAYS WITHIN MODAL BOUNDS */}
       {isImageViewerOpen && hasImages && (
         <>
           {/* Backdrop */}
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70]" onClick={closeImageViewer} />
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[70]" onClick={closeImageViewer} />
           
-          {/* Image Viewer Content */}
-          <div className="fixed inset-2 sm:inset-4 bg-white rounded-xl sm:rounded-2xl shadow-2xl z-[80] flex flex-col overflow-hidden">
+          {/* Image Viewer Content - STAYS WITHIN MODAL */}
+          <div className="fixed inset-2 sm:inset-4 bg-black rounded-xl sm:rounded-2xl shadow-2xl z-[80] flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="flex flex-col xs:flex-row xs:items-center justify-between p-3 sm:p-4 bg-white border-b border-gray-200 shrink-0 gap-2 xs:gap-0">
+            <div className="flex flex-col xs:flex-row xs:items-center justify-between p-3 sm:p-4 bg-black/80 border-b border-gray-700 shrink-0 gap-2 xs:gap-0 backdrop-blur-sm">
               <div className="flex items-center gap-2 sm:gap-4">
                 <button
                   onClick={closeImageViewer}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-all"
+                  className="p-2 hover:bg-white/10 rounded-lg transition-all text-white"
                 >
                   <X className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base sm:text-lg font-semibold truncate">
+                  <h3 className="text-base sm:text-lg font-semibold truncate text-white">
                     {announcement.title}
                   </h3>
-                  <p className="text-xs sm:text-sm text-gray-500">Image Preview</p>
+                  <p className="text-xs sm:text-sm text-gray-300">Image Preview</p>
                 </div>
               </div>
               
-              <div className="flex justify-end">
+              <div className="flex items-center gap-2">
+                {/* Small Download Button */}
                 <button
                   onClick={() => handleFileDownload(announcement.attachment)}
-                  className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm sm:text-base w-full xs:w-auto"
+                  className="p-2 hover:bg-white/10 rounded-lg transition-all text-white"
+                  title="Download Image"
                 >
-                  <Download className="w-4 h-4" />
-                  <span className="hidden xs:inline">Download Image</span>
-                  <span className="xs:hidden">Download</span>
+                  <Download className="w-5 h-5" />
                 </button>
               </div>
             </div>
 
-            {/* Image Content */}
-            <div className="flex-1 flex items-center justify-center bg-gray-900 p-2 sm:p-4">
-              <div className="relative max-w-full max-h-full flex items-center justify-center">
+            {/* Image Content - FULL VIEW WITHIN MODAL */}
+            <div className="flex-1 flex items-center justify-center bg-black p-2 sm:p-4 min-h-0">
+              <div className="relative w-full h-full flex items-center justify-center">
                 <img
                   src={announcement.attachment.data}
                   alt={announcement.title}
@@ -434,14 +433,14 @@ const AnnouncementDetailModal = ({
             </div>
 
             {/* Image Controls */}
-            <div className="p-3 sm:p-4 bg-white border-t border-gray-200 shrink-0">
+            <div className="p-3 sm:p-4 bg-black/80 border-t border-gray-700 shrink-0 backdrop-blur-sm">
               <div className="flex items-center justify-center">
-                <div className="flex items-center gap-1 sm:gap-2 bg-gray-100 rounded-full px-3 py-2 sm:px-4 sm:py-2 overflow-x-auto">
+                <div className="flex items-center gap-1 sm:gap-2 bg-white/10 rounded-full px-3 py-2 sm:px-4 sm:py-2 overflow-x-auto">
                   {/* Zoom Out */}
                   <button
                     onClick={zoomOut}
                     disabled={zoomLevel <= 0.5}
-                    className="p-1 sm:p-2 hover:bg-white rounded-full transition-all disabled:opacity-30 flex-shrink-0"
+                    className="p-1 sm:p-2 hover:bg-white/20 rounded-full transition-all disabled:opacity-30 flex-shrink-0 text-white"
                     title="Zoom Out"
                   >
                     <ZoomOut className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -450,14 +449,14 @@ const AnnouncementDetailModal = ({
                   {/* Reset */}
                   <button
                     onClick={resetImage}
-                    className="p-1 sm:p-2 hover:bg-white rounded-full transition-all flex-shrink-0"
+                    className="p-1 sm:p-2 hover:bg-white/20 rounded-full transition-all flex-shrink-0 text-white"
                     title="Reset Image"
                   >
                     <RotateCw className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
 
                   {/* Zoom Level Display */}
-                  <span className="mx-1 sm:mx-2 text-sm font-medium min-w-[50px] sm:min-w-[60px] text-center flex-shrink-0">
+                  <span className="mx-1 sm:mx-2 text-sm font-medium min-w-[50px] sm:min-w-[60px] text-center flex-shrink-0 text-white">
                     {Math.round(zoomLevel * 100)}%
                   </span>
 
@@ -465,7 +464,7 @@ const AnnouncementDetailModal = ({
                   <button
                     onClick={zoomIn}
                     disabled={zoomLevel >= 3}
-                    className="p-1 sm:p-2 hover:bg-white rounded-full transition-all disabled:opacity-30 flex-shrink-0"
+                    className="p-1 sm:p-2 hover:bg-white/20 rounded-full transition-all disabled:opacity-30 flex-shrink-0 text-white"
                     title="Zoom In"
                   >
                     <ZoomIn className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -474,7 +473,7 @@ const AnnouncementDetailModal = ({
                   {/* Rotate */}
                   <button
                     onClick={rotateImage}
-                    className="p-1 sm:p-2 hover:bg-white rounded-full transition-all flex-shrink-0"
+                    className="p-1 sm:p-2 hover:bg-white/20 rounded-full transition-all flex-shrink-0 text-white"
                     title="Rotate Image"
                   >
                     <RotateCw className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -486,7 +485,6 @@ const AnnouncementDetailModal = ({
         </>
       )}
 
-      {/* Full Screen PDF Viewer - WITH PROPER BACKGROUND */}
       {isPdfViewerOpen && isPdf && (
         <>
           {/* Backdrop */}
@@ -538,12 +536,13 @@ const AnnouncementDetailModal = ({
                   </button>
                 </div>
 
+                {/* Small Download Button */}
                 <button
                   onClick={() => handleFileDownload(announcement.attachment)}
-                  className="flex items-center justify-center gap-2 px-3 py-2 sm:px-4 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm sm:text-base w-full xs:w-auto"
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-all flex-shrink-0"
+                  title="Download PDF"
                 >
-                  <Download className="w-4 h-4" />
-                  <span>Download PDF</span>
+                  <Download className="w-5 h-5" />
                 </button>
               </div>
             </div>

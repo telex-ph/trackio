@@ -236,47 +236,11 @@ const AdminAnnouncement = () => {
       ));
     };
 
-    // ✅ IMPROVED: REAL-TIME CANCELLATION SYNC WITH STATUS UPDATE
-    const handleAnnouncementCancelled = (data) => {
-      console.log("🔴 Real-time cancellation sync:", data.announcementId);
-      setAnnouncements(prev => 
-        prev.map(ann => 
-          ann._id === data.announcementId 
-            ? { 
-                ...ann, 
-                status: "Inactive", 
-                cancelledAt: data.cancelledAt, 
-                cancelledBy: data.cancelledBy 
-              }
-            : ann
-        )
-      );
-    };
-
-    // ✅ IMPROVED: REAL-TIME REPOST SYNC WITH STATUS UPDATE
-    const handleAnnouncementReposted = (data) => {
-      console.log("🟢 Real-time repost sync:", data.announcementId);
-      setAnnouncements(prev => 
-        prev.map(ann => 
-          ann._id === data.announcementId 
-            ? { 
-                ...ann, 
-                status: "Active", 
-                cancelledAt: null, 
-                cancelledBy: null 
-              }
-            : ann
-        )
-      );
-    };
-
     // Register event listeners
     socket.on("initialAdminData", handleInitialData);
     socket.on("adminAnnouncementUpdate", handleAdminUpdate);
     socket.on("newAnnouncement", handleNewAnnouncement);
     socket.on("announcementUpdated", handleAnnouncementUpdated);
-    socket.on("announcementCancelled", handleAnnouncementCancelled);
-    socket.on("announcementReposted", handleAnnouncementReposted);
 
     // Request initial data via socket
     socket.emit("getAdminData");
@@ -296,8 +260,6 @@ const AdminAnnouncement = () => {
       socket.off("adminAnnouncementUpdate", handleAdminUpdate);
       socket.off("newAnnouncement", handleNewAnnouncement);
       socket.off("announcementUpdated", handleAnnouncementUpdated);
-      socket.off("announcementCancelled", handleAnnouncementCancelled);
-      socket.off("announcementReposted", handleAnnouncementReposted);
     };
   }, [fetchAnnouncements]);
 
@@ -575,7 +537,7 @@ const AdminAnnouncement = () => {
     setIsConfirmationModalOpen(true);
   };
 
-  // ✅ UPDATED: CANCELLATION WITH REAL-TIME SOCKET EVENTS AND PROPER STATUS SYNC
+  // ✅ UPDATED: CANCELLATION WITH LIKES/VIEWS RESET AND REAL-TIME REMOVAL
   const handleConfirmCancel = async () => {
     try {
       const announcementToCancel = announcements.find(a => a._id === itemToCancel);
@@ -586,11 +548,15 @@ const AdminAnnouncement = () => {
 
       console.log("🗑️ Cancelling announcement:", itemToCancel);
 
+      // ✅ RESET LIKES AND VIEWS WHEN CANCELLING
       const payload = {
         status: "Inactive",
         cancelledAt: new Date().toISOString(),
         cancelledBy: getUserFullName(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        // ✅ RESET LIKES AND VIEWS
+        views: [],
+        acknowledgements: []
       };
 
       let response;
@@ -602,30 +568,26 @@ const AdminAnnouncement = () => {
         setAnnouncements(prev => 
           prev.map(ann => 
             ann._id === itemToCancel 
-              ? { ...ann, ...payload }
+              ? { 
+                  ...ann, 
+                  ...payload,
+                  // ✅ ENSURE LIKES/VIEWS ARE RESET IN FRONTEND
+                  views: [],
+                  acknowledgements: []
+                }
               : ann
           )
         );
         
         if (socket) {
-          const updatedAnnouncement = { 
-            ...announcementToCancel, 
-            ...payload,
-            _id: itemToCancel
-          };
-          
-          // Emit to admin for real-time update
-          socket.emit("announcementUpdated", updatedAnnouncement);
-          
-          // ✅ CRITICAL: Emit specific event for agents
+          // ✅ CRITICAL: Emit specific event for AGENTS to REMOVE from their dashboard
           socket.emit("announcementCancelled", {
             announcementId: itemToCancel,
             cancelledBy: getUserFullName(),
-            cancelledAt: payload.cancelledAt,
-            announcementData: updatedAnnouncement // Include full data for agents
+            cancelledAt: payload.cancelledAt
           });
           
-          console.log("📢 Emitted cancellation events");
+          console.log("📢 Emitted cancellation event - Announcement removed from agent dashboard");
         }
       } catch (patchError) {
         console.log("🔄 PATCH failed, trying PUT:", patchError);
@@ -634,7 +596,10 @@ const AdminAnnouncement = () => {
           status: "Inactive",
           cancelledAt: new Date().toISOString(),
           cancelledBy: getUserFullName(),
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
+          // ✅ RESET LIKES AND VIEWS
+          views: [],
+          acknowledgements: []
         };
         delete putPayload._id;
         delete putPayload.__v;
@@ -645,26 +610,28 @@ const AdminAnnouncement = () => {
         setAnnouncements(prev => 
           prev.map(ann => 
             ann._id === itemToCancel 
-              ? { ...ann, ...putPayload }
+              ? { 
+                  ...ann, 
+                  ...putPayload,
+                  // ✅ ENSURE LIKES/VIEWS ARE RESET IN FRONTEND
+                  views: [],
+                  acknowledgements: []
+                }
               : ann
           )
         );
         
         if (socket) {
-          // Emit to admin for real-time update
-          socket.emit("announcementUpdated", putPayload);
-          
-          // ✅ CRITICAL: Emit specific event for agents
+          // ✅ CRITICAL: Emit specific event for AGENTS to REMOVE from their dashboard
           socket.emit("announcementCancelled", {
             announcementId: itemToCancel,
             cancelledBy: getUserFullName(),
-            cancelledAt: putPayload.cancelledAt,
-            announcementData: putPayload
+            cancelledAt: putPayload.cancelledAt
           });
         }
       }
 
-      showNotification("Announcement cancelled successfully!", "success");
+      showNotification("Announcement cancelled successfully! Likes and views have been reset.", "success");
       
       // ✅ Switch to inactive tab to show the cancelled announcement
       setActiveTab('inactive');
@@ -691,7 +658,7 @@ const AdminAnnouncement = () => {
     setIsRepostModalOpen(true);
   };
 
-  // ✅ UPDATED: REPOSTING WITH REAL-TIME SOCKET EVENTS AND PROPER STATUS SYNC
+  // ✅ UPDATED: REPOSTING WITH FRESH LIKES/VIEWS
   const handleConfirmRepost = async () => {
     try {
       const announcementToRepost = announcements.find(a => a._id === itemToRepost);
@@ -706,7 +673,10 @@ const AdminAnnouncement = () => {
         status: "Active",
         updatedAt: new Date().toISOString(),
         cancelledAt: null,
-        cancelledBy: null
+        cancelledBy: null,
+        // ✅ KEEP LIKES/VIEWS EMPTY WHEN REPOSTING (FRESH START)
+        views: [],
+        acknowledgements: []
       };
 
       let response;
@@ -718,30 +688,26 @@ const AdminAnnouncement = () => {
         setAnnouncements(prev => 
           prev.map(ann => 
             ann._id === itemToRepost 
-              ? { ...ann, ...payload }
+              ? { 
+                  ...ann, 
+                  ...payload,
+                  // ✅ ENSURE LIKES/VIEWS ARE EMPTY IN FRONTEND
+                  views: [],
+                  acknowledgements: []
+                }
               : ann
           )
         );
         
         if (socket) {
-          const updatedAnnouncement = { 
+          // ✅ CRITICAL: Emit as new announcement for agents
+          socket.emit("newAnnouncement", { 
             ...announcementToRepost, 
             ...payload,
             _id: itemToRepost
-          };
-          
-          // Emit to admin for real-time update
-          socket.emit("announcementUpdated", updatedAnnouncement);
-          
-          // ✅ CRITICAL: Emit specific event for agents with full data
-          socket.emit("announcementReposted", {
-            announcementId: itemToRepost,
-            repostedBy: getUserFullName(),
-            repostedAt: payload.updatedAt,
-            announcementData: updatedAnnouncement // Include full data for agents
           });
           
-          console.log("📢 Emitted repost events");
+          console.log("📢 Emitted repost event - Announcement added to agent dashboard");
         }
       } catch (patchError) {
         console.log("🔄 PATCH failed, trying PUT:", patchError);
@@ -750,7 +716,10 @@ const AdminAnnouncement = () => {
           status: "Active",
           updatedAt: new Date().toISOString(),
           cancelledAt: null,
-          cancelledBy: null
+          cancelledBy: null,
+          // ✅ KEEP LIKES/VIEWS EMPTY WHEN REPOSTING
+          views: [],
+          acknowledgements: []
         };
         delete putPayload._id;
         delete putPayload.__v;
@@ -761,26 +730,24 @@ const AdminAnnouncement = () => {
         setAnnouncements(prev => 
           prev.map(ann => 
             ann._id === itemToRepost 
-              ? { ...ann, ...putPayload }
+              ? { 
+                  ...ann, 
+                  ...putPayload,
+                  // ✅ ENSURE LIKES/VIEWS ARE EMPTY IN FRONTEND
+                  views: [],
+                  acknowledgements: []
+                }
               : ann
           )
         );
         
         if (socket) {
-          // Emit to admin for real-time update
-          socket.emit("announcementUpdated", putPayload);
-          
-          // ✅ CRITICAL: Emit specific event for agents with full data
-          socket.emit("announcementReposted", {
-            announcementId: itemToRepost,
-            repostedBy: getUserFullName(),
-            repostedAt: putPayload.updatedAt,
-            announcementData: putPayload
-          });
+          // ✅ CRITICAL: Emit as new announcement for agents
+          socket.emit("newAnnouncement", putPayload);
         }
       }
 
-      showNotification("Announcement reposted successfully!", "success");
+      showNotification("Announcement reposted successfully! Ready for new likes and views.", "success");
       
       // ✅ Switch to active tab to show the reposted announcement
       setActiveTab('active');
@@ -902,7 +869,7 @@ const AdminAnnouncement = () => {
         isOpen={isConfirmationModalOpen}
         onClose={() => setIsConfirmationModalOpen(false)}
         onConfirm={handleConfirmCancel}
-        message="Are you sure you want to cancel this announcement?"
+        message="Are you sure you want to cancel this announcement? This will reset all likes and views, and remove it from agent dashboards."
         confirmText="Cancel Announcement"
       />
 
@@ -910,7 +877,7 @@ const AdminAnnouncement = () => {
         isOpen={isRepostModalOpen}
         onClose={() => setIsRepostModalOpen(false)}
         onConfirm={handleConfirmRepost}
-        message="Are you sure you want to repost this announcement? It will become active again and visible to all users."
+        message="Are you sure you want to repost this announcement? It will become active again with fresh likes and views count."
         confirmText="Repost Announcement"
       />
 

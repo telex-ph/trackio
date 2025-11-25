@@ -25,14 +25,42 @@ export default async function announcementWatcher(io) {
         
         console.log("📝 Updated announcement:", updatedAnnouncement?.title);
         
-        // ✅ DETECT LIKES/VIEWS CHANGES
+        // ✅ DETECT STATUS CHANGES (CANCELLATION/REPOST)
         const updateDescription = change.updateDescription || {};
         const updatedFields = updateDescription.updatedFields || {};
         
         console.log("📊 Updated fields:", Object.keys(updatedFields));
         
+        // Check if STATUS was changed (cancellation or repost)
+        if (updatedFields.status !== undefined) {
+          console.log("🔄 Status change detected:", updatedFields.status);
+          
+          if (updatedFields.status === "Inactive") {
+            // ANNOUNCEMENT CANCELLED
+            console.log("🔴 Announcement cancelled via socket");
+            io.emit("announcementCancelled", {
+              announcementId: updatedAnnouncement._id.toString(),
+              cancelledBy: updatedFields.cancelledBy || "Admin",
+              cancelledAt: updatedFields.cancelledAt || new Date().toISOString(),
+              announcementData: updatedAnnouncement
+            });
+          } else if (updatedFields.status === "Active") {
+            // ANNOUNCEMENT REPOSTED
+            console.log("🟢 Announcement reposted via socket");
+            io.emit("announcementReposted", {
+              announcementId: updatedAnnouncement._id.toString(),
+              repostedBy: updatedFields.cancelledBy || "Admin", 
+              repostedAt: updatedFields.updatedAt || new Date().toISOString(),
+              announcementData: updatedAnnouncement
+            });
+            
+            // Also send as new announcement for agents
+            io.emit("newAnnouncement", updatedAnnouncement);
+          }
+        }
+        
         // Check if likes (acknowledgements) or views were updated
-        if (updatedFields.acknowledgements || updatedFields.views) {
+        else if (updatedFields.acknowledgements || updatedFields.views) {
           console.log("❤️👀 Likes/Views update detected!");
           
           // Send to ADMIN with detailed user data
@@ -52,7 +80,7 @@ export default async function announcementWatcher(io) {
           });
           
         } else {
-          // Other updates (title, content, status, etc.)
+          // Other updates (title, content, etc.)
           console.log("📄 Content update detected");
           io.emit("announcementUpdated", updatedAnnouncement);
         }
@@ -64,7 +92,7 @@ export default async function announcementWatcher(io) {
       }
     });
 
-    // ✅ DAGDAG: HANDLE MANUAL SOCKET EVENTS FOR CANCELLATION/REPOST
+    // Handle initial data requests
     io.on("connection", async (socket) => {
       console.log("👤 User connected via socket:", socket.id);
       
@@ -80,23 +108,23 @@ export default async function announcementWatcher(io) {
         socket.emit("initialAgentData", announcements);
       });
 
-      // ✅ CRITICAL: LISTEN FOR CANCELLATION EVENT FROM ADMIN
+      // LISTEN FOR CANCELLATION EVENT FROM ADMIN
       socket.on("announcementCancelled", (data) => {
-        console.log("🗑️ Admin cancelled announcement:", data.announcementId);
+        console.log("🔴 Admin cancelled announcement:", data.announcementId);
         // Broadcast to ALL agents
         socket.broadcast.emit("announcementCancelled", data);
-        console.log("📢 Broadcasted cancellation to all agents");
+        console.log("📢 Announcement cancellation broadcasted to all agents");
       });
 
-      // ✅ CRITICAL: LISTEN FOR REPOST EVENT FROM ADMIN
+      // LISTEN FOR REPOST EVENT FROM ADMIN
       socket.on("announcementReposted", (data) => {
-        console.log("🔄 Admin reposted announcement:", data.announcementId);
+        console.log("🟢 Admin reposted announcement:", data.announcementId);
         // Broadcast to ALL agents
         socket.broadcast.emit("announcementReposted", data);
-        console.log("📢 Broadcasted repost to all agents");
+        console.log("📢 Announcement repost broadcasted to all agents");
       });
 
-      // ✅ OPTIONAL: Listen for manual announcement updates
+      // Listen for manual announcement updates
       socket.on("announcementUpdated", (data) => {
         console.log("📝 Manual announcement update:", data._id);
         socket.broadcast.emit("announcementUpdated", data);
@@ -108,7 +136,7 @@ export default async function announcementWatcher(io) {
       });
     });
 
-    console.log("✅ Announcement watcher started - Real-time likes/views enabled");
+    console.log("✅ Announcement watcher started - Real-time cancellation/repost enabled");
   } catch (err) {
     console.error("❌ Error in announcementWatcher:", err);
   }
