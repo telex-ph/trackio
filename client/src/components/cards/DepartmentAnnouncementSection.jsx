@@ -19,17 +19,15 @@ const DepartmentAnnouncementSection = ({
   currentUserId
 }) => {
 
-  // ✅ FIXED: Memoize filtered announcements to prevent unnecessary re-renders
   const filteredAnnouncements = useMemo(() => {
     return showPinnedOnly 
       ? announcements.filter(a => a?.isPinned)
       : announcements;
   }, [announcements, showPinnedOnly]);
 
-  // ✅ FIXED: Early return for empty state
-  if (filteredAnnouncements.length === 0 && !showPinnedOnly) {
-    return null;
-  }
+    if (filteredAnnouncements.length === 0 && !showPinnedOnly) {
+      return null;
+    }
 
   return (
     <div className="mb-6 sm:mb-8">
@@ -49,7 +47,6 @@ const DepartmentAnnouncementSection = ({
           </div>
         </div>
         
-        {/* OPTIMIZED PINNED TOGGLE BUTTON - Compact and Clean */}
         {pinnedCount > 0 && (
           <button 
             onClick={onTogglePinnedView}
@@ -77,7 +74,6 @@ const DepartmentAnnouncementSection = ({
         )}
       </div>
 
-      {/* Empty State for Pinned Only */}
       {showPinnedOnly && filteredAnnouncements.length === 0 ? (
         <div className="text-center py-6 sm:py-8 bg-gray-50 rounded-xl border border-gray-200">
           <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center">
@@ -91,9 +87,8 @@ const DepartmentAnnouncementSection = ({
           </p>
         </div>
       ) : (
-        /* Announcements Grid - RESPONSIVE */
+
         <div className="relative">
-          {/* Mobile: Vertical Scroll */}
           <div className="block lg:hidden">
             <div className="space-y-3 sm:space-y-4">
               {filteredAnnouncements.map((announcement, index) => (
@@ -114,7 +109,6 @@ const DepartmentAnnouncementSection = ({
             </div>
           </div>
 
-          {/* Desktop: Horizontal Scroll for multiple cards */}
           <div className="hidden lg:block">
             <div className="overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 
               scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
@@ -138,7 +132,6 @@ const DepartmentAnnouncementSection = ({
             </div>
           </div>
 
-          {/* Tablet: 2-column grid */}
           <div className="hidden sm:block lg:hidden">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredAnnouncements.map((announcement, index) => (
@@ -161,7 +154,6 @@ const DepartmentAnnouncementSection = ({
         </div>
       )}
 
-      {/* Simplified Pin Status */}
       {pinnedCount > 0 && (
         <div className="mt-3 sm:mt-4 flex items-center justify-between text-xs text-gray-500">
           <div className="flex items-center gap-2">
@@ -183,5 +175,4 @@ const DepartmentAnnouncementSection = ({
   );
 };
 
-// ✅ FIXED: Wrap with memo to prevent unnecessary re-renders
 export default memo(DepartmentAnnouncementSection);

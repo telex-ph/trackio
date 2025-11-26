@@ -32,24 +32,17 @@ const AnnouncementDetailModal = ({
   const [zoomLevel, setZoomLevel] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [currentPdfPage, setCurrentPdfPage] = useState(1);
-  
-  // ✅ Local state for real-time counts
   const [localViewCount, setLocalViewCount] = useState(0);
   const [localLikeCount, setLocalLikeCount] = useState(0);
   const [localIsLiked, setLocalIsLiked] = useState(false);
   const [isLikeDisabled, setIsLikeDisabled] = useState(false);
-
-  // ✅ FIXED: Use ref to track if view has been counted for this session
-  const hasViewedRef = useRef(false);
   const viewTrackedRef = useRef(false);
 
-  // ✅ FIXED: Initialize and sync with announcement data - PROPER LIKE CHECK
   useEffect(() => {
     if (announcement) {
       const views = Array.isArray(announcement.views) ? announcement.views.length : 0;
       const likes = Array.isArray(announcement.acknowledgements) ? announcement.acknowledgements.length : 0;
-      
-      // ✅ FIXED: Properly check if current user has liked this announcement
+    
       let liked = false;
       if (currentUser && announcement.acknowledgements && Array.isArray(announcement.acknowledgements)) {
         liked = announcement.acknowledgements.some(ack => ack.userId === currentUser._id);
@@ -58,78 +51,47 @@ const AnnouncementDetailModal = ({
       setLocalViewCount(views);
       setLocalLikeCount(likes);
       setLocalIsLiked(liked);
-      setIsLikeDisabled(liked); // ✅ Only disable if user has already liked
+      setIsLikeDisabled(liked);
       
-      console.log("🔍 Like status check:", {
-        userId: currentUser?._id,
+      console.log("🔍 Modal initialized:", {
         announcementId: announcement._id,
-        acknowledgements: announcement.acknowledgements,
+        initialViews: views,
+        initialLikes: likes,
         userHasLiked: liked
       });
-      
-      // ✅ Reset view tracking when announcement changes
-      hasViewedRef.current = false;
-      viewTrackedRef.current = false;
     }
   }, [announcement, currentUser]);
 
-  // ✅ FIXED: IMPROVED VIEW TRACKING - Track view when modal opens
+
   useEffect(() => {
     if (isOpen && announcement && currentUser && trackView) {
-      // ✅ Check if we've already tracked a view for this announcement in current session
+
       if (!viewTrackedRef.current) {
         console.log("📊 Tracking view for announcement:", announcement._id);
         
-        // ✅ Update view count immediately for better UX
         setLocalViewCount(prev => {
           const newCount = prev + 1;
           console.log("📈 View count updated:", newCount);
           return newCount;
         });
-        
-        // ✅ Mark as viewed to prevent double counting
+
         viewTrackedRef.current = true;
-        
-        // ✅ Call the actual trackView function
+
         trackView(announcement._id, currentUser._id);
-      } else {
-        console.log("📊 View already tracked for this session:", announcement._id);
+        
+        console.log("✅ View tracked successfully");
       }
     }
   }, [isOpen, announcement, currentUser, trackView]);
 
-  // ✅ FIXED: Reset view tracking when modal closes or announcement changes
   useEffect(() => {
     if (!isOpen) {
-      // Reset view tracking when modal closes so it can track again when reopened
+      console.log("🔄 Resetting view tracking for next open");
       viewTrackedRef.current = false;
     }
   }, [isOpen]);
 
-  // ✅ FIXED: Alternative view tracking - track when component mounts with announcement
-  useEffect(() => {
-    if (isOpen && announcement && currentUser && trackView && !viewTrackedRef.current) {
-      // Small delay to ensure modal is fully open
-      const timer = setTimeout(() => {
-        if (!viewTrackedRef.current) {
-          console.log("⏱️ Delayed view tracking for announcement:", announcement._id);
-          
-          setLocalViewCount(prev => {
-            const newCount = prev + 1;
-            console.log("📈 Delayed view count updated:", newCount);
-            return newCount;
-          });
-          
-          viewTrackedRef.current = true;
-          trackView(announcement._id, currentUser._id);
-        }
-      }, 500);
-
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, announcement, currentUser, trackView]);
-
-  // Prevent body scroll when modal is open
+  
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -179,7 +141,6 @@ const AnnouncementDetailModal = ({
     }
   };
 
-  // ✅ FIXED: Enhanced like click with immediate UI update - NO UNLIKE ALLOWED
   const handleLikeClick = async () => {
     if (!onLike || !currentUser || isLikeDisabled) {
       console.log("❌ Like button blocked:", {
@@ -193,7 +154,6 @@ const AnnouncementDetailModal = ({
     try {
       console.log("❤️ Starting like process for announcement:", announcement._id);
       
-      // ✅ IMMEDIATE UI UPDATE for better UX
       const newLikeStatus = true;
       const newLikeCount = localLikeCount + 1;
       
@@ -201,7 +161,6 @@ const AnnouncementDetailModal = ({
       setLocalLikeCount(newLikeCount);
       setIsLikeDisabled(true);
 
-      // ✅ Call the actual like function
       await onLike(announcement._id, currentUser._id);
       
       console.log("✅ Like action completed - Button disabled:", {
@@ -213,14 +172,12 @@ const AnnouncementDetailModal = ({
 
     } catch (error) {
       console.error("❌ Error in like action:", error);
-      // ✅ ROLLBACK UI if the API call fails
       setLocalIsLiked(false);
       setLocalLikeCount(localLikeCount);
       setIsLikeDisabled(false);
     }
   };
 
-  // Image viewer functions
   const openImageViewer = () => {
     if (hasImages) {
       setIsImageViewerOpen(true);
@@ -264,7 +221,6 @@ const AnnouncementDetailModal = ({
     setRotation(0);
   };
 
-  // PDF navigation functions
   const nextPdfPage = () => {
     setCurrentPdfPage(prev => prev + 1);
   };
@@ -273,15 +229,13 @@ const AnnouncementDetailModal = ({
     setCurrentPdfPage(prev => Math.max(prev - 1, 1));
   };
 
-  // For demo purposes - you'll need to replace this with actual PDF page count
   const totalPdfPages = 10;
 
   return (
     <>
-      {/* Main Modal - WITH PROPER BACKGROUND */}
+
       {isOpen && (
         <>
-          {/* Backdrop with opacity and blur */}
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={onClose} />
           
           {/* Modal Content */}
@@ -303,7 +257,6 @@ const AnnouncementDetailModal = ({
                 </div>
               </div>
               
-              {/* Pin/Unpin Button in Header */}
               {onTogglePin && (
                 <button
                   onClick={() => onTogglePin(announcement)}
@@ -329,7 +282,6 @@ const AnnouncementDetailModal = ({
               )}
             </div>
 
-            {/* Content - SINGLE SCROLLABLE AREA */}
             <div className="flex-1 overflow-y-auto">
               <div className="max-w-6xl mx-auto">
                 {/* Image Section - Full Width */}
@@ -342,7 +294,6 @@ const AnnouncementDetailModal = ({
                       onClick={openImageViewer}
                     />
                     
-                    {/* Small Download button for image */}
                     <button
                       onClick={() => handleFileDownload(announcement.attachment)}
                       className="absolute top-2 right-2 sm:top-4 sm:right-4 p-2 bg-black/70 text-white rounded-full hover:bg-black transition-all backdrop-blur-sm"
@@ -351,7 +302,6 @@ const AnnouncementDetailModal = ({
                       <Download className="w-4 h-4" />
                     </button>
 
-                    {/* Click to zoom indicator */}
                     <div className="absolute bottom-2 left-2 sm:bottom-4 sm:left-4 bg-black/70 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1 backdrop-blur-sm">
                       <ZoomIn className="w-3 h-3" />
                       <span>Click to view</span>
@@ -359,9 +309,7 @@ const AnnouncementDetailModal = ({
                   </div>
                 )}
 
-                {/* Content Section */}
                 <div className="p-4 sm:p-6 md:p-8 space-y-6 md:space-y-8">
-                  {/* Title and Author */}
                   <div className="space-y-4 sm:space-y-6">
                     <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
                       {announcement.title}
@@ -379,7 +327,6 @@ const AnnouncementDetailModal = ({
                         )}
                       </div>
                       
-                      {/* ✅ FIXED: Enhanced like button with proper disabled state */}
                       <button
                         onClick={handleLikeClick}
                         disabled={!currentUser || isLikeDisabled}
@@ -440,7 +387,6 @@ const AnnouncementDetailModal = ({
                     </div>
                   </div>
 
-                  {/* Description/Agenda */}
                   <div className="space-y-3 sm:space-y-4">
                     <h3 className="text-xl sm:text-2xl font-semibold text-gray-800">Description</h3>
                     <div className="bg-gray-50 rounded-xl p-4 sm:p-6 md:p-8">
@@ -450,7 +396,6 @@ const AnnouncementDetailModal = ({
                     </div>
                   </div>
 
-                  {/* Non-image Attachment */}
                   {announcement.attachment && !hasImages && (
                     <div className="space-y-3 sm:space-y-4">
                       <h3 className="text-xl sm:text-2xl font-semibold text-gray-800">Attachment</h3>
@@ -480,8 +425,8 @@ const AnnouncementDetailModal = ({
                             )}
                           </div>
                         </div>
+
                         <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 sm:gap-3">
-                          {/* Preview Button for PDF */}
                           {isPdf && (
                             <button
                               onClick={openPdfViewer}
@@ -524,15 +469,12 @@ const AnnouncementDetailModal = ({
         </>
       )}
 
-      {/* Full Screen Image Viewer - STAYS WITHIN MODAL BOUNDS */}
+
       {isImageViewerOpen && hasImages && (
         <>
-          {/* Backdrop */}
+
           <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[70]" onClick={closeImageViewer} />
-          
-          {/* Image Viewer Content - STAYS WITHIN MODAL */}
           <div className="fixed inset-2 sm:inset-4 bg-black rounded-xl sm:rounded-2xl shadow-2xl z-[80] flex flex-col overflow-hidden">
-            {/* Header */}
             <div className="flex flex-col xs:flex-row xs:items-center justify-between p-3 sm:p-4 bg-black/80 border-b border-gray-700 shrink-0 gap-2 xs:gap-0 backdrop-blur-sm">
               <div className="flex items-center gap-2 sm:gap-4">
                 <button
@@ -550,7 +492,6 @@ const AnnouncementDetailModal = ({
               </div>
               
               <div className="flex items-center gap-2">
-                {/* Small Download Button */}
                 <button
                   onClick={() => handleFileDownload(announcement.attachment)}
                   className="p-2 hover:bg-white/10 rounded-lg transition-all text-white"
@@ -560,8 +501,6 @@ const AnnouncementDetailModal = ({
                 </button>
               </div>
             </div>
-
-            {/* Image Content - FULL VIEW WITHIN MODAL */}
             <div className="flex-1 flex items-center justify-center bg-black p-2 sm:p-4 min-h-0">
               <div className="relative w-full h-full flex items-center justify-center">
                 <img
@@ -575,11 +514,9 @@ const AnnouncementDetailModal = ({
               </div>
             </div>
 
-            {/* Image Controls */}
             <div className="p-3 sm:p-4 bg-black/80 border-t border-gray-700 shrink-0 backdrop-blur-sm">
               <div className="flex items-center justify-center">
                 <div className="flex items-center gap-1 sm:gap-2 bg-white/10 rounded-full px-3 py-2 sm:px-4 sm:py-2 overflow-x-auto">
-                  {/* Zoom Out */}
                   <button
                     onClick={zoomOut}
                     disabled={zoomLevel <= 0.5}
@@ -589,7 +526,6 @@ const AnnouncementDetailModal = ({
                     <ZoomOut className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
 
-                  {/* Reset */}
                   <button
                     onClick={resetImage}
                     className="p-1 sm:p-2 hover:bg-white/20 rounded-full transition-all flex-shrink-0 text-white"
@@ -598,12 +534,12 @@ const AnnouncementDetailModal = ({
                     <RotateCw className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
 
-                  {/* Zoom Level Display */}
+             
                   <span className="mx-1 sm:mx-2 text-sm font-medium min-w-[50px] sm:min-w-[60px] text-center flex-shrink-0 text-white">
                     {Math.round(zoomLevel * 100)}%
                   </span>
 
-                  {/* Zoom In */}
+             
                   <button
                     onClick={zoomIn}
                     disabled={zoomLevel >= 3}
@@ -613,7 +549,7 @@ const AnnouncementDetailModal = ({
                     <ZoomIn className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
 
-                  {/* Rotate */}
+       
                   <button
                     onClick={rotateImage}
                     className="p-1 sm:p-2 hover:bg-white/20 rounded-full transition-all flex-shrink-0 text-white"
@@ -630,12 +566,9 @@ const AnnouncementDetailModal = ({
 
       {isPdfViewerOpen && isPdf && (
         <>
-          {/* Backdrop */}
+
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70]" onClick={closePdfViewer} />
-          
-          {/* PDF Viewer Content */}
           <div className="fixed inset-2 sm:inset-4 bg-white rounded-xl sm:rounded-2xl shadow-2xl z-[80] flex flex-col overflow-hidden">
-            {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between p-3 sm:p-4 bg-white border-b border-gray-200 shrink-0 gap-3 lg:gap-0">
               <div className="flex items-center gap-2 sm:gap-4">
                 <button
@@ -654,7 +587,6 @@ const AnnouncementDetailModal = ({
                 </div>
               </div>
               <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 sm:gap-4">
-                {/* Page Navigation */}
                 <div className="flex items-center gap-1 sm:gap-2 bg-gray-100 rounded-lg px-2 py-1 sm:px-3 sm:py-2">
                   <button
                     onClick={prevPdfPage}
@@ -679,7 +611,6 @@ const AnnouncementDetailModal = ({
                   </button>
                 </div>
 
-                {/* Small Download Button */}
                 <button
                   onClick={() => handleFileDownload(announcement.attachment)}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-all flex-shrink-0"
@@ -690,7 +621,6 @@ const AnnouncementDetailModal = ({
               </div>
             </div>
 
-            {/* PDF Viewer */}
             <div className="flex-1 bg-gray-100 min-h-0">
               <iframe
                 src={`${announcement.attachment.data}#page=${currentPdfPage}`}
@@ -700,14 +630,12 @@ const AnnouncementDetailModal = ({
               />
             </div>
 
-            {/* Bottom Navigation */}
             <div className="p-3 sm:p-4 bg-white border-t border-gray-200 shrink-0">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
                 <div className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">
                   Use the navigation buttons to browse pages
                 </div>
                 
-                {/* Quick Page Jump */}
                 <div className="flex items-center justify-center gap-2">
                   <span className="text-xs sm:text-sm text-gray-600 hidden xs:inline">Go to page:</span>
                   <span className="text-xs sm:text-sm text-gray-600 xs:hidden">Page:</span>
