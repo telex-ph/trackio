@@ -25,7 +25,6 @@ const HR_OffenseDetails = ({
   rejectOffense,
   handleHearingDate,
   handleAfterHearing,
-  base64ToBlobUrl,
   selectedFile,
   setSelectedFile,
   selectedMOMFile,
@@ -235,7 +234,7 @@ const HR_OffenseDetails = ({
                 </label>
                 <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
                   {formData.evidence.slice(0, 1).map((ev, idx) => {
-                    const viewUrl = base64ToBlobUrl(ev.data, ev.type);
+                    const viewUrl = ev.url;
                     return (
                       <div key={idx} className="flex flex-col gap-3">
                         <div className="flex items-center gap-2 min-w-0">
@@ -255,7 +254,7 @@ const HR_OffenseDetails = ({
                             View
                           </a>
                           <a
-                            href={ev.data}
+                            href={ev.url}
                             download={ev.fileName}
                             className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
                           >
@@ -278,7 +277,7 @@ const HR_OffenseDetails = ({
                 </label>
                 <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
                   {formData.fileNTE.slice(0, 1).map((nte, idx) => {
-                    const viewUrl = base64ToBlobUrl(nte.data, nte.type);
+                    const viewUrl = nte.url;
                     return (
                       <div key={idx} className="flex flex-col gap-3">
                         <div className="flex items-center gap-2 min-w-0">
@@ -298,7 +297,7 @@ const HR_OffenseDetails = ({
                             View
                           </a>
                           <a
-                            href={nte.data}
+                            href={nte.url}
                             download={nte.fileName}
                             className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
                           >
@@ -340,7 +339,7 @@ const HR_OffenseDetails = ({
                   </label>
                   <div className="border-2 border-dashed rounded-2xl p-4 mb-4 border-blue-400 bg-blue-50">
                     {formData.fileMOM.slice(0, 1).map((mom, idx) => {
-                      const viewUrl = base64ToBlobUrl(mom.data, mom.type);
+                      const viewUrl = mom.url;
                       return (
                         <div key={idx} className="flex flex-col gap-3">
                           <div className="flex items-center gap-2 min-w-0">
@@ -360,7 +359,7 @@ const HR_OffenseDetails = ({
                               View
                             </a>
                             <a
-                              href={mom.data}
+                              href={mom.url}
                               download={mom.fileName}
                               className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
                             >
@@ -377,7 +376,7 @@ const HR_OffenseDetails = ({
                   </label>
                   <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
                     {formData.fileNDA.slice(0, 1).map((nda, idx) => {
-                      const viewUrl = base64ToBlobUrl(nda.data, nda.type);
+                      const viewUrl = nda.url;
                       return (
                         <div key={idx} className="flex flex-col gap-3">
                           <div className="flex items-center gap-2 min-w-0">
@@ -397,7 +396,7 @@ const HR_OffenseDetails = ({
                               View
                             </a>
                             <a
-                              href={nda.data}
+                              href={nda.url}
                               download={nda.fileName}
                               className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
                             >
@@ -720,11 +719,12 @@ const HR_OffenseDetails = ({
                 )}
               </div>
             </div>
-          )}
+          )}Pending Review
+
           {formData.status === "Scheduled for hearing" && (
             <div>
               <button
-                onClick={() => setShowAfterHearingModal(true)}
+                // onClick={() => setShowAfterHearingModal(true)}
                 className="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-indigo-700 hover:to-indigo-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
               >
                 Escalate
