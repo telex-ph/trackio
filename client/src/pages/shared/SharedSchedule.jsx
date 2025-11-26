@@ -13,8 +13,6 @@ const SharedSchedule = ({ role }) => {
   const { userByRoleScope, loading } = useUser();
   const { schedule } = useSchedule({ id: user._id });
 
-  console.log(schedule);
-
   const handleViewClick = (id) => {
     navigate(`${id}`);
   };
