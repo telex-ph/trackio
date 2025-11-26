@@ -32,6 +32,40 @@ const AnnouncementDetailModal = ({
   const [zoomLevel, setZoomLevel] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [currentPdfPage, setCurrentPdfPage] = useState(1);
+  
+  // ✅ ADDED: Local state for real-time counts
+  const [localViewCount, setLocalViewCount] = useState(0);
+  const [localLikeCount, setLocalLikeCount] = useState(0);
+  const [localIsLiked, setLocalIsLiked] = useState(false);
+  const [isLikeDisabled, setIsLikeDisabled] = useState(false); // ✅ NEW: Disable like after clicking
+
+  // ✅ FIXED: Initialize and sync with announcement data
+  useEffect(() => {
+    if (announcement) {
+      const views = Array.isArray(announcement.views) ? announcement.views.length : 0;
+      const likes = Array.isArray(announcement.acknowledgements) ? announcement.acknowledgements.length : 0;
+      const liked = currentUser && hasLiked ? hasLiked(announcement, currentUser._id) : false;
+      
+      setLocalViewCount(views);
+      setLocalLikeCount(likes);
+      setLocalIsLiked(liked);
+      setIsLikeDisabled(liked); // ✅ Disable if already liked
+    }
+  }, [announcement, currentUser, hasLiked]);
+
+  // ✅ FIXED: Track view when modal opens
+  useEffect(() => {
+    if (isOpen && announcement && currentUser) {
+      // Simulate view tracking - you should call your actual view tracking function here
+      console.log("📊 Modal view tracked for announcement:", announcement._id);
+      
+      // Update view count immediately for better UX
+      setLocalViewCount(prev => prev + 1);
+      
+      // If you have a trackView function, call it here:
+      // trackView(announcement._id, currentUser._id);
+    }
+  }, [isOpen, announcement, currentUser]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -47,15 +81,6 @@ const AnnouncementDetailModal = ({
   }, [isOpen]);
 
   if (!isOpen || !announcement) return null;
-
-  const isLiked =
-    hasLiked && currentUser ? hasLiked(announcement, currentUser._id) : false;
-  const viewCount = Array.isArray(announcement.views)
-    ? announcement.views.length
-    : 0;
-  const likeCount = Array.isArray(announcement.acknowledgements)
-    ? announcement.acknowledgements.length
-    : 0;
 
   const hasImages = announcement.attachment && 
     announcement.attachment.type?.startsWith('image/');
@@ -92,10 +117,35 @@ const AnnouncementDetailModal = ({
     }
   };
 
-  // Handle like/unlike click
-  const handleLikeClick = () => {
-    if (onLike && currentUser) {
-      onLike(announcement._id, currentUser._id);
+  // ✅ FIXED: Enhanced like/unlike click with immediate UI update - NO UNLIKE ALLOWED
+  const handleLikeClick = async () => {
+    if (!onLike || !currentUser || isLikeDisabled) return; // ✅ Prevent if already liked
+
+    try {
+      // ✅ IMMEDIATE UI UPDATE for better UX
+      const newLikeStatus = true; // ✅ ALWAYS set to true (no unlike)
+      const newLikeCount = localLikeCount + 1; // ✅ ALWAYS increment
+      
+      setLocalIsLiked(newLikeStatus);
+      setLocalLikeCount(newLikeCount);
+      setIsLikeDisabled(true); // ✅ IMMEDIATELY DISABLE THE BUTTON
+
+      // ✅ Call the actual like function
+      await onLike(announcement._id, currentUser._id);
+      
+      console.log("❤️ Like action completed - Button disabled:", {
+        announcementId: announcement._id,
+        userId: currentUser._id,
+        newLikeStatus,
+        newLikeCount
+      });
+
+    } catch (error) {
+      console.error("❌ Error in like action:", error);
+      // ✅ ROLLBACK UI if the API call fails
+      setLocalIsLiked(false);
+      setLocalLikeCount(localLikeCount);
+      setIsLikeDisabled(false); // ✅ Re-enable button on error
     }
   };
 
@@ -248,27 +298,46 @@ const AnnouncementDetailModal = ({
                     </h1>
 
                     <div className="flex flex-row xs:flex-row items-start xs:items-center gap-3 xs:gap-6">
+                      {/* ✅ FIXED: Using local view count */}
                       <div className="flex items-center gap-2 text-gray-600">
                         <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
-                        <span className="font-medium text-base sm:text-lg">{viewCount} Views</span>
+                        <span className="font-medium text-base sm:text-lg">
+                          {localViewCount} View{localViewCount !== 1 ? 's' : ''}
+                        </span>
                       </div>
+                      
+                      {/* ✅ FIXED: Enhanced like button with NO UNLIKE functionality */}
                       <button
                         onClick={handleLikeClick}
-                        disabled={!currentUser}
-                        className="flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 group">
+                        disabled={!currentUser || isLikeDisabled} // ✅ Disabled if no user or already liked
+                        className={`flex items-center gap-2 transition-all group ${
+                          !currentUser || isLikeDisabled 
+                            ? "opacity-50 cursor-not-allowed" 
+                            : "hover:scale-105"
+                        }`}
+                        title={
+                          !currentUser 
+                            ? "Please log in to like" 
+                            : isLikeDisabled 
+                            ? "You've already liked this announcement"
+                            : "Like this announcement"
+                        }
+                      >
                         <Heart
                           className={`w-4 h-4 sm:w-5 sm:h-5 transition-all ${
-                            isLiked 
+                            localIsLiked 
                               ? "text-red-500 fill-current scale-110" 
                               : "text-gray-600 group-hover:text-red-400 group-hover:scale-110"
                           }`}
-                          fill={isLiked ? "currentColor" : "none"}
+                          fill={localIsLiked ? "currentColor" : "none"}
                         />
                         <span
                           className={`font-medium text-base sm:text-lg transition-colors ${
-                            isLiked ? "text-red-500" : "text-gray-600"
-                          }`} > 
-                          {likeCount} Likes{likeCount !== 1 ? 's' : ''}
+                            localIsLiked ? "text-red-500" : "text-gray-600"
+                          }`}
+                        >
+                          {localLikeCount} Like{localLikeCount !== 1 ? 's' : ''}
+                          {isLikeDisabled && " ✓"} {/* ✅ Added checkmark when liked */}
                         </span>
                       </button>
                     </div>

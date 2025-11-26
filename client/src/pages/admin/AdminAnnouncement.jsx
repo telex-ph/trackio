@@ -83,11 +83,26 @@ const AdminAnnouncement = () => {
     return "Admin User";
   }, [user]);
 
+  // ✅ FIXED: REAL-TIME CURRENT DATE/TIME WITH LIVE UPDATES EVERY SECOND
+  const [currentDateTime, setCurrentDateTime] = useState(() => DateTime.local());
+
+  // Update current time every second for real-time display
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentDateTime(DateTime.local());
+    }, 1000); // Update every second for real-time feel
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // ✅ FIXED: REAL-TIME TIME DISPLAY FUNCTION
   const getCurrentDateTime = useCallback(() => {
-    const currentTime = DateTime.local();
+    const now = DateTime.local();
     return {
-      dateInput: currentTime.toISODate(),
-      timeInput: currentTime.toFormat('HH:mm')
+      dateInput: now.toISODate(),
+      timeInput: now.toFormat('HH:mm'),
+      displayTime: now.toFormat('HH:mm:ss'),
+      displayDate: now.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)
     };
   }, []);
 
@@ -106,6 +121,18 @@ const AdminAnnouncement = () => {
     };
   });
 
+  // ✅ FIXED: AUTO-UPDATE FORM TIME WHEN CURRENT TIME CHANGES (FOR NEW ANNOUNCEMENTS ONLY)
+  useEffect(() => {
+    if (!isEditMode) {
+      const updatedDateTime = getCurrentDateTime();
+      setFormData(prev => ({
+        ...prev,
+        dateInput: updatedDateTime.dateInput,
+        timeInput: updatedDateTime.timeInput
+      }));
+    }
+  }, [currentDateTime, isEditMode, getCurrentDateTime]);
+
   // ✅ FIXED: BETTER ERROR HANDLING
   const fetchAnnouncements = useCallback(async () => {
     setIsLoading(true);
@@ -118,7 +145,16 @@ const AdminAnnouncement = () => {
       if (response.data && Array.isArray(response.data)) {
         console.log("✅ Successfully loaded", response.data.length, "announcements");
         
-        const sortedAll = response.data.sort((a, b) => {
+        const processedAnnouncements = response.data.map(announcement => ({
+          ...announcement,
+          // ✅ ADDED: Store original creation time for inactive announcements
+          originalDateTime: announcement.dateTime,
+          // ✅ ADDED: Store cancellation time for time freezing
+          frozenTimeAgo: announcement.status === "Inactive" ? 
+            formatTimeAgo(announcement.cancelledAt || announcement.dateTime) : null
+        }));
+
+        const sortedAll = processedAnnouncements.sort((a, b) => {
           const priorityA = a.priority === "High" ? 3 : a.priority === "Medium" ? 2 : 1;
           const priorityB = b.priority === "High" ? 3 : b.priority === "Medium" ? 2 : 1;
 
@@ -168,7 +204,16 @@ const AdminAnnouncement = () => {
       console.log("📥 Received initial admin data via socket:", socketAnnouncements?.length);
       
       if (Array.isArray(socketAnnouncements) && socketAnnouncements.length > 0) {
-        const sortedAll = socketAnnouncements.sort((a, b) => {
+        const processedAnnouncements = socketAnnouncements.map(announcement => ({
+          ...announcement,
+          // ✅ ADDED: Store original creation time for inactive announcements
+          originalDateTime: announcement.dateTime,
+          // ✅ ADDED: Store cancellation time for time freezing
+          frozenTimeAgo: announcement.status === "Inactive" ? 
+            formatTimeAgo(announcement.cancelledAt || announcement.dateTime) : null
+        }));
+
+        const sortedAll = processedAnnouncements.sort((a, b) => {
           const priorityA = a.priority === "High" ? 3 : a.priority === "Medium" ? 2 : 1;
           const priorityB = b.priority === "High" ? 3 : b.priority === "Medium" ? 2 : 1;
 
@@ -209,11 +254,18 @@ const AdminAnnouncement = () => {
     const handleNewAnnouncement = (newAnnouncement) => {
       console.log("🆕 New announcement received via socket");
       
+      const processedAnnouncement = {
+        ...newAnnouncement,
+        // ✅ ADDED: Store original creation time
+        originalDateTime: newAnnouncement.dateTime,
+        frozenTimeAgo: null
+      };
+      
       setAnnouncements(prev => {
-        const exists = prev.find(a => a._id === newAnnouncement._id);
+        const exists = prev.find(a => a._id === processedAnnouncement._id);
         if (exists) return prev;
         
-        return [newAnnouncement, ...prev].sort((a, b) => {
+        return [processedAnnouncement, ...prev].sort((a, b) => {
           const priorityA = a.priority === "High" ? 3 : a.priority === "Medium" ? 2 : 1;
           const priorityB = b.priority === "High" ? 3 : b.priority === "Medium" ? 2 : 1;
 
@@ -231,12 +283,20 @@ const AdminAnnouncement = () => {
     const handleAnnouncementUpdated = (updatedAnnouncement) => {
       console.log("📝 Announcement updated via socket");
       
+      const processedAnnouncement = {
+        ...updatedAnnouncement,
+        // ✅ PRESERVE ORIGINAL TIME DATA
+        originalDateTime: updatedAnnouncement.originalDateTime || updatedAnnouncement.dateTime,
+        frozenTimeAgo: updatedAnnouncement.status === "Inactive" ? 
+          formatTimeAgo(updatedAnnouncement.cancelledAt || updatedAnnouncement.dateTime) : null
+      };
+      
       setAnnouncements(prev => prev.map(ann => 
-        ann._id === updatedAnnouncement._id ? updatedAnnouncement : ann
+        ann._id === processedAnnouncement._id ? processedAnnouncement : ann
       ));
     };
 
-    // ✅ NEW: LISTEN FOR CANCELLATION CONFIRMATION
+    // ✅ FIXED: CANCELLATION WITH PROPER TIME FREEZING
     const handleAnnouncementCancelled = (data) => {
       console.log("🔴 Cancellation confirmed via socket:", data.announcementId);
       
@@ -247,7 +307,9 @@ const AdminAnnouncement = () => {
                 ...ann, 
                 status: "Inactive",
                 cancelledBy: data.cancelledBy,
-                cancelledAt: data.cancelledAt,
+                cancelledAt: data.cancelledAt || new Date().toISOString(),
+                // ✅ FREEZE THE TIME - Use cancellation time for "time ago"
+                frozenTimeAgo: formatTimeAgo(data.cancelledAt || new Date().toISOString()),
                 views: [],
                 acknowledgements: []
               }
@@ -256,19 +318,28 @@ const AdminAnnouncement = () => {
       );
     };
 
-    // ✅ NEW: LISTEN FOR REPOST CONFIRMATION
+    // ✅ FIXED: REPOST WITH FRESH TIME DATA
     const handleAnnouncementReposted = (repostedAnnouncement) => {
       console.log("🟢 Repost confirmed via socket:", repostedAnnouncement._id);
       
+      const currentTime = new Date().toISOString();
+      const processedAnnouncement = {
+        ...repostedAnnouncement,
+        status: "Active",
+        // ✅ RESET TIME TO CURRENT TIME
+        dateTime: currentTime,
+        originalDateTime: currentTime,
+        frozenTimeAgo: null,
+        cancelledAt: null,
+        cancelledBy: null,
+        views: [],
+        acknowledgements: []
+      };
+      
       setAnnouncements(prev => 
         prev.map(ann => 
-          ann._id === repostedAnnouncement._id 
-            ? { 
-                ...repostedAnnouncement,
-                status: "Active",
-                views: [],
-                acknowledgements: []
-              }
+          ann._id === processedAnnouncement._id 
+            ? processedAnnouncement
             : ann
         )
       );
@@ -528,7 +599,10 @@ const AdminAnnouncement = () => {
             // ✅ ENSURE ALL REQUIRED FIELDS ARE INCLUDED
             views: response.data.views || [],
             acknowledgements: response.data.acknowledgements || [],
-            isPinned: response.data.isPinned || false
+            isPinned: response.data.isPinned || false,
+            // ✅ PRESERVE ORIGINAL TIME DATA
+            originalDateTime: response.data.originalDateTime || response.data.dateTime,
+            frozenTimeAgo: null
           };
           
           if (socket) {
@@ -548,7 +622,13 @@ const AdminAnnouncement = () => {
         if (response.status === 201) {
           showNotification("Announcement posted successfully!", "success");
           if (socket && response.data) {
-            socket.emit("newAnnouncement", response.data);
+            const newAnnouncement = {
+              ...response.data,
+              // ✅ ADD ORIGINAL TIME DATA
+              originalDateTime: response.data.dateTime,
+              frozenTimeAgo: null
+            };
+            socket.emit("newAnnouncement", newAnnouncement);
           }
         } else {
           throw new Error(`Creation failed with status: ${response.status}`);
@@ -599,6 +679,7 @@ const AdminAnnouncement = () => {
     setIsConfirmationModalOpen(true);
   };
 
+  // ✅ FIXED: CANCELLATION WITH PROPER TIME FREEZING
   const handleConfirmCancel = async () => {
     try {
       const announcementToCancel = announcements.find(a => a._id === itemToCancel);
@@ -609,12 +690,15 @@ const AdminAnnouncement = () => {
 
       console.log("🗑️ Cancelling announcement:", itemToCancel);
 
+      // ✅ FIXED: USE CURRENT REAL-TIME FOR CANCELLATION
+      const currentTime = new Date().toISOString();
+      
       // ✅ RESET LIKES AND VIEWS WHEN CANCELLING
       const payload = {
         status: "Inactive",
-        cancelledAt: new Date().toISOString(),
+        cancelledAt: currentTime, // ✅ Use current real-time
         cancelledBy: getUserFullName(),
-        updatedAt: new Date().toISOString(),
+        updatedAt: currentTime,
         // ✅ RESET LIKES AND VIEWS
         views: [],
         acknowledgements: []
@@ -632,6 +716,8 @@ const AdminAnnouncement = () => {
               ? { 
                   ...ann, 
                   ...payload,
+                  // ✅ FREEZE THE TIME - Use cancellation time for "time ago"
+                  frozenTimeAgo: formatTimeAgo(currentTime),
                   // ✅ ENSURE LIKES/VIEWS ARE RESET IN FRONTEND
                   views: [],
                   acknowledgements: []
@@ -645,7 +731,7 @@ const AdminAnnouncement = () => {
           socket.emit("manualAnnouncementCancelled", {
             announcementId: itemToCancel,
             cancelledBy: getUserFullName(),
-            cancelledAt: payload.cancelledAt
+            cancelledAt: currentTime // ✅ Use current real-time
           });
           
           console.log("📢 Emitted manual cancellation event");
@@ -655,9 +741,9 @@ const AdminAnnouncement = () => {
         const putPayload = {
           ...announcementToCancel,
           status: "Inactive",
-          cancelledAt: new Date().toISOString(),
+          cancelledAt: currentTime, // ✅ Use current real-time
           cancelledBy: getUserFullName(),
-          updatedAt: new Date().toISOString(),
+          updatedAt: currentTime,
           // ✅ RESET LIKES AND VIEWS
           views: [],
           acknowledgements: []
@@ -674,6 +760,8 @@ const AdminAnnouncement = () => {
               ? { 
                   ...ann, 
                   ...putPayload,
+                  // ✅ FREEZE THE TIME - Use cancellation time for "time ago"
+                  frozenTimeAgo: formatTimeAgo(currentTime),
                   // ✅ ENSURE LIKES/VIEWS ARE RESET IN FRONTEND
                   views: [],
                   acknowledgements: []
@@ -687,7 +775,7 @@ const AdminAnnouncement = () => {
           socket.emit("manualAnnouncementCancelled", {
             announcementId: itemToCancel,
             cancelledBy: getUserFullName(),
-            cancelledAt: putPayload.cancelledAt
+            cancelledAt: currentTime // ✅ Use current real-time
           });
         }
       }
@@ -719,7 +807,7 @@ const AdminAnnouncement = () => {
     setIsRepostModalOpen(true);
   };
 
-  // ✅ COMPLETELY FIXED: REPOSTING WITH NO DUPLICATES
+  // ✅ FIXED: REPOSTING WITH CURRENT REAL-TIME AND TIME RESET
   const handleConfirmRepost = async () => {
     try {
       const announcementToRepost = announcements.find(a => a._id === itemToRepost);
@@ -730,9 +818,13 @@ const AdminAnnouncement = () => {
 
       console.log("🔄 Reposting announcement:", itemToRepost);
 
+      // ✅ FIXED: USE CURRENT REAL-TIME FOR REPOST
+      const currentTime = new Date().toISOString();
+
       const payload = {
         status: "Active",
-        updatedAt: new Date().toISOString(),
+        dateTime: currentTime, // ✅ RESET TO CURRENT TIME
+        updatedAt: currentTime,
         cancelledAt: null,
         cancelledBy: null,
         // ✅ KEEP LIKES/VIEWS EMPTY WHEN REPOSTING (FRESH START)
@@ -752,6 +844,9 @@ const AdminAnnouncement = () => {
               ? { 
                   ...ann, 
                   ...payload,
+                  // ✅ RESET TIME DATA - Fresh start with current time
+                  originalDateTime: currentTime,
+                  frozenTimeAgo: null,
                   // ✅ ENSURE LIKES/VIEWS ARE EMPTY IN FRONTEND
                   views: [],
                   acknowledgements: []
@@ -768,7 +863,8 @@ const AdminAnnouncement = () => {
         const putPayload = {
           ...announcementToRepost,
           status: "Active",
-          updatedAt: new Date().toISOString(),
+          dateTime: currentTime, // ✅ RESET TO CURRENT TIME
+          updatedAt: currentTime,
           cancelledAt: null,
           cancelledBy: null,
           // ✅ KEEP LIKES/VIEWS EMPTY WHEN REPOSTING
@@ -787,6 +883,9 @@ const AdminAnnouncement = () => {
               ? { 
                   ...ann, 
                   ...putPayload,
+                  // ✅ RESET TIME DATA - Fresh start with current time
+                  originalDateTime: currentTime,
+                  frozenTimeAgo: null,
                   // ✅ ENSURE LIKES/VIEWS ARE EMPTY IN FRONTEND
                   views: [],
                   acknowledgements: []
@@ -799,7 +898,7 @@ const AdminAnnouncement = () => {
         console.log("📢 No socket emission - letting database change stream handle real-time update");
       }
 
-      showNotification("Announcement reposted successfully! Ready for new likes and views.", "success");
+      showNotification("Announcement reposted successfully! Ready for new likes and views with fresh time.", "success");
       
       // ✅ Switch to active tab to show the reposted announcement
       setActiveTab('active');
@@ -890,12 +989,14 @@ const AdminAnnouncement = () => {
     return time.toLocaleString(DateTime.TIME_SIMPLE);
   };
 
+  // ✅ FIXED: REAL-TIME TIME AGO FUNCTION WITH FREEZING FOR INACTIVE ANNOUNCEMENTS
   const formatTimeAgo = (isoDateStr) => {
     if (!isoDateStr) return "";
-    const combinedDateTime = DateTime.fromISO(isoDateStr);
-    if (!combinedDateTime.isValid) return "";
+    const announcementTime = DateTime.fromISO(isoDateStr);
+    if (!announcementTime.isValid) return "";
     
-    const diff = DateTime.local().diff(combinedDateTime, ["years", "months", "days", "hours", "minutes", "seconds"]);
+    const now = DateTime.local();
+    const diff = now.diff(announcementTime, ["years", "months", "days", "hours", "minutes", "seconds"]);
 
     if (diff.years > 0) return `${Math.floor(diff.years)} year${Math.floor(diff.years) > 1 ? "s" : ""} ago`;
     if (diff.months > 0) return `${Math.floor(diff.months)} month${Math.floor(diff.months) > 1 ? "s" : ""} ago`;
@@ -905,6 +1006,17 @@ const AdminAnnouncement = () => {
     
     const seconds = Math.floor(diff.seconds);
     return seconds <= 1 ? "just now" : `${seconds} seconds ago`;
+  };
+
+  // ✅ ADDED: SMART TIME DISPLAY THAT FREEZES FOR INACTIVE ANNOUNCEMENTS
+  const getSmartTimeAgo = (announcement) => {
+    if (announcement.status === "Inactive") {
+      // ✅ FROZEN TIME: Show time since cancellation (doesn't update)
+      return announcement.frozenTimeAgo || formatTimeAgo(announcement.cancelledAt || announcement.dateTime);
+    } else {
+      // ✅ LIVE TIME: Real-time updates for active announcements
+      return formatTimeAgo(announcement.dateTime);
+    }
   };
 
   return (
@@ -921,7 +1033,7 @@ const AdminAnnouncement = () => {
         isOpen={isConfirmationModalOpen}
         onClose={() => setIsConfirmationModalOpen(false)}
         onConfirm={handleConfirmCancel}
-        message="Are you sure you want to cancel this announcement? This will reset all likes and views, and remove it from agent dashboards."
+        message="Are you sure you want to cancel this announcement? This will reset all likes and views, and freeze the time display."
         confirmText="Cancel Announcement"
       />
 
@@ -929,7 +1041,7 @@ const AdminAnnouncement = () => {
         isOpen={isRepostModalOpen}
         onClose={() => setIsRepostModalOpen(false)}
         onConfirm={handleConfirmRepost}
-        message="Are you sure you want to repost this announcement? It will become active again with fresh likes and views count."
+        message="Are you sure you want to repost this announcement? It will become active again with fresh likes, views, and current time."
         confirmText="Repost Announcement"
       />
 
@@ -1049,6 +1161,11 @@ const AdminAnnouncement = () => {
                     }
                     className="w-full pl-10 pr-3 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm"
                   />
+                </div>
+                {/* ✅ REAL-TIME TIME INDICATOR - FIXED */}
+                <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                  <span>Current time: {getCurrentDateTime().displayTime}</span>
                 </div>
               </div>
             </div>
@@ -1258,7 +1375,9 @@ const AdminAnnouncement = () => {
                           🗑️ INACTIVE
                         </span>
                         <span className="text-xs text-red-600">
-                          Cancelled by {a.cancelledBy} • {formatTimeAgo(a.cancelledAt)}
+                          Cancelled by {a.cancelledBy} • {getSmartTimeAgo(a)}
+                          {/* ✅ ADDED: FROZEN TIME INDICATOR */}
+                          <span className="ml-1 text-gray-500">(Time frozen)</span>
                         </span>
                       </div>
                     </div>
@@ -1291,7 +1410,11 @@ const AdminAnnouncement = () => {
                             {a.status}
                           </span>
                           <span className="text-xs text-gray-500">
-                            {formatTimeAgo(a.dateTime)}
+                            {getSmartTimeAgo(a)}
+                            {/* ✅ ADDED: LIVE INDICATOR FOR ACTIVE ANNOUNCEMENTS */}
+                            {a.status === 'Active' && (
+                              <span className="ml-1 text-green-500">• Live</span>
+                            )}
                           </span>
                         </div>
                       </div>

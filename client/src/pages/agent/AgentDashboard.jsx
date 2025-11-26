@@ -31,6 +31,9 @@ import {
   getPersistentUserDepartment,
 } from "../../utils/announcementUtils";
 
+// ✅ ADDED: Import DateTime for real-time time handling
+import { DateTime } from "luxon";
+
 const getUniqueViewers = (announcement) => {
   if (!announcement.views || !Array.isArray(announcement.views)) {
     return [];
@@ -99,7 +102,29 @@ const processAnnouncementData = (announcement) => {
     totalViews: uniqueViewers.length,
     totalAcknowledgements: uniqueAcknowledgements.length,
     formattedDateTime: new Date(announcement.dateTime).toLocaleDateString(),
+    // ✅ ADDED: Real-time formatted date and time
+    realTimeFormatted: DateTime.fromISO(announcement.dateTime).toLocaleString(DateTime.DATETIME_MED),
+    timeAgo: "", // Will be populated by real-time function
   };
+};
+
+// ✅ ADDED: REAL-TIME TIME AGO FUNCTION
+const getRealTimeAgo = (isoDateStr) => {
+  if (!isoDateStr) return "";
+  const announcementTime = DateTime.fromISO(isoDateStr);
+  if (!announcementTime.isValid) return "";
+  
+  const now = DateTime.local();
+  const diff = now.diff(announcementTime, ["years", "months", "days", "hours", "minutes", "seconds"]);
+
+  if (diff.years > 0) return `${Math.floor(diff.years)} year${Math.floor(diff.years) > 1 ? "s" : ""} ago`;
+  if (diff.months > 0) return `${Math.floor(diff.months)} month${Math.floor(diff.months) > 1 ? "s" : ""} ago`;
+  if (diff.days > 0) return `${Math.floor(diff.days)} day${Math.floor(diff.days) > 1 ? "s" : ""} ago`;
+  if (diff.hours > 0) return `${Math.floor(diff.hours)} hour${Math.floor(diff.hours) > 1 ? "s" : ""} ago`;
+  if (diff.minutes > 0) return `${Math.floor(diff.minutes)} minute${Math.floor(diff.minutes) > 1 ? "s" : ""} ago`;
+  
+  const seconds = Math.floor(diff.seconds);
+  return seconds <= 1 ? "just now" : `${seconds} seconds ago`;
 };
 
 // ==================== RESPONSIVE FILE ATTACHMENT COMPONENT ====================
@@ -178,6 +203,9 @@ const AgentDashboard = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // ✅ ADDED: Real-time current time state
+  const [currentTime, setCurrentTime] = useState(DateTime.local());
+
   const [accountingPinned, setAccountingPinned] = useState(false);
   const [compliancePinned, setCompliancePinned] = useState(false);
   const [hrPinned, setHrPinned] = useState(false);
@@ -189,6 +217,35 @@ const AgentDashboard = () => {
 
   const { hasLiked, trackView, handleLike, getViewCount, getLikeCount } =
     useAnnouncementInteractions(announcements, setAnnouncements);
+
+  // ✅ ADDED: REAL-TIME TIME UPDATES EVERY SECOND
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(DateTime.local());
+    }, 1000); // Update every second
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // ✅ ADDED: UPDATE ANNOUNCEMENT TIME DISPLAYS IN REAL-TIME
+  useEffect(() => {
+    if (announcements.length > 0) {
+      // Update time ago for all announcements
+      const updatedAnnouncements = announcements.map(announcement => ({
+        ...announcement,
+        timeAgo: getRealTimeAgo(announcement.dateTime),
+        realTimeFormatted: DateTime.fromISO(announcement.dateTime).toLocaleString(DateTime.DATETIME_MED)
+      }));
+      
+      // Only update if there are actual changes to prevent unnecessary re-renders
+      setAnnouncements(prev => {
+        const hasChanges = prev.some((ann, index) => 
+          ann.timeAgo !== updatedAnnouncements[index].timeAgo
+        );
+        return hasChanges ? updatedAnnouncements : prev;
+      });
+    }
+  }, [currentTime]); // Re-run when currentTime updates
 
   // ✅ FIXED USER INITIALIZATION
   useEffect(() => {
@@ -274,6 +331,12 @@ const AgentDashboard = () => {
               : [],
           }))
           .map(processAnnouncementData)
+          .map(announcement => ({
+            ...announcement,
+            // ✅ ADDED: Initialize real-time time data
+            timeAgo: getRealTimeAgo(announcement.dateTime),
+            realTimeFormatted: DateTime.fromISO(announcement.dateTime).toLocaleString(DateTime.DATETIME_MED)
+          }))
           .sort((a, b) => {
             if (a.isPinned && !b.isPinned) return -1;
             if (!a.isPinned && b.isPinned) return 1;
@@ -311,6 +374,9 @@ const AgentDashboard = () => {
             // Update counts only (agents don't see user lists)
             totalViews: updateData.views,
             totalAcknowledgements: updateData.likes,
+            // ✅ PRESERVE REAL-TIME TIME DATA
+            timeAgo: ann.timeAgo || getRealTimeAgo(ann.dateTime),
+            realTimeFormatted: ann.realTimeFormatted || DateTime.fromISO(ann.dateTime).toLocaleString(DateTime.DATETIME_MED)
           };
         }
         return ann;
@@ -342,12 +408,19 @@ const AgentDashboard = () => {
         return;
       }
 
+      // ✅ ADDED: Initialize real-time time data for new announcements
+      const announcementWithRealTime = {
+        ...processedAnnouncement,
+        timeAgo: getRealTimeAgo(processedAnnouncement.dateTime),
+        realTimeFormatted: DateTime.fromISO(processedAnnouncement.dateTime).toLocaleString(DateTime.DATETIME_MED)
+      };
+
       setAnnouncements(prev => {
         // ✅ CRITICAL: Remove existing announcement with same ID first
-        const filtered = prev.filter(a => a._id !== processedAnnouncement._id);
+        const filtered = prev.filter(a => a._id !== announcementWithRealTime._id);
         
         // ✅ Add the new/reposted announcement at the beginning
-        const updated = [processedAnnouncement, ...filtered];
+        const updated = [announcementWithRealTime, ...filtered];
         
         // ✅ Sort the announcements
         return updated.sort((a, b) => {
@@ -366,7 +439,7 @@ const AgentDashboard = () => {
         });
       });
 
-      console.log(`✅ ${source} processed successfully - Announcement:`, processedAnnouncement.title);
+      console.log(`✅ ${source} processed successfully - Announcement:`, announcementWithRealTime.title);
     };
 
     // ✅ FIXED: NEW ANNOUNCEMENT HANDLER
@@ -418,10 +491,17 @@ const AgentDashboard = () => {
         return;
       }
 
+      // ✅ ADDED: Initialize real-time time data for updated announcements
+      const announcementWithRealTime = {
+        ...processedAnnouncement,
+        timeAgo: getRealTimeAgo(processedAnnouncement.dateTime),
+        realTimeFormatted: DateTime.fromISO(processedAnnouncement.dateTime).toLocaleString(DateTime.DATETIME_MED)
+      };
+
       setAnnouncements(prev => {
         // ✅ REMOVE EXISTING AND ADD UPDATED ANNOUNCEMENT
-        const filtered = prev.filter(a => a._id !== processedAnnouncement._id);
-        const updated = [processedAnnouncement, ...filtered];
+        const filtered = prev.filter(a => a._id !== announcementWithRealTime._id);
+        const updated = [announcementWithRealTime, ...filtered];
         
         // ✅ SORT THE ANNOUNCEMENTS
         return updated.sort((a, b) => {
@@ -440,7 +520,7 @@ const AgentDashboard = () => {
         });
       });
 
-      console.log("✅ Announcement updated in real-time:", processedAnnouncement.title);
+      console.log("✅ Announcement updated in real-time:", announcementWithRealTime.title);
     };
 
     // Register event listeners
@@ -563,6 +643,9 @@ const AgentDashboard = () => {
       const updatedAnnouncement = {
         ...announcement,
         isPinned: newPinnedStatus,
+        // ✅ PRESERVE REAL-TIME TIME DATA
+        timeAgo: announcement.timeAgo || getRealTimeAgo(announcement.dateTime),
+        realTimeFormatted: announcement.realTimeFormatted || DateTime.fromISO(announcement.dateTime).toLocaleString(DateTime.DATETIME_MED)
       };
 
       const updatedAnnouncements = announcements.map((a) =>
@@ -623,6 +706,12 @@ const AgentDashboard = () => {
             : [],
         }))
         .map(processAnnouncementData)
+        .map(announcement => ({
+          ...announcement,
+          // ✅ ADDED: Initialize real-time time data
+          timeAgo: getRealTimeAgo(announcement.dateTime),
+          realTimeFormatted: DateTime.fromISO(announcement.dateTime).toLocaleString(DateTime.DATETIME_MED)
+        }))
         .sort((a, b) => {
           if (a.isPinned && !b.isPinned) return -1;
           if (!a.isPinned && b.isPinned) return 1;
@@ -832,6 +921,19 @@ const AgentDashboard = () => {
         </div>
       )}
 
+      {/* ✅ ADDED: REAL-TIME TIME DISPLAY */}
+      <div className="fixed bottom-4 right-4 z-40 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200 px-3 py-2">
+        <div className="text-xs text-gray-600 font-medium">
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            Current Time: {currentTime.toFormat('HH:mm:ss')}
+          </div>
+          <div className="text-xs text-gray-500">
+            {currentTime.toFormat('MMM dd, yyyy')}
+          </div>
+        </div>
+      </div>
+
       {/* Main Content - FIXED RESPONSIVE LAYOUT */}
       <div className={`flex flex-col lg:flex-row gap-3 sm:gap-4 lg:gap-6 p-2 sm:p-4 lg:p-6 min-h-screen ${isMobileMenuOpen ? 'lg:flex-row' : ''}`}>
         
@@ -853,6 +955,11 @@ const AgentDashboard = () => {
                 <p className="text-sm sm:text-base lg:text-lg opacity-90">
                   Stay updated with the latest announcements
                 </p>
+                {/* ✅ ADDED: REAL-TIME TIME IN HEADER */}
+                <div className="mt-2 text-xs sm:text-sm opacity-80 flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+                  Live: {currentTime.toFormat('HH:mm:ss')} • {currentTime.toFormat('MMM dd, yyyy')}
+                </div>
               </div>
             </div>
           </div>
@@ -889,6 +996,16 @@ const AgentDashboard = () => {
                       <p className="text-xs sm:text-sm lg:text-base text-gray-500 font-medium mt-1">
                         Latest updates from different departments
                       </p>
+                      {/* ✅ ADDED: REAL-TIME UPDATE INDICATOR */}
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                          Real-time updates
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          Time updates every second
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 self-start sm:self-auto">
