@@ -1,10 +1,10 @@
-import React from "react";
+import React, { memo, useMemo } from "react";
 import { Building, Pin, PinOff } from "lucide-react";
 import AnnouncementCard from "./AnnouncementCard";
 
 const DepartmentAnnouncementSection = ({ 
   title, 
-  announcements, 
+  announcements = [], 
   onReadMore, 
   onFileDownload, 
   onFileView,
@@ -12,23 +12,21 @@ const DepartmentAnnouncementSection = ({
   canPinMore,
   showPinnedOnly,
   onTogglePinnedView,
-  pinnedCount,
-  maxPinnedLimit,
+  pinnedCount = 0,
+  maxPinnedLimit = 3,
   onLike,
   hasLiked, 
   currentUserId
 }) => {
 
-  console.log('🔍 DEPARTMENT SECTION:', {
-    title,
-    currentUserId, 
-    receivedUserId: !!currentUserId
-  });
+  // ✅ FIXED: Memoize filtered announcements to prevent unnecessary re-renders
+  const filteredAnnouncements = useMemo(() => {
+    return showPinnedOnly 
+      ? announcements.filter(a => a?.isPinned)
+      : announcements;
+  }, [announcements, showPinnedOnly]);
 
-  const filteredAnnouncements = showPinnedOnly 
-    ? announcements.filter(a => a.isPinned)
-    : announcements;
-
+  // ✅ FIXED: Early return for empty state
   if (filteredAnnouncements.length === 0 && !showPinnedOnly) {
     return null;
   }
@@ -99,14 +97,14 @@ const DepartmentAnnouncementSection = ({
           <div className="block lg:hidden">
             <div className="space-y-3 sm:space-y-4">
               {filteredAnnouncements.map((announcement, index) => (
-                <div key={announcement._id || index} className="w-full">
+                <div key={announcement?._id || `mobile-${index}`} className="w-full">
                   <AnnouncementCard
                     announcement={announcement}
                     onReadMore={onReadMore}
                     onFileDownload={onFileDownload}
                     onFileView={onFileView}
                     onTogglePin={onTogglePin}
-                    canPinMore={canPinMore || announcement.isPinned}
+                    canPinMore={canPinMore || announcement?.isPinned}
                     onLike={onLike}
                     hasLiked={hasLiked}
                     currentUserId={currentUserId} 
@@ -122,14 +120,14 @@ const DepartmentAnnouncementSection = ({
               scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
               <div className="flex gap-4 min-w-max pr-4">
                 {filteredAnnouncements.map((announcement, index) => (
-                  <div key={announcement._id || index} className="w-80 flex-shrink-0">
+                  <div key={announcement?._id || `desktop-${index}`} className="w-80 flex-shrink-0">
                     <AnnouncementCard
                       announcement={announcement}
                       onReadMore={onReadMore}
                       onFileDownload={onFileDownload}
                       onFileView={onFileView}
                       onTogglePin={onTogglePin}
-                      canPinMore={canPinMore || announcement.isPinned}
+                      canPinMore={canPinMore || announcement?.isPinned}
                       onLike={onLike}
                       hasLiked={hasLiked}
                       currentUserId={currentUserId} 
@@ -144,14 +142,14 @@ const DepartmentAnnouncementSection = ({
           <div className="hidden sm:block lg:hidden">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredAnnouncements.map((announcement, index) => (
-                <div key={announcement._id || index}>
+                <div key={announcement?._id || `tablet-${index}`}>
                   <AnnouncementCard
                     announcement={announcement}
                     onReadMore={onReadMore}
                     onFileDownload={onFileDownload}
                     onFileView={onFileView}
                     onTogglePin={onTogglePin}
-                    canPinMore={canPinMore || announcement.isPinned}
+                    canPinMore={canPinMore || announcement?.isPinned}
                     onLike={onLike}
                     hasLiked={hasLiked}
                     currentUserId={currentUserId} 
@@ -185,4 +183,5 @@ const DepartmentAnnouncementSection = ({
   );
 };
 
-export default DepartmentAnnouncementSection;
+// ✅ FIXED: Wrap with memo to prevent unnecessary re-renders
+export default memo(DepartmentAnnouncementSection);
