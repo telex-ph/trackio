@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   X,
   User,
@@ -20,11 +20,11 @@ const AnnouncementDetailModal = ({
   onClose,
   announcement,
   onLike,
-  hasLiked,
   currentUser,
   onTogglePin,
   pinnedCount,
   maxPinnedLimit,
+  trackView,
 }) => {
   
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
@@ -33,39 +33,101 @@ const AnnouncementDetailModal = ({
   const [rotation, setRotation] = useState(0);
   const [currentPdfPage, setCurrentPdfPage] = useState(1);
   
-  // ✅ ADDED: Local state for real-time counts
+  // ✅ Local state for real-time counts
   const [localViewCount, setLocalViewCount] = useState(0);
   const [localLikeCount, setLocalLikeCount] = useState(0);
   const [localIsLiked, setLocalIsLiked] = useState(false);
-  const [isLikeDisabled, setIsLikeDisabled] = useState(false); // ✅ NEW: Disable like after clicking
+  const [isLikeDisabled, setIsLikeDisabled] = useState(false);
 
-  // ✅ FIXED: Initialize and sync with announcement data
+  // ✅ FIXED: Use ref to track if view has been counted for this session
+  const hasViewedRef = useRef(false);
+  const viewTrackedRef = useRef(false);
+
+  // ✅ FIXED: Initialize and sync with announcement data - PROPER LIKE CHECK
   useEffect(() => {
     if (announcement) {
       const views = Array.isArray(announcement.views) ? announcement.views.length : 0;
       const likes = Array.isArray(announcement.acknowledgements) ? announcement.acknowledgements.length : 0;
-      const liked = currentUser && hasLiked ? hasLiked(announcement, currentUser._id) : false;
+      
+      // ✅ FIXED: Properly check if current user has liked this announcement
+      let liked = false;
+      if (currentUser && announcement.acknowledgements && Array.isArray(announcement.acknowledgements)) {
+        liked = announcement.acknowledgements.some(ack => ack.userId === currentUser._id);
+      }
       
       setLocalViewCount(views);
       setLocalLikeCount(likes);
       setLocalIsLiked(liked);
-      setIsLikeDisabled(liked); // ✅ Disable if already liked
+      setIsLikeDisabled(liked); // ✅ Only disable if user has already liked
+      
+      console.log("🔍 Like status check:", {
+        userId: currentUser?._id,
+        announcementId: announcement._id,
+        acknowledgements: announcement.acknowledgements,
+        userHasLiked: liked
+      });
+      
+      // ✅ Reset view tracking when announcement changes
+      hasViewedRef.current = false;
+      viewTrackedRef.current = false;
     }
-  }, [announcement, currentUser, hasLiked]);
+  }, [announcement, currentUser]);
 
-  // ✅ FIXED: Track view when modal opens
+  // ✅ FIXED: IMPROVED VIEW TRACKING - Track view when modal opens
   useEffect(() => {
-    if (isOpen && announcement && currentUser) {
-      // Simulate view tracking - you should call your actual view tracking function here
-      console.log("📊 Modal view tracked for announcement:", announcement._id);
-      
-      // Update view count immediately for better UX
-      setLocalViewCount(prev => prev + 1);
-      
-      // If you have a trackView function, call it here:
-      // trackView(announcement._id, currentUser._id);
+    if (isOpen && announcement && currentUser && trackView) {
+      // ✅ Check if we've already tracked a view for this announcement in current session
+      if (!viewTrackedRef.current) {
+        console.log("📊 Tracking view for announcement:", announcement._id);
+        
+        // ✅ Update view count immediately for better UX
+        setLocalViewCount(prev => {
+          const newCount = prev + 1;
+          console.log("📈 View count updated:", newCount);
+          return newCount;
+        });
+        
+        // ✅ Mark as viewed to prevent double counting
+        viewTrackedRef.current = true;
+        
+        // ✅ Call the actual trackView function
+        trackView(announcement._id, currentUser._id);
+      } else {
+        console.log("📊 View already tracked for this session:", announcement._id);
+      }
     }
-  }, [isOpen, announcement, currentUser]);
+  }, [isOpen, announcement, currentUser, trackView]);
+
+  // ✅ FIXED: Reset view tracking when modal closes or announcement changes
+  useEffect(() => {
+    if (!isOpen) {
+      // Reset view tracking when modal closes so it can track again when reopened
+      viewTrackedRef.current = false;
+    }
+  }, [isOpen]);
+
+  // ✅ FIXED: Alternative view tracking - track when component mounts with announcement
+  useEffect(() => {
+    if (isOpen && announcement && currentUser && trackView && !viewTrackedRef.current) {
+      // Small delay to ensure modal is fully open
+      const timer = setTimeout(() => {
+        if (!viewTrackedRef.current) {
+          console.log("⏱️ Delayed view tracking for announcement:", announcement._id);
+          
+          setLocalViewCount(prev => {
+            const newCount = prev + 1;
+            console.log("📈 Delayed view count updated:", newCount);
+            return newCount;
+          });
+          
+          viewTrackedRef.current = true;
+          trackView(announcement._id, currentUser._id);
+        }
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, announcement, currentUser, trackView]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -117,23 +179,32 @@ const AnnouncementDetailModal = ({
     }
   };
 
-  // ✅ FIXED: Enhanced like/unlike click with immediate UI update - NO UNLIKE ALLOWED
+  // ✅ FIXED: Enhanced like click with immediate UI update - NO UNLIKE ALLOWED
   const handleLikeClick = async () => {
-    if (!onLike || !currentUser || isLikeDisabled) return; // ✅ Prevent if already liked
+    if (!onLike || !currentUser || isLikeDisabled) {
+      console.log("❌ Like button blocked:", {
+        hasOnLike: !!onLike,
+        hasCurrentUser: !!currentUser,
+        isLikeDisabled
+      });
+      return;
+    }
 
     try {
+      console.log("❤️ Starting like process for announcement:", announcement._id);
+      
       // ✅ IMMEDIATE UI UPDATE for better UX
-      const newLikeStatus = true; // ✅ ALWAYS set to true (no unlike)
-      const newLikeCount = localLikeCount + 1; // ✅ ALWAYS increment
+      const newLikeStatus = true;
+      const newLikeCount = localLikeCount + 1;
       
       setLocalIsLiked(newLikeStatus);
       setLocalLikeCount(newLikeCount);
-      setIsLikeDisabled(true); // ✅ IMMEDIATELY DISABLE THE BUTTON
+      setIsLikeDisabled(true);
 
       // ✅ Call the actual like function
       await onLike(announcement._id, currentUser._id);
       
-      console.log("❤️ Like action completed - Button disabled:", {
+      console.log("✅ Like action completed - Button disabled:", {
         announcementId: announcement._id,
         userId: currentUser._id,
         newLikeStatus,
@@ -145,7 +216,7 @@ const AnnouncementDetailModal = ({
       // ✅ ROLLBACK UI if the API call fails
       setLocalIsLiked(false);
       setLocalLikeCount(localLikeCount);
-      setIsLikeDisabled(false); // ✅ Re-enable button on error
+      setIsLikeDisabled(false);
     }
   };
 
@@ -203,8 +274,7 @@ const AnnouncementDetailModal = ({
   };
 
   // For demo purposes - you'll need to replace this with actual PDF page count
-  // In a real implementation, you'd get this from your PDF library
-  const totalPdfPages = 10; // This should come from your PDF data
+  const totalPdfPages = 10;
 
   return (
     <>
@@ -304,12 +374,15 @@ const AnnouncementDetailModal = ({
                         <span className="font-medium text-base sm:text-lg">
                           {localViewCount} View{localViewCount !== 1 ? 's' : ''}
                         </span>
+                        {viewTrackedRef.current && (
+                          <span className="text-xs text-green-600 bg-green-100 px-1 rounded">+1</span>
+                        )}
                       </div>
                       
-                      {/* ✅ FIXED: Enhanced like button with NO UNLIKE functionality */}
+                      {/* ✅ FIXED: Enhanced like button with proper disabled state */}
                       <button
                         onClick={handleLikeClick}
-                        disabled={!currentUser || isLikeDisabled} // ✅ Disabled if no user or already liked
+                        disabled={!currentUser || isLikeDisabled}
                         className={`flex items-center gap-2 transition-all group ${
                           !currentUser || isLikeDisabled 
                             ? "opacity-50 cursor-not-allowed" 
@@ -337,10 +410,11 @@ const AnnouncementDetailModal = ({
                           }`}
                         >
                           {localLikeCount} Like{localLikeCount !== 1 ? 's' : ''}
-                          {isLikeDisabled && " ✓"} {/* ✅ Added checkmark when liked */}
+                          {isLikeDisabled && " ✓"}
                         </span>
                       </button>
                     </div>
+                  
                     
                     <div className="flex items-center gap-3 sm:gap-4">
                       <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
