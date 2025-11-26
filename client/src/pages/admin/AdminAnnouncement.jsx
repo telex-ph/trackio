@@ -679,7 +679,7 @@ const AdminAnnouncement = () => {
     setIsConfirmationModalOpen(true);
   };
 
-  // ✅ FIXED: CANCELLATION WITH PROPER TIME FREEZING
+  // ✅ FIXED: CANCELLATION WITH PROPER TIME FREEZING AND CORRECT SOCKET EVENT
   const handleConfirmCancel = async () => {
     try {
       const announcementToCancel = announcements.find(a => a._id === itemToCancel);
@@ -727,14 +727,14 @@ const AdminAnnouncement = () => {
         );
         
         if (socket) {
-          // ✅ CORRECT EVENT NAME: manualAnnouncementCancelled
-          socket.emit("manualAnnouncementCancelled", {
+          // ✅ CRITICAL FIX: Use the correct event name that AgentDashboard is listening for
+          socket.emit("announcementCancelled", {
             announcementId: itemToCancel,
             cancelledBy: getUserFullName(),
             cancelledAt: currentTime // ✅ Use current real-time
           });
           
-          console.log("📢 Emitted manual cancellation event");
+          console.log("📢 Emitted announcementCancelled event for agents");
         }
       } catch (patchError) {
         console.log("🔄 PATCH failed, trying PUT:", patchError);
@@ -771,8 +771,8 @@ const AdminAnnouncement = () => {
         );
         
         if (socket) {
-          // ✅ CORRECT EVENT NAME: manualAnnouncementCancelled
-          socket.emit("manualAnnouncementCancelled", {
+          // ✅ CRITICAL FIX: Use the correct event name
+          socket.emit("announcementCancelled", {
             announcementId: itemToCancel,
             cancelledBy: getUserFullName(),
             cancelledAt: currentTime // ✅ Use current real-time
@@ -855,8 +855,18 @@ const AdminAnnouncement = () => {
           )
         );
         
-        // ✅ NO SOCKET EMISSION - Let database change stream handle it
-        console.log("📢 No socket emission - letting database change stream handle real-time update");
+        if (socket) {
+          // ✅ CRITICAL FIX: Emit repost event for agents
+          socket.emit("announcementReposted", {
+            ...announcementToRepost,
+            ...payload,
+            _id: itemToRepost,
+            originalDateTime: currentTime,
+            frozenTimeAgo: null
+          });
+          
+          console.log("📢 Emitted announcementReposted event for agents");
+        }
         
       } catch (patchError) {
         console.log("🔄 PATCH failed, trying PUT:", patchError);
@@ -894,8 +904,16 @@ const AdminAnnouncement = () => {
           )
         );
         
-        // ✅ NO SOCKET EMISSION - Let database change stream handle it
-        console.log("📢 No socket emission - letting database change stream handle real-time update");
+        if (socket) {
+          // ✅ CRITICAL FIX: Emit repost event for agents
+          socket.emit("announcementReposted", {
+            ...announcementToRepost,
+            ...putPayload,
+            _id: itemToRepost,
+            originalDateTime: currentTime,
+            frozenTimeAgo: null
+          });
+        }
       }
 
       showNotification("Announcement reposted successfully! Ready for new likes and views with fresh time.", "success");

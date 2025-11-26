@@ -301,15 +301,21 @@ const AgentDashboard = () => {
     initializeUserData();
   }, []);
 
-  // ✅ FIXED SOCKET LISTENERS FOR REAL-TIME UPDATES - INCLUDES EDIT LISTENER
+  // ✅ FIXED SOCKET LISTENERS FOR REAL-TIME UPDATES - COMPLETE FIX
   useEffect(() => {
+    console.log("🔄 Setting up socket listeners for agent...");
+
+    // Check socket connection
     if (!socket) {
       console.log("❌ Socket not available for agent");
       fetchAnnouncements();
       return;
     }
 
-    console.log("🔄 Setting up socket listeners for agent...");
+    if (!socket.connected) {
+      console.log("❌ Socket not connected for agent, attempting connection...");
+      socket.connect();
+    }
 
     let dataLoaded = false;
 
@@ -452,25 +458,41 @@ const AgentDashboard = () => {
       handleUnifiedAnnouncement(repostedAnnouncement, "REPOST");
     };
 
-    // ✅ CRITICAL: LISTEN FOR CANCELLATION EVENTS - REAL-TIME REMOVAL
+    // ✅ CRITICAL: FIXED CANCELLATION HANDLER - LISTEN FOR MULTIPLE EVENT NAMES
     const handleAnnouncementCancelled = (data) => {
-      console.log("🔴 Real-time: Announcement cancelled", data.announcementId);
+      console.log("🔴 Real-time: Announcement cancellation received", data);
+      
+      // Extract announcement ID from different possible data structures
+      const announcementId = data?.announcementId || data?._id || data?.id;
+      
+      if (!announcementId) {
+        console.error("❌ No announcement ID found in cancellation data:", data);
+        return;
+      }
+
+      console.log("🗑️ Removing cancelled announcement from agent view:", announcementId);
       
       // ✅ IMMEDIATELY REMOVE FROM AGENT DASHBOARD
-      setAnnouncements(prev => 
-        prev.filter(ann => ann._id !== data.announcementId)
-      );
-      
-      console.log("🗑️ Removed cancelled announcement from agent view");
+      setAnnouncements(prev => {
+        const updated = prev.filter(ann => ann._id !== announcementId);
+        console.log(`✅ Removed cancelled announcement. Before: ${prev.length}, After: ${updated.length}`);
+        return updated;
+      });
+
+      // Also remove from pinned storage
+      removePinnedAnnouncementFromStorage(announcementId);
     };
 
-    // ✅ NEW: REAL-TIME EDIT HANDLER - FOR ADMIN EDITS
+    // ✅ FIXED: REAL-TIME EDIT HANDLER - FOR ADMIN EDITS
     const handleAnnouncementUpdated = (updatedAnnouncement) => {
       console.log("📝 Real-time: Announcement updated", updatedAnnouncement._id, updatedAnnouncement.title);
       
       // ✅ CHECK IF ANNOUNCEMENT IS ACTIVE
       if (updatedAnnouncement.status !== "Active") {
-        console.log("❌ Ignoring inactive updated announcement");
+        console.log("❌ Updated announcement is not active, removing it");
+        // Remove if status changed to inactive
+        setAnnouncements(prev => prev.filter(ann => ann._id !== updatedAnnouncement._id));
+        removePinnedAnnouncementFromStorage(updatedAnnouncement._id);
         return;
       }
 
@@ -523,18 +545,29 @@ const AgentDashboard = () => {
       console.log("✅ Announcement updated in real-time:", announcementWithRealTime.title);
     };
 
-    // Register event listeners
+    // ✅ DEBUG: Log socket connection status
+    console.log("🔌 Socket connection status:", socket.connected);
+    console.log("🔌 Socket ID:", socket.id);
+
+    // Register event listeners with multiple event names for reliability
     socket.on("initialAgentData", handleInitialData);
     socket.on("agentAnnouncementUpdate", handleAgentUpdate);
     socket.on("newAnnouncement", handleNewAnnouncement);
+    
+    // ✅ CRITICAL: LISTEN FOR MULTIPLE CANCELLATION EVENT NAMES
     socket.on("announcementCancelled", handleAnnouncementCancelled);
+    socket.on("announcementCanceled", handleAnnouncementCancelled); // Alternative spelling
+    socket.on("cancelledAnnouncement", handleAnnouncementCancelled);
+    socket.on("announcementDeleted", handleAnnouncementCancelled);
+    
     socket.on("announcementReposted", handleAnnouncementReposted);
     
-    // ✅ REGISTER THE EDIT LISTENER
+    // ✅ REGISTER THE EDIT LISTENERS
     socket.on("announcementUpdated", handleAnnouncementUpdated);
-    socket.on("updatedAnnouncement", handleAnnouncementUpdated); // Alternative event name
+    socket.on("updatedAnnouncement", handleAnnouncementUpdated);
 
     // Request initial data via socket
+    console.log("📤 Requesting initial agent data via socket...");
     socket.emit("getAgentData");
 
     // Fallback to API if socket doesn't respond in 3 seconds
@@ -545,16 +578,25 @@ const AgentDashboard = () => {
       }
     }, 3000);
 
-    // Cleanup
+    // Cleanup function
     return () => {
+      console.log("🧹 Cleaning up socket listeners for agent");
       clearTimeout(fallbackTimeout);
+      
+      // Remove all event listeners
       socket.off("initialAgentData", handleInitialData);
       socket.off("agentAnnouncementUpdate", handleAgentUpdate);
       socket.off("newAnnouncement", handleNewAnnouncement);
+      
+      // Remove all cancellation listeners
       socket.off("announcementCancelled", handleAnnouncementCancelled);
+      socket.off("announcementCanceled", handleAnnouncementCancelled);
+      socket.off("cancelledAnnouncement", handleAnnouncementCancelled);
+      socket.off("announcementDeleted", handleAnnouncementCancelled);
+      
       socket.off("announcementReposted", handleAnnouncementReposted);
       
-      // ✅ CLEANUP EDIT LISTENERS
+      // Remove edit listeners
       socket.off("announcementUpdated", handleAnnouncementUpdated);
       socket.off("updatedAnnouncement", handleAnnouncementUpdated);
     };
@@ -568,6 +610,23 @@ const AgentDashboard = () => {
     } catch (error) {
       console.error("Error reading pinned announcements:", error);
       return {};
+    }
+  };
+
+  // ✅ ADDED: Helper to remove pinned announcement from storage
+  const removePinnedAnnouncementFromStorage = (announcementId) => {
+    try {
+      const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
+      if (pinnedAnnouncements[announcementId]) {
+        delete pinnedAnnouncements[announcementId];
+        localStorage.setItem(
+          PINNED_ANNOUNCEMENTS_KEY,
+          JSON.stringify(pinnedAnnouncements)
+        );
+        console.log("✅ Removed cancelled announcement from pinned storage:", announcementId);
+      }
+    } catch (error) {
+      console.error("Error removing pinned announcement:", error);
     }
   };
 
@@ -920,19 +979,6 @@ const AgentDashboard = () => {
           </div>
         </div>
       )}
-
-      {/* ✅ ADDED: REAL-TIME TIME DISPLAY */}
-      <div className="fixed bottom-4 right-4 z-40 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200 px-3 py-2">
-        <div className="text-xs text-gray-600 font-medium">
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            Current Time: {currentTime.toFormat('HH:mm:ss')}
-          </div>
-          <div className="text-xs text-gray-500">
-            {currentTime.toFormat('MMM dd, yyyy')}
-          </div>
-        </div>
-      </div>
 
       {/* Main Content - FIXED RESPONSIVE LAYOUT */}
       <div className={`flex flex-col lg:flex-row gap-3 sm:gap-4 lg:gap-6 p-2 sm:p-4 lg:p-6 min-h-screen ${isMobileMenuOpen ? 'lg:flex-row' : ''}`}>
