@@ -939,7 +939,12 @@ const AgentDashboard = () => {
         
         {/* Left Column - Main Content */}
         <div className="flex-1 min-w-0 order-1 lg:order-1 space-y-4 sm:space-y-6 overflow-hidden">
-          
+          <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold mb-2">
+               Welcome back, {currentUser.name}!
+            </h1>
+             <p className="text-sm sm:text-base lg:text-lg opacity-90">
+                  Stay updated with the latest announcements
+                </p>
           {/* Cover Image - ULTRA RESPONSIVE */}
           <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg">
             <img
@@ -949,12 +954,6 @@ const AgentDashboard = () => {
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent flex items-center">
               <div className="text-white p-4 sm:p-6 lg:p-8">
-                <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold mb-2">
-                  Welcome back, {currentUser.name}!
-                </h1>
-                <p className="text-sm sm:text-base lg:text-lg opacity-90">
-                  Stay updated with the latest announcements
-                </p>
                 {/* ✅ ADDED: REAL-TIME TIME IN HEADER */}
                 <div className="mt-2 text-xs sm:text-sm opacity-80 flex items-center gap-1">
                   <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>

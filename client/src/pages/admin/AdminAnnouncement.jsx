@@ -1377,7 +1377,7 @@ const AdminAnnouncement = () => {
                         <span className="text-xs text-red-600">
                           Cancelled by {a.cancelledBy} • {getSmartTimeAgo(a)}
                           {/* ✅ ADDED: FROZEN TIME INDICATOR */}
-                          <span className="ml-1 text-gray-500">(Time frozen)</span>
+                          <span className="ml-1 text-gray-500"></span>
                         </span>
                       </div>
                     </div>
@@ -1413,7 +1413,7 @@ const AdminAnnouncement = () => {
                             {getSmartTimeAgo(a)}
                             {/* ✅ ADDED: LIVE INDICATOR FOR ACTIVE ANNOUNCEMENTS */}
                             {a.status === 'Active' && (
-                              <span className="ml-1 text-green-500">• Live</span>
+                              <span className="ml-1 text-green-500"></span>
                             )}
                           </span>
                         </div>
