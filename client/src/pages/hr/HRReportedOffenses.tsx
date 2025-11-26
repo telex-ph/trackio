@@ -16,7 +16,8 @@ interface FileUpload {
   fileName: string;
   size: number;
   type: string;
-  data: string;
+  public_id: string;
+  url: string;
 }
 
 interface Offense {
@@ -44,29 +45,6 @@ interface Offense {
   createdAt?: string;
   updatedAt?: string;
 }
-
-// Helper Function
-const base64ToBlobUrl = (base64: string, type: string): string => {
-  try {
-    const base64Data = base64.split(",")[1];
-    if (!base64Data) {
-      console.error("Invalid Base64 string");
-      return base64;
-    }
-    const binaryString = atob(base64Data);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    const blob = new Blob([bytes], { type: type });
-    const url = URL.createObjectURL(blob);
-    return url;
-  } catch (e) {
-    console.error("Failed to convert Base64 to Blob URL:", e);
-    return base64;
-  }
-};
 
 const HRReportedOffenses = () => {
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
@@ -290,13 +268,26 @@ const HRReportedOffenses = () => {
       };
 
       if (selectedFile) {
-        const base64File = await fileToBase64(selectedFile);
+        console.log("NTE FIle: ", selectedFile);
+
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+
+        const uploadRes = await api.post("/upload/nte", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+
+        console.log(uploadRes.data);
+
         payload.fileNTE = [
           {
-            fileName: selectedFile.name,
-            size: selectedFile.size,
-            type: selectedFile.type,
-            data: base64File,
+            fileName: uploadRes.data.fileName,
+            size: uploadRes.data.size,
+            type: uploadRes.data.type,
+            url: uploadRes.data.url,
+            public_id: uploadRes.data.public_id,
           },
         ];
       }
@@ -330,36 +321,54 @@ const HRReportedOffenses = () => {
       };
 
       if (selectedMOMFile) {
-        const base64MOM = await fileToBase64(selectedMOMFile);
+        console.log("MOM FIle: ", selectedMOMFile);
+
+        const formData = new FormData();
+        formData.append("file", selectedMOMFile);
+
+        const uploadRes = await api.post("/upload/mom", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+
+        console.log(uploadRes.data);
+
         payload.fileMOM = [
-          ...(formData.fileMOM || []),
           {
-            fileName: selectedMOMFile.name,
-            size: selectedMOMFile.size,
-            type: selectedMOMFile.type,
-            data: base64MOM,
+            fileName: uploadRes.data.fileName,
+            size: uploadRes.data.size,
+            type: uploadRes.data.type,
+            url: uploadRes.data.url,
+            public_id: uploadRes.data.public_id,
           },
         ];
       }
 
       if (selectedNDAFile) {
-        const base64NDA = await fileToBase64(selectedNDAFile);
+        console.log("NDA FIle: ", selectedNDAFile);
+
+        const formData = new FormData();
+        formData.append("file", selectedNDAFile);
+
+        const uploadRes = await api.post("/upload/nda", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+
+        console.log(uploadRes.data);
+
         payload.fileNDA = [
-          ...(formData.fileNDA || []),
           {
-            fileName: selectedNDAFile.name,
-            size: selectedNDAFile.size,
-            type: selectedNDAFile.type,
-            data: base64NDA,
+            fileName: uploadRes.data.fileName,
+            size: uploadRes.data.size,
+            type: uploadRes.data.type,
+            url: uploadRes.data.url,
+            public_id: uploadRes.data.public_id,
           },
         ];
       }
-
-      console.log("Final payload fileMOM:", payload.fileMOM);
-      console.log("Final payload fileNDA:", payload.fileNDA);
-      console.log("Payload before API call:", payload);
-      console.log("selectedMOMFile:", selectedMOMFile);
-      console.log("selectedNDAFile:", selectedNDAFile);
 
       // --- API Call ---
       await api.put(`/offenses/${editingId}`, payload);
@@ -417,10 +426,7 @@ const HRReportedOffenses = () => {
   // Filter for "Cases In Progress"
   const filteredOffenses = offenses.filter(
     (off) =>
-      ![
-        "Invalid",
-        "Acknowledged",
-      ].includes(off.status) &&
+      !["Invalid", "Acknowledged"].includes(off.status) &&
       [
         off.agentName,
         off.offenseType,
@@ -439,9 +445,7 @@ const HRReportedOffenses = () => {
 
   // Filter for "Case History"
   const resolvedOffenses = offenses.filter((off) => {
-    const isResolved = [
-      "Acknowledged",
-    ].includes(off.status);
+    const isResolved = ["Acknowledged"].includes(off.status);
     if (!isResolved) return false;
 
     const textMatch = [
@@ -499,7 +503,6 @@ const HRReportedOffenses = () => {
           handleValid={handleValid}
           handleHearingDate={handleHearingDate}
           handleAfterHearing={handleAfterHearing}
-          base64ToBlobUrl={base64ToBlobUrl}
           rejectOffense={rejectOffense}
           selectedFile={selectedFile}
           setSelectedFile={setSelectedFile}
@@ -525,7 +528,6 @@ const HRReportedOffenses = () => {
           onView={handleView}
           isLoading={isLoading}
           formatDisplayDate={formatDisplayDate}
-          base64ToBlobUrl={base64ToBlobUrl}
         />
       </div>
 

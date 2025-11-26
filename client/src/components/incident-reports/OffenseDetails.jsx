@@ -7,7 +7,6 @@ const OffenseDetails = ({
   onClose,
   onDelete,
   formatDisplayDate,
-  base64ToBlobUrl,
 }) => {
   return (
     <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
@@ -82,7 +81,7 @@ const OffenseDetails = ({
               </label>
               <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
                 {formData.evidence.slice(0, 1).map((ev, idx) => {
-                  const viewUrl = base64ToBlobUrl(ev.data, ev.type);
+                  const viewUrl = ev.url;
                   return (
                     <div key={idx} className="flex flex-col gap-3">
                       <div className="flex items-center gap-2 min-w-0">
@@ -102,7 +101,7 @@ const OffenseDetails = ({
                           View
                         </a>
                         <a
-                          href={ev.data}
+                          href={ev.url}
                           download={ev.fileName}
                           className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
                         >
@@ -123,7 +122,7 @@ const OffenseDetails = ({
               </label>
               <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
                 {formData.fileNTE.slice(0, 1).map((nte, idx) => {
-                  const viewUrl = base64ToBlobUrl(nte.data, nte.type);
+                  const viewUrl = nte.url;
                   return (
                     <div key={idx} className="flex flex-col gap-3">
                       <div className="flex items-center gap-2 min-w-0">
@@ -143,7 +142,7 @@ const OffenseDetails = ({
                           View
                         </a>
                         <a
-                          href={nte.data}
+                          href={nte.url}
                           download={nte.fileName}
                           className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
                         >
@@ -182,7 +181,7 @@ const OffenseDetails = ({
                 </label>
                 <div className="border-2 border-dashed rounded-2xl p-4 mb-4 border-blue-400 bg-blue-50">
                   {formData.fileMOM.slice(0, 1).map((mom, idx) => {
-                    const viewUrl = base64ToBlobUrl(mom.data, mom.type);
+                    const viewUrl = mom.url;
                     return (
                       <div key={idx} className="flex flex-col gap-3">
                         <div className="flex items-center gap-2 min-w-0">
@@ -202,7 +201,7 @@ const OffenseDetails = ({
                             View
                           </a>
                           <a
-                            href={mom.data}
+                            href={mom.url}
                             download={mom.fileName}
                             className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
                           >
@@ -219,7 +218,7 @@ const OffenseDetails = ({
                 </label>
                 <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
                   {formData.fileNDA.slice(0, 1).map((nda, idx) => {
-                    const viewUrl = base64ToBlobUrl(nda.data, nda.type);
+                    const viewUrl = nda.url;
                     return (
                       <div key={idx} className="flex flex-col gap-3">
                         <div className="flex items-center gap-2 min-w-0">
@@ -239,7 +238,7 @@ const OffenseDetails = ({
                             View
                           </a>
                           <a
-                            href={nda.data}
+                            href={nda.url}
                             download={nda.fileName}
                             className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
                           >
