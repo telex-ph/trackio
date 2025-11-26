@@ -23,7 +23,6 @@ const HR_CasesInProgress = ({
   onView,
   isLoading,
   formatDisplayDate,
-  base64ToBlobUrl,
 }) => {
   const safeOffenses = Array.isArray(offenses)
     ? offenses.filter((o) => o && typeof o === "object" && o._id)
@@ -229,7 +228,7 @@ const HR_CasesInProgress = ({
 
                     <div className="space-y-2">
                       {off.evidence.map((ev, idx) => {
-                        const viewUrl = base64ToBlobUrl(ev.data, ev.type);
+                        const viewUrl = ev.url;
                         return (
                           <div
                             key={idx}
@@ -252,7 +251,7 @@ const HR_CasesInProgress = ({
 
                               {/* Download Button */}
                               <a
-                                href={ev.data}
+                                href={ev.url}
                                 download={ev.fileName}
                                 className="p-1 text-gray-500 hover:text-green-600 rounded-md hover:bg-green-50 transition-colors"
                               >

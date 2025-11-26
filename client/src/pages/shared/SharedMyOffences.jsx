@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Calendar,
   Clock,
@@ -19,38 +19,9 @@ import {
 import { DateTime } from "luxon"; // Import DateTime
 import api from "../../utils/axios";
 import socket from "../../utils/socket";
-
-// --- HELPER FUNCTION ---
-// Converts Base64 data URL to a browser-readable Blob URL
-// This fixes the "blank screen" issue when viewing PDFs
-const base64ToBlobUrl = (base64, type) => {
-  try {
-    const base64Data = base64.split(",")[1];
-    if (!base64Data) {
-      console.error("Invalid Base64 string");
-      return base64; // Fallback
-    }
-
-    const binaryString = atob(base64Data);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-
-    const blob = new Blob([bytes], { type: type });
-    // Create and return the Object URL
-    const url = URL.createObjectURL(blob);
-    // Optional: Revoke the URL when it's no longer needed (e.g., in useEffect cleanup or when component unmounts)
-    // This helps free up memory, but be careful not to revoke too early if the URL is still needed.
-    // setTimeout(() => URL.revokeObjectURL(url), 60000); // Example: Revoke after 1 minute
-    return url;
-  } catch (e) {
-    console.error("Failed to convert Base64 to Blob URL:", e);
-    return base64; // Fallback
-  }
-};
-// --- END OF HELPER FUNCTION ---
+import CaseHistory from "../../components/incident-reports/my-offences/CaseHistory";
+import { useStore } from "../../store/useStore";
+import CasesInProgress from "../../components/incident-reports/my-offences/CasesInProgress";
 
 const Notification = ({ message, type, onClose }) => {
   const [isVisible, setIsVisible] = useState(true);
@@ -137,6 +108,7 @@ const SharedMyOffences = () => {
   const [offenses, setOffenses] = useState([]);
   const [searchQuery, setSearchQuery] = useState(""); // For Cases in Progress
   const [currentUser, setCurrentUser] = useState(null);
+  const loggedUser = useStore((state) => state.user);
 
   const [showAcknowledgeModal, setShowAcknowledgeModal] = useState(false);
   const [ackMessage, setAckMessage] = useState("");
@@ -171,7 +143,7 @@ const SharedMyOffences = () => {
     setNotification({ message, type, isVisible: true });
   };
 
-  const fetchCurrentUser = async () => {
+  const fetchCurrentUser = useCallback(async () => {
     try {
       const response = await api.get("/auth/get-auth-user");
       setCurrentUser(response.data);
@@ -184,9 +156,9 @@ const SharedMyOffences = () => {
       );
       return null;
     }
-  };
+  }, []);
 
-  const fetchOffenses = async () => {
+  const fetchOffenses = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await api.get("/offenses");
@@ -199,7 +171,7 @@ const SharedMyOffences = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const loadData = async () => {
@@ -207,7 +179,7 @@ const SharedMyOffences = () => {
       await fetchOffenses();
     };
     loadData();
-  }, []);
+  }, [fetchCurrentUser, fetchOffenses]);
 
   const setupSocketListeners = useCallback(() => {
     const onAdd = (off) => off?._id && setOffenses((p) => [off, ...p]);
@@ -361,14 +333,25 @@ const SharedMyOffences = () => {
     setHistoryEndDate("");
   };
 
-  // Filter for "Cases In Progress"
-  const filteredOffenses = offenses.filter(
-    (off) =>
-      currentUser &&
-      (off.employeeId === currentUser.employeeId ||
-        off.witnesses?.some((w) => w._id === currentUser._id)) &&
-      !["Invalid", "Acknowledged"].includes(off.status) &&
-      [
+  const safeOffenses = useMemo(
+    () => offenses.filter((o) => o && o._id),
+    [offenses]
+  );
+
+  const filteredOffensesForList = useMemo(() => {
+    return safeOffenses.filter((off) => {
+      console.log("Respondant", off.respondantId);
+      console.log("Logged user", loggedUser._id);
+
+      if (
+        off.respondantId !== loggedUser._id ||
+        off.witnesses?.some((w) => w._id === loggedUser._id)
+      )
+        return false;
+      if (["Pending Review", "Invalid", "Acknowledged"].includes(off.status)) return false;
+
+      return [
+        off.agentName,
         off.offenseType,
         off.offenseCategory,
         off.offenseLevel || "",
@@ -379,46 +362,48 @@ const SharedMyOffences = () => {
       ]
         .join(" ")
         .toLowerCase()
-        .includes(searchQuery.toLowerCase()) // Uses the main searchQuery
-  );
+        .includes(searchQuery.toLowerCase());
+    });
+  }, [safeOffenses, searchQuery, loggedUser, formatDisplayDate]);
 
-  // Filter for "Case History"
-  const resolvedOffenses = offenses.filter((off) => {
-    // Basic status & user filter
-    const isResolved =
-      currentUser &&
-      off.employeeId === currentUser.employeeId &&
-      ["Invalid", "Acknowledged"].includes(off.status);
-    if (!isResolved) return false;
+  const resolvedOffensesForHistory = useMemo(() => {
+    return safeOffenses.filter((off) => {
+      const isResolved =
+        loggedUser &&
+        off.reportedById === loggedUser._id &&
+        ["Invalid", "Acknowledged"].includes(off.status);
+      if (!isResolved) return false;
 
-    // Text search filter
-    const textMatch = [
-      off.offenseType,
-      off.offenseLevel || "",
-      off.status,
-      off.actionTaken,
-      off.remarks || "",
-      formatDisplayDate(off.dateOfOffense),
-    ]
-      .join(" ")
-      .toLowerCase()
-      .includes(historySearchQuery.toLowerCase());
-    if (!textMatch) return false;
+      const textMatch = [
+        off.offenseType,
+        off.offenseLevel || "",
+        off.status,
+        off.remarks || "",
+        formatDisplayDate(off.dateOfOffense),
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(historySearchQuery.toLowerCase());
 
-    // Date range filter using Luxon
-    const offenseDate = DateTime.fromISO(off.dateOfOffense).startOf("day");
-    const start = historyStartDate
-      ? DateTime.fromISO(historyStartDate).startOf("day")
-      : null;
-    const end = historyEndDate
-      ? DateTime.fromISO(historyEndDate).startOf("day")
-      : null;
+      if (!textMatch) return false;
 
-    const isAfterStartDate = start ? offenseDate >= start : true;
-    const isBeforeEndDate = end ? offenseDate <= end : true;
+      const offenseDate = DateTime.fromISO(off.dateOfOffense).startOf("day");
+      const start = historyStartDate
+        ? DateTime.fromISO(historyStartDate).startOf("day")
+        : null;
+      const end = historyEndDate
+        ? DateTime.fromISO(historyEndDate).startOf("day")
+        : null;
 
-    return isAfterStartDate && isBeforeEndDate; // Return true only if all filters pass
-  });
+      return (!start || offenseDate >= start) && (!end || offenseDate <= end);
+    });
+  }, [
+    safeOffenses,
+    historySearchQuery,
+    historyStartDate,
+    historyEndDate,
+    loggedUser,
+  ]);
 
   return (
     <div>
@@ -438,6 +423,22 @@ const SharedMyOffences = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
         {/* --- OFFENSE DETAILS --- */}
+        {/* <OffenseDetails
+          isViewMode={true}
+          resetForm={resetForm}
+          formData={formData}
+          formatDisplayDate={formatDisplayDate}
+          handleInputChange={handleInputChange}
+          originalExplanation={originalExplanation}
+          respondentHasExplanation={respondentHasExplanation}
+          handleSubmit={handleSubmit}
+          showAcknowledgeModal={showAcknowledgeModal}
+          setShowAcknowledgeModal={setShowAcknowledgeModal}
+          ackMessage={ackMessage}
+          setAckMessage={setAckMessage}
+          handleAcknowledge={handleAcknowledge}
+        /> */}
+
         <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -520,7 +521,7 @@ const SharedMyOffences = () => {
                   </label>
                   <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
                     {formData.evidence.slice(0, 1).map((ev, idx) => {
-                      const viewUrl = base64ToBlobUrl(ev.data, ev.type);
+                      const viewUrl = ev.url;
                       return (
                         <div key={idx} className="flex flex-col gap-3">
                           <div className="flex items-center gap-2 min-w-0">
@@ -540,7 +541,7 @@ const SharedMyOffences = () => {
                               View
                             </a>
                             <a
-                              href={ev.data}
+                              href={ev.url}
                               download={ev.fileName}
                               className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
                             >
@@ -562,7 +563,7 @@ const SharedMyOffences = () => {
                 {formData.fileNTE.length > 0 ? (
                   <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
                     {formData.fileNTE.slice(0, 1).map((nte, idx) => {
-                      const viewUrl = base64ToBlobUrl(nte.data, nte.type);
+                      const viewUrl = nte.url;
                       return (
                         <div key={idx} className="flex flex-col gap-3">
                           <div className="flex items-center gap-2 min-w-0">
@@ -572,7 +573,7 @@ const SharedMyOffences = () => {
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <a
+                            <a 
                               href={viewUrl}
                               target="_blank"
                               rel="noopener noreferrer"
@@ -582,7 +583,7 @@ const SharedMyOffences = () => {
                               View
                             </a>
                             <a
-                              href={nte.data}
+                              href={nte.url}
                               download={nte.fileName}
                               className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
                             >
@@ -621,7 +622,7 @@ const SharedMyOffences = () => {
                     </label>
                     <div className="border-2 border-dashed rounded-2xl p-4 mb-4 border-blue-400 bg-blue-50">
                       {formData.fileMOM.slice(0, 1).map((mom, idx) => {
-                        const viewUrl = base64ToBlobUrl(mom.data, mom.type);
+                        const viewUrl = mom.url;
                         return (
                           <div key={idx} className="flex flex-col gap-3">
                             <div className="flex items-center gap-2 min-w-0">
@@ -641,7 +642,7 @@ const SharedMyOffences = () => {
                                 View
                               </a>
                               <a
-                                href={mom.data}
+                                href={mom.url}
                                 download={mom.fileName}
                                 className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
                               >
@@ -658,7 +659,7 @@ const SharedMyOffences = () => {
                     </label>
                     <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
                       {formData.fileNDA.slice(0, 1).map((nda, idx) => {
-                        const viewUrl = base64ToBlobUrl(nda.data, nda.type);
+                        const viewUrl = nda.url;
                         return (
                           <div key={idx} className="flex flex-col gap-3">
                             <div className="flex items-center gap-2 min-w-0">
@@ -678,7 +679,7 @@ const SharedMyOffences = () => {
                                 View
                               </a>
                               <a
-                                href={nda.data}
+                                href={nda.url}
                                 download={nda.fileName}
                                 className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
                               >
@@ -788,436 +789,35 @@ const SharedMyOffences = () => {
         )}
 
         {/* --- CASES IN PROGRESS --- */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
-              </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
-                Cases In Progress
-              </h3>
-            </div>
-            <span className="bg-red-100 text-red-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
-              {filteredOffenses.length} Records
-            </span>
-          </div>
-
-          <div className="mb-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by level, type, category..."
-                className="w-full pl-10 pr-4 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
-              />
-            </div>
-          </div>
-
-          {filteredOffenses.length > 0 ? (
-            <div className="space-y-4 overflow-y-auto max-h-[52.5rem] pr-2">
-              {filteredOffenses.map(
-                (off) =>
-                  off.status !== "Pending Review" &&
-                  off.status !== "Invalid" && (
-                    <div
-                      key={off._id}
-                      className="group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border border-gray-100"
-                    >
-                      {/* Card Header */}
-                      <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
-                        <div className="flex items-start gap-3 sm:gap-4">
-                          <div className="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors">
-                            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-2 group-hover:text-red-600 transition-colors">
-                              {off.offenseType}
-                            </h4>
-                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
-                              <span className="text-xs text-gray-500">
-                                Date: {formatDisplayDate(off.dateOfOffense)}
-                              </span>
-                              <span
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  {
-                                    "Pending Review":
-                                      "bg-amber-100 text-amber-700 border border-amber-200",
-                                    NTE: "bg-blue-100 text-blue-700 border border-blue-200",
-                                    Invalid:
-                                      "bg-red-100 text-red-700 border border-red-200",
-                                    "Respondent Explained":
-                                      "bg-purple-100 text-purple-700 border border-purple-200",
-                                    "Scheduled for hearing":
-                                      "bg-indigo-100 text-indigo-700 border border-indigo-200",
-                                    "After Hearing":
-                                      "bg-teal-100 text-teal-700 border border-teal-200",
-                                    Acknowledged:
-                                      "bg-green-100 text-green-700 border border-green-200",
-                                  }[off.status] ||
-                                  "bg-gray-100 text-gray-700 border border-gray-200"
-                                }`}
-                              >
-                                {off.status}
-                              </span>
-
-                              {(() => {
-                                const status = off.status;
-
-                                // Map status to which "reader" we care about
-                                const statusReaderMap = {
-                                  "Pending Review": "isReadByHR",
-                                  "Respondent Explained": "isReadByHR",
-                                  Acknowledged: "isReadByHR",
-                                  NTE: "isReadByRespondant",
-                                  "Scheduled for hearing": "isReadByRespondant",
-                                  "After Hearing": "isReadByRespondant",
-                                  Invalid: "isReadByReporter",
-                                };
-
-                                const readerKey = statusReaderMap[status];
-                                const hasRead = readerKey
-                                  ? off[readerKey]
-                                  : null;
-
-                                // Determine label based on status
-                                const labelMap = {
-                                  isReadByHR: {
-                                    read: "Read by HR",
-                                    unread: "Unread by HR",
-                                  },
-                                  isReadByRespondant: {
-                                    read: "Read",
-                                    unread: "Unread",
-                                  },
-                                  isReadByReporter: {
-                                    read: "Read by You",
-                                    unread: "Unread by You",
-                                  },
-                                };
-
-                                if (!readerKey) {
-                                  return (
-                                    <span className="flex items-center gap-1 text-gray-500 text-xs">
-                                      <Bell className="w-4 h-4" /> No Read
-                                      Status
-                                    </span>
-                                  );
-                                }
-
-                                const label = hasRead
-                                  ? labelMap[readerKey].read
-                                  : labelMap[readerKey].unread;
-                                const isUnread = !hasRead;
-
-                                return (
-                                  <span
-                                    className={`flex items-center gap-1 text-xs ${
-                                      isUnread
-                                        ? "text-red-600 font-bold"
-                                        : "text-green-600"
-                                    }`}
-                                  >
-                                    {isUnread ? (
-                                      <Bell className="w-4 h-4" />
-                                    ) : (
-                                      <CheckCircle className="w-4 h-4" />
-                                    )}
-                                    {label}
-                                  </span>
-                                );
-                              })()}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Card Body */}
-                      <div className="space-y-3 mb-4">
-                        <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                          <User className="w-3 h-3 sm:w-4 sm:h-4" />
-                          Reporter:{" "}
-                          <span className="font-medium">
-                            {off.reporterName || "N/A"}
-                          </span>
-                        </p>
-                        <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                          <Tag className="w-3 h-3 sm:w-4 sm:h-4" />
-                          Category:{" "}
-                          <span className="font-medium">
-                            {off.offenseCategory}
-                          </span>
-                        </p>
-                        {off.hearingDate && (
-                          <div className="space-y-3 mb-4">
-                            <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                              <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                              Hearing date:{" "}
-                              <span className="font-medium">
-                                {DateTime.fromISO(
-                                  off.hearingDate
-                                ).toLocaleString({
-                                  weekday: "short",
-                                  month: "long",
-                                  day: "numeric",
-                                  year: "numeric",
-                                  hour: "numeric",
-                                  minute: "2-digit",
-                                })}
-                              </span>
-                            </p>
-                            <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                              <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-                              Witnesses:{" "}
-                              <span className="font-medium">
-                                {off.witnesses?.length > 0
-                                  ? off.witnesses.map((w) => w.name).join(", ")
-                                  : "None"}
-                              </span>
-                            </p>
-                          </div>
-                        )}
-
-                        {off.remarks && (
-                          <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border-l-4 border-gray-400">
-                            <p className="text-xs sm:text-sm text-gray-700 flex items-start gap-2">
-                              <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4 mt-0.5 text-gray-600" />
-                              <span className="font-semibold text-gray-800">
-                                Remarks:
-                              </span>{" "}
-                              {off.remarks}
-                            </p>
-                          </div>
-                        )}
-
-                        {off.evidence?.length > 0 && (
-                          <div className="bg-purple-50 rounded-xl p-3 sm:p-4 border-l-4 border-purple-500">
-                            {off.evidence.map((ev, idx) => {
-                              const viewUrl = base64ToBlobUrl(ev.data, ev.type);
-                              return (
-                                <div
-                                  key={idx}
-                                  className="flex items-center justify-between gap-2 w-full p-2 bg-white border border-purple-100 rounded-lg mt-1"
-                                >
-                                  <span className="text-purple-700 truncate text-xs font-medium">
-                                    {ev.fileName}
-                                  </span>
-                                  <div className="flex items-center gap-1 flex-shrink-0">
-                                    <a
-                                      href={viewUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="p-1 text-gray-500 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
-                                    >
-                                      <Eye className="w-3.5 h-3.5" />
-                                    </a>
-                                    <a
-                                      href={ev.data}
-                                      download={ev.fileName}
-                                      className="p-1 text-gray-500 hover:text-green-600 rounded-md hover:bg-green-50 transition-colors"
-                                    >
-                                      <Download className="w-3.5 h-3.5" />
-                                    </a>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* View Button */}
-                      <div className="flex gap-3">
-                        <button
-                          onClick={() => handleView(off)}
-                          className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
-                        >
-                          View
-                        </button>
-                      </div>
-                    </div>
-                  )
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center justify-center py-10 text-gray-500 italic">
-              {isLoading
-                ? "Loading offenses..."
-                : searchQuery
-                ? "No matching offense records found."
-                : "No offense records found."}
-            </div>
-          )}
-        </div>
+        <CasesInProgress
+          offenses={filteredOffensesForList}
+          searchQuery={searchQuery}
+          onSearchChange={(e) => setSearchQuery(e.target.value)}
+          onView={handleView}
+          isLoading={isLoading}
+          formatDisplayDate={formatDisplayDate}
+        />
       </div>
 
       {/* --- CASE HISTORY --- */}
-      <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
-            </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
-              Case History
-            </h3>
-          </div>
-          <span className="bg-green-100 text-green-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
-            {resolvedOffenses.length} Records
-          </span>
-        </div>
-
-        {/* Filters for History */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          {/* Search Bar */}
-          <div className="md:col-span-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                value={historySearchQuery}
-                onChange={(e) => setHistorySearchQuery(e.target.value)}
-                placeholder="Search history..."
-                className="w-full pl-10 pr-4 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-green-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm sm:text-base"
-              />
-            </div>
-          </div>
-
-          {/* Date Filters */}
-          <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <input
-              type="date"
-              value={historyStartDate}
-              onChange={(e) => setHistoryStartDate(e.target.value)}
-              max={historyEndDate || today} // Cannot be after end date or today
-              className="w-full px-4 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-green-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-              title="Start Date"
-            />
-            <input
-              type="date"
-              value={historyEndDate}
-              onChange={(e) => setHistoryEndDate(e.target.value)}
-              min={historyStartDate} // Cannot be before start date
-              max={today} // Cannot be in the future
-              className="w-full px-4 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-green-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-              title="End Date"
-            />
-            <button
-              onClick={handleHistoryDateReset}
-              className="flex items-center justify-center gap-1 sm:col-start-3 p-3 bg-gray-100 text-gray-600 rounded-2xl hover:bg-gray-200 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!historyStartDate && !historyEndDate}
-              title="Clear Dates"
-            >
-              <ClearIcon className="w-4 h-4" /> Clear Dates
-            </button>
-          </div>
-        </div>
-
-        {resolvedOffenses.length > 0 ? (
-          <div className="w-full overflow-x-auto overflow-y-auto max-h-200">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200 text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                  <th className="p-4 whitespace-nowrap">Date</th>
-                  <th className="p-4 whitespace-nowrap">Offense Type</th>
-                  <th className="p-4 whitespace-nowrap">Level</th>
-                  <th className="p-4 whitespace-nowrap">Status</th>
-                  <th className="p-4 whitespace-nowrap">Action Taken</th>
-                  <th className="p-4 whitespace-nowrap">Evidence</th>
-                  <th className="p-4 whitespace-nowrap">Remarks</th>
-                </tr>
-              </thead>
-              <tbody>
-                {resolvedOffenses.map((off) => (
-                  <tr
-                    key={off._id}
-                    className="border-b border-gray-100 hover:bg-gray-50"
-                  >
-                    <td className="p-4 text-sm text-gray-600">
-                      {formatDisplayDate(off.dateOfOffense)}
-                    </td>
-                    <td className="p-4 text-sm text-gray-600">
-                      {off.offenseType}
-                    </td>
-                    <td className="p-4 text-sm text-gray-600">
-                      {off.offenseLevel || "N/A"}
-                    </td>
-                    <td className="p-4">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          off.status === "Closed"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-200 text-gray-600"
-                        }`}
-                      >
-                        {off.status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-sm text-gray-600">
-                      {off.actionTaken}
-                    </td>
-
-                    {/* Evidence Column with icons */}
-                    <td className="p-4 text-sm text-gray-600">
-                      {off.evidence && off.evidence.length > 0 ? (
-                        <div className="flex flex-col items-start gap-2">
-                          {off.evidence.map((ev, idx) => {
-                            const viewUrl = base64ToBlobUrl(ev.data, ev.type);
-                            return (
-                              <div
-                                key={idx}
-                                className="flex items-center gap-2"
-                              >
-                                <span className="truncate" title={ev.fileName}>
-                                  {ev.fileName}
-                                </span>
-                                <a
-                                  href={viewUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="p-1 text-gray-500 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
-                                  title="View"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </a>
-                                <a
-                                  href={ev.data}
-                                  download={ev.fileName}
-                                  className="p-1 text-gray-500 hover:text-green-600 rounded-md hover:bg-green-50 transition-colors"
-                                  title="Download"
-                                >
-                                  <Download className="w-4 h-4" />
-                                </a>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    {/* End of Evidence Column */}
-
-                    <td className="p-4 text-sm text-gray-600">
-                      {off.remarks || "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="flex items-center justify-center py-10 text-gray-500 italic">
-            {isLoading
-              ? "Loading history..."
-              : historySearchQuery || historyStartDate || historyEndDate // Check if any filter is active
-              ? "No matching history records found for the selected filters."
-              : "No resolved offense records found."}
-          </div>
-        )}
-      </div>
+      <CaseHistory
+        offenses={resolvedOffensesForHistory}
+        filters={{
+          searchQuery: historySearchQuery,
+          startDate: historyStartDate,
+          endDate: historyEndDate,
+        }}
+        setFilters={{
+          setSearchQuery: setHistorySearchQuery,
+          setStartDate: setHistoryStartDate,
+          setEndDate: setHistoryEndDate,
+        }}
+        onDateReset={handleHistoryDateReset}
+        isLoading={isLoading}
+        formatDisplayDate={formatDisplayDate}
+        today={today}
+        onView={handleView}
+      />
     </div>
   );
 };

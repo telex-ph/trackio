@@ -13,34 +13,6 @@ import Notification from "../../components/incident-reports/Notification";
 import { useStore } from "../../store/useStore";
 
 // -----------------------------
-// Helper Utilities
-// -----------------------------
-const base64ToBlobUrl = (base64) => {
-  try {
-    // Fix wrong MIME type
-    base64 = base64.replace("image/pndg", "image/png");
-
-    const [prefix, data] = base64.split(",");
-    if (!data) return base64;
-
-    const mime = prefix.match(/data:(.*);base64/)[1];
-
-    const binary = atob(data);
-    const bytes = new Uint8Array(binary.length);
-
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-
-    const blob = new Blob([bytes], { type: mime });
-    return URL.createObjectURL(blob);
-  } catch (err) {
-    console.error("Failed to convert base64:", err);
-    return base64;
-  }
-};
-
-// -----------------------------
 // Component
 // -----------------------------
 const SharedCreateOffences = () => {
@@ -197,46 +169,57 @@ const SharedCreateOffences = () => {
     }
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append("agentName", formData.agentName);
-      formDataToSend.append("employeeId", formData.employeeId || "");
-      formDataToSend.append("agentRole", formData.agentRole || "");
-      formDataToSend.append("offenseCategory", formData.offenseCategory);
-      formDataToSend.append("offenseLevel", formData.offenseLevel || "");
-      formDataToSend.append("dateOfOffense", formData.dateOfOffense);
-      formDataToSend.append("status", formData.status || "");
-      formDataToSend.append("remarks", formData.remarks || "");
+      setIsLoading(true);
+      const payload = { ...formData };
+      delete payload.isRead;
 
+      // Upload to Cloudinary instead of converting to Base64
       if (selectedFile) {
-        formDataToSend.append("files", selectedFile); // <-- this matches backend multer
+        console.log("Evidence FIle: ", selectedFile);
+
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+
+        const uploadRes = await api.post("/upload/evidence", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+
+        console.log(uploadRes.data);
+
+        payload.evidence = [
+          {
+            fileName: uploadRes.data.fileName,
+            size: uploadRes.data.size,
+            type: uploadRes.data.type,
+            url: uploadRes.data.url,
+            public_id: uploadRes.data.public_id,
+          },
+        ];
       }
 
       if (panelMode === "edit") {
-        await api.put(`/offenses/${editingId}`, formDataToSend, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        await api.put(`/offenses/${editingId}`, payload);
+        showNotification("Offense updated!", "success");
       } else {
-        await api.post("/offenses", formDataToSend, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        await api.post("/offenses", payload);
+        showNotification("Offense created!", "success");
       }
-
-      showNotification(
-        panelMode === "edit" ? "Offense updated!" : "Offense created!",
-        "success"
-      );
 
       resetFormAndPanel();
       fetchTeamOffenses();
     } catch (err) {
       console.error("Submit error", err);
       showNotification("Failed to submit offense", "error");
+    } finally {
+      setIsLoading(false);
     }
   }, [
     formData,
-    selectedFile,
     panelMode,
     editingId,
+    selectedFile,
     resetFormAndPanel,
     fetchTeamOffenses,
     showNotification,
@@ -303,8 +286,13 @@ const SharedCreateOffences = () => {
     }
   };
 
-  const formatDisplayDate = (d) =>
-    d ? DateTime.fromISO(d).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY) : "";
+  const formatDisplayDate = useCallback(
+    (d) =>
+      d
+        ? DateTime.fromISO(d).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)
+        : "",
+    []
+  );
 
   const handleHistoryDateReset = () => {
     setHistoryStartDate("");
@@ -371,7 +359,14 @@ const SharedCreateOffences = () => {
 
       return (!start || offenseDate >= start) && (!end || offenseDate <= end);
     });
-  }, [safeOffenses, historySearchQuery, historyStartDate, historyEndDate]);
+  }, [
+    safeOffenses,
+    historySearchQuery,
+    historyStartDate,
+    historyEndDate,
+    loggedUser,
+    formatDisplayDate,
+  ]);
 
   // -----------------------------
   // Render
@@ -416,6 +411,7 @@ const SharedCreateOffences = () => {
               resetForm={resetFormAndPanel}
               handleSubmit={handleSubmit}
               showNotification={showNotification}
+              isLoading={isLoading}
             />
           ) : (
             <OffenseDetails
@@ -424,7 +420,6 @@ const SharedCreateOffences = () => {
               onClose={resetFormAndPanel}
               onDelete={handleDelete}
               formatDisplayDate={formatDisplayDate}
-              base64ToBlobUrl={base64ToBlobUrl}
               onEditClick={() => handleEditClick(formData)}
             />
           )}
@@ -437,7 +432,6 @@ const SharedCreateOffences = () => {
           onView={handleView}
           isLoading={isLoading}
           formatDisplayDate={formatDisplayDate}
-          base64ToBlobUrl={base64ToBlobUrl}
         />
       </div>
 
@@ -456,7 +450,6 @@ const SharedCreateOffences = () => {
         onDateReset={handleHistoryDateReset}
         isLoading={isLoading}
         formatDisplayDate={formatDisplayDate}
-        base64ToBlobUrl={base64ToBlobUrl}
         today={today}
         onView={handleView}
       />
