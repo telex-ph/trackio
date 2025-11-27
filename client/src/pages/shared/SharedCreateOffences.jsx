@@ -173,7 +173,6 @@ const SharedCreateOffences = () => {
       const payload = { ...formData };
       delete payload.isRead;
 
-      // Upload to Cloudinary instead of converting to Base64
       if (selectedFile) {
         console.log("Evidence FIle: ", selectedFile);
 
