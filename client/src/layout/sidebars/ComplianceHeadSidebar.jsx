@@ -147,6 +147,13 @@ const ComplianceHeadSidebar = ({
         }
         isCollapsed={isCollapsed}
       />
+      <SidebarLink
+        to={`/compliance-head/reported-ir`}
+        icon={GalleryVerticalEnd}
+        label="Reported IR"
+        isCollapsed={isCollapsed}
+        badge={!isCollapsed ? unreadOffenses : 0}
+      />
     </CustomCollapse>
     <SidebarLink
       to="/compliance-head/account-management"
