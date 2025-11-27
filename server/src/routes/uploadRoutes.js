@@ -1,111 +1,72 @@
 import express from "express";
 import multer from "multer";
 import cloudUpload from "../config/cloudinary.js";
+import crypto from "crypto";
+import path from "path";
 
 const router = express.Router();
 
-// Use memory storage for multer
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
+// Multer memory storage
+const upload = multer({ storage: multer.memoryStorage() });
 
-router.post("/evidence", upload.single("file"), async (req, res) => {
+// Supported folder types
+const folderMap = {
+  evidence: "trackio/offense/evidence",
+  nte: "trackio/offense/NTE",
+  mom: "trackio/offense/MOM",
+  nda: "trackio/offense/NDA",
+};
+
+// Reusable upload handler
+async function handleUpload(req, res, folder) {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
+    const originalName = req.file.originalname;
+    const ext = path.extname(originalName); // .png / .pdf / .mp4
+    const baseName = path.basename(originalName, ext);
+
+    // Ensures uniqueness (prevents overwrite)
+    const uniqueSuffix = crypto.randomBytes(4).toString("hex");
+
+    const publicId = `${baseName}-${uniqueSuffix}`;
+
     // Upload buffer to Cloudinary
     const result = await cloudUpload(req.file.buffer, {
-      folder: "trackio/offense/evidence",
+      folder,
       resource_type: "auto",
+      public_id: publicId,
+      format: ext.replace(".", ""),
     });
 
     res.json({
       url: result.secure_url,
       public_id: result.public_id,
-      fileName: req.file.originalname,
+      fileName: originalName,
       size: req.file.size,
       type: req.file.mimetype,
     });
   } catch (err) {
     console.error("Cloudinary upload error:", err);
-    res.status(500).json({ message: "Cloudinary upload failed", error: err.message });
+    res.status(500).json({
+      message: "Cloudinary upload failed",
+      error: err.message,
+    });
   }
-});
+}
 
-router.post("/nte", upload.single("file"), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
-    }
+// Dynamic route — one function handles all your endpoints
+router.post("/:type", upload.single("file"), async (req, res) => {
+  const { type } = req.params;
+  const folder = folderMap[type];
 
-    // Upload buffer to Cloudinary
-    const result = await cloudUpload(req.file.buffer, {
-      folder: "trackio/offense/NTE",
-      resource_type: "auto",
-    });
-
-    res.json({
-      url: result.secure_url,
-      public_id: result.public_id,
-      fileName: req.file.originalname,
-      size: req.file.size,
-      type: req.file.mimetype,
-    });
-  } catch (err) {
-    console.error("Cloudinary upload error:", err);
-    res.status(500).json({ message: "Cloudinary upload failed", error: err.message });
+  if (!folder) {
+    return res.status(400).json({ message: "Invalid upload type" });
   }
-});
 
-router.post("/mom", upload.single("file"), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
-    }
-
-    // Upload buffer to Cloudinary
-    const result = await cloudUpload(req.file.buffer, {
-      folder: "trackio/offense/MOM",
-      resource_type: "auto",
-    });
-
-    res.json({
-      url: result.secure_url,
-      public_id: result.public_id,
-      fileName: req.file.originalname,
-      size: req.file.size,
-      type: req.file.mimetype,
-    });
-  } catch (err) {
-    console.error("Cloudinary upload error:", err);
-    res.status(500).json({ message: "Cloudinary upload failed", error: err.message });
-  }
-});
-
-router.post("/nda", upload.single("file"), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
-    }
-
-    // Upload buffer to Cloudinary
-    const result = await cloudUpload(req.file.buffer, {
-      folder: "trackio/offense/NDA",
-      resource_type: "auto",
-    });
-
-    res.json({
-      url: result.secure_url,
-      public_id: result.public_id,
-      fileName: req.file.originalname,
-      size: req.file.size,
-      type: req.file.mimetype,
-    });
-  } catch (err) {
-    console.error("Cloudinary upload error:", err);
-    res.status(500).json({ message: "Cloudinary upload failed", error: err.message });
-  }
+  handleUpload(req, res, folder);
 });
 
 export default router;
