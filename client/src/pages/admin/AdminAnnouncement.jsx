@@ -277,6 +277,7 @@ const AdminAnnouncement = () => {
       });
       
       showNotification("New announcement posted!", "success");
+
     };
 
     // Listen for announcement updates
@@ -410,6 +411,10 @@ const AdminAnnouncement = () => {
 
   const showNotification = (message, type) => {
     setNotification({ message, type, isVisible: true });
+
+    setTimeout(() => {
+      setNotification({ message: "", type, isVisible: false }); 
+    }, 5000);
   };
 
   const handleViewDetails = async (announcement) => {

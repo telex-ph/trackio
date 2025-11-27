@@ -31,7 +31,6 @@ import {
   getPersistentUserDepartment,
 } from "../../utils/announcementUtils";
 
-// ✅ ADDED: Import DateTime for real-time time handling
 import { DateTime } from "luxon";
 
 const getUniqueViewers = (announcement) => {
@@ -1000,16 +999,12 @@ const AgentDashboard = () => {
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent flex items-center">
               <div className="text-white p-4 sm:p-6 lg:p-8">
-                {/* ✅ ADDED: REAL-TIME TIME IN HEADER */}
                 <div className="mt-2 text-xs sm:text-sm opacity-80 flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
-                  Live: {currentTime.toFormat('HH:mm:ss')} • {currentTime.toFormat('MMM dd, yyyy')}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Top Cards Section - RESPONSIVE GRID */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
             <div className="min-w-0">
               <PaydayCard />
@@ -1019,7 +1014,6 @@ const AgentDashboard = () => {
             </div>
           </div>
 
-          {/* Announcements Section - FIXED SCROLLING */}
           <div className="bg-gradient-to-br from-white via-gray-50/80 to-blue-50/30 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-xl border border-gray-200/60 relative overflow-hidden backdrop-blur-sm">
             <div className="absolute top-0 left-0 w-full h-full">
               <div className="absolute top-2 sm:top-4 lg:top-6 right-2 sm:right-4 lg:right-6 w-8 sm:w-12 lg:w-16 xl:w-24 h-8 sm:h-12 lg:h-16 xl:h-24 bg-gradient-to-r from-blue-400/15 to-purple-400/10 rounded-full blur-lg sm:blur-xl lg:blur-2xl animate-pulse"></div>
@@ -1041,7 +1035,6 @@ const AgentDashboard = () => {
                       <p className="text-xs sm:text-sm lg:text-base text-gray-500 font-medium mt-1">
                         Latest updates from different departments
                       </p>
-                      {/* ✅ ADDED: REAL-TIME UPDATE INDICATOR */}
                       <div className="flex items-center gap-2 mt-1">
                         <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium flex items-center gap-1">
                           <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
@@ -1234,7 +1227,6 @@ const AgentDashboard = () => {
           </div>
         </div>
 
-        {/* Right Column - Daily Records Card - FIXED RESPONSIVE */}
         <div className={`w-full lg:w-80 xl:w-96 2xl:w-[28rem] p-2 sm:p-3 lg:p-4 flex-shrink-0 order-2 lg:order-2 ${isMobileMenuOpen ? 'block' : 'hidden lg:block'}`}>
           <div className="sticky top-4">
             <DailyRecordsCard />

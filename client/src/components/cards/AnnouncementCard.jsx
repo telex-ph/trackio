@@ -95,7 +95,7 @@ const AnnouncementCard = ({
     onLike,
     hasLiked,
     currentUserId,
-    socket, // ADD SOCKET PROP HERE
+    socket, 
 }) => {
     const formatDisplayDate = (isoDateStr) => {
       if (!isoDateStr) return "";
@@ -193,11 +193,9 @@ const AnnouncementCard = ({
         socket.emit('add-view', viewData);
       }
       
-      // Call the original onReadMore function
       onReadMore(announcement);
     };
 
-    // Handle Like with socket emission
     const handleLike = (e) => {
       e.stopPropagation();
       
@@ -205,7 +203,7 @@ const AnnouncementCard = ({
       
       console.log('❤️ Like clicked for announcement:', announcement._id);
       
-      // Emit like event via socket
+
       if (socket) {
         const likeData = {
           announcementId: announcement._id,
@@ -217,7 +215,6 @@ const AnnouncementCard = ({
         socket.emit('toggle-like', likeData);
       }
       
-      // Call the original onLike function
       onLike(announcement._id, currentUserId);
     };
 
@@ -358,10 +355,13 @@ const AnnouncementCard = ({
               </button>
             </div>
 
-            {/* Read More Button */}
             <button
               onClick={handleReadMore}
-              className="w-auto bg-gradient-to-r from-[#ff0b0b] via-[#c11112] to-[#60020c] text-white py-2 px-4 rounded-[20px] text-sm font-medium hover:from-[#c11112] hover:via-[#ff0b0b] hover:to-[#c11112] transition-all duration-300 hover:shadow-lg flex items-center gap-2 group/readmore"
+              className="w-auto bg-gradient-to-r from-[#ff0b0b] 
+              via-[#c11112] to-[#60020c] text-white py-2 px-4 
+              rounded-[20px] text-sm font-medium hover:from-[#c11112] 
+              hover:via-[#ff0b0b] hover:to-[#c11112] transition-all 
+              duration-300 hover:shadow-lg flex items-center gap-2 group/readmore"
             >
               <span>Read More</span>
               <ArrowUpRight className="w-4 h-4 group-hover/readmore:translate-x-0.5 group-hover/readmore:-translate-y-0.5 transition-transform" />
