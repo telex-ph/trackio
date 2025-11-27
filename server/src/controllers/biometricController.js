@@ -102,6 +102,9 @@ export const getEvents = async (req, res) => {
               const totalBreak = attendance.totalBreak || 0;
               const status = attendance.status;
 
+              const shiftStart = DateTime.fromJSDate(attendance.shiftStart, {
+                zone: "utc",
+              });
               const shiftEnd = DateTime.fromJSDate(attendance.shiftEnd, {
                 zone: "utc",
               });
@@ -149,6 +152,13 @@ export const getEvents = async (req, res) => {
                 }
 
                 if (status === STATUS.WORKING) {
+                  // Ignore breaks if the employee is not yet on shift
+                  if (nowTime < shiftStart) {
+                    console.log(
+                      `Ignoring event at ${IP.BIO_OUT}: Employee ${ac.name} attempted BIO_OUT while not yet on shift.`
+                    );
+                    // return res.status(200).send("OK");
+                  }
                   console.log(
                     `Employee ${ac.name} is WORKING, processing break-in`
                   );
