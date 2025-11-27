@@ -66,7 +66,7 @@ const CalendarDay = ({ date, readOnly, handleRightClick, handleDateClick }) => {
             </span>
           </div>
 
-          <div className="flex items-start gap-1 w-full italic text-light">
+          <div className="flex items-start gap-1 w-full italic">
             <span
               title={`${schedule?.user?.firstName} ${schedule?.user?.lastName}`}
               className="text-xs! ml-auto w-min truncate"
@@ -77,7 +77,7 @@ const CalendarDay = ({ date, readOnly, handleRightClick, handleDateClick }) => {
           <div className="flex gap-1 w-full italic">
             <span
               title={`${schedule?.updatedAt}`}
-              className="text-xs! ml-auto w-min truncate text-light"
+              className="text-xs! ml-auto w-min truncate"
             >
               {schedule?.updatedAt
                 ? `at ${dateFormatter(
@@ -119,7 +119,7 @@ const CalendarDay = ({ date, readOnly, handleRightClick, handleDateClick }) => {
           <div className="flex gap-1 w-full italic">
             <span
               title={`${schedule?.user?.firstName} ${schedule?.user?.lastName}`}
-              className="text-xs! ml-auto w-min truncate text-light"
+              className="text-xs! ml-auto w-min truncate"
             >
               Updated by: {schedule?.user?.firstName} {schedule?.user?.lastName}
             </span>
@@ -127,7 +127,7 @@ const CalendarDay = ({ date, readOnly, handleRightClick, handleDateClick }) => {
           <div className="flex gap-1 w-full italic">
             <span
               title={`${schedule?.updatedAt}`}
-              className="text-xs! ml-auto w-min truncate text-light"
+              className="text-xs! ml-auto w-min truncate"
             >
               {schedule?.updatedAt
                 ? `at ${dateFormatter(
@@ -170,7 +170,7 @@ const CalendarDay = ({ date, readOnly, handleRightClick, handleDateClick }) => {
           <div className="flex items-start gap-1 w-full italic">
             <span
               title={`${schedule?.user?.firstName} ${schedule?.user?.lastName}`}
-              className="text-xs! ml-auto w-min truncate text-light"
+              className="text-xs! ml-auto w-min truncate"
             >
               Updated by: {schedule?.user?.firstName} {schedule?.user?.lastName}
             </span>
@@ -178,7 +178,7 @@ const CalendarDay = ({ date, readOnly, handleRightClick, handleDateClick }) => {
           <div className="flex items-start gap-1 w-full italic">
             <span
               title={`${schedule?.updatedAt}`}
-              className="text-xs! ml-auto w-min truncate text-light"
+              className="text-xs! ml-auto w-min truncate"
             >
               {schedule?.updatedAt
                 ? `at ${dateFormatter(
