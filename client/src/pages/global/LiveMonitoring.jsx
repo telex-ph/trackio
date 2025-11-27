@@ -123,7 +123,8 @@ export default function LiveBreaks() {
           <h2 className="mb-4 text-gray-700 border p-2 border-light bg-gray-50 rounded-md">
             Live On Break (max: 1hr 30min)
           </h2>
-          <section className="grid grid-cols-4 grid-rows-10 grid-flow-col gap-3">
+          {/* <section className="grid grid-cols-4 grid-rows-10 grid-flow-col gap-3"> */}
+          <section className="grid grid-cols-1 grid-rows-10 lg:grid-cols-4 lg:grid-flow-col gap-3">
             <AnimatePresence mode="popLayout">
               {onBreakStatuses.map((status, key) => (
                 <motion.div
@@ -140,18 +141,18 @@ export default function LiveBreaks() {
                   ></div>
                   <div className="w-full flex items-center gap-2 px-7 relative z-10">
                     <div className="flex gap-3">
-                      <h4>{key + 1}</h4>
-                      <h4 className="flex-1 text-center">
+                      <p>{key + 1}</p>
+                      <span className="flex-1 text-center font-bold">
                         {status.firstName} {status.lastName}
-                      </h4>
+                      </span>
                     </div>
-                    <h4 className="text-center flex-1">
+                    <span className="text-center flex-1">
                       {status?.percentage <= 0
                         ? 0.0
                         : status?.percentage.toFixed(1)}
                       %
-                    </h4>
-                    <h4>{status.formattedTime}</h4>
+                    </span>
+                    <span>{status.formattedTime}</span>
                   </div>
                 </motion.div>
               ))}
@@ -163,7 +164,8 @@ export default function LiveBreaks() {
           <h2 className="mb-4 text-gray-700 border p-2 border-light bg-gray-50 rounded-md">
             Live Over Break
           </h2>
-          <section className="grid grid-cols-4 grid-rows-10 grid-flow-col gap-3">
+          {/* <section className="grid grid-cols-4 grid-rows-10 grid-flow-col gap-3"> */}
+          <section className="grid grid-cols-1 grid-rows-10 lg:grid-cols-4 lg:grid-flow-col gap-3">
             <AnimatePresence mode="popLayout">
               {overBreaks.map((status, key) => (
                 <motion.div
@@ -176,12 +178,12 @@ export default function LiveBreaks() {
                 >
                   <div className="w-full flex items-center gap-2 px-7 relative z-10">
                     <div className="flex gap-3">
-                      <h4>{key + 1})</h4>
-                      <h4 className="flex-1 text-center">
+                      <p>{key + 1})</p>
+                      <span className="flex-1 text-center font-bold">
                         {status.firstName} {status.lastName}
-                      </h4>
+                      </span>
                     </div>
-                    <h4>{formatMilliseconds(status?.totalBreakTime)}</h4>
+                    <span>{formatMilliseconds(status?.totalBreakTime)}</span>
                   </div>
                 </motion.div>
               ))}
