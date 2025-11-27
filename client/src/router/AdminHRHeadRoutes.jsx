@@ -68,11 +68,11 @@ const ADMIN_HR_HEAD_ROUTES = [
   { path: "account-settings", element: <SharedSettings /> },
   {
     path: "offenses",
-    element: <TeamLeaderCreateOffenses />,
+    element: <TeamLeaderOffenses />,
   },
   {
     path: "createoffense",
-    element: <TeamLeaderOffenses />,
+    element: <TeamLeaderCreateOffenses />,
   },
   {
     path: "reported-ir",
