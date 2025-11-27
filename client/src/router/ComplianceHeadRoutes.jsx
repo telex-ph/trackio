@@ -27,6 +27,7 @@ import SharedTicketAnalytics from "../pages/shared/SharedTicketAnalytics";
 import TicketLayout from "../layout/TicketLayout";
 import TeamLeaderOffenses from "../pages/team-leader/TeamLeaderOffenses";
 import TeamLeaderCreateOffenses from "../pages/team-leader/TeamLeaderCreateOffense";
+import HRReportedOffenses from "../pages/hr/HRReportedOffenses";
 
 const COMPLIANCE_HEAD_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -72,6 +73,10 @@ const COMPLIANCE_HEAD_ROUTES = [
   {
     path: "createoffense",
     element: <TeamLeaderCreateOffenses />,
+  },
+  {
+    path: "reported-ir",
+    element: <HRReportedOffenses />,
   },
   {
     path: "ticket",
