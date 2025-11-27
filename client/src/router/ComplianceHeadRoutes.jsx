@@ -75,10 +75,6 @@ const COMPLIANCE_HEAD_ROUTES = [
     element: <TeamLeaderCreateOffenses />,
   },
   {
-    path: "reported-ir",
-    element: <HRReportedOffenses />,
-  },
-  {
     path: "ticket",
     element: <TicketLayout role={Roles.COMPLIANCE} />,
     children: [
