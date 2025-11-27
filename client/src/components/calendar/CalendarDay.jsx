@@ -1,5 +1,6 @@
 import SCHEDULE from "../../constants/schedule";
 import {
+  Building,
   BriefcaseBusiness,
   Hamburger,
   BedDouble,
@@ -31,7 +32,7 @@ const CalendarDay = ({ date, readOnly, handleRightClick, handleDateClick }) => {
     case SCHEDULE.WORK_DAY:
       return (
         <section
-          className="flex flex-col gap-2"
+          className="relative flex flex-col h-full"
           onContextMenu={handleRightClick}
           onClick={() => {
             handleDateClick(date);
@@ -40,6 +41,10 @@ const CalendarDay = ({ date, readOnly, handleRightClick, handleDateClick }) => {
           <div className="flex justify-between">
             <span className="text-start">{formmatedDay}</span>
             <span className="font-bold">{schedule.type || "---"}</span>
+          </div>
+
+          <div className="h-full w-full absolute inset-0 flex justify-center items-center">
+            <Building className="h-8 w-8" />
           </div>
 
           {/* Shift time */}
@@ -51,28 +56,17 @@ const CalendarDay = ({ date, readOnly, handleRightClick, handleDateClick }) => {
             </span>
           </div>
 
-          {/* Meal time */}
-          {schedule.mealStart && schedule.mealEnd && (
-            <div className="flex items-center gap-1 text-sm">
-              <Hamburger className="w-4 h-4" />
-              <span>
-                {dateFormatter(schedule.mealStart, "hh:mm a")} :{" "}
-                {dateFormatter(schedule.mealEnd, "hh:mm a")}
-              </span>
-            </div>
-          )}
-
-          <div className="flex items-center gap-1 w-full">
+          <div className="flex items-end gap-1 w-full h-full mt-16">
             <StickyNote className="w-4 h-4" />
             <span
               title={schedule.notes}
-              className="text-xs! w-min truncate flex-1"
+              className="text-xs! w-min truncate flex-1 text-left"
             >
               {schedule.notes || "---"}
             </span>
           </div>
 
-          <div className="flex items-start gap-1 w-full mt-3">
+          <div className="flex items-start gap-1 w-full italic text-light">
             <span
               title={`${schedule?.user?.firstName} ${schedule?.user?.lastName}`}
               className="text-xs! ml-auto w-min truncate"
@@ -80,12 +74,25 @@ const CalendarDay = ({ date, readOnly, handleRightClick, handleDateClick }) => {
               Updated by: {schedule?.user?.firstName} {schedule?.user?.lastName}
             </span>
           </div>
+          <div className="flex gap-1 w-full italic">
+            <span
+              title={`${schedule?.updatedAt}`}
+              className="text-xs! ml-auto w-min truncate text-light"
+            >
+              {schedule?.updatedAt
+                ? `at ${dateFormatter(
+                    schedule?.updatedAt,
+                    "yyyy-MM-dd hh:mm a"
+                  )}`
+                : ""}
+            </span>
+          </div>
         </section>
       );
     case SCHEDULE.REST_DAY:
       return (
         <section
-          className="relative flex flex-col h-full justify-between items-end"
+          className="relative flex flex-col justify-evenly h-full"
           onContextMenu={handleRightClick}
           onClick={() => {
             handleDateClick(date);
@@ -100,21 +107,34 @@ const CalendarDay = ({ date, readOnly, handleRightClick, handleDateClick }) => {
             <BedDouble className="h-8 w-8" />
           </div>
 
-          <div className="flex items-end gap-1 h-full w-full">
+          <div className="flex gap-1 items-end w-full h-full mt-16">
             <StickyNote className="w-4 h-4" />
             <span
               title={schedule.notes}
-              className="text-xs! w-min truncate flex-1"
+              className="text-xs! w-min truncate flex-1 text-left"
             >
-              {schedule.notes || "---"}
+              {schedule.notes || ""}
             </span>
           </div>
-          <div className="flex items-start gap-1 w-full mt-3">
+          <div className="flex gap-1 w-full italic">
             <span
               title={`${schedule?.user?.firstName} ${schedule?.user?.lastName}`}
-              className="text-xs! ml-auto w-min truncate"
+              className="text-xs! ml-auto w-min truncate text-light"
             >
               Updated by: {schedule?.user?.firstName} {schedule?.user?.lastName}
+            </span>
+          </div>
+          <div className="flex gap-1 w-full italic">
+            <span
+              title={`${schedule?.updatedAt}`}
+              className="text-xs! ml-auto w-min truncate text-light"
+            >
+              {schedule?.updatedAt
+                ? `at ${dateFormatter(
+                    schedule?.updatedAt,
+                    "yyyy-MM-dd hh:mm a"
+                  )}`
+                : ""}
             </span>
           </div>
         </section>
@@ -137,22 +157,35 @@ const CalendarDay = ({ date, readOnly, handleRightClick, handleDateClick }) => {
             <TentTree className="h-8 w-8" />
           </div>
 
-          <div className="flex items-end gap-1 w-full h-full mt-3">
+          <div className="flex items-end gap-1 w-full h-full mt-16">
             <StickyNote className="w-4 h-4" />
             <span
               title={schedule.notes}
-              className="text-xs! w-min truncate flex-1"
+              className="text-xs! w-min truncate flex-1 text-left"
             >
               {schedule.notes || "---"}
             </span>
           </div>
 
-          <div className="flex items-start gap-1 w-full">
+          <div className="flex items-start gap-1 w-full italic">
             <span
               title={`${schedule?.user?.firstName} ${schedule?.user?.lastName}`}
-              className="text-xs! ml-auto w-min truncate"
+              className="text-xs! ml-auto w-min truncate text-light"
             >
               Updated by: {schedule?.user?.firstName} {schedule?.user?.lastName}
+            </span>
+          </div>
+          <div className="flex items-start gap-1 w-full italic">
+            <span
+              title={`${schedule?.updatedAt}`}
+              className="text-xs! ml-auto w-min truncate text-light"
+            >
+              {schedule?.updatedAt
+                ? `at ${dateFormatter(
+                    schedule?.updatedAt,
+                    "yyyy-MM-dd hh:mm a"
+                  )}`
+                : ""}
             </span>
           </div>
         </section>

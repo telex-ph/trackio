@@ -174,7 +174,11 @@ const Calendar = ({ handleBtnsClick, loading, readOnly = false }) => {
   };
 
   return (
-    <div className="w-full mx-auto rounded-md" onClick={handleCloseMenu}>
+    <div
+      className="mx-auto rounded-md overflow-x-scroll"
+      onClick={handleCloseMenu}
+      style={{ width: "100%", minWidth: "80rem" }}
+    >
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
         <div className="flex items-center gap-2">
