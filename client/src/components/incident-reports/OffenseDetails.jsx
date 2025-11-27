@@ -7,6 +7,7 @@ const OffenseDetails = ({
   onClose,
   onDelete,
   formatDisplayDate,
+  loggedUser,
 }) => {
   return (
     <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
@@ -126,7 +127,7 @@ const OffenseDetails = ({
                   return (
                     <div key={idx} className="flex flex-col gap-3">
                       <div className="flex items-center gap-2 min-w-0">
-                        <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                        <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 shrink-0" />
                         <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
                           {nte.fileName}
                         </p>
@@ -160,6 +161,8 @@ const OffenseDetails = ({
             "Respondent Explained",
             "Scheduled for hearing",
             "Respondent Explained",
+            "MOM Uploaded",
+            "For Acknowledgement",
             "Acknowledged",
           ].includes(formData.status) && (
             <div className="space-y-2">
@@ -174,7 +177,8 @@ const OffenseDetails = ({
 
           {formData.fileMOM &&
             formData.fileMOM.length > 0 &&
-            formData.fileNDA.length > 0 && (
+            formData.respondantId?.some((w) => w._id === loggedUser._id) &&
+            formData.respondantId !== loggedUser._id && (
               <div>
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Minutes of the meeting
@@ -185,7 +189,7 @@ const OffenseDetails = ({
                     return (
                       <div key={idx} className="flex flex-col gap-3">
                         <div className="flex items-center gap-2 min-w-0">
-                          <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                          <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 shrink-0" />
                           <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
                             {mom.fileName}
                           </p>
@@ -213,6 +217,13 @@ const OffenseDetails = ({
                     );
                   })}
                 </div>
+              </div>
+            )}
+          {formData.fileNDA &&
+            formData.fileNDA.length > 0 &&
+            formData.witnesses?.some((w) => w._id === loggedUser._id) &&
+            formData.respondantId === loggedUser._id && (
+              <div>
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Notice of Disciplinary Action
                 </label>
@@ -222,7 +233,7 @@ const OffenseDetails = ({
                     return (
                       <div key={idx} className="flex flex-col gap-3">
                         <div className="flex items-center gap-2 min-w-0">
-                          <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                          <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 shrink-0" />
                           <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
                             {nda.fileName}
                           </p>

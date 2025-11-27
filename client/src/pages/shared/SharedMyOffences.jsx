@@ -302,6 +302,10 @@ const SharedMyOffences = () => {
 
     setRespondentHasExplanation(!!off.respondantExplanation);
 
+    const [isRespondantNDA, setIsRespondantNDA] = useState(
+      off.respondantId === loggedUser._id
+    );
+
     try {
       // Fetch the latest offense data
       const { data: offense } = await api.get(`/offenses/${off._id}`);
@@ -338,18 +342,17 @@ const SharedMyOffences = () => {
     [offenses]
   );
 
-  const filteredOffensesForList = useMemo(() => {
-    return safeOffenses.filter((off) => {
-      console.log("Respondant", off.respondantId);
-      console.log("Logged user", loggedUser._id);
+  const filteredOffenses = safeOffenses.filter((off) => {
+    const isInvolved =
+      off.respondantId === loggedUser._id ||
+      off.witnesses?.some((w) => w._id === loggedUser._id);
 
-      if (
-        off.respondantId !== loggedUser._id ||
-        off.witnesses?.some((w) => w._id === loggedUser._id)
-      )
-        return false;
-      if (["Pending Review", "Invalid", "Acknowledged"].includes(off.status)) return false;
+    if (!isInvolved) return false;
 
+    if (["Invalid", "Acknowledged"].includes(off.status)) return false;
+
+    // Only filter by search for respondents
+    if (off.respondantId === loggedUser._id) {
       return [
         off.agentName,
         off.offenseType,
@@ -363,15 +366,20 @@ const SharedMyOffences = () => {
         .join(" ")
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
-    });
-  }, [safeOffenses, searchQuery, loggedUser, formatDisplayDate]);
+    }
+
+    return true; // witnesses always see
+  });
 
   const resolvedOffensesForHistory = useMemo(() => {
     return safeOffenses.filter((off) => {
       const isResolved =
-        loggedUser &&
-        off.reportedById === loggedUser._id &&
-        ["Invalid", "Acknowledged"].includes(off.status);
+        (loggedUser &&
+          off.reportedById === loggedUser._id &&
+          ["Invalid", "Acknowledged"].includes(off.status)) ||
+        (loggedUser &&
+          off.respondantId === loggedUser._id &&
+          ["Invalid", "Acknowledged"].includes(off.status));
       if (!isResolved) return false;
 
       const textMatch = [
@@ -573,7 +581,7 @@ const SharedMyOffences = () => {
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <a 
+                            <a
                               href={viewUrl}
                               target="_blank"
                               rel="noopener noreferrer"
@@ -615,7 +623,8 @@ const SharedMyOffences = () => {
               </div>
               {formData.fileMOM &&
                 formData.fileMOM.length > 0 &&
-                formData.fileNDA.length > 0 && (
+                formData.witnesses?.some((w) => w._id === loggedUser._id) &&
+                formData.respondantId !== loggedUser._id && (
                   <div>
                     <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                       Minutes of the meeting
@@ -654,45 +663,54 @@ const SharedMyOffences = () => {
                         );
                       })}
                     </div>
-                    <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                      Notice of Disciplinary Action
-                    </label>
-                    <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
-                      {formData.fileNDA.slice(0, 1).map((nda, idx) => {
-                        const viewUrl = nda.url;
-                        return (
-                          <div key={idx} className="flex flex-col gap-3">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
-                              <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
-                                {nda.fileName}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <a
-                                href={viewUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
-                              >
-                                <Eye className="w-4 h-4" />
-                                View
-                              </a>
-                              <a
-                                href={nda.url}
-                                download={nda.fileName}
-                                className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
-                              >
-                                <Download className="w-4 h-4" />
-                                Download
-                              </a>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
                   </div>
                 )}
+              {((formData.fileNDA &&
+                formData.fileNDA.length > 0 &&
+                formData.witnesses?.some((w) => w._id === loggedUser._id)) ||
+                (formData.fileNDA &&
+                  formData.fileNDA.length > 0 &&
+                  formData.respondantId === loggedUser._id)) && (
+                <div>
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                    Notice of Disciplinary Action
+                  </label>
+                  <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
+                    {formData.fileNDA.slice(0, 1).map((nda, idx) => {
+                      const viewUrl = nda.url;
+                      return (
+                        <div key={idx} className="flex flex-col gap-3">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                            <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
+                              {nda.fileName}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={viewUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                            >
+                              <Eye className="w-4 h-4" />
+                              View
+                            </a>
+                            <a
+                              href={nda.url}
+                              download={nda.fileName}
+                              className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                            >
+                              <Download className="w-4 h-4" />
+                              Download
+                            </a>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
               {formData.status === "Acknowledged" && (
                 <div className="space-y-2">
                   <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -713,7 +731,7 @@ const SharedMyOffences = () => {
                     Submit
                   </button>
                 )}
-                {formData.status === "After Hearing" && (
+                {formData.status === "For Acknowledgement" && (
                   <button
                     onClick={() => setShowAcknowledgeModal(true)}
                     className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
@@ -790,12 +808,13 @@ const SharedMyOffences = () => {
 
         {/* --- CASES IN PROGRESS --- */}
         <CasesInProgress
-          offenses={filteredOffensesForList}
+          offenses={filteredOffenses}
           searchQuery={searchQuery}
           onSearchChange={(e) => setSearchQuery(e.target.value)}
           onView={handleView}
           isLoading={isLoading}
           formatDisplayDate={formatDisplayDate}
+          loggedUser={loggedUser}
         />
       </div>
 
