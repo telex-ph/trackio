@@ -53,6 +53,7 @@ export const addSchedules = async (req, res) => {
           type,
           notes: schedule.notes,
           createdAt: DateTime.utc().toJSDate(),
+          updatedAt: DateTime.utc().toJSDate(),
           updatedBy: new ObjectId(updatedBy),
         };
 
@@ -63,6 +64,7 @@ export const addSchedules = async (req, res) => {
           type,
           notes: schedule.notes,
           createdAt: DateTime.utc().toJSDate(),
+          updatedAt: DateTime.utc().toJSDate(),
           updatedBy: new ObjectId(updatedBy),
         };
     }
