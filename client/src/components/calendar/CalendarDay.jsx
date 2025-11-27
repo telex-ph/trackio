@@ -8,16 +8,17 @@ import {
 } from "lucide-react";
 import { dateFormatter } from "../../utils/formatDateTime";
 import { useStore } from "../../store/useStore";
+import { useSchedule } from "../../hooks/useSchedule";
 
-const CalendarDay = ({ date, handleRightClick, handleDateClick }) => {
+const CalendarDay = ({ userId, date, handleRightClick, handleDateClick }) => {
   // eg: 2021-03-12
   const formattedDate = dateFormatter(date, "yyyy-MM-dd");
   // eg: 12
   const formmatedDay = dateFormatter(date, "d");
-  // Shift Schedule
-
-  const shiftSchedule = useStore((state) => state.shiftSchedule);
-  const schedule = shiftSchedule.find(
+  const { schedule: shiftSchedule } = useSchedule({
+    id: userId,
+  });
+  const schedule = shiftSchedule?.find(
     (schedule) => dateFormatter(schedule.date, "yyyy-MM-dd") === formattedDate
   );
 

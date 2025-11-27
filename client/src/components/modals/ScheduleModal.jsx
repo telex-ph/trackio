@@ -11,9 +11,11 @@ import Spinner from "../../assets/loaders/Spinner";
 import { useStore } from "../../store/useStore";
 import WarningDeletion from "../../assets/illustrations/WarningDeletion";
 import { DateTime } from "luxon";
+import { useQueryClient } from "@tanstack/react-query";
 
-const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
+const ScheduleModal = ({ onClose, operation }) => {
   const { id } = useParams();
+  const queryClient = useQueryClient();
   const user = useStore((state) => state.user);
 
   const selectedDates = useStore((state) => state.selectedDates);
@@ -79,7 +81,7 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
         updatedBy: user._id,
       });
       toast.success("Schedules have been saved successfully.");
-      if (fetchSchedules) fetchSchedules();
+      queryClient.invalidateQueries("schedule");
       onClose();
     } catch (error) {
       console.error(error);
@@ -101,9 +103,7 @@ const ScheduleModal = ({ onClose, fetchSchedules, operation }) => {
           deletedCount !== 1 ? "s" : ""
         } deleted successfully`
       );
-      if (fetchSchedules) {
-        fetchSchedules();
-      }
+      queryClient.invalidateQueries("schedule");
       onClose();
     } catch (error) {
       console.error(error);
