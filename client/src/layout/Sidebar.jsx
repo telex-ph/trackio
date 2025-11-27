@@ -114,6 +114,7 @@ export const Sidebar = ({ isCollapsed }) => {
             isCollapsed={isCollapsed}
             activeDropdown={activeDropdown}
             setActiveDropdown={setActiveDropdown}
+            unreadOffenses={unreadOffenses}
           />
         );
       case Role.COMPLIANCE:

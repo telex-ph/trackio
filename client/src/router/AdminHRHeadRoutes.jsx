@@ -26,6 +26,7 @@ import SharedSettings from "../pages/shared/SharedSettings";
 import SharedTeamViewMembers from "../pages/shared/SharedTeamViewMembers";
 import AdminAccountManagement from "../pages/admin/AdminAccountManagement";
 import SharedTicket from "../pages/shared/SharedTicket";
+import TeamLeaderCreateOffenses from "../pages/team-leader/TeamLeaderCreateOffense";
 
 const ADMIN_HR_HEAD_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -66,10 +67,14 @@ const ADMIN_HR_HEAD_ROUTES = [
   { path: "account-settings", element: <SharedSettings /> },
   {
     path: "offenses",
-    element: <HROffenses />,
+    element: <TeamLeaderCreateOffenses />,
   },
   {
     path: "createoffense",
+    element: <TeamLeaderCreateOffenses />,
+  },
+  {
+    path: "reported-ir",
     element: <HRReportedOffenses />,
   },
 ];
