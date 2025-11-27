@@ -18,6 +18,7 @@ const AdminHRHeadSidebar = ({
   isCollapsed,
   activeDropdown,
   setActiveDropdown,
+  unreadOffenses,
 }) => (
   <div className="space-y-1">
     <SidebarLink
@@ -91,6 +92,41 @@ const AdminHRHeadSidebar = ({
       label="Team"
       isCollapsed={isCollapsed}
     />
+    <CustomCollapse
+      icon={<Clock className="w-5 h-5" />}
+      label="Offenses"
+      isCollapsed={isCollapsed}
+      open={activeDropdown === "offenses"}
+      onToggle={() =>
+        setActiveDropdown(activeDropdown === "offenses" ? null : "offenses")
+      }
+      badge={unreadOffenses}
+    >
+      <SidebarLink
+        to={`/admin-hr-head/createoffense`}
+        icon={List}
+        label="Create Offense"
+        isCollapsed={isCollapsed}
+      />
+      {/* <SidebarLink
+        to={`/admin-hr-head/offenses`}
+        icon={GalleryVerticalEnd}
+        label={
+          <>
+            My Offenses
+          </>
+        }
+        isCollapsed={isCollapsed}
+        badge={!isCollapsed ? unreadOffenses : 0}
+      /> */}
+      <SidebarLink
+        to={`/admin-hr-head/reported-ir`}
+        icon={GalleryVerticalEnd}
+        label="Reported IR"
+        isCollapsed={isCollapsed}
+        badge={!isCollapsed ? unreadOffenses : 0}
+      />
+    </CustomCollapse>
     <SidebarLink
       to="/admin-hr-head/ticket"
       icon={Ticket}

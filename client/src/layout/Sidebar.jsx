@@ -20,7 +20,7 @@ export const Sidebar = ({ isCollapsed }) => {
   const fetchUnreadOffenses = useStore((state) => state.fetchUnreadOffenses);
 
   const unreadOffenses = useStore((state) => {
-    if (user.role === Role.HR) return state.unreadOffensesHR;
+    if ([Role.HR, Role.ADMIN_HR_HEAD].includes(user.role)) return state.unreadOffensesHR;
     if (![Role.HR, Role.ADMIN_HR_HEAD].includes(user.role))
       return state.unreadOffensesRespondent;
     return 0;
@@ -114,6 +114,7 @@ export const Sidebar = ({ isCollapsed }) => {
             isCollapsed={isCollapsed}
             activeDropdown={activeDropdown}
             setActiveDropdown={setActiveDropdown}
+            unreadOffenses={unreadOffenses}
           />
         );
       case Role.COMPLIANCE:

@@ -719,7 +719,7 @@ const HR_OffenseDetails = ({
                 )}
               </div>
             </div>
-          )}Pending Review
+          )}
 
           {formData.status === "Scheduled for hearing" && (
             <div>
