@@ -9,14 +9,19 @@ import {
 import { dateFormatter } from "../../utils/formatDateTime";
 import { useStore } from "../../store/useStore";
 import { useSchedule } from "../../hooks/useSchedule";
+import { useParams } from "react-router-dom";
 
-const CalendarDay = ({ userId, date, handleRightClick, handleDateClick }) => {
+const CalendarDay = ({ date, readOnly, handleRightClick, handleDateClick }) => {
+  const user = useStore((state) => state.user);
+  const { id } = useParams();
+
   // eg: 2021-03-12
   const formattedDate = dateFormatter(date, "yyyy-MM-dd");
   // eg: 12
   const formmatedDay = dateFormatter(date, "d");
+  // If read only use the userId else use the params id
   const { schedule: shiftSchedule } = useSchedule({
-    id: userId,
+    id: readOnly ? user._id : id,
   });
   const schedule = shiftSchedule?.find(
     (schedule) => dateFormatter(schedule.date, "yyyy-MM-dd") === formattedDate

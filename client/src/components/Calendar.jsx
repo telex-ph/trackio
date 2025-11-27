@@ -20,8 +20,6 @@ import { useStore } from "../store/useStore";
 import { useParams } from "react-router-dom";
 
 const Calendar = ({ handleBtnsClick, loading, readOnly = false }) => {
-  // For fetching schedule
-  const { id } = useParams();
   // Explicitly use Philippine timezone
   const philippineZone = "Asia/Manila";
   const selectedDates = useStore((state) => state.selectedDates);
@@ -348,8 +346,8 @@ const Calendar = ({ handleBtnsClick, loading, readOnly = false }) => {
   `}
                 >
                   <CalendarDay
-                    userId={id}
                     date={date}
+                    readOnly={readOnly}
                     handleRightClick={handleRightClick}
                     handleDateClick={handleDateClick}
                   />
