@@ -17,70 +17,51 @@ export const Sidebar = ({ isCollapsed }) => {
   const user = useStore((state) => state.user);
   const [activeDropdown, setActiveDropdown] = useState(null);
 
-  const fetchUnreadOffensesHR = useStore(
-    (state) => state.fetchUnreadOffensesHR
-  );
-  const fetchUnreadOffensesRespondent = useStore(
-    (state) => state.fetchUnreadOffensesRespondent
-  );
+  const fetchUnreadOffenses = useStore((state) => state.fetchUnreadOffenses);
 
   const unreadOffenses = useStore((state) => {
-    if (user.role === Role.HR) return state.unreadOffensesHR;
-    if ([Role.AGENT, Role.TEAM_LEADER].includes(user.role))
+    if ([Role.HR, Role.ADMIN_HR_HEAD].includes(user.role)) return state.unreadOffensesHR;
+    if (![Role.HR, Role.ADMIN_HR_HEAD].includes(user.role))
       return state.unreadOffensesRespondent;
     return 0;
   });
 
   useEffect(() => {
-    // --- Initial fetch of unread offenses ---
+    // --- Initial fetch ---
     if (user.role === Role.HR) {
-      fetchUnreadOffensesHR();
-    } else if ([Role.AGENT, Role.TEAM_LEADER].includes(user.role)) {
-      fetchUnreadOffensesRespondent(user.employeeId);
+      fetchUnreadOffenses({ role: "HR" });
+    } else if (![Role.HR, Role.ADMIN_HR_HEAD].includes(user.role)) {
+      fetchUnreadOffenses({ role: "RESPONDENT", employeeId: user.employeeId });
     }
 
-    // --- Socket handlers for real-time updates ---
-    const handleOffenseAdded = () => {
-      if (user.role === Role.HR) fetchUnreadOffensesHR();
-      else if ([Role.AGENT, Role.TEAM_LEADER].includes(user.role))
-        fetchUnreadOffensesRespondent(user.employeeId);
-    };
-
-    const handleOffenseUpdated = () => {
-      if (user.role === Role.HR) fetchUnreadOffensesHR();
-      else if ([Role.AGENT, Role.TEAM_LEADER].includes(user.role))
-        fetchUnreadOffensesRespondent(user.employeeId);
-    };
-
-    const handleOffenseDeleted = () => {
-      if (user.role === Role.HR) fetchUnreadOffensesHR();
-      else if ([Role.AGENT, Role.TEAM_LEADER].includes(user.role))
-        fetchUnreadOffensesRespondent(user.employeeId);
+    // --- Socket handlers ---
+    const handleOffenseEvent = () => {
+      if (user.role === Role.HR) {
+        fetchUnreadOffenses({ role: "HR" });
+      } else if (![Role.HR, Role.ADMIN_HR_HEAD].includes(user.role)) {
+        fetchUnreadOffenses({
+          role: "RESPONDENT",
+          employeeId: user.employeeId,
+        });
+      }
     };
 
     const attachListeners = () => {
-      socket.on("offenseAdded", handleOffenseAdded);
-      socket.on("offenseUpdated", handleOffenseUpdated);
-      socket.on("offenseDeleted", handleOffenseDeleted);
+      socket.on("offenseAdded", handleOffenseEvent);
+      socket.on("offenseUpdated", handleOffenseEvent);
+      socket.on("offenseDeleted", handleOffenseEvent);
     };
 
-    // Attach listeners immediately if socket is connected
     if (socket.connected) attachListeners();
     socket.on("connect", attachListeners);
 
-    // Cleanup
     return () => {
-      socket.off("offenseAdded", handleOffenseAdded);
-      socket.off("offenseUpdated", handleOffenseUpdated);
-      socket.off("offenseDeleted", handleOffenseDeleted);
+      socket.off("offenseAdded", handleOffenseEvent);
+      socket.off("offenseUpdated", handleOffenseEvent);
+      socket.off("offenseDeleted", handleOffenseEvent);
       socket.off("connect", attachListeners);
     };
-  }, [
-    user.role,
-    user.employeeId,
-    fetchUnreadOffensesHR,
-    fetchUnreadOffensesRespondent,
-  ]);
+  }, [user.role, user.employeeId, fetchUnreadOffenses]);
 
   const renderSidebar = () => {
     switch (user.role) {
@@ -133,6 +114,7 @@ export const Sidebar = ({ isCollapsed }) => {
             isCollapsed={isCollapsed}
             activeDropdown={activeDropdown}
             setActiveDropdown={setActiveDropdown}
+            unreadOffenses={unreadOffenses}
           />
         );
       case Role.COMPLIANCE:

@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
 import api from "../utils/axios";
 import { useStore } from "../store/useStore";
+import { useQuery } from "@tanstack/react-query";
 
 export const useSchedule = ({ id }) => {
-  const setShiftSchedule = useStore((state) => state.setShiftSchedule);
   const currentDate = useStore((state) => state.currentDate);
-  const [schedule, setSchedule] = useState(null);
-  const [loading, setLoading] = useState(false);
 
-  const fetchSchedules = async () => {
+  const fetchSchedules = async (id) => {
+    if (!id) return;
+
     try {
-      setLoading(true);
       const response = await api.get(`/schedule/get-schedules/${id}`, {
         params: {
           currentMonth: currentDate.month,
@@ -18,18 +17,21 @@ export const useSchedule = ({ id }) => {
         },
       });
 
-      setShiftSchedule(response.data);
-      setSchedule(response.data);
+      return response.data;
     } catch (error) {
       console.error(error);
-    } finally {
-      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchSchedules();
-  }, [id, currentDate.month, currentDate.year]);
+  const {
+    data: schedule,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["schedule", id],
+    queryFn: () => fetchSchedules(id),
+    enabled: !!id,
+  });
 
-  return { schedule, loading, fetchSchedules };
+  return { schedule, loading: isLoading, fetchSchedules: refetch };
 };

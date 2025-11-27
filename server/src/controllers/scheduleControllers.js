@@ -5,7 +5,7 @@ import SCHEDULE from "../../constants/schedule.js";
 import User from "../model/User.js";
 
 export const addSchedules = async (req, res) => {
-  const { schedules, id, type } = req.body;
+  const { schedules, id, type, updatedBy } = req.body;
 
   // Early return if the id is invalid
   const user = await User.getById(id);
@@ -20,31 +20,43 @@ export const addSchedules = async (req, res) => {
       zone: "Asia/Manila",
     }).startOf("day");
 
-    const mergeDateAndTime = (timeISO) => {
-      const time = DateTime.fromISO(timeISO, { zone: "Asia/Manila" });
-      return baseDate
-        .set({
-          hour: time.hour,
-          minute: time.minute,
-          second: time.second,
-          millisecond: 0,
-        })
-        .toJSDate();
+    // Merge a time with baseDate
+    const mergeDateAndTime = (timeISO, shiftStartTime = null) => {
+      let time = DateTime.fromISO(timeISO, { zone: "Asia/Manila" });
+      let dateTime = baseDate.set({
+        hour: time.hour,
+        minute: time.minute,
+        second: time.second,
+        millisecond: 0,
+      });
+
+      // If shiftEnd (or mealEnd) is earlier than shiftStart, assume it is the next day
+      if (shiftStartTime && dateTime < shiftStartTime) {
+        dateTime = dateTime.plus({ days: 1 });
+      }
+
+      return dateTime.toJSDate();
     };
 
     switch (type) {
       case SCHEDULE.WORK_DAY:
+        // First get shiftStart datetime
+        const shiftStartDateTime = mergeDateAndTime(schedule.shiftStart);
+
         return {
           userId: new ObjectId(id),
           date: baseDate.toJSDate(),
-          shiftStart: mergeDateAndTime(schedule.shiftStart),
-          shiftEnd: mergeDateAndTime(schedule.shiftEnd),
-          mealStart: mergeDateAndTime(schedule.mealStart),
-          mealEnd: mergeDateAndTime(schedule.mealEnd),
+          shiftStart: shiftStartDateTime,
+          shiftEnd: mergeDateAndTime(schedule.shiftEnd, shiftStartDateTime),
+          // mealStart: mergeDateAndTime(schedule.mealStart, shiftStartDateTime),
+          // mealEnd: mergeDateAndTime(schedule.mealEnd, shiftStartDateTime),
           type,
           notes: schedule.notes,
           createdAt: DateTime.utc().toJSDate(),
+          updatedAt: DateTime.utc().toJSDate(),
+          updatedBy: new ObjectId(updatedBy),
         };
+
       default:
         return {
           userId: new ObjectId(id),
@@ -52,16 +64,18 @@ export const addSchedules = async (req, res) => {
           type,
           notes: schedule.notes,
           createdAt: DateTime.utc().toJSDate(),
+          updatedAt: DateTime.utc().toJSDate(),
+          updatedBy: new ObjectId(updatedBy),
         };
     }
   });
 
   try {
-    const schedules = await Schedule.addAll(formattedSchedules);
-    return res.status(200).json(schedules);
+    const result = await Schedule.addAll(formattedSchedules);
+    return res.status(200).json(result);
   } catch (error) {
-    console.error("Error adsd schedules: ", error);
-    res.status(500).json({
+    console.error("Error adding schedules: ", error);
+    return res.status(500).json({
       message: "Failed to add list of schedules",
       error: error.message,
     });

@@ -59,22 +59,37 @@ class Schedules {
 
     if (startDate && endDate) {
       query.date = {
-        $gte: startDate,
-        $lte: endDate,
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
       };
     } else if (startDate) {
-      query.date = {
-        $gte: startDate,
-      };
+      query.date = { $gte: new Date(startDate) };
     } else if (endDate) {
-      query.date = {
-        $lte: endDate,
-      };
+      query.date = { $lte: new Date(endDate) };
     }
 
-    return await collection.find(query).toArray();
-  }
+    const schedules = await collection
+      .aggregate([
+        { $match: query },
+        {
+          $lookup: {
+            from: "users",
+            localField: "updatedBy",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        {
+          $unwind: {
+            path: "$user",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+      ])
+      .toArray();
 
+    return schedules;
+  }
   static async get(id, min, max) {
     if (!id) {
       throw new Error("ID is required");

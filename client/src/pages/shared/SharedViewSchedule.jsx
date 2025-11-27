@@ -9,7 +9,7 @@ import Spinner from "../../assets/loaders/Spinner";
 
 const SharedViewSchedule = ({ role, readOnly }) => {
   const { id } = useParams();
-  const { fetchSchedules, loading: scheduleLoading } = useSchedule({ id });
+  const { loading: scheduleLoading } = useSchedule({ id });
   const [user, setUser] = useState(null);
   const [userLoading, setUserLoading] = useState(true);
   const [operation, setOperation] = useState("upsert");
@@ -92,11 +92,7 @@ const SharedViewSchedule = ({ role, readOnly }) => {
       </section>
 
       {isOpenModal && (
-        <ScheduleModal
-          onClose={handleModalClose}
-          fetchSchedules={fetchSchedules}
-          operation={operation}
-        />
+        <ScheduleModal onClose={handleModalClose} operation={operation} />
       )}
     </div>
   );

@@ -45,7 +45,7 @@ interface Offense {
   createdAt?: string;
   updatedAt?: string;
 }
- 
+
 const HRReportedOffenses = () => {
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -69,27 +69,27 @@ const HRReportedOffenses = () => {
     type: "",
     isVisible: false,
   });
- 
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
- 
+
   const [selectedMOMFile, setSelectedMOMFile] = useState<File | null>(null);
   const [isDragOverMOM, setIsDragOverMOM] = useState(false);
- 
+
   const [selectedNDAFile, setSelectedNDAFile] = useState<File | null>(null);
   const [isDragOverNDA, setIsDragOverNDA] = useState(false);
- 
+
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
- 
+
       reader.onload = () => resolve(reader.result as string); // FIX
       reader.onerror = (error) => reject(error);
- 
+
       reader.readAsDataURL(file);
     });
   };
- 
+
   const [formData, setFormData] = useState<Partial<Offense>>({
     agentName: "",
     offenseCategory: "",
@@ -130,7 +130,7 @@ const HRReportedOffenses = () => {
       if (!newOffense?._id) return;
       setOffenses((prev) => [newOffense, ...(prev || [])]);
     };
- 
+
     const handleUpdated = (updatedOffense: Offense) => {
       if (!updatedOffense?._id) return;
       setOffenses((prev) =>
@@ -139,19 +139,19 @@ const HRReportedOffenses = () => {
         )
       );
     };
- 
+
     const handleDeleted = (deletedId: string) => {
       if (!deletedId) return;
       setOffenses((prev) =>
         (prev || []).filter((off) => off._id !== deletedId)
       );
     };
- 
+
     // Attach once
     socket.on("offenseAdded", handleAdded);
     socket.on("offenseUpdated", handleUpdated);
     socket.on("offenseDeleted", handleDeleted);
- 
+
     // Cleanup on unmount
     return () => {
       socket.off("offenseAdded", handleAdded);
@@ -159,7 +159,7 @@ const HRReportedOffenses = () => {
       socket.off("offenseDeleted", handleDeleted);
     };
   }, []);
- 
+
   // Reset form/view
   const resetForm = () => {
     setFormData({
@@ -196,7 +196,7 @@ const HRReportedOffenses = () => {
     try {
       const { data: offense } = await api.get(`/offenses/${off._id}`);
       console.log(offense.isReadByHR);
- 
+
       if (offense.isReadByHR === false) {
         const payload = { ...off, isReadByHR: true };
         await api.put(`/offenses/${off._id}`, payload);
@@ -219,10 +219,10 @@ const HRReportedOffenses = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
- 
+
   const [showHearingModal, setShowHearingModal] = useState<boolean>(false);
   const [hearingDate, setHearingDate] = React.useState("");
- 
+
   const handleHearingDate = async (
     hearingDate: string,
     witnesses: { _id: string; name: string; employeeId: string }[]
@@ -235,9 +235,9 @@ const HRReportedOffenses = () => {
         hearingDate,
         witnesses,
       };
- 
+
       await api.put(`/offenses/${editingId}`, payload);
- 
+
       showNotification("Hearing has been set.", "success");
       resetForm();
       fetchOffenses();
@@ -251,13 +251,13 @@ const HRReportedOffenses = () => {
       );
     }
   };
- 
+
   // NEW: Handle Update button
   const handleValid = async () => {
     if (!editingId) return;
- 
+
     const now = new Date();
- 
+
     try {
       const payload = {
         ...formData,
@@ -266,21 +266,21 @@ const HRReportedOffenses = () => {
         nteSentDateTime: now.toISOString(),
         isReadByHR: true,
       };
- 
+
       if (selectedFile) {
         console.log("NTE FIle: ", selectedFile);
- 
+
         const formData = new FormData();
         formData.append("file", selectedFile);
- 
+
         const uploadRes = await api.post("/upload/nte", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         });
- 
+
         console.log(uploadRes.data);
- 
+
         payload.fileNTE = [
           {
             fileName: uploadRes.data.fileName,
@@ -292,11 +292,11 @@ const HRReportedOffenses = () => {
         ];
       }
       // -------------------------------------------
- 
+
       await api.put(`/offenses/${editingId}`, payload);
- 
+
       showNotification("Offense is validated. NTE!", "success");
- 
+
       resetForm();
       setSelectedFile(null);
       fetchOffenses();
@@ -305,12 +305,12 @@ const HRReportedOffenses = () => {
       showNotification("Failed to update. Please try again.", "error");
     }
   };
- 
+
   const handleAfterHearing = async () => {
     if (!editingId) return;
- 
+
     const now = new Date();
- 
+
     try {
       const payload = {
         ...formData,
@@ -319,21 +319,21 @@ const HRReportedOffenses = () => {
         isReadByRespondant: false,
         afterHearingDateTime: now.toISOString(),
       };
- 
+
       if (selectedMOMFile) {
         console.log("MOM FIle: ", selectedMOMFile);
- 
+
         const formData = new FormData();
         formData.append("file", selectedMOMFile);
- 
+
         const uploadRes = await api.post("/upload/mom", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         });
- 
+
         console.log(uploadRes.data);
- 
+
         payload.fileMOM = [
           {
             fileName: uploadRes.data.fileName,
@@ -344,21 +344,21 @@ const HRReportedOffenses = () => {
           },
         ];
       }
- 
+
       if (selectedNDAFile) {
         console.log("NDA FIle: ", selectedNDAFile);
- 
+
         const formData = new FormData();
         formData.append("file", selectedNDAFile);
- 
+
         const uploadRes = await api.post("/upload/nda", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         });
- 
+
         console.log(uploadRes.data);
- 
+
         payload.fileNDA = [
           {
             fileName: uploadRes.data.fileName,
@@ -369,17 +369,17 @@ const HRReportedOffenses = () => {
           },
         ];
       }
- 
+
       // --- API Call ---
       await api.put(`/offenses/${editingId}`, payload);
- 
+
       showNotification("Documents uploaded successfully!", "success");
- 
+
       // --- Reset ---
       resetForm();
       setSelectedMOMFile(null);
       setSelectedNDAFile(null);
- 
+
       fetchOffenses();
     } catch (error) {
       console.error("Error updating offense:", error);

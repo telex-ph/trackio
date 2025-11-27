@@ -16,7 +16,7 @@ import { Navigate } from "react-router-dom";
 import Roles from "../constants/roles";
 
 // Human Resources
-import HROffenses from "../pages/hr/HROffenses";
+import HROffenses from "../pages/hr/HROffense";
 import HRReportedOffenses from "../pages/hr/HRReportedOffenses";
 import SharedSettings from "../pages/shared/SharedSettings";
 import SharedTeamViewMembers from "../pages/shared/SharedTeamViewMembers";

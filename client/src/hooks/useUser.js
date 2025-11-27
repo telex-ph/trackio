@@ -1,23 +1,17 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import api from "../utils/axios";
 import { formatDate } from "../utils/formatDateTime";
 import toast from "react-hot-toast";
 import { useStore } from "../store/useStore";
 import Roles from "../constants/roles";
+import { useQuery } from "@tanstack/react-query";
 
 const useUser = () => {
   const user = useStore((state) => state.user);
-
-  const [users, setUsers] = useState([]);
-  const [userByRoleScope, setUsersByRoleScope] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchUsers = useCallback(async () => {
+  const fetchUsers = async () => {
     try {
-      setLoading(true);
-      setError(null);
-
       const response = await api.get("/user/get-users");
 
       // Map only if array exists
@@ -28,21 +22,16 @@ const useUser = () => {
         email: item.email,
       }));
 
-      setUsers(formattedData);
-    } catch (err) {
+      return formattedData;
+    } catch (error) {
       console.error("Error fetching users:", err);
       setError(err.response?.data ?? err.message);
       toast.error("Failed to load users");
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  };
 
-  const fetchUsersByRoleScope = useCallback(async () => {
+  const fetchUsersByRoleScope = async () => {
     try {
-      setLoading(true);
-      setError(null);
-
       const response = await api.get(
         `/user/get-by-role/${user._id}/${user.role}`
       );
@@ -60,32 +49,38 @@ const useUser = () => {
         };
       });
 
-      setUsersByRoleScope(formattedData);
+      return formattedData;
     } catch (error) {
       console.error("Error fetching users by role scope: ", error);
       setError(error.response?.data ?? error.message);
       toast.error("Failed to load users by role scrope");
-    } finally {
-      setLoading(false);
     }
-  }, [user?._id, user?.role]);
+  };
 
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+  const { data: users } = useQuery({
+    queryKey: ["users"],
+    queryFn: fetchUsers,
+  });
 
-  useEffect(() => {
-    if (
-      user.role === Roles.PRESIDENT ||
-      user.role === Roles.ADMIN ||
-      user.role === Roles.ADMIN_HR_HEAD ||
-      user.role === Roles.COMPLIANCE ||
-      user.role === Roles.COMPLIANCE_HEAD ||
-      user.role === Roles.OM ||
-      user.role === Roles.TEAM_LEADER
-    )
-      fetchUsersByRoleScope();
-  }, [fetchUsersByRoleScope, user.role]);
+  const allowedRoles = [
+    Roles.PRESIDENT,
+    Roles.ADMIN,
+    Roles.ADMIN_HR_HEAD,
+    Roles.COMPLIANCE,
+    Roles.COMPLIANCE_HEAD,
+    Roles.OM,
+    Roles.TEAM_LEADER,
+  ];
+
+  const { data: userByRoleScope, isLoading: loading } = useQuery({
+    queryKey: ["usersByRoleScope"],
+    queryFn: fetchUsersByRoleScope,
+    enabled: !!user?._id && !!user?.role && allowedRoles.includes(user.role),
+  });
+
+  // useEffect(() => {
+  //   fetchUsers();
+  // }, [fetchUsers]);
 
   return {
     users,

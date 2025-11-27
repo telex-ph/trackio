@@ -18,14 +18,16 @@ import SharedViewSchedule from "../pages/shared/SharedViewSchedule";
 import { Navigate } from "react-router-dom";
 import Roles from "../constants/roles";
 
-// Human Resources
-import HROffenses from "../pages/hr/HROffenses";
-import HRReportedOffenses from "../pages/hr/HRReportedOffenses";
-
 import SharedSettings from "../pages/shared/SharedSettings";
 import SharedTeamViewMembers from "../pages/shared/SharedTeamViewMembers";
 import AdminAccountManagement from "../pages/admin/AdminAccountManagement";
 import SharedTicket from "../pages/shared/SharedTicket";
+import SharedTicketList from "../pages/shared/SharedTicketList";
+import SharedTicketAnalytics from "../pages/shared/SharedTicketAnalytics";
+import TicketLayout from "../layout/TicketLayout";
+import TeamLeaderOffenses from "../pages/team-leader/TeamLeaderOffenses";
+import TeamLeaderCreateOffenses from "../pages/team-leader/TeamLeaderCreateOffense";
+import HRReportedOffenses from "../pages/hr/HRReportedOffenses";
 
 const COMPLIANCE_HEAD_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -66,11 +68,19 @@ const COMPLIANCE_HEAD_ROUTES = [
   { path: "account-settings", element: <SharedSettings /> },
   {
     path: "offenses",
-    element: <HROffenses />,
+    element: <TeamLeaderOffenses />,
   },
   {
     path: "createoffense",
-    element: <HRReportedOffenses />,
+    element: <TeamLeaderCreateOffenses />,
+  },
+  {
+    path: "ticket",
+    element: <TicketLayout role={Roles.COMPLIANCE} />,
+    children: [
+      { path: "list", element: <SharedTicketList /> },
+      { path: "analytics", element: <SharedTicketAnalytics /> },
+    ],
   },
 ];
 

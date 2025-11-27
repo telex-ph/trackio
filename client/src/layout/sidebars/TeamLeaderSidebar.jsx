@@ -18,7 +18,7 @@ const TeamLeaderSidebar = ({
   isCollapsed,
   activeDropdown,
   setActiveDropdown,
-  unreadOffenses, // <-- add prop
+  unreadOffenses,
 }) => (
   <div className="space-y-1">
     <SidebarLink
@@ -102,6 +102,7 @@ const TeamLeaderSidebar = ({
       onToggle={() =>
         setActiveDropdown(activeDropdown === "offenses" ? null : "offenses")
       }
+      badge={unreadOffenses}
     >
       <SidebarLink
         to={`/team-leader/createoffense`}

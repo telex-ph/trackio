@@ -47,7 +47,6 @@ const OffenseList = ({
   setSearchQuery,
   isLoading,
   handleEdit,
-  handleDeleteClick,
 }) => {
   const formatDisplayDate = (dateStr) =>
     dateStr
@@ -124,25 +123,91 @@ const OffenseList = ({
                         Date: {formatDisplayDate(off.dateOfOffense)}
                       </span>
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${off.status === "Pending Review"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : off.status === "Under Investigation"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-gray-200 text-gray-600"
-                          }`}
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          {
+                            "Pending Review":
+                              "bg-amber-100 text-amber-700 border border-amber-200",
+                            NTE: "bg-blue-100 text-blue-700 border border-blue-200",
+                            Invalid:
+                              "bg-red-100 text-red-700 border border-red-200",
+                            "Respondent Explained":
+                              "bg-purple-100 text-purple-700 border border-purple-200",
+                            "Scheduled for hearing":
+                              "bg-indigo-100 text-indigo-700 border border-indigo-200",
+                            "After Hearing":
+                              "bg-teal-100 text-teal-700 border border-teal-200",
+                            Acknowledged:
+                              "bg-green-100 text-green-700 border border-green-200",
+                          }[off.status] ||
+                          "bg-gray-100 text-gray-700 border border-gray-200"
+                        }`}
                       >
                         {off.status}
                       </span>
 
-                      {off.isRead ? (
-                        <span className="flex items-center gap-1 text-green-600 text-xs">
-                          <CheckCircle className="w-4 h-4" /> Read by Agent
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-gray-500 text-xs">
-                          <Bell className="w-4 h-4" /> Unread by Agent
-                        </span>
-                      )}
+                      {(() => {
+                        const status = off.status;
+
+                        // Map status to which "reader" we care about
+                        const statusReaderMap = {
+                          "Pending Review": "isReadByHR",
+                          "Respondent Explained": "isReadByHR",
+                          Acknowledged: "isReadByHR",
+                          NTE: "isReadByRespondant",
+                          "Scheduled for hearing": "isReadByRespondant",
+                          "After Hearing": "isReadByRespondant",
+                          Invalid: "isReadByReporter",
+                        };
+
+                        const readerKey = statusReaderMap[status];
+                        const hasRead = readerKey ? off[readerKey] : null;
+
+                        // Determine label based on status
+                        const labelMap = {
+                          isReadByHR: {
+                            read: "Read by HR",
+                            unread: "Unread by HR",
+                          },
+                          isReadByRespondant: {
+                            read: "Read by Respondent",
+                            unread: "Unread by Respondent",
+                          },
+                          isReadByReporter: {
+                            read: "Read by You",
+                            unread: "Unread by You",
+                          },
+                        };
+
+                        if (!readerKey) {
+                          return (
+                            <span className="flex items-center gap-1 text-gray-500 text-xs">
+                              <Bell className="w-4 h-4" /> No Read Status
+                            </span>
+                          );
+                        }
+
+                        const label = hasRead
+                          ? labelMap[readerKey].read
+                          : labelMap[readerKey].unread;
+                        const isUnread = !hasRead;
+
+                        return (
+                          <span
+                            className={`flex items-center gap-1 text-xs ${
+                              isUnread
+                                ? "text-red-600 font-bold"
+                                : "text-green-600"
+                            }`}
+                          >
+                            {isUnread ? (
+                              <Bell className="w-4 h-4" />
+                            ) : (
+                              <CheckCircle className="w-4 h-4" />
+                            )}
+                            {label}
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -258,8 +323,8 @@ const OffenseList = ({
           {isLoading
             ? "Loading offenses..."
             : searchQuery
-              ? "No matching offense records found."
-              : "No offense records found."}
+            ? "No matching offense records found."
+            : "No offense records found."}
         </div>
       )}
     </div>

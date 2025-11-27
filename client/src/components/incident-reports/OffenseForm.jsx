@@ -14,34 +14,6 @@ import {
 } from "lucide-react";
 import api from "../../utils/axios";
 
-// --- HELPER FUNCTION ---
-// Converts Base64 data URL to a browser-readable Blob URL
-// This fixes the "blank screen" issue when viewing PDFs
-const base64ToBlobUrl = (base64, type) => {
-  try {
-    const base64Data = base64.split(",")[1];
-    if (!base64Data) {
-      console.error("Invalid Base64 string");
-      return base64; // Fallback
-    }
-
-    const binaryString = atob(base64Data);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-
-    const blob = new Blob([bytes], { type: type });
-    const url = URL.createObjectURL(blob);
-    return url;
-  } catch (e) {
-    console.error("Failed to convert Base64 to Blob URL:", e);
-    return base64; // Fallback
-  }
-};
-// --- END OF HELPER FUNCTION ---
-
 const OffenseForm = ({
   formData,
   setFormData,
@@ -53,6 +25,7 @@ const OffenseForm = ({
   resetForm,
   handleSubmit,
   showNotification,
+  isLoading
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -117,6 +90,7 @@ const OffenseForm = ({
       agentName: fullName,
       employeeId: employee.employeeId,
       agentRole: employee.role,
+      respondantId: employee._id,
     }));
     setSearchQuery(fullName);
     setShowSuggestions(false);
@@ -271,18 +245,32 @@ const OffenseForm = ({
               className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
             >
               <option value="">Select category</option>
-              <option value="Attendance and Punctuality">Attendance and Punctuality</option>
+              <option value="Attendance and Punctuality">
+                Attendance and Punctuality
+              </option>
               <option value="Behavior and Conduct">Behavior and Conduct</option>
-              <option value="Good Morals and Work Ethics">Good Morals and Work Ethics</option>
-              <option value="Negligence in the Performance of Duty">Negligence in the Performance of Duty</option>
-              <option value="Company Interest/Insubordination">Company Interest/Insubordination</option>
-              <option value="Company Funds and Property">Company Funds and Property</option>
-              <option value="Sanitation, Safety and Security at Work">Sanitation, Safety and Security at Work</option>
-              <option value="Securing or Divulging Confidential Information">Securing or Divulging Confidential Information</option>
+              <option value="Good Morals and Work Ethics">
+                Good Morals and Work Ethics
+              </option>
+              <option value="Negligence in the Performance of Duty">
+                Negligence in the Performance of Duty
+              </option>
+              <option value="Company Interest/Insubordination">
+                Company Interest/Insubordination
+              </option>
+              <option value="Company Funds and Property">
+                Company Funds and Property
+              </option>
+              <option value="Sanitation, Safety and Security at Work">
+                Sanitation, Safety and Security at Work
+              </option>
+              <option value="Securing or Divulging Confidential Information">
+                Securing or Divulging Confidential Information
+              </option>
             </select>
           </div>
           <div className="space-y-2">
-<label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+            <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
               Date of Offense *
             </label>
             <div className="relative">
@@ -342,7 +330,7 @@ const OffenseForm = ({
           ) : !selectedFile && existingEvidence.length > 0 ? (
             <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
               {existingEvidence.slice(0, 1).map((ev, idx) => {
-                const viewUrl = base64ToBlobUrl(ev.data, ev.type);
+                const viewUrl = ev.url;
                 return (
                   <div key={idx} className="flex flex-col gap-3">
                     <div className="flex items-center gap-2 min-w-0">
@@ -362,7 +350,7 @@ const OffenseForm = ({
                         View
                       </a>
                       <a
-                        href={ev.data}
+                        href={ev.url}
                         download={ev.fileName}
                         className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
                       >
@@ -414,9 +402,9 @@ const OffenseForm = ({
             </div>
           )}
         </div>
-
         <button
           onClick={handleSubmit}
+          disabled={isLoading}
           className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all duration-300 font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
         >
           {isEditMode ? "Update Offense" : "Submit Offense"}

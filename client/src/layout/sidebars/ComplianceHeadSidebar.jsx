@@ -9,6 +9,8 @@ import {
   GalleryVerticalEnd,
   Users2Icon,
   Ticket,
+  BarChart2,
+  ClipboardList,
 } from "lucide-react";
 import SidebarLink from "./SidebarLink";
 import CustomCollapse from "./CustomCollapse";
@@ -18,6 +20,7 @@ const ComplianceHeadSidebar = ({
   isCollapsed,
   activeDropdown,
   setActiveDropdown,
+  unreadOffenses,
 }) => (
   <div className="space-y-1">
     <SidebarLink
@@ -91,12 +94,60 @@ const ComplianceHeadSidebar = ({
       label="Team"
       isCollapsed={isCollapsed}
     />
-    <SidebarLink
-      to="/compliance-head/ticket"
-      icon={Ticket}
+    <CustomCollapse
+      icon={<ClipboardList className="w-5 h-5" />}
       label="Ticket"
       isCollapsed={isCollapsed}
-    />
+      open={activeDropdown === "tickets"}
+      onToggle={() =>
+        setActiveDropdown(activeDropdown === "tickets" ? null : "tickets")
+      }
+    >
+      <SidebarLink
+        to="/compliance-head/ticket/list"
+        icon={List}
+        label="List"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to={`/compliance-head/ticket/analytics`}
+        icon={BarChart2}
+        label="Analytics"
+        isCollapsed={isCollapsed}
+      />
+    </CustomCollapse>
+    <CustomCollapse
+      icon={<Clock className="w-5 h-5" />}
+      label="Offenses"
+      isCollapsed={isCollapsed}
+      open={activeDropdown === "offenses"}
+      onToggle={() =>
+        setActiveDropdown(activeDropdown === "offenses" ? null : "offenses")
+      }
+      badge={unreadOffenses}
+    >
+      <SidebarLink
+        to={`/compliance-head/createoffense`}
+        icon={List}
+        label="Create Offense"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to={`/compliance-head/offenses`}
+        icon={GalleryVerticalEnd}
+        label={
+          <>
+            My Offenses
+            {!isCollapsed && unreadOffenses > 0 && (
+              <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                {unreadOffenses}
+              </span>
+            )}
+          </>
+        }
+        isCollapsed={isCollapsed}
+      />
+    </CustomCollapse>
     <SidebarLink
       to="/compliance-head/account-management"
       icon={Users2Icon}

@@ -18,18 +18,14 @@ import offenseRoutes from "./routes/offenseRoutes.js";
 import scheduleRoutes from "./routes/scheduleRoutes.js";
 import groupRoutes from "./routes/groupRoutes.js";
 import serverRoutes from "./routes/serverRoutes.js";
-import biometricRoute from "./routes/biometricRoute.js"
+import biometricRoute from "./routes/biometricRoute.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
 import webhook from "./utils/webhook.js";
 
-const app = express();
 dotenv.config();
+const app = express();
 
-// Middlewares
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ extended: true, limit: "50mb" }));
-app.use(express.text({ type: "*/*", limit: "50mb" }));
-app.use(cookieParser());
-
+// CORS (should come before routes)
 app.use(
   cors({
     origin: [
@@ -41,7 +37,20 @@ app.use(
     credentials: true,
   })
 );
-// Routes
+
+// Cookie parser
+app.use(cookieParser());
+
+// --- IMPORTANT ---
+// Register /api/upload BEFORE body parsers
+app.use("/api/upload", uploadRoutes);
+
+// Body parsers (JSON, URL-encoded, text)
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+app.use(express.text({ type: "*/*", limit: "50mb" }));
+
+// Other routes
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/accounts", accountRoutes);
@@ -54,11 +63,11 @@ app.use("/api/offenses", offenseRoutes);
 app.use("/api/schedule", scheduleRoutes);
 app.use("/api/group", groupRoutes);
 app.use("/api/server", serverRoutes);
-app.use('/api/biometric', biometricRoute);
+app.use("/api/biometric", biometricRoute);
 
+// Health check
 app.get("/", async (req, res) => {
   await webhook("testing");
-
   res.json({
     message: "Trackio API is running",
     status: "success",

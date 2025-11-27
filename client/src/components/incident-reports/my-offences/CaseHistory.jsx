@@ -1,7 +1,7 @@
 import React from "react";
 import { FileText, Search, Eye, Download, X as ClearIcon } from "lucide-react";
 
-const HR_CaseHistory = ({
+const CaseHistory = ({
   offenses,
   filters,
   setFilters,
@@ -154,4 +154,4 @@ const HR_CaseHistory = ({
   );
 };
 
-export default HR_CaseHistory;
+export default CaseHistory;

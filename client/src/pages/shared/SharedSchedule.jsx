@@ -4,33 +4,22 @@ import { CalendarDays } from "lucide-react";
 import useUser from "../../hooks/useUser";
 import { useNavigate } from "react-router-dom";
 import Spinner from "../../assets/loaders/Spinner";
+import { useSchedule } from "../../hooks/useSchedule";
+import { useStore } from "../../store/useStore";
 
 const SharedSchedule = ({ role }) => {
   const navigate = useNavigate();
+  const user = useStore((state) => state.user);
   const { userByRoleScope, loading } = useUser();
-
-  const [filterGroup, setFilterGroup] = useState("All");
-  const [filterCategory, setFilterCategory] = useState("All");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null);
-
-  const handleDetailsClicked = (row) => {
-    setSelectedRow(row);
-    setIsModalOpen(true);
-  };
+  const { schedule } = useSchedule({ id: user._id });
 
   const handleViewClick = (id) => {
     navigate(`${id}`);
   };
 
-  const parseTimeToMinutes = (timeStr) => {
-    if (!timeStr || timeStr === "-") return 0;
-    const [time, modifier] = timeStr.split(" ");
-    let [hours, minutes] = time.split(":").map(Number);
-    if (modifier === "P.M." && hours !== 12) hours += 12;
-    if (modifier === "A.M." && hours === 12) hours = 0;
-    return hours * 60 + minutes;
-  };
+  const userFutureSchedules = schedule?.filter(
+    (s) => new Date(s.date) > new Date()
+  );
 
   // Separate users by department presence
   const backoffice = userByRoleScope?.filter((u) => u.department);
@@ -39,8 +28,7 @@ const SharedSchedule = ({ role }) => {
   // Columns for Frontoffice (without department)
   const frontofficeColumns = [
     { headerName: "ID", field: "employeeId", flex: 1 },
-    { headerName: "First Name", field: "firstName", flex: 1 },
-    { headerName: "Last Name", field: "lastName", flex: 1 },
+    { headerName: "Name", field: "name", flex: 1 },
     { headerName: "Email", field: "email", flex: 1 },
     {
       headerName: "Upcoming Schedules",
@@ -119,23 +107,15 @@ const SharedSchedule = ({ role }) => {
         </div>
       </section>
 
-      {/* Filters */}
-      <div className="flex gap-4 mb-4">
-        <select
-          className="border border-gray-300 rounded-lg px-3 py-2"
-          value={filterGroup}
-          onChange={(e) => setFilterGroup(e.target.value)}
-        >
-          <option value="All">All Groups</option>
-        </select>
-
-        <select
-          className="border border-gray-300 rounded-lg px-3 py-2"
-          value={filterCategory}
-          onChange={(e) => setFilterCategory(e.target.value)}
-        >
-          <option value="All">All Departments</option>
-        </select>
+      <div className="border-light container-light flex items-center gap-3 p-3 w-fit rounded-md">
+        <h3 className="text-lg font-bold">My Schedule: </h3>
+        <p className="text-light">
+          You have {userFutureSchedules?.length ?? 0} schedule(s) ahead
+        </p>
+        <CalendarDays
+          className="w-5 h-5 cursor-pointer"
+          onClick={() => handleViewClick(user._id)}
+        />
       </div>
 
       {loading ? (
@@ -149,6 +129,7 @@ const SharedSchedule = ({ role }) => {
             <div>
               <h3 className="text-lg font-bold my-2">Frontoffice</h3>
               <Table data={frontoffice} columns={frontofficeColumns} />
+              {/* <Table> */}
             </div>
           )}
 

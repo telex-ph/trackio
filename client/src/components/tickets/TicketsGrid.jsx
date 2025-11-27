@@ -51,10 +51,23 @@ const calculateTimeRemaining = (resolutionTime, pausedAt) => {
   const isOverdue = timeDiff < 0;
 
   const totalMinutes = Math.abs(Math.floor(timeDiff / (1000 * 60)));
-  const hours = Math.floor(totalMinutes / 60);
+  const totalHours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
 
-  const timeText = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+  // Convert to days, hours, minutes if more than 24h
+  let timeText = "";
+  if (totalHours >= 24) {
+    const days = Math.floor(totalHours / 24);
+    const hours = totalHours % 24;
+    timeText = `${days}d${hours ? ` ${hours}h` : ""}${
+      minutes ? ` ${minutes}m` : ""
+    }`;
+  } else if (totalHours > 0) {
+    timeText = `${totalHours}h${minutes ? ` ${minutes}m` : ""}`;
+  } else {
+    timeText = `${minutes}m`;
+  }
+
   const percentage = isOverdue
     ? 100
     : Math.min(100, 100 - (timeDiff / (1000 * 60 * 60 * 24)) * 100);
@@ -63,7 +76,7 @@ const calculateTimeRemaining = (resolutionTime, pausedAt) => {
     timeText,
     isOverdue,
     percentage: Math.max(0, Math.min(100, percentage)),
-    hours,
+    hours: totalHours,
     minutes,
   };
 };
@@ -88,38 +101,8 @@ const timeAgo = (dateString) => {
   return `(${Math.floor(seconds)}s ago)`;
 };
 
-const calculateDuration = (start, end) => {
-  if (!start || !end) return "N/A";
-
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-  const diffMs = endDate.getTime() - startDate.getTime();
-  if (diffMs < 0) return "N/A";
-
-  let totalMinutes = Math.floor(diffMs / (1000 * 60));
-  if (totalMinutes < 1) return "< 1m";
-
-  const days = Math.floor(totalMinutes / (60 * 24));
-  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
-  const minutes = totalMinutes % 60;
-
-  const parts = [];
-  if (days > 0) parts.push(`${days}d`);
-  if (hours > 0) parts.push(`${hours}h`);
-  if (minutes > 0) parts.push(`${minutes}m`);
-
-  return parts.join(" ");
-};
-
 // --- TicketsGrid Component ---
-const TicketsGrid = ({
-  data,
-  isLoading,
-  tableRef,
-  onViewDetails,
-  onEdit,
-  onDelete,
-}) => {
+const TicketsGrid = ({ data, isLoading, tableRef, onViewDetails }) => {
   const [statusFilter, setStatusFilter] = useState("");
 
   // Filtered data based on status
@@ -133,7 +116,7 @@ const TicketsGrid = ({
       headerName: "Ticket No",
       field: "ticketNo",
       flex: 1,
-      valueFormatter: (params) => `Ticket#${params.value}`,
+      valueFormatter: (params) => `${params.value}`,
     },
     {
       headerName: "Station No",
@@ -146,7 +129,7 @@ const TicketsGrid = ({
               params.value ? "text-gray-700 font-medium" : "text-gray-500"
             }
           >
-            {params.value ? `Station ${params.value}` : "N/A"}
+            {params.value ? `${params.value}` : "N/A"}
           </span>
         </div>
       ),
@@ -195,18 +178,49 @@ const TicketsGrid = ({
       field: "resolution_time",
       flex: 1.5,
       cellRenderer: (params) => {
-        const isPaused = params.data.paused_at != null;
-        const isClosed = params.data.status?.toLowerCase() === "closed";
+        const status = params.data.status?.toLowerCase();
+        const isClosed =
+          status === "closed" ||
+          status === "resolved" ||
+          status === "completed"; // resolved/complete
+        const isPaused = params.data.paused_at != null && !isClosed; // only paused if not closed
 
+        // --- RESOLVED / COMPLETED CASE ---
         if (isClosed) {
-          const closedAtTimestamp = params.data.closed_at
-            ? new Date(params.data.closed_at)
+          const createdAt = new Date(params.data.$createdAt).getTime();
+          const resolvedAt = params.data.closed_at
+            ? new Date(params.data.closed_at).getTime()
             : params.data.resolution_time
-            ? new Date(params.data.resolution_time)
+            ? new Date(params.data.resolution_time).getTime()
             : null;
 
-          const closedDateTime = closedAtTimestamp
-            ? closedAtTimestamp.toLocaleString("en-US", {
+          let durationText = "N/A";
+
+          if (resolvedAt) {
+            const diffMs = resolvedAt - createdAt;
+            const totalMinutes = Math.floor(diffMs / (1000 * 60));
+            const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const totalDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+            if (totalMinutes < 60) {
+              durationText = `${totalMinutes} min${
+                totalMinutes > 1 ? "s" : ""
+              }`;
+            } else if (totalHours < 24) {
+              const remainingMinutes = totalMinutes % 60;
+              durationText = `${totalHours} hr${totalHours > 1 ? "s" : ""}${
+                remainingMinutes ? ` ${remainingMinutes} min` : ""
+              }`;
+            } else {
+              const remainingHours = totalHours % 24;
+              durationText = `${totalDays} day${totalDays > 1 ? "s" : ""}${
+                remainingHours ? ` ${remainingHours} hr` : ""
+              }`;
+            }
+          }
+
+          const resolvedDate = resolvedAt
+            ? new Date(resolvedAt).toLocaleString("en-US", {
                 month: "short",
                 day: "2-digit",
                 year: "numeric",
@@ -216,16 +230,11 @@ const TicketsGrid = ({
               })
             : "";
 
-          const durationText = calculateDuration(
-            params.data.$createdAt,
-            params.data.closed_at || params.data.resolution_time
-          );
-
           return (
             <div className="flex flex-col justify-center h-full py-2">
-              {closedDateTime && (
+              {resolvedDate && (
                 <div className="text-xs text-gray-600">
-                  Closed: {closedDateTime}
+                  Resolved: {resolvedDate}
                 </div>
               )}
               <div className="text-xs text-gray-500 mt-0.5">
@@ -235,6 +244,34 @@ const TicketsGrid = ({
           );
         }
 
+        // --- PAUSED CASE ---
+        if (isPaused) {
+          const pausedDate = params.data.paused_at
+            ? new Date(params.data.paused_at).toLocaleString("en-US", {
+                month: "short",
+                day: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              })
+            : "";
+          return (
+            <div className="flex flex-col justify-center h-full py-2">
+              {pausedDate && (
+                <div className="text-xs text-gray-600">{pausedDate}</div>
+              )}
+              <div className="flex items-center gap-1 mt-1">
+                <div className="w-2 h-2 bg-blue-500 rounded-sm"></div>
+                <span className="text-xs text-blue-600 font-medium">
+                  Paused
+                </span>
+              </div>
+            </div>
+          );
+        }
+
+        // --- IN-PROGRESS CASE ---
         const calculatedResolutionTime = getResolutionDeadline(
           params.data.$createdAt,
           params.data.severity
@@ -253,37 +290,6 @@ const TicketsGrid = ({
         const textColor = isOverdue ? "text-red-600" : "text-green-600";
         const labelText = isOverdue ? "Overdue:" : "Remaining:";
 
-        if (isPaused) {
-          const pausedDate = params.data.paused_at
-            ? new Date(params.data.paused_at).toLocaleString("en-US", {
-                month: "short",
-                day: "2-digit",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: true,
-              })
-            : "";
-          return (
-            <div className="flex flex-col justify-center h-full py-2">
-              {pausedDate && (
-                <div className="text-xs text-gray-600">{pausedDate}</div>
-              )}
-              {durationText && (
-                <div className="text-xs text-gray-500 mt-0.5">
-                  {durationText}
-                </div>
-              )}
-              <div className="flex items-center gap-1 mt-1">
-                <div className="w-2 h-2 bg-blue-500 rounded-sm"></div>
-                <span className="text-xs text-blue-600 font-medium">
-                  Paused
-                </span>
-              </div>
-            </div>
-          );
-        }
-
         let barColor = "bg-green-500";
         if (isOverdue) barColor = "bg-red-500";
         else if (hours < 1) barColor = "bg-yellow-400";
@@ -300,6 +306,9 @@ const TicketsGrid = ({
             <div className={`text-sm font-semibold ${textColor} mt-1`}>
               {labelText} {timeText}
             </div>
+            {durationText && (
+              <div className="text-xs text-gray-500 mt-0.5">{durationText}</div>
+            )}
           </div>
         );
       },
@@ -335,20 +344,6 @@ const TicketsGrid = ({
       cellRenderer: (params) => (
         <section className="flex items-center gap-2 justify-center h-full">
           <TableAction action={() => onViewDetails(params.data)} />
-          <button
-            onClick={() => onEdit(params.data)}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
-            title="Edit Ticket"
-          >
-            <Pen size={18} className="text-blue-600" />
-          </button>
-          <button
-            onClick={() => onDelete(params.data)}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
-            title="Delete Ticket"
-          >
-            <Trash2 size={18} className="text-red-600" />
-          </button>
         </section>
       ),
     },

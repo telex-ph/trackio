@@ -204,7 +204,7 @@ const TicketDetailsModal = ({
     setIsSaving(true);
     try {
       const url =
-        "https://ticketing-system-eight-kappa.vercel.app/api/ittickets/trackio/updateTicket";
+        "https://ticketing-system-2u0k.onrender.com/api/ittickets/trackio/updateTicket";
 
       const payload = {
         email: userEmail,

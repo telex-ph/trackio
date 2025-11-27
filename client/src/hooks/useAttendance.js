@@ -4,35 +4,37 @@ import toast from "react-hot-toast";
 import api from "../utils/axios";
 import { formatTime, formatDate } from "../utils/formatDateTime";
 import { useStore } from "../store/useStore";
+import { useQuery } from "@tanstack/react-query";
 
 export const useAttendance = (userId, filter) => {
-  const [attendance, setAttendance] = useState(null);
   const [absentees, setAbsentees] = useState(null);
-  const [attendancesByStatus, setAttendancesByStatus] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const user = useStore((state) => state.user);
 
-  const fetchUserAttendance = useCallback(async () => {
+  const fetchUserAttendance = async (userId) => {
     if (!userId) return;
     try {
       setError(null);
       const response = await api.get(`/attendance/get-attendance/${userId}`);
-      setAttendance(response.data[0] || null);
+      return response.data[0] || null;
     } catch (error) {
       console.error("Error fetching attendance:", error);
       setError("Failed to fetch attendance data");
       toast.error("Failed to load attendance data");
-    } finally {
-      setLoading(false);
     }
-  }, [userId]);
+  };
+
+  const { data: attendance } = useQuery({
+    queryKey: ["attendance", userId],
+    queryFn: () => fetchUserAttendance(userId),
+    enabled: !!userId,
+  });
 
   const fetchAttendancesByStatus = useCallback(async () => {
     if (!filter) return;
 
     try {
-      setError(null);
       const response = await api.get("/attendance/get-attendances", {
         params: {
           userId: user._id,
@@ -137,14 +139,23 @@ export const useAttendance = (userId, filter) => {
         };
       });
 
-      setAttendancesByStatus(formattedData);
+      return formattedData;
     } catch (error) {
       console.error("Error fetching attendances by status:", error);
       setError("Failed to fetch attendances by status");
-    } finally {
-      setLoading(false);
     }
-  }, [filter?.startDate, filter?.endDate, filter?.status]);
+  });
+
+  const { data: attendancesByStatus } = useQuery({
+    queryKey: [
+      "attendancesByStatus",
+      filter?.startDate,
+      filter?.endDate,
+      filter?.status,
+    ],
+    queryFn: fetchAttendancesByStatus,
+    enabled: !!filter,
+  });
 
   const fetchAbsentees = useCallback(async () => {
     if (!filter) return;
@@ -212,18 +223,6 @@ export const useAttendance = (userId, filter) => {
     },
     [attendance?._id, fetchUserAttendance]
   );
-
-  useEffect(() => {
-    fetchUserAttendance();
-  }, [fetchUserAttendance]);
-
-  useEffect(() => {
-    fetchAttendancesByStatus();
-  }, [fetchAttendancesByStatus]);
-
-  useEffect(() => {
-    fetchAbsentees();
-  }, [fetchAbsentees]);
 
   return {
     attendance,

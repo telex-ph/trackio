@@ -80,7 +80,18 @@ export const getEvents = async (req, res) => {
           const user = await User.getById(ac.employeeNoString);
           if (user) {
             const userId = user._id.toString();
-            const [attendance] = await Attendance.getById(userId);
+            const attendances = await Attendance.getById(userId, "desc");
+            const attendance =
+              attendances.find((a) => {
+                const shiftStart = DateTime.fromJSDate(a.shiftStart, {
+                  zone: "utc",
+                });
+                const shiftEnd = DateTime.fromJSDate(a.shiftEnd, {
+                  zone: "utc",
+                });
+                const nowTime = DateTime.now().toUTC();
+                return shiftEnd > nowTime || shiftStart <= nowTime;
+              }) || attendances[0];
 
             // TODO: remove soon;
             await User.update(userId, "isValidEmployeeId", true);
@@ -91,8 +102,28 @@ export const getEvents = async (req, res) => {
               const totalBreak = attendance.totalBreak || 0;
               const status = attendance.status;
 
-              const shiftEnd = DateTime.fromJSDate(attendance.shiftEnd).toUTC();
-              const nowTime = DateTime.utc();
+              const shiftStart = DateTime.fromJSDate(attendance.shiftStart, {
+                zone: "utc",
+              });
+              const shiftEnd = DateTime.fromJSDate(attendance.shiftEnd, {
+                zone: "utc",
+              });
+              const nowTime = DateTime.now().toUTC();
+
+              console.log(
+                `Name: ${ac.name} ID: ${userId} shiftEnd: ${shiftEnd} nowTime: ${nowTime}`
+              );
+              // TODO: remove soon;
+              console.log(
+                `Attendance selection for ${ac.name}: ` +
+                  `List: [${attendances
+                    .map((a) => a._id.toString())
+                    .join(", ")}] ` +
+                  `| Selected -> ID: ${attendance._id.toString()}, ` +
+                  `shiftDate: ${attendance.shiftDate}, ` +
+                  `shiftStart: ${attendance.shiftStart}, ` +
+                  `shiftEnd: ${attendance.shiftEnd}`
+              );
 
               if (shiftEnd < nowTime) {
                 if (status === STATUS.ON_BREAK) {
@@ -100,13 +131,37 @@ export const getEvents = async (req, res) => {
                 }
                 // Shift already ended
                 await biometricOut(attendanceId);
+                console.log(
+                  `Employee ${ac.name} is about to go out of the office`
+                );
               } else {
-                // Active shift
-                // if (status === STATUS.WORKING) {
-                //     await biometricBreakIn(attendanceId, breaks, totalBreak);
-                // }
+                // Prevent the scenario where an employee logs in but doesn't actually enter the area
+                if (status === STATUS.WORKING && ipAddress === IP.BIO_IN) {
+                  console.log(
+                    `Ignoring event at ${IP.BIO_IN}: Employee ${ac.name} attempted BIO_IN while already in WORKING status.`
+                  );
+                  return res.status(200).send("OK");
+                }
+
+                // Prevent the scenario where an employee logs out without actually leaving the production area
+                if (status === STATUS.ON_BREAK && ipAddress === IP.BIO_OUT) {
+                  console.log(
+                    `Ignoring event at ${IP.BIO_OUT}: Employee ${ac.name} attempted BIO_OUT while already in ON_BREAK status.`
+                  );
+                  return res.status(200).send("OK");
+                }
+
                 if (status === STATUS.WORKING) {
-                  console.log(`Employee is WORKING, processing break-in`);
+                  // Ignore breaks if the employee is not yet on shift
+                  if (nowTime < shiftStart) {
+                    console.log(
+                      `Ignoring event at ${IP.BIO_OUT}: Employee ${ac.name} attempted BIO_OUT while not yet on shift.`
+                    );
+                    // return res.status(200).send("OK");
+                  }
+                  console.log(
+                    `Employee ${ac.name} is WORKING, processing break-in`
+                  );
                   try {
                     await biometricBreakIn(attendanceId, breaks, totalBreak);
                     console.log(`Break-in successful for user ${ac.name}`);
@@ -124,7 +179,9 @@ export const getEvents = async (req, res) => {
                     await webhook(message);
                   }
                 } else if (status === STATUS.ON_BREAK) {
-                  console.log(`Employee is ON_BREAK, processing break-out`);
+                  console.log(
+                    `Employee ${ac.name} is ON_BREAK, processing break-out`
+                  );
                   try {
                     await biometricBreakOut(attendanceId, breaks);
                     console.log(`Break-out successful for user ${ac.name}`);
@@ -168,41 +225,6 @@ export const getEvents = async (req, res) => {
             console.log(
               `No registered user for ${ac.name} (Employee ID: ${ac.employeeNoString})`
             );
-
-            // Create a new user if not found
-            // const arrName = ac.name.split(" ");
-            // const lastName = arrName[arrName.length - 1];
-            // const firstName = arrName.slice(0, -1).join(" ");
-            // const employeeId = ac.employeeNoString;
-
-            // const newUser = {
-            //     employeeId,
-            //     firstName,
-            //     lastName,
-            //     teamId: null,
-            //     email: null,
-            //     phoneNumber: null,
-            //     role: "agent",
-            //     password:
-            //         "$2a$10$1jHppZ6SOnm4wnTMDg0kPOY9FHu/0L31MdP50WaeGmnVkLpeLPpau",
-            //     createdAt: new Date(),
-            // };
-
-            // try {
-            //     const user = await User.addUser(newUser);
-            //     console.log(user);
-            //     const message = `New user added: ${ac.name} (Employee ID: ${ac.employeeNoString}) has been added to the system.`;
-            //     await webhook(message);
-            // } catch (error) {
-            //     const stack = (error.stack || error.message || "").slice(0, 1500);
-            //     const message =
-            //         `**Add User Error:** Unable to add the user to the system.\n` +
-            //         `Employee: ${ac.name}, ID: ${ac.employeeNoString}\n\n` +
-            //         `**Technical details:**\n\n` +
-            //         `\`\`\`\n${stack}\n\`\`\``;
-
-            //     await webhook(message);
-            // }
           }
         }
       }

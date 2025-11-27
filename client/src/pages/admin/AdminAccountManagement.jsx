@@ -6,14 +6,14 @@ import AddUserModal from "../../components/modals/AddUserModal";
 import DeleteModal from "../../components/modals/DeleteModal";
 import { Button } from "flowbite-react";
 import toast from "react-hot-toast";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const AdminAccountManagement = () => {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("add");
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const queryClient = useQueryClient();
   const tableRef = useRef();
 
   const columns = useMemo(
@@ -67,19 +67,17 @@ const AdminAccountManagement = () => {
 
   const fetchUsers = async () => {
     try {
-      setLoading(true);
       const { data } = await api.get("/user/get-users?role=");
-      setUsers(data);
+      return data;
     } catch (error) {
       console.error("Error fetching users:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const { data: users, isLoading: loading } = useQuery({
+    queryKey: "users",
+    queryFn: fetchUsers,
+  });
 
   const handleAddClick = () => {
     setSelectedUser(null);
@@ -94,11 +92,16 @@ const AdminAccountManagement = () => {
       await api.patch(`/user/delete-user/${selectedUser._id}`);
       toast.success(`User ${selectedUser.firstName} deleted successfully`);
       setDeleteModalOpen(false);
+      queryClient.invalidateQueries(["users"]);
       fetchUsers();
     } catch (error) {
       console.error("Error deleting user:", error);
       toast.error("Failed to delete user");
     }
+  };
+
+  const handleAddConfirm = () => {
+    queryClient.invalidateQueries(["users"]);
   };
 
   return (
@@ -130,7 +133,7 @@ const AdminAccountManagement = () => {
       <AddUserModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onSuccess={fetchUsers}
+        onSuccess={handleAddConfirm}
         mode={modalMode}
         user={selectedUser}
       />

@@ -21,7 +21,8 @@ import Wristwatch from "../../assets/illustrations/Wristwatch";
 const Login = () => {
   const navigate = useNavigate();
   const [data, setData] = useState({ email: "", password: "" });
-  const { login, isLoading, error } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const { login, error } = useAuth();
 
   const [isShowPassword, setIsShowPassword] = useState(false);
   // const [error, setError] = useState({ message: "", hasError: false });
@@ -57,8 +58,15 @@ const Login = () => {
   };
 
   const handleLoginClick = async (e) => {
-    e.preventDefault();
-    login(data);
+    try {
+      setLoading(true);
+      e.preventDefault();
+      await login(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEyeClick = () => setIsShowPassword((prev) => !prev);
@@ -152,13 +160,17 @@ const Login = () => {
             </p>
           </div>
 
-          <Button
-            type="submit"
-            className={`bg-(--primary-color) hover:bg-(--primary-color)`}
-            disabled={isLoading}
-          >
-            {isLoading ? <Spinner width={5} height={5} /> : "Log In"}
-          </Button>
+          {loading ? (
+            <Spinner width={3} height={3} />
+          ) : (
+            <Button
+              type="submit"
+              className={`bg-(--primary-color) hover:bg-(--primary-color)`}
+              disabled={loading}
+            >
+              Log In
+            </Button>
+          )}
         </form>
       </div>
 
@@ -167,44 +179,6 @@ const Login = () => {
           <Wristwatch />
         </section>
       </div>
-
-      {/* Right Side */}
-      {/* <div className="flex-1 hidden lg:flex justify-center items-center flex-col bg-[#470905] relative rounded-l-lg p-24 overflow-hidden border border-[#582e2b]/40">
-        <img
-          src={ellipse}
-          className="absolute -top-64 -right-65"
-          alt="Background Shape"
-        /> */}
-
-      {/* Logo + Title */}
-      {/* <div
-          className={`absolute inset-0 flex flex-col items-center justify-center gap-6 transition-all duration-1500 ease-in-out ${
-            showVideo ? "opacity-0" : "opacity-100"
-          }`}
-        >
-          <img
-            src={telexLogo}
-            alt="Telex PH"
-            className="w-3/4 h-3/4 object-contain"
-          />
-          <p className="text-4xl md:text-5xl text-white text-center font-semibold">
-            Business Support Services Inc.
-          </p>
-        </div> */}
-
-      {/* Video (play once, then back to logo) */}
-      {/* {showVideo && (
-          <video
-            src={telexvid}
-            autoPlay
-            muted
-            className={`absolute  hidden lg:flex inset-0 w-full h-full object-cover rounded-l-lg transition-all duration-1500 ease-in-out ${
-              showVideo ? "opacity-100" : "opacity-0"
-            }`}
-            onEnded={() => setShowVideo(false)}
-          />
-        )} */}
-      {/* </div> */}
     </section>
   );
 };
