@@ -18,7 +18,7 @@ const AdminHRHeadSidebar = ({
   isCollapsed,
   activeDropdown,
   setActiveDropdown,
-  unreadOffenses
+  unreadOffenses,
 }) => (
   <div className="space-y-1">
     <SidebarLink
@@ -103,13 +103,13 @@ const AdminHRHeadSidebar = ({
       badge={unreadOffenses}
     >
       <SidebarLink
-        to={`/compliance-head/createoffense`}
+        to={`/admin-hr-head/createoffense`}
         icon={List}
         label="Create Offense"
         isCollapsed={isCollapsed}
       />
       <SidebarLink
-        to={`/compliance-head/offenses`}
+        to={`/admin-hr-head/offenses`}
         icon={GalleryVerticalEnd}
         label={
           <>
@@ -124,7 +124,7 @@ const AdminHRHeadSidebar = ({
         isCollapsed={isCollapsed}
       />
       <SidebarLink
-        to={`/compliance-head/reported-ir`}
+        to={`/admin-hr-head/reported-ir`}
         icon={GalleryVerticalEnd}
         label="Reported IR"
         isCollapsed={isCollapsed}
