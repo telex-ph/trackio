@@ -306,7 +306,7 @@ const HRReportedOffenses = () => {
     }
   };
 
-  const handleAfterHearing = async () => {
+  const handleUploadMOM = async () => {
     if (!editingId) return;
 
     const now = new Date();
@@ -314,8 +314,7 @@ const HRReportedOffenses = () => {
     try {
       const payload = {
         ...formData,
-        isAcknowledged: false,
-        status: "After Hearing",
+        status: "MOM Uploaded",
         isReadByRespondant: false,
         afterHearingDateTime: now.toISOString(),
       };
@@ -344,6 +343,37 @@ const HRReportedOffenses = () => {
           },
         ];
       }
+
+      // --- API Call ---
+      await api.put(`/offenses/${editingId}`, payload);
+
+      showNotification("Documents uploaded successfully!", "success");
+
+      // --- Reset ---
+      resetForm();
+      setSelectedMOMFile(null);
+      setSelectedNDAFile(null);
+
+      fetchOffenses();
+    } catch (error) {
+      console.error("Error updating offense:", error);
+      showNotification("Failed to update. Please try again.", "error");
+    }
+  };
+
+  const handleUploadNDA = async () => {
+    if (!editingId) return;
+
+    const now = new Date();
+
+    try {
+      const payload = {
+        ...formData,
+        isAcknowledged: false,
+        status: "For Acknowledgement",
+        isReadByRespondant: false,
+        afterHearingDateTime: now.toISOString(),
+      };
 
       if (selectedNDAFile) {
         console.log("NDA FIle: ", selectedNDAFile);
@@ -502,7 +532,8 @@ const HRReportedOffenses = () => {
           onFormChange={handleFormChange}
           handleValid={handleValid}
           handleHearingDate={handleHearingDate}
-          handleAfterHearing={handleAfterHearing}
+          handleUploadMOM={handleUploadMOM}
+          handleUploadNDA={handleUploadNDA}
           rejectOffense={rejectOffense}
           selectedFile={selectedFile}
           setSelectedFile={setSelectedFile}

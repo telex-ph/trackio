@@ -420,6 +420,7 @@ const SharedCreateOffences = () => {
               onDelete={handleDelete}
               formatDisplayDate={formatDisplayDate}
               onEditClick={() => handleEditClick(formData)}
+              loggedUser={loggedUser}
             />
           )}
         </div>
