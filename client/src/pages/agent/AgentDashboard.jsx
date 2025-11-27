@@ -31,6 +31,7 @@ import {
   getPersistentUserDepartment,
 } from "../../utils/announcementUtils";
 
+// ✅ ADDED: Import DateTime for real-time time handling
 import { DateTime } from "luxon";
 
 const getUniqueViewers = (announcement) => {
@@ -989,8 +990,8 @@ const AgentDashboard = () => {
             </h1>
              <p className="text-sm sm:text-base lg:text-lg opacity-90">
                   Stay updated with the latest announcements
-                </p>
-          {/* Cover Image - ULTRA RESPONSIVE */}
+            </p>
+
           <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg">
             <img
               className="w-full h-24 xs:h-28 sm:h-32 md:h-36 lg:h-44 xl:h-52 2xl:h-60 object-cover"
@@ -999,8 +1000,6 @@ const AgentDashboard = () => {
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent flex items-center">
               <div className="text-white p-4 sm:p-6 lg:p-8">
-                <div className="mt-2 text-xs sm:text-sm opacity-80 flex items-center gap-1">
-                </div>
               </div>
             </div>
           </div>
@@ -1035,6 +1034,7 @@ const AgentDashboard = () => {
                       <p className="text-xs sm:text-sm lg:text-base text-gray-500 font-medium mt-1">
                         Latest updates from different departments
                       </p>
+                      {/* ✅ ADDED: REAL-TIME UPDATE INDICATOR */}
                       <div className="flex items-center gap-2 mt-1">
                         <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium flex items-center gap-1">
                           <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
@@ -1227,6 +1227,7 @@ const AgentDashboard = () => {
           </div>
         </div>
 
+        {/* Right Column - Daily Records Card - FIXED RESPONSIVE */}
         <div className={`w-full lg:w-80 xl:w-96 2xl:w-[28rem] p-2 sm:p-3 lg:p-4 flex-shrink-0 order-2 lg:order-2 ${isMobileMenuOpen ? 'block' : 'hidden lg:block'}`}>
           <div className="sticky top-4">
             <DailyRecordsCard />

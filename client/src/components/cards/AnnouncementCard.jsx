@@ -128,30 +128,6 @@ const AnnouncementCard = ({
       }
     };
 
-    const getPriorityColor = (priority) => {
-      switch (priority) {
-        case "High":
-          return "bg-red-100 text-red-700 border-red-200";
-        case "Medium":
-          return "bg-yellow-100 text-yellow-700 border-yellow-200";
-        case "Low":
-          return "bg-green-100 text-green-700 border-green-200";
-        default:
-          return "bg-gray-100 text-gray-700 border-gray-200";
-      }
-    };
-
-    const getStatusColor = (status) => {
-      switch (status) {
-        case "Active":
-          return "bg-green-100 text-green-700";
-        case "Cancelled":
-          return "bg-red-100 text-red-700";
-        default:
-          return "bg-gray-100 text-gray-700";
-      }
-    };
-
     const isUrgent = () => {
       const announcementDate = DateTime.fromISO(announcement.dateTime);
       const now = DateTime.local();
@@ -268,11 +244,6 @@ const AnnouncementCard = ({
             {announcement.isPinned ? <PinOff className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
             {announcement.isPinned ? 'Pinned' : 'Pin'}
           </button>
-
-          {/* Status Badge */}
-          <div className={`absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(announcement.status)}`}>
-            {announcement.status}
-          </div>
         </div>
 
         <div className="flex-1 p-4 flex flex-col">
@@ -282,9 +253,7 @@ const AnnouncementCard = ({
               <h3 className="font-bold text-gray-800 text-sm leading-tight line-clamp-2 flex-1">
                 {announcement.title}
               </h3>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(announcement.priority)} whitespace-nowrap`}>
-                {announcement.priority}
-              </span>
+        
             </div>
             
             <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
