@@ -108,21 +108,17 @@ const AdminHRHeadSidebar = ({
         label="Create Offense"
         isCollapsed={isCollapsed}
       />
-      <SidebarLink
+      {/* <SidebarLink
         to={`/admin-hr-head/offenses`}
         icon={GalleryVerticalEnd}
         label={
           <>
             My Offenses
-            {!isCollapsed && unreadOffenses > 0 && (
-              <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
-                {unreadOffenses}
-              </span>
-            )}
           </>
         }
         isCollapsed={isCollapsed}
-      />
+        badge={!isCollapsed ? unreadOffenses : 0}
+      /> */}
       <SidebarLink
         to={`/admin-hr-head/reported-ir`}
         icon={GalleryVerticalEnd}
