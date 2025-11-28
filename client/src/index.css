@@ -143,3 +143,12 @@ h6 {
 .animate-fadeIn {
   animation: fadeIn 1s ease forwards;
 }
+
+@keyframes pulseRed {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.02); opacity: 0.85; }
+}
+
+.pulse-red {
+  animation: pulseRed 1.5s infinite;
+}
