@@ -110,6 +110,12 @@ export default function LiveBreaks() {
     onBreak.filter((s) => s.status === STATUS.ON_BREAK)
   );
 
+  const overBreakStatuses = overBreaks.sort((a, b) => {
+    return b.totalBreakTime - a.totalBreakTime;
+  });
+
+  console.log(overBreakStatuses);
+
   return (
     <section
       style={{
@@ -164,17 +170,16 @@ export default function LiveBreaks() {
           <h2 className="mb-4 text-gray-700 border p-2 border-light bg-gray-50 rounded-md">
             Live Over Break
           </h2>
-          {/* <section className="grid grid-cols-4 grid-rows-10 grid-flow-col gap-3"> */}
           <section className="grid grid-cols-1 grid-rows-10 lg:grid-cols-4 lg:grid-flow-col gap-3">
             <AnimatePresence mode="popLayout">
-              {overBreaks.map((status, key) => (
+              {overBreakStatuses.map((status, key) => (
                 <motion.div
                   key={status._id}
                   layout
                   initial={{ x: -100, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   exit={{ x: 100, opacity: 0 }}
-                  className="h-20 relative flex items-center justify-center text-gray-700 border p-2 border-light bg-gray-50 rounded-md"
+                  className="h-20 relative flex items-center justify-center text-gray-700 border p-2 border-light bg-gray-200 rounded-md"
                 >
                   <div className="w-full flex items-center gap-2 px-7 relative z-10">
                     <div className="flex gap-3">
