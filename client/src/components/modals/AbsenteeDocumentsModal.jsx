@@ -58,7 +58,7 @@ const AbsenteeDocumentsModal = ({ employee, onClose }) => {
   };
 
   const handleDeleteFile = async (fileName) => {
-    const previousAttachments = selectedEmployee.attachments;
+  
 
     // Optimistic update
     setSelectedEmployee((prev) => ({

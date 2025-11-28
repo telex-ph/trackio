@@ -4,6 +4,7 @@ import {
   overBreakWatcher,
 } from "./handlers/statusWatcher.js";
 import offenseWatcher from "./handlers/offenseWatcher.js";
+import announcementWatcher from "./handlers/announcementWatcher.js";
 
 let io;
 
@@ -37,6 +38,7 @@ const socket = async (server, app) => {
   await onBreakWatcher(io);
   await overBreakWatcher(io);
   await offenseWatcher(io);
+  await announcementWatcher(io);
 };
 
 export default socket;
