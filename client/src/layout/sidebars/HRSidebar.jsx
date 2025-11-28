@@ -77,10 +77,17 @@ const HRSidebar = ({
       badge={unreadOffenses}
     >
       <SidebarLink
-        to="/human-resources/offenses"
-        icon={Calendar}
+        to={`/human-resources/createoffense`}
+        icon={List}
         label="Create Offense"
         isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to={`/human-resources/offenses`}
+        icon={GalleryVerticalEnd}
+        label={<>My Offenses</>}
+        isCollapsed={isCollapsed}
+        badge={!isCollapsed ? unreadOffenses : 0}
       />
       <SidebarLink
         to={`/human-resources/reported-ir`}

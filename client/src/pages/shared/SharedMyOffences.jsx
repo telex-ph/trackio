@@ -238,12 +238,15 @@ const SharedMyOffences = () => {
       return;
     }
 
+    const now = new Date();
+
     try {
       const payload = {
         ...formData,
         respondantExplanation: formData.respondantExplanation,
         status: "Respondent Explained",
         isReadByHR: false,
+        explanationDateTime: now.toISOString(),
       };
 
       await api.put(`/offenses/${editingId}`, payload);
@@ -263,12 +266,15 @@ const SharedMyOffences = () => {
 
   const handleAcknowledge = async (ackMessage) => {
     try {
+      const now = new Date();
+
       const payload = {
         ...formData,
         status: "Acknowledged",
         ackMessage,
         isAcknowledged: true,
         isReadByHR: true,
+        acknowledgedDateTime: now.toISOString(),
       };
 
       await api.put(`/offenses/${editingId}`, payload);
@@ -300,12 +306,6 @@ const SharedMyOffences = () => {
 
     setOriginalExplanation(off.respondantExplanation || "");
 
-    setRespondentHasExplanation(!!off.respondantExplanation);
-
-    const [isRespondantNDA, setIsRespondantNDA] = useState(
-      off.respondantId === loggedUser._id
-    );
-
     try {
       // Fetch the latest offense data
       const { data: offense } = await api.get(`/offenses/${off._id}`);
@@ -323,9 +323,6 @@ const SharedMyOffences = () => {
       showNotification("Failed to update offense. Please try again.", "error");
     }
   };
-
-  const [respondentHasExplanation, setRespondentHasExplanation] =
-    useState(false);
 
   const formatDisplayDate = (dateStr) =>
     dateStr
@@ -533,7 +530,7 @@ const SharedMyOffences = () => {
                       return (
                         <div key={idx} className="flex flex-col gap-3">
                           <div className="flex items-center gap-2 min-w-0">
-                            <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                            <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 shrink-0" />
                             <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
                               {ev.fileName}
                             </p>
@@ -564,63 +561,68 @@ const SharedMyOffences = () => {
                 </div>
               )}
 
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Notice to explain
-                </label>
-                {formData.fileNTE.length > 0 ? (
-                  <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
-                    {formData.fileNTE.slice(0, 1).map((nte, idx) => {
-                      const viewUrl = nte.url;
-                      return (
-                        <div key={idx} className="flex flex-col gap-3">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
-                            <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
-                              {nte.fileName}
-                            </p>
+              {formData.fileNTE && formData.fileNTE.length > 0 ? (
+                <div>
+                  <div className="space-y-2">
+                    <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                      Notice to explain
+                    </label>
+                    <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
+                      {formData.fileNTE.slice(0, 1).map((nte, idx) => {
+                        const viewUrl = nte.url;
+                        return (
+                          <div key={idx} className="flex flex-col gap-3">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 shrink-0" />
+                              <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
+                                {nte.fileName}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={viewUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                              >
+                                <Eye className="w-4 h-4" />
+                                View
+                              </a>
+                              <a
+                                href={nte.url}
+                                download={nte.fileName}
+                                className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                              >
+                                <Download className="w-4 h-4" />
+                                Download
+                              </a>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <a
-                              href={viewUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
-                            >
-                              <Eye className="w-4 h-4" />
-                              View
-                            </a>
-                            <a
-                              href={nte.url}
-                              download={nte.fileName}
-                              className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
-                            >
-                              <Download className="w-4 h-4" />
-                              Download
-                            </a>
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                ) : null}
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Explanation
-                </label>
-                <textarea
-                  onChange={(e) =>
-                    handleInputChange("respondantExplanation", e.target.value)
-                  }
-                  placeholder="Your explanation..."
-                  className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl 
+                  <div className="space-y-2">
+                    <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                      Explanation
+                    </label>
+                    <textarea
+                      onChange={(e) =>
+                        handleInputChange(
+                          "respondantExplanation",
+                          e.target.value
+                        )
+                      }
+                      placeholder="Your explanation..."
+                      className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl 
                     h-24 sm:h-32 focus:border-red-500 focus:bg-white transition-all duration-300 
                   text-gray-800 placeholder-gray-400 resize-none text-sm sm:text-base"
-                  disabled={!!originalExplanation}
-                  value={formData.respondantExplanation || ""}
-                />
-              </div>
+                      disabled={!!originalExplanation}
+                      value={formData.respondantExplanation || ""}
+                    />
+                  </div>
+                </div>
+              ) : null}
               {formData.fileMOM &&
                 formData.fileMOM.length > 0 &&
                 formData.witnesses?.some((w) => w._id === loggedUser._id) &&
@@ -635,7 +637,7 @@ const SharedMyOffences = () => {
                         return (
                           <div key={idx} className="flex flex-col gap-3">
                             <div className="flex items-center gap-2 min-w-0">
-                              <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                              <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 shrink-0" />
                               <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
                                 {mom.fileName}
                               </p>
@@ -681,7 +683,7 @@ const SharedMyOffences = () => {
                       return (
                         <div key={idx} className="flex flex-col gap-3">
                           <div className="flex items-center gap-2 min-w-0">
-                            <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                            <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 shrink-0" />
                             <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
                               {nda.fileName}
                             </p>
@@ -723,10 +725,10 @@ const SharedMyOffences = () => {
               )}
               {/* Buttons */}
               <div className="flex gap-4">
-                {!respondentHasExplanation && (
+                {formData.status === "NTE" && (
                   <button
                     onClick={handleSubmit}
-                    className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
+                    className="flex-1 bg-linear-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
                   >
                     Submit
                   </button>
@@ -734,7 +736,7 @@ const SharedMyOffences = () => {
                 {formData.status === "For Acknowledgement" && (
                   <button
                     onClick={() => setShowAcknowledgeModal(true)}
-                    className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
+                    className="flex-1 bg-linear-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
                   >
                     Acknowledge
                   </button>

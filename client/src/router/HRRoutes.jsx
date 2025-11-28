@@ -21,6 +21,7 @@ import HRReportedOffenses from "../pages/hr/HRReportedOffenses";
 import SharedSettings from "../pages/shared/SharedSettings";
 import SharedTeamViewMembers from "../pages/shared/SharedTeamViewMembers";
 import SharedTicket from "../pages/shared/SharedTicket";
+import TeamLeaderOffenses from "../pages/team-leader/TeamLeaderOffenses";
 
 const HR_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -49,8 +50,12 @@ const HR_ROUTES = [
     element: <SharedTeamViewMembers />,
   },
   {
-    path: "offenses",
+    path: "createoffense",
     element: <HROffenses />,
+  },
+  {
+    path: "offenses",
+    element: <TeamLeaderOffenses />,
   },
   {
     path: "reported-ir",
