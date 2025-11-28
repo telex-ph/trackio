@@ -114,8 +114,6 @@ export default function LiveBreaks() {
     return b.totalBreakTime - a.totalBreakTime;
   });
 
-  console.log(overBreakStatuses);
-
   return (
     <section
       style={{
