@@ -11,6 +11,7 @@ import {
 
 import { useRef } from "react";
 import api from "../../../utils/axios";
+import { DateTime } from "luxon";
 
 // Standard form field styling
 const inputStyle =
@@ -114,7 +115,13 @@ const HR_OffenseDetails = ({
             <Edit className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
           </div>
           <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
-            {isViewMode ? "Manage Offense" : "Offense Details"}
+            {isViewMode ? "Manage Offense" : "Offense Details"} (
+            {DateTime.fromISO(formData.createdAt).toLocaleString({
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
+            )
           </h3>
         </div>
         {isViewMode && (
@@ -274,7 +281,13 @@ const HR_OffenseDetails = ({
             {formData.fileNTE && formData.fileNTE.length > 0 && (
               <div>
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Notice to explain
+                  Notice to explain (
+                  {DateTime.fromISO(formData.nteSentDateTime).toLocaleString({
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                  )
                 </label>
                 <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
                   {formData.fileNTE.slice(0, 1).map((nte, idx) => {
@@ -322,7 +335,15 @@ const HR_OffenseDetails = ({
             ].includes(formData.status) && (
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Explanation
+                  Explanation (
+                  {DateTime.fromISO(
+                    formData.explanationDateTime
+                  ).toLocaleString({
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                  )
                 </label>
                 <textarea
                   name="remarks"
@@ -333,94 +354,112 @@ const HR_OffenseDetails = ({
                 />
               </div>
             )}
-            {formData.fileMOM &&
-              formData.fileMOM.length > 0 &&(
-                <div>
-                  <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                    Minutes of the meeting
-                  </label>
-                  <div className="border-2 border-dashed rounded-2xl p-4 mb-4 border-blue-400 bg-blue-50">
-                    {formData.fileMOM.slice(0, 1).map((mom, idx) => {
-                      const viewUrl = mom.url;
-                      return (
-                        <div key={idx} className="flex flex-col gap-3">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
-                            <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
-                              {mom.fileName}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <a
-                              href={viewUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
-                            >
-                              <Eye className="w-4 h-4" />
-                              View
-                            </a>
-                            <a
-                              href={mom.url}
-                              download={mom.fileName}
-                              className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
-                            >
-                              <Download className="w-4 h-4" />
-                              Download
-                            </a>
-                          </div>
+            {formData.fileMOM && formData.fileMOM.length > 0 && (
+              <div>
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  Minutes of the meeting (
+                  {DateTime.fromISO(formData.momSentDateTime).toLocaleString({
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                  )
+                </label>
+                <div className="border-2 border-dashed rounded-2xl p-4 mb-4 border-blue-400 bg-blue-50">
+                  {formData.fileMOM.slice(0, 1).map((mom, idx) => {
+                    const viewUrl = mom.url;
+                    return (
+                      <div key={idx} className="flex flex-col gap-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                          <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
+                            {mom.fileName}
+                          </p>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            {formData.fileNDA &&
-              formData.fileNDA.length > 0 && (
-                <div>
-                  <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                    Notice of Disciplinary Action
-                  </label>
-                  <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
-                    {formData.fileNDA.slice(0, 1).map((nda, idx) => {
-                      const viewUrl = nda.url;
-                      return (
-                        <div key={idx} className="flex flex-col gap-3">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
-                            <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
-                              {nda.fileName}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <a
-                              href={viewUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
-                            >
-                              <Eye className="w-4 h-4" />
-                              View
-                            </a>
-                            <a
-                              href={nda.url}
-                              download={nda.fileName}
-                              className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
-                            >
-                              <Download className="w-4 h-4" />
-                              Download
-                            </a>
-                          </div>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={viewUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View
+                          </a>
+                          <a
+                            href={mom.url}
+                            download={mom.fileName}
+                            className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                          >
+                            <Download className="w-4 h-4" />
+                            Download
+                          </a>
                         </div>
-                      );
-                    })}
-                  </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
+            )}
+            {formData.fileNDA && formData.fileNDA.length > 0 && (
+              <div>
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  Notice of Disciplinary Action (
+                  {DateTime.fromISO(formData.ndaSentDateTime).toLocaleString({
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                  )
+                </label>
+                <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
+                  {formData.fileNDA.slice(0, 1).map((nda, idx) => {
+                    const viewUrl = nda.url;
+                    return (
+                      <div key={idx} className="flex flex-col gap-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                          <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
+                            {nda.fileName}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={viewUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View
+                          </a>
+                          <a
+                            href={nda.url}
+                            download={nda.fileName}
+                            className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                          >
+                            <Download className="w-4 h-4" />
+                            Download
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             {formData.isAcknowledged === true && (
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Acknowledgement
+                  Acknowledgement (
+                  {DateTime.fromISO(
+                    formData.acknowledgedDateTime
+                  ).toLocaleString({
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                  )
                 </label>
                 <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 text-gray-800 text-sm sm:text-base overflow-y-auto">
                   {formData.ackMessage || "No acknowledgement"}
