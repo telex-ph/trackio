@@ -27,6 +27,7 @@ const ScheduleModal = ({ onClose, operation }) => {
   const [notes, setNotes] = useState("");
   const [shiftHour, setShiftHour] = useState(0);
   const [isNightShift, setIsNightShift] = useState(false);
+  const [isLeave, setIsLeave] = useState(false);
 
   useEffect(() => {
     if (!shiftStart || !shiftEnd) return;
@@ -163,12 +164,17 @@ const ScheduleModal = ({ onClose, operation }) => {
                 name="attendanceType"
                 className="block w-full rounded-lg border-light p-2 text-sm"
                 value={type}
-                onChange={(e) => setType(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setType(val);
+                  setIsLeave(val === "leave");
+                }}
                 required
               >
                 <option value={SCHEDULE.WORK_DAY}>Workday</option>
                 <option value={SCHEDULE.REST_DAY}>Rest Day</option>
                 <option value={SCHEDULE.HOLIDAY}>Holiday</option>
+                <option value="leave">Leave</option>
               </select>
 
               {/* Shift Hours */}
@@ -205,34 +211,91 @@ const ScheduleModal = ({ onClose, operation }) => {
                 </div>
               )}
 
-              {/* Meal Break */}
-              {/* {type === SCHEDULE.WORK_DAY && (
-                <div>
-                  <label
-                    htmlFor="mealBreak"
-                    className="block text-sm font-medium mb-1"
-                  >
-                    Meal Break
-                  </label>
-                  <div className="flex gap-3 items-center">
-                    <input
-                      type="time"
-                      value={mealStart}
-                      onChange={(e) => setMealStart(e.target.value)}
-                      className="flex-1 border-light rounded-md p-2"
-                      required
-                    />
-                    <span>To</span>
-                    <input
-                      type="time"
-                      value={mealEnd}
-                      onChange={(e) => setMealEnd(e.target.value)}
-                      className="flex-1 border-light rounded-md p-2"
-                      required
-                    />
+              {/* Leave types */}
+              {type === "leave" && (
+                <div className="my-2">
+                  <div className="grid grid-cols-3">
+                    {/* Vacation Leave */}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        id={SCHEDULE.VACATION_LEAVE}
+                        name="leaveType"
+                        value={SCHEDULE.VACATION_LEAVE}
+                        checked
+                      />
+                      <label htmlFor={SCHEDULE.VACATION_LEAVE}>
+                        Vacation Leave
+                      </label>
+                    </div>
+
+                    {/* Unpaid Vacation Leave */}
+                    <div className="flex items-center gap-2 mt-1">
+                      <input
+                        type="radio"
+                        id={SCHEDULE.UNPAID_VACATION_LEAVE}
+                        name="leaveType"
+                        value={SCHEDULE.UNPAID_VACATION_LEAVE}
+                      />
+                      <label htmlFor={SCHEDULE.UNPAID_VACATION_LEAVE}>
+                        Unpaid Vacation Leave
+                      </label>
+                    </div>
+
+                    {/* Emergency Leave */}
+                    <div className="flex items-center gap-2 mt-1">
+                      <input
+                        type="radio"
+                        id={SCHEDULE.EMERGENCY_LEAVE}
+                        name="leaveType"
+                        value={SCHEDULE.EMERGENCY_LEAVE}
+                      />
+                      <label htmlFor={SCHEDULE.EMERGENCY_LEAVE}>
+                        Emergency Leave
+                      </label>
+                    </div>
+
+                    {/* Maternity Leave */}
+                    <div className="flex items-center gap-2 mt-1">
+                      <input
+                        type="radio"
+                        id={SCHEDULE.MATERNITY_LEAVE}
+                        name="leaveType"
+                        value={SCHEDULE.MATERNITY_LEAVE}
+                      />
+                      <label htmlFor={SCHEDULE.MATERNITY_LEAVE}>
+                        Maternity Leave
+                      </label>
+                    </div>
+
+                    {/* Paternity Leave */}
+                    <div className="flex items-center gap-2 mt-1">
+                      <input
+                        type="radio"
+                        id={SCHEDULE.PATERNITY_LEAVE}
+                        name="leaveType"
+                        value={SCHEDULE.PATERNITY_LEAVE}
+                      />
+                      <label htmlFor={SCHEDULE.PATERNITY_LEAVE}>
+                        Paternity Leave
+                      </label>
+                    </div>
+
+                    {/* Solo Parent Leave */}
+                    <div className="flex items-center gap-2 mt-1">
+                      <input
+                        type="radio"
+                        id={SCHEDULE.SOLO_PARENT_LEAVE}
+                        name="leaveType"
+                        value={SCHEDULE.SOLO_PARENT_LEAVE}
+                      />
+                      <label htmlFor={SCHEDULE.SOLO_PARENT_LEAVE}>
+                        Solo Parent Leave
+                      </label>
+                    </div>
                   </div>
                 </div>
-              )} */}
+              )}
 
               {/* Notes */}
               <div>
