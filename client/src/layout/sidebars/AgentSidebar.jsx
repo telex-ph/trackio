@@ -1,5 +1,6 @@
 import {
   LayoutGrid,
+  Trophy,
   Bell,
   NotebookTabs,
   Clock,
@@ -21,6 +22,12 @@ const AgentSidebar = ({
       to="/agent/dashboard"
       icon={LayoutGrid}
       label="Dashboard"
+      isCollapsed={isCollapsed}
+    />
+     <SidebarLink
+      to="/agent/recognition"
+      icon={Trophy}
+      label="Recognition Wall"
       isCollapsed={isCollapsed}
     />
     <SidebarLink

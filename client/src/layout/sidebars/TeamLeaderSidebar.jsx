@@ -1,5 +1,6 @@
 import {
   LayoutGrid,
+  Trophy,
   Bell,
   Clock,
   Calendar,
@@ -27,6 +28,12 @@ const TeamLeaderSidebar = ({
       label="Dashboard"
       isCollapsed={isCollapsed}
     />
+    <SidebarLink
+      to="/team-leader/recognition"
+      icon={Trophy}
+      label={"Recognition Wall"}
+      isCollapsed={isCollapsed}
+      />
     <SidebarLink
       to="/team-leader/attendance"
       icon={Bell}

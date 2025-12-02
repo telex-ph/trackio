@@ -1,5 +1,6 @@
 import {
   LayoutGrid,
+  Trophy,
   Bell,
   Clock,
   Megaphone,
@@ -25,6 +26,12 @@ const AdminSidebar = ({
       to="/admin/dashboard"
       icon={LayoutGrid}
       label="Dashboard"
+      isCollapsed={isCollapsed}
+    />
+     <SidebarLink
+      to="/admin/recognition"
+      icon={Trophy}
+      label="Recognition Wall"
       isCollapsed={isCollapsed}
     />
     <SidebarLink
