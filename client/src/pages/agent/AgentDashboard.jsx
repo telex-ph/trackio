@@ -31,7 +31,6 @@ import {
   getPersistentUserDepartment,
 } from "../../utils/announcementUtils";
 
-// ✅ ADDED: Import DateTime for real-time time handling
 import { DateTime } from "luxon";
 
 const getUniqueViewers = (announcement) => {
@@ -102,13 +101,11 @@ const processAnnouncementData = (announcement) => {
     totalViews: uniqueViewers.length,
     totalAcknowledgements: uniqueAcknowledgements.length,
     formattedDateTime: new Date(announcement.dateTime).toLocaleDateString(),
-    // ✅ ADDED: Real-time formatted date and time
     realTimeFormatted: DateTime.fromISO(announcement.dateTime).toLocaleString(DateTime.DATETIME_MED),
-    timeAgo: "", // Will be populated by real-time function
+    timeAgo: "", 
   };
 };
 
-// ✅ ADDED: REAL-TIME TIME AGO FUNCTION
 const getRealTimeAgo = (isoDateStr) => {
   if (!isoDateStr) return "";
   const announcementTime = DateTime.fromISO(isoDateStr);
