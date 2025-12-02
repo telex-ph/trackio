@@ -2,6 +2,13 @@ const SCHEDULE = Object.freeze({
   WORK_DAY: "workday",
   REST_DAY: "restday",
   HOLIDAY: "holiday",
+  ABSENT: "absent",
+  SUSPENDED: "suspended",
+  UNDERTIME: "undertime",
+
+  // For vidaXL only
+  REPORTING: "reporting",
+
   // Leave types
   VACATION_LEAVE: "vacation leave",
   UNPAID_VACATION_LEAVE: "unpaid vacation leave",

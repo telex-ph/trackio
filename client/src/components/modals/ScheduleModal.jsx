@@ -12,6 +12,8 @@ import { useStore } from "../../store/useStore";
 import WarningDeletion from "../../assets/illustrations/WarningDeletion";
 import { DateTime } from "luxon";
 import { useQueryClient } from "@tanstack/react-query";
+import { Alert } from "flowbite-react";
+import { TriangleAlert } from "lucide-react";
 
 const ScheduleModal = ({ onClose, operation }) => {
   const { id } = useParams();
@@ -22,12 +24,12 @@ const ScheduleModal = ({ onClose, operation }) => {
 
   const [loading, setLoading] = useState(false);
   const [type, setType] = useState(SCHEDULE.WORK_DAY);
+  const [leaveType, setLeaveType] = useState("");
   const [shiftStart, setShiftStart] = useState("");
   const [shiftEnd, setShiftEnd] = useState("");
   const [notes, setNotes] = useState("");
   const [shiftHour, setShiftHour] = useState(0);
   const [isNightShift, setIsNightShift] = useState(false);
-  const [isLeave, setIsLeave] = useState(false);
 
   useEffect(() => {
     if (!shiftStart || !shiftEnd) return;
@@ -73,12 +75,21 @@ const ScheduleModal = ({ onClose, operation }) => {
       notes: notes || null,
     }));
 
+    // ---- VALIDATION ----
+    if (type === "leave" && !leaveType) {
+      toast.error("Please select the correct the leave type.");
+      return;
+    }
+
+    // Check if the schedule is a leave
+    const schedType = type !== "leave" ? type : leaveType;
+
     try {
       setLoading(true);
       await api.post("/schedule/upsert-schedules", {
         schedules,
         id,
-        type,
+        schedType,
         updatedBy: user._id,
       });
       toast.success("Schedules have been saved successfully.");
@@ -164,21 +175,43 @@ const ScheduleModal = ({ onClose, operation }) => {
                 name="attendanceType"
                 className="block w-full rounded-lg border-light p-2 text-sm"
                 value={type}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setType(val);
-                  setIsLeave(val === "leave");
-                }}
+                onChange={(e) => setType(e.target.value)}
                 required
               >
-                <option value={SCHEDULE.WORK_DAY}>Workday</option>
+                <option value={SCHEDULE.WORK_DAY}>Work Day</option>
                 <option value={SCHEDULE.REST_DAY}>Rest Day</option>
+                <option value={SCHEDULE.ABSENT}>Absent</option>
+                <option value={SCHEDULE.REPORTING}>
+                  Reporting (for vidaXL only)
+                </option>
                 <option value={SCHEDULE.HOLIDAY}>Holiday</option>
+                <option value={SCHEDULE.UNDERTIME}>Undertime</option>
                 <option value="leave">Leave</option>
+                <option value={SCHEDULE.SUSPENDED}>Suspended</option>
               </select>
 
+              {/* For VidaXL */}
+              {type === SCHEDULE.REPORTING && (
+                <div>
+                  <Alert
+                    color="info"
+                    icon={TriangleAlert}
+                    rounded
+                    className="border border-blue-200 mt-2"
+                  >
+                    <span className="font-medium text-blue-900 text-sm!">
+                      Please read!
+                    </span>
+                    <p className="text-sm! text-blue-800 mt-1">
+                      This scheduling option is available for{" "}
+                      <strong>vidaXL accounts only</strong>.
+                    </p>
+                  </Alert>
+                </div>
+              )}
+
               {/* Shift Hours */}
-              {type === SCHEDULE.WORK_DAY && (
+              {(type === SCHEDULE.WORK_DAY || type === SCHEDULE.REPORTING) && (
                 <div>
                   <label
                     htmlFor="shiftHour"
@@ -222,7 +255,7 @@ const ScheduleModal = ({ onClose, operation }) => {
                         id={SCHEDULE.VACATION_LEAVE}
                         name="leaveType"
                         value={SCHEDULE.VACATION_LEAVE}
-                        checked
+                        onChange={(e) => setLeaveType(e.target.value)}
                       />
                       <label htmlFor={SCHEDULE.VACATION_LEAVE}>
                         Vacation Leave
@@ -236,6 +269,7 @@ const ScheduleModal = ({ onClose, operation }) => {
                         id={SCHEDULE.UNPAID_VACATION_LEAVE}
                         name="leaveType"
                         value={SCHEDULE.UNPAID_VACATION_LEAVE}
+                        onChange={(e) => setLeaveType(e.target.value)}
                       />
                       <label htmlFor={SCHEDULE.UNPAID_VACATION_LEAVE}>
                         Unpaid Vacation Leave
@@ -249,6 +283,7 @@ const ScheduleModal = ({ onClose, operation }) => {
                         id={SCHEDULE.EMERGENCY_LEAVE}
                         name="leaveType"
                         value={SCHEDULE.EMERGENCY_LEAVE}
+                        onChange={(e) => setLeaveType(e.target.value)}
                       />
                       <label htmlFor={SCHEDULE.EMERGENCY_LEAVE}>
                         Emergency Leave
@@ -262,6 +297,7 @@ const ScheduleModal = ({ onClose, operation }) => {
                         id={SCHEDULE.MATERNITY_LEAVE}
                         name="leaveType"
                         value={SCHEDULE.MATERNITY_LEAVE}
+                        onChange={(e) => setLeaveType(e.target.value)}
                       />
                       <label htmlFor={SCHEDULE.MATERNITY_LEAVE}>
                         Maternity Leave
@@ -275,6 +311,7 @@ const ScheduleModal = ({ onClose, operation }) => {
                         id={SCHEDULE.PATERNITY_LEAVE}
                         name="leaveType"
                         value={SCHEDULE.PATERNITY_LEAVE}
+                        onChange={(e) => setLeaveType(e.target.value)}
                       />
                       <label htmlFor={SCHEDULE.PATERNITY_LEAVE}>
                         Paternity Leave
@@ -288,6 +325,7 @@ const ScheduleModal = ({ onClose, operation }) => {
                         id={SCHEDULE.SOLO_PARENT_LEAVE}
                         name="leaveType"
                         value={SCHEDULE.SOLO_PARENT_LEAVE}
+                        onChange={(e) => setLeaveType(e.target.value)}
                       />
                       <label htmlFor={SCHEDULE.SOLO_PARENT_LEAVE}>
                         Solo Parent Leave

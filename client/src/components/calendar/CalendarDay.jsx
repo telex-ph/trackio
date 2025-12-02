@@ -2,10 +2,18 @@ import SCHEDULE from "../../constants/schedule";
 import {
   Building,
   BriefcaseBusiness,
-  Hamburger,
   BedDouble,
   TentTree,
   StickyNote,
+  TreePalm,
+  CircleOff,
+  ShieldQuestionMark,
+  TriangleAlert,
+  Baby,
+  UserRound,
+  CalendarOff,
+  FlagOff,
+  AlarmClockMinus,
 } from "lucide-react";
 import { dateFormatter } from "../../utils/formatDateTime";
 import { useStore } from "../../store/useStore";
@@ -28,8 +36,34 @@ const CalendarDay = ({ date, readOnly, handleRightClick, handleDateClick }) => {
     (schedule) => dateFormatter(schedule.date, "yyyy-MM-dd") === formattedDate
   );
 
+  const getScheduleLeaveIcon = (type) => {
+    switch (type) {
+      case SCHEDULE.ABSENT:
+        return <CalendarOff className="h-8 w-8" />;
+      case SCHEDULE.SUSPENDED:
+        return <FlagOff className="h-8 w-8" />;
+      case SCHEDULE.UNDERTIME:
+        return <AlarmClockMinus className="h-8 w-8" />;
+      case SCHEDULE.VACATION_LEAVE:
+        return <TreePalm className="h-8 w-8" />;
+      case SCHEDULE.UNPAID_VACATION_LEAVE:
+        return <CircleOff className="h-8 w-8" />;
+      case SCHEDULE.EMERGENCY_LEAVE:
+        return <TriangleAlert className="h-8 w-8" />;
+      case SCHEDULE.MATERNITY_LEAVE:
+        return <Baby className="h-8 w-8" />;
+      case SCHEDULE.PATERNITY_LEAVE:
+        return <Baby className="h-8 w-8" />;
+      case SCHEDULE.SOLO_PARENT_LEAVE:
+        return <UserRound className="h-8 w-8" />;
+      default:
+        return <ShieldQuestionMark className="h-8 w-8" />;
+    }
+  };
+
   switch (schedule?.type) {
     case SCHEDULE.WORK_DAY:
+    case SCHEDULE.REPORTING:
       return (
         <section
           className="relative flex flex-col h-full"
@@ -155,6 +189,66 @@ const CalendarDay = ({ date, readOnly, handleRightClick, handleDateClick }) => {
 
           <div className="h-full w-full absolute inset-0 flex justify-center items-center">
             <TentTree className="h-8 w-8" />
+          </div>
+
+          <div className="flex items-end gap-1 w-full h-full mt-16">
+            <StickyNote className="w-4 h-4" />
+            <span
+              title={schedule.notes}
+              className="text-xs! w-min truncate flex-1 text-left"
+            >
+              {schedule.notes || "---"}
+            </span>
+          </div>
+
+          <div className="flex items-start gap-1 w-full italic">
+            <span
+              title={`${schedule?.user?.firstName} ${schedule?.user?.lastName}`}
+              className="text-xs! ml-auto w-min truncate"
+            >
+              Updated by: {schedule?.user?.firstName} {schedule?.user?.lastName}
+            </span>
+          </div>
+          <div className="flex items-start gap-1 w-full italic">
+            <span
+              title={`${schedule?.updatedAt}`}
+              className="text-xs! ml-auto w-min truncate"
+            >
+              {schedule?.updatedAt
+                ? `at ${dateFormatter(
+                    schedule?.updatedAt,
+                    "yyyy-MM-dd hh:mm a"
+                  )}`
+                : ""}
+            </span>
+          </div>
+        </section>
+      );
+
+    case SCHEDULE.ABSENT:
+    case SCHEDULE.SUSPENDED:
+    case SCHEDULE.UNDERTIME:
+    case SCHEDULE.VACATION_LEAVE:
+    case SCHEDULE.UNPAID_VACATION_LEAVE:
+    case SCHEDULE.EMERGENCY_LEAVE:
+    case SCHEDULE.MATERNITY_LEAVE:
+    case SCHEDULE.PATERNITY_LEAVE:
+    case SCHEDULE.SOLO_PARENT_LEAVE:
+      return (
+        <section
+          className="relative flex flex-col h-full justify-between items-end"
+          onContextMenu={handleRightClick}
+          onClick={() => {
+            handleDateClick(date);
+          }}
+        >
+          <div className="w-full flex justify-between">
+            <span className="text-start">{formmatedDay}</span>
+            <span className="font-bold">{schedule.type || "---"}</span>
+          </div>
+
+          <div className="h-full w-full absolute inset-0 flex justify-center items-center">
+            {getScheduleLeaveIcon(schedule?.type)}
           </div>
 
           <div className="flex items-end gap-1 w-full h-full mt-16">
