@@ -15,7 +15,6 @@ import {
   Pin,
 } from "lucide-react";
 
-
 import AnnouncementDetailModal from "../../components/modals/AnnouncementDetailModal";
 import DepartmentAnnouncementSection from "../../components/cards/DepartmentAnnouncementSection";
 import { useAnnouncementInteractions } from "../../hooks/useAnnouncementInteractions";
@@ -24,7 +23,6 @@ import { DateTime } from "luxon";
 import api from "../../utils/axios";
 import socket from "../../utils/socket";
 import FileViewModal from "../../components/modals/FileViewModal";
-
 
 const getUniqueViewers = (announcement) => {
   if (!announcement.views || !Array.isArray(announcement.views)) {
@@ -121,14 +119,12 @@ const AdminDashboard = () => {
   const [isEmployeeClicked, setIsEmployeeClicked] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
-
   const [announcements, setAnnouncements] = useState([]);
   const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(true);
   const [announcementDetailModal, setAnnouncementDetailModal] = useState({
     isOpen: false,
     announcement: null,
   });
-  
 
   const [fileViewModal, setFileViewModal] = useState({
     isOpen: false,
@@ -139,58 +135,92 @@ const AdminDashboard = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [showPinLimitToast, setShowPinLimitToast] = useState(false);
 
-
   const [accountingPinned, setAccountingPinned] = useState(false);
   const [compliancePinned, setCompliancePinned] = useState(false);
   const [hrPinned, setHrPinned] = useState(false);
   const [technicalPinned, setTechnicalPinned] = useState(false);
 
-
   const MAX_PINNED_PER_DEPARTMENT = 3;
   const PINNED_ANNOUNCEMENTS_KEY = "pinned_announcements_admin";
 
-
   const [currentRealTime, setCurrentRealTime] = useState(DateTime.local());
 
+
   useEffect(() => {
-    const initializeAdminUser = () => {
+    const initializeAdminUser = async () => {
       try {
-      
-        const storedUser = localStorage.getItem("admin_user");
+        console.log("🔄 Initializing admin user from database...");
         
-        if (storedUser) {
-          const adminData = JSON.parse(storedUser);
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        
+        if (token) {
+          try {
+            const response = await api.get("/auth/me", {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            if (response.data && response.data.role === "admin") {
+              console.log("✅ Admin user authenticated:", response.data.name);
+              setCurrentUser({
+                _id: response.data._id,
+                name: response.data.name,
+                employeeId: response.data.employeeId,
+                department: response.data.department,
+                role: response.data.role
+              });
+              return;
+            }
+          } catch (authError) {
+            console.log(" Authentication failed:", authError.message);
+          }
+        }
+        
+        try {
+          const response = await api.get("/users/admins");
+          
+          if (response.data && response.data.length > 0) {
+            const adminUser = response.data[0];
+            console.log("✅ Found admin in database:", adminUser.name);
+            setCurrentUser({
+              _id: adminUser._id,
+              name: adminUser.name,
+              employeeId: adminUser.employeeId,
+              department: adminUser.department,
+              role: adminUser.role
+            });
+          } else {
+
+            console.log("⚠️ No admin found in database...");
+           
+          }
+        } catch (dbError) {
+          console.error("❌ Database error:", dbError);
+
           setCurrentUser({
-            _id: adminData._id || "admin_user",
-            name: adminData.name || "Administrator",
-            employeeId: adminData.employeeId || "admin001",
-            department: adminData.department || "Administration",
-            role: "admin"
-          });
-        } else {
-          setCurrentUser({
-            _id: "admin_user",
-            name: "Administrator",
-            employeeId: "admin001",
-            department: "Administration",
-            role: "admin"
+            // _id: "admin_database_error",
+            // name: "Administrator",
+            // // employeeId: "ADMIN001",
+            // // department: "Administration",
+            // role: "admin"
           });
         }
+        
       } catch (error) {
-        console.error("Error initializing admin user:", error);
+        console.error("❌ Error initializing admin user:", error);
         setCurrentUser({
-          _id: "admin_user_fallback",
-          name: "Administrator",
-          employeeId: "admin001",
-          department: "Administration",
-          role: "admin"
+          // _id: "admin_error",
+          // // name: "Administrator",
+          // // employeeId: "ADMIN001",
+          // department: "Administration",
+          // role: "admin"
         });
       }
     };
 
+
+
     initializeAdminUser();
   }, []);
-
 
   const { 
     hasLiked, 
@@ -199,7 +229,6 @@ const AdminDashboard = () => {
     getViewCount, 
     getLikeCount 
   } = useAnnouncementInteractions(announcements, setAnnouncements, currentUser?._id);
-
 
   useEffect(() => {
     const t = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -213,7 +242,6 @@ const AdminDashboard = () => {
     };
   }, []);
 
- 
   useEffect(() => {
     if (announcements.length > 0) {
       const updatedAnnouncements = announcements.map(announcement => ({
@@ -231,7 +259,7 @@ const AdminDashboard = () => {
     }
   }, [currentRealTime]);
 
-  // ✅ FIXED: Pinning functionality - SAME AS AGENT DASHBOARD
+  // ✅ Pin functionality (localStorage OK dito lang)
   const getPinnedAnnouncementsFromStorage = () => {
     try {
       const pinned = localStorage.getItem(PINNED_ANNOUNCEMENTS_KEY);
@@ -289,7 +317,6 @@ const AdminDashboard = () => {
     setShowPinLimitToast(true);
     setTimeout(() => setShowPinLimitToast(false), 3000);
   };
-
 
   const handleTogglePin = async (announcement) => {
     try {
@@ -371,7 +398,6 @@ const AdminDashboard = () => {
     }
   };
 
-
   const handleFileDownload = (file) => {
     try {
       const base64Data = file.data.split(",")[1];
@@ -404,7 +430,6 @@ const AdminDashboard = () => {
     setFileViewModal({ isOpen: false, file: null });
   };
 
-  // ✅ FIXED: Fetch announcements from API
   const fetchAnnouncements = async () => {
     try {
       setIsLoadingAnnouncements(true);
@@ -490,7 +515,6 @@ const AdminDashboard = () => {
   const { accounting, compliance, technical, hr } =
     categorizeAnnouncements(announcements);
 
-
   const getFilteredAnnouncements = () => {
     if (!searchTerm) return announcements;
 
@@ -528,10 +552,13 @@ const AdminDashboard = () => {
     getFilteredAnnouncementsByDepartment("accounting").length > 0 ||
     getFilteredAnnouncementsByDepartment("hr").length > 0;
 
-
+  // ✅ FIXED: HandleReadMore with database user ID
   const handleReadMore = async (announcement) => {
     if (currentUser?._id) {
+      console.log(`👁️ Admin ${currentUser.name} viewing announcement ${announcement._id}`);
       await trackView(announcement._id, currentUser._id);
+    } else {
+      console.warn("⚠️ No user ID found for tracking view");
     }
     setAnnouncementDetailModal({ isOpen: true, announcement });
   };
@@ -544,6 +571,7 @@ const AdminDashboard = () => {
     setIsEmployeeClicked(false);
   };
 
+  // ✅ FIXED: Socket implementation
   useEffect(() => {
     console.log("🔄 Setting up socket listeners for admin...");
 
@@ -604,7 +632,6 @@ const AdminDashboard = () => {
       }
     };
 
-    // ✅ CRITICAL: Listen for agent updates (since backend sends same updates)
     const handleAgentUpdate = (updateData) => {
       console.log("📊 Real-time admin update:", updateData);
       
@@ -622,7 +649,6 @@ const AdminDashboard = () => {
       }));
     };
 
-    // Unified announcement handler
     const handleUnifiedAnnouncement = (announcementData, source) => {
       console.log(`📥 ${source}:`, announcementData._id, announcementData.title);
       
@@ -681,7 +707,6 @@ const AdminDashboard = () => {
       handleUnifiedAnnouncement(repostedAnnouncement, "REPOST");
     };
 
-    // ✅ CRITICAL: Handle cancellation properly
     const handleAnnouncementCancelled = (data) => {
       console.log("🔴 Real-time: Announcement cancellation received", data);
       
@@ -754,11 +779,8 @@ const AdminDashboard = () => {
       });
     };
 
-    // ✅ CRITICAL: Register CORRECT socket events - USE AGENT EVENTS FOR COMPATIBILITY
     socket.on("initialAgentData", handleInitialData);
     socket.on("agentAnnouncementUpdate", handleAgentUpdate);
-    
-    // These events are the same for both admin and agent
     socket.on("newAnnouncement", handleNewAnnouncement);
     socket.on("announcementCancelled", handleAnnouncementCancelled);
     socket.on("announcementCanceled", handleAnnouncementCancelled);
@@ -768,11 +790,9 @@ const AdminDashboard = () => {
     socket.on("announcementUpdated", handleAnnouncementUpdated);
     socket.on("updatedAnnouncement", handleAnnouncementUpdated);
 
-    // Request initial data via socket - USE AGENT DATA FOR COMPATIBILITY
     console.log("📤 Requesting initial admin data via socket...");
-    socket.emit("getAgentData"); // Use agent data for compatibility
+    socket.emit("getAgentData");
 
-    // Fallback to API if socket doesn't respond in 3 seconds
     const fallbackTimeout = setTimeout(() => {
       if (!dataLoaded) {
         console.log("⏰ Socket timeout for admin, falling back to API...");
@@ -780,12 +800,10 @@ const AdminDashboard = () => {
       }
     }, 3000);
 
-    // Cleanup function
     return () => {
       console.log("🧹 Cleaning up socket listeners for admin");
       clearTimeout(fallbackTimeout);
       
-      // Remove all event listeners
       socket.off("initialAgentData", handleInitialData);
       socket.off("agentAnnouncementUpdate", handleAgentUpdate);
       socket.off("newAnnouncement", handleNewAnnouncement);
@@ -872,7 +890,7 @@ const AdminDashboard = () => {
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <span className="text-gray-600 text-lg">Loading admin data...</span>
+          <span className="text-gray-600 text-lg">Loading admin data from database...</span>
         </div>
       </div>
     );
@@ -946,7 +964,10 @@ const AdminDashboard = () => {
             <span>{currentUser.name}</span>
           </div>
           <div className="px-3 py-1.5 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
-            Admin
+          
+          </div>
+          <div className="text-xs text-gray-500">
+         
           </div>
         </div>
       </div>
@@ -1047,6 +1068,9 @@ const AdminDashboard = () => {
               <div>
                 <h3 className="text-xl font-bold text-gray-800 mb-2">Department Announcements</h3>
                 <p className="text-gray-600">Latest updates from different departments - Real-time</p>
+                <div className="text-xs text-gray-500 mt-1">
+                  Logged in as: {currentUser.name} ({currentUser.employeeId})
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm font-medium flex items-center gap-1.5 whitespace-nowrap">
@@ -1093,7 +1117,6 @@ const AdminDashboard = () => {
             </div>
           ) : hasFilteredAnnouncements ? (
             <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-            
               {/* Technical Announcements */}
               {getFilteredAnnouncementsByDepartment("technical").length > 0 && (
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
