@@ -15,6 +15,7 @@ import {
   Pin,
 } from "lucide-react";
 
+
 import AnnouncementDetailModal from "../../components/modals/AnnouncementDetailModal";
 import DepartmentAnnouncementSection from "../../components/cards/DepartmentAnnouncementSection";
 import { useAnnouncementInteractions } from "../../hooks/useAnnouncementInteractions";
@@ -23,6 +24,7 @@ import { DateTime } from "luxon";
 import api from "../../utils/axios";
 import socket from "../../utils/socket";
 import FileViewModal from "../../components/modals/FileViewModal";
+
 
 const getUniqueViewers = (announcement) => {
   if (!announcement.views || !Array.isArray(announcement.views)) {
@@ -119,12 +121,14 @@ const AdminDashboard = () => {
   const [isEmployeeClicked, setIsEmployeeClicked] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  // ✅ ADDED: Announcement States - SAME AS AGENT DASHBOARD
   const [announcements, setAnnouncements] = useState([]);
   const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(true);
   const [announcementDetailModal, setAnnouncementDetailModal] = useState({
     isOpen: false,
     announcement: null,
   });
+  
 
   const [fileViewModal, setFileViewModal] = useState({
     isOpen: false,
@@ -135,92 +139,58 @@ const AdminDashboard = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [showPinLimitToast, setShowPinLimitToast] = useState(false);
 
+
   const [accountingPinned, setAccountingPinned] = useState(false);
   const [compliancePinned, setCompliancePinned] = useState(false);
   const [hrPinned, setHrPinned] = useState(false);
   const [technicalPinned, setTechnicalPinned] = useState(false);
 
+
   const MAX_PINNED_PER_DEPARTMENT = 3;
   const PINNED_ANNOUNCEMENTS_KEY = "pinned_announcements_admin";
 
+
   const [currentRealTime, setCurrentRealTime] = useState(DateTime.local());
 
-
   useEffect(() => {
-    const initializeAdminUser = async () => {
+    const initializeAdminUser = () => {
       try {
-        console.log("🔄 Initializing admin user from database...");
+      
+        const storedUser = localStorage.getItem("admin_user");
         
-        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-        
-        if (token) {
-          try {
-            const response = await api.get("/auth/me", {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            
-            if (response.data && response.data.role === "admin") {
-              console.log("✅ Admin user authenticated:", response.data.name);
-              setCurrentUser({
-                _id: response.data._id,
-                name: response.data.name,
-                employeeId: response.data.employeeId,
-                department: response.data.department,
-                role: response.data.role
-              });
-              return;
-            }
-          } catch (authError) {
-            console.log(" Authentication failed:", authError.message);
-          }
-        }
-        
-        try {
-          const response = await api.get("/users/admins");
-          
-          if (response.data && response.data.length > 0) {
-            const adminUser = response.data[0];
-            console.log("✅ Found admin in database:", adminUser.name);
-            setCurrentUser({
-              _id: adminUser._id,
-              name: adminUser.name,
-              employeeId: adminUser.employeeId,
-              department: adminUser.department,
-              role: adminUser.role
-            });
-          } else {
-
-            console.log("⚠️ No admin found in database...");
-           
-          }
-        } catch (dbError) {
-          console.error("❌ Database error:", dbError);
-
+        if (storedUser) {
+          const adminData = JSON.parse(storedUser);
           setCurrentUser({
-            // _id: "admin_database_error",
-            // name: "Administrator",
-            // // employeeId: "ADMIN001",
-            // // department: "Administration",
-            // role: "admin"
+            _id: adminData._id || "admin_user",
+            name: adminData.name || "Administrator",
+            employeeId: adminData.employeeId || "admin001",
+            department: adminData.department || "Administration",
+            role: "admin"
+          });
+        } else {
+          setCurrentUser({
+            _id: "admin_user",
+            name: "Administrator",
+            employeeId: "admin001",
+            department: "Administration",
+            role: "admin"
           });
         }
-        
       } catch (error) {
-        console.error("❌ Error initializing admin user:", error);
+        console.error("Error initializing admin user:", error);
         setCurrentUser({
-          // _id: "admin_error",
-          // // name: "Administrator",
-          // // employeeId: "ADMIN001",
-          // department: "Administration",
-          // role: "admin"
+          _id: "admin_user_fallback",
+          name: "Administrator",
+          employeeId: "admin001",
+          department: "Administration",
+          role: "admin"
         });
       }
     };
 
-
-
     initializeAdminUser();
   }, []);
+
 
   const { 
     hasLiked, 
@@ -229,6 +199,7 @@ const AdminDashboard = () => {
     getViewCount, 
     getLikeCount 
   } = useAnnouncementInteractions(announcements, setAnnouncements, currentUser?._id);
+
 
   useEffect(() => {
     const t = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -242,6 +213,7 @@ const AdminDashboard = () => {
     };
   }, []);
 
+ 
   useEffect(() => {
     if (announcements.length > 0) {
       const updatedAnnouncements = announcements.map(announcement => ({
@@ -259,7 +231,6 @@ const AdminDashboard = () => {
     }
   }, [currentRealTime]);
 
-  // ✅ Pin functionality (localStorage OK dito lang)
   const getPinnedAnnouncementsFromStorage = () => {
     try {
       const pinned = localStorage.getItem(PINNED_ANNOUNCEMENTS_KEY);
@@ -317,6 +288,7 @@ const AdminDashboard = () => {
     setShowPinLimitToast(true);
     setTimeout(() => setShowPinLimitToast(false), 3000);
   };
+
 
   const handleTogglePin = async (announcement) => {
     try {
@@ -398,6 +370,7 @@ const AdminDashboard = () => {
     }
   };
 
+
   const handleFileDownload = (file) => {
     try {
       const base64Data = file.data.split(",")[1];
@@ -430,6 +403,7 @@ const AdminDashboard = () => {
     setFileViewModal({ isOpen: false, file: null });
   };
 
+  // ✅ FIXED: Fetch announcements from API
   const fetchAnnouncements = async () => {
     try {
       setIsLoadingAnnouncements(true);
@@ -515,6 +489,7 @@ const AdminDashboard = () => {
   const { accounting, compliance, technical, hr } =
     categorizeAnnouncements(announcements);
 
+
   const getFilteredAnnouncements = () => {
     if (!searchTerm) return announcements;
 
@@ -552,13 +527,10 @@ const AdminDashboard = () => {
     getFilteredAnnouncementsByDepartment("accounting").length > 0 ||
     getFilteredAnnouncementsByDepartment("hr").length > 0;
 
-  // ✅ FIXED: HandleReadMore with database user ID
+
   const handleReadMore = async (announcement) => {
     if (currentUser?._id) {
-      console.log(`👁️ Admin ${currentUser.name} viewing announcement ${announcement._id}`);
       await trackView(announcement._id, currentUser._id);
-    } else {
-      console.warn("⚠️ No user ID found for tracking view");
     }
     setAnnouncementDetailModal({ isOpen: true, announcement });
   };
@@ -571,7 +543,6 @@ const AdminDashboard = () => {
     setIsEmployeeClicked(false);
   };
 
-  // ✅ FIXED: Socket implementation
   useEffect(() => {
     console.log("🔄 Setting up socket listeners for admin...");
 
@@ -632,6 +603,7 @@ const AdminDashboard = () => {
       }
     };
 
+   
     const handleAgentUpdate = (updateData) => {
       console.log("📊 Real-time admin update:", updateData);
       
@@ -649,6 +621,7 @@ const AdminDashboard = () => {
       }));
     };
 
+  
     const handleUnifiedAnnouncement = (announcementData, source) => {
       console.log(`📥 ${source}:`, announcementData._id, announcementData.title);
       
@@ -707,6 +680,7 @@ const AdminDashboard = () => {
       handleUnifiedAnnouncement(repostedAnnouncement, "REPOST");
     };
 
+ 
     const handleAnnouncementCancelled = (data) => {
       console.log("🔴 Real-time: Announcement cancellation received", data);
       
@@ -779,8 +753,11 @@ const AdminDashboard = () => {
       });
     };
 
+    
     socket.on("initialAgentData", handleInitialData);
     socket.on("agentAnnouncementUpdate", handleAgentUpdate);
+    
+    // These events are the same for both admin and agent
     socket.on("newAnnouncement", handleNewAnnouncement);
     socket.on("announcementCancelled", handleAnnouncementCancelled);
     socket.on("announcementCanceled", handleAnnouncementCancelled);
@@ -790,9 +767,11 @@ const AdminDashboard = () => {
     socket.on("announcementUpdated", handleAnnouncementUpdated);
     socket.on("updatedAnnouncement", handleAnnouncementUpdated);
 
-    console.log("📤 Requesting initial admin data via socket...");
-    socket.emit("getAgentData");
 
+    console.log("📤 Requesting initial admin data via socket...");
+    socket.emit("getAgentData"); 
+
+    
     const fallbackTimeout = setTimeout(() => {
       if (!dataLoaded) {
         console.log("⏰ Socket timeout for admin, falling back to API...");
@@ -800,9 +779,11 @@ const AdminDashboard = () => {
       }
     }, 3000);
 
+   
     return () => {
       console.log("🧹 Cleaning up socket listeners for admin");
       clearTimeout(fallbackTimeout);
+      
       
       socket.off("initialAgentData", handleInitialData);
       socket.off("agentAnnouncementUpdate", handleAgentUpdate);
@@ -817,7 +798,7 @@ const AdminDashboard = () => {
     };
   }, [currentUser?._id]);
 
-  // Stats data with "COMING SOON" values
+  
   const stats = [
     {
       key: "totalEmployees",
@@ -890,7 +871,7 @@ const AdminDashboard = () => {
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <span className="text-gray-600 text-lg">Loading admin data from database...</span>
+          <span className="text-gray-600 text-lg">Loading admin data...</span>
         </div>
       </div>
     );
@@ -898,7 +879,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen p-4 sm:p-6 bg-gray-50">
-      {/* Pin Limit Toast */}
+    
       {showPinLimitToast && (
         <div className="fixed top-4 left-2 right-2 sm:left-4 sm:right-auto z-[10000] bg-yellow-500 text-white p-3 sm:p-4 rounded-xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-top duration-300 max-w-sm mx-auto sm:mx-0">
           <svg className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -917,7 +898,6 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Modals */}
       <FileViewModal
         isOpen={fileViewModal.isOpen}
         onClose={closeFileView}
@@ -936,7 +916,6 @@ const AdminDashboard = () => {
         currentUser={currentUser}
       />
 
-      {/* Header */}
       <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
@@ -963,16 +942,9 @@ const AdminDashboard = () => {
             </svg>
             <span>{currentUser.name}</span>
           </div>
-          <div className="px-3 py-1.5 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
-          
-          </div>
-          <div className="text-xs text-gray-500">
-         
-          </div>
         </div>
       </div>
 
-      {/* Stats Cards with "COMING SOON" */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {stats.map((stat) => (
           <div key={stat.key} className="bg-white rounded-xl p-4 shadow border border-gray-200">
@@ -993,7 +965,7 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      {/* Main Content Grid */}
+  
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
         {/* Weekly Attendance Trend - COMING SOON */}
         <div className="bg-white rounded-xl p-6 shadow border border-gray-200">
@@ -1017,7 +989,6 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Employee Distribution by Department - COMING SOON */}
         <div className="bg-white rounded-xl p-6 shadow border border-gray-200">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-800">Employee Distribution by Department</h3>
@@ -1039,7 +1010,6 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Activity Monitor - COMING SOON */}
         <div className="bg-white rounded-xl p-6 shadow border border-gray-200">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-800">Activity Monitor</h3>
@@ -1061,16 +1031,12 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Announcements Section - Full Width - ACTIVE */}
         <div className="lg:col-span-3 bg-white rounded-xl p-6 shadow-lg border border-gray-200">
           <div className="mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
               <div>
                 <h3 className="text-xl font-bold text-gray-800 mb-2">Department Announcements</h3>
                 <p className="text-gray-600">Latest updates from different departments - Real-time</p>
-                <div className="text-xs text-gray-500 mt-1">
-                  Logged in as: {currentUser.name} ({currentUser.employeeId})
-                </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm font-medium flex items-center gap-1.5 whitespace-nowrap">
@@ -1084,7 +1050,6 @@ const AdminDashboard = () => {
               </div>
             </div>
             
-            {/* Search Bar */}
             <div className="mt-4 max-w-md">
               <div className="relative">
                 <input
@@ -1109,7 +1074,6 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* Announcements Content */}
           {isLoadingAnnouncements ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
@@ -1117,6 +1081,7 @@ const AdminDashboard = () => {
             </div>
           ) : hasFilteredAnnouncements ? (
             <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            
               {/* Technical Announcements */}
               {getFilteredAnnouncementsByDepartment("technical").length > 0 && (
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -1259,7 +1224,6 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Employee Detail Modal */}
       {isEmployeeClicked && (
         <EmployeeModal
           onClose={handleModalOnClose}
