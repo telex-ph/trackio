@@ -7,6 +7,7 @@ import trackio from "../../assets/logos/trackio.svg";
 import Happy from "../../assets/illustrations/Happy";
 import { STATUS } from "../../constants/status";
 import liveMonitoring from "../../assets/background/live-monitoring.png";
+import { formatDate } from "../../utils/formatDateTime";
 
 const SOCKET_URL =
   import.meta.env.VITE_API_RENDER_BASE_URL || "http://localhost:3000";
@@ -187,6 +188,9 @@ export default function LiveBreaks() {
                       </span>
                     </div>
                     <span>{formatMilliseconds(status?.totalBreakTime)}</span>
+                  </div>
+                  <div className="text-xs! flex-1">
+                    {formatDate(status?.updatedAt)}
                   </div>
                 </motion.div>
               ))}
