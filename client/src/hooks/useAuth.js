@@ -12,7 +12,7 @@ export const useAuth = () => {
 
   const createAccountTicket = async (name, email) => {
     try {
-      const url = "https://ticketing-system-eight-kappa.vercel.app/api/auth/register/trackio";
+      const url = "https://ticketing-system-2u0k.onrender.com/api/auth/register/trackio";
 
       const body = {
         name: name,

@@ -167,7 +167,7 @@ const OffenseForm = ({
         {/* Agent Name Search */}
         <div className="space-y-2" ref={searchRef}>
           <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-            Agent Name *
+            Employee Name *
           </label>
           <div className="relative">
             <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />

@@ -5,7 +5,7 @@ import SCHEDULE from "../../constants/schedule.js";
 import User from "../model/User.js";
 
 export const addSchedules = async (req, res) => {
-  const { schedules, id, type, updatedBy } = req.body;
+  const { schedules, id, schedType, updatedBy } = req.body;
 
   // Early return if the id is invalid
   const user = await User.getById(id);
@@ -38,8 +38,9 @@ export const addSchedules = async (req, res) => {
       return dateTime.toJSDate();
     };
 
-    switch (type) {
+    switch (schedType) {
       case SCHEDULE.WORK_DAY:
+      case SCHEDULE.REPORTING:
         // First get shiftStart datetime
         const shiftStartDateTime = mergeDateAndTime(schedule.shiftStart);
 
@@ -48,9 +49,7 @@ export const addSchedules = async (req, res) => {
           date: baseDate.toJSDate(),
           shiftStart: shiftStartDateTime,
           shiftEnd: mergeDateAndTime(schedule.shiftEnd, shiftStartDateTime),
-          // mealStart: mergeDateAndTime(schedule.mealStart, shiftStartDateTime),
-          // mealEnd: mergeDateAndTime(schedule.mealEnd, shiftStartDateTime),
-          type,
+          type: schedType,
           notes: schedule.notes,
           createdAt: DateTime.utc().toJSDate(),
           updatedAt: DateTime.utc().toJSDate(),
@@ -61,7 +60,7 @@ export const addSchedules = async (req, res) => {
         return {
           userId: new ObjectId(id),
           date: baseDate.toJSDate(),
-          type,
+          type: schedType,
           notes: schedule.notes,
           createdAt: DateTime.utc().toJSDate(),
           updatedAt: DateTime.utc().toJSDate(),

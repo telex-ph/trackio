@@ -1,5 +1,6 @@
 import React from "react";
 import { FileText, Search, Eye, Download, X as ClearIcon } from "lucide-react";
+import { DateTime } from "luxon";
 
 const HR_CaseHistory = ({
   offenses,
@@ -9,7 +10,7 @@ const HR_CaseHistory = ({
   isLoading,
   formatDisplayDate,
   today,
-  onView
+  onView,
 }) => {
   return (
     <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
@@ -79,8 +80,11 @@ const HR_CaseHistory = ({
             <thead>
               <tr className="border-b border-gray-200 text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wider">
                 <th className="p-4 whitespace-nowrap">Date Created</th>
-                <th className="p-4 whitespace-nowrap">Category</th>
                 <th className="p-4 whitespace-nowrap">Respondant</th>
+                <th className="p-4 whitespace-nowrap">Category</th>
+                <th className="p-4 whitespace-nowrap">NTE Date</th>
+                <th className="p-4 whitespace-nowrap">Hearing Date</th>
+                <th className="p-4 whitespace-nowrap">NDA Date</th>
                 <th className="p-4 whitespace-nowrap">Status</th>
                 <th className="p-4 whitespace-nowrap">Action</th>
               </tr>
@@ -97,10 +101,37 @@ const HR_CaseHistory = ({
                       {formatDisplayDate(off.dateOfOffense)}
                     </td>
                     <td className="p-4 text-sm text-gray-600">
+                      {off.agentName || "N/A"}
+                    </td>
+                    <td className="p-4 text-sm text-gray-600">
                       {off.offenseCategory}
                     </td>
                     <td className="p-4 text-sm text-gray-600">
-                      {off.agentName || "N/A"}
+                      {DateTime.fromISO(
+                        off.nteSentDateTime
+                      ).toLocaleString({
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </td>
+                    <td className="p-4 text-sm text-gray-600">
+                      {DateTime.fromISO(
+                        off.hearingDate
+                      ).toLocaleString({
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </td>
+                    <td className="p-4 text-sm text-gray-600">
+                      {DateTime.fromISO(
+                        off.ndaSentDateTime
+                      ).toLocaleString({
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
                     </td>
                     <td className="p-4">
                       <span

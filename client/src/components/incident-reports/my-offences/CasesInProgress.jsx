@@ -18,6 +18,7 @@ const CasesInProgress = ({
   onView,
   isLoading,
   formatDisplayDate,
+  loggedUser
 }) => {
   const safeOffenses = Array.isArray(offenses)
     ? offenses.filter((o) => o && o._id)
@@ -82,8 +83,11 @@ const CasesInProgress = ({
                               "bg-red-100 text-red-700 border border-red-200",
                             "Respondent Explained":
                               "bg-purple-100 text-purple-700 border border-purple-200",
-                            "Scheduled for hearing":
-                              "bg-indigo-100 text-indigo-700 border border-indigo-200",
+                            "Scheduled for hearing": off.witnesses?.some(
+                              (w) => w._id === loggedUser._id
+                            )
+                              ? "bg-green-100 text-green-700 border border-green-200"
+                              : "bg-red-100 text-red-700 border border-red-200",
                             "After Hearing":
                               "bg-teal-100 text-teal-700 border border-teal-200",
                             Acknowledged:
@@ -92,7 +96,9 @@ const CasesInProgress = ({
                           "bg-gray-100 text-gray-700 border border-gray-200"
                         }`}
                       >
-                        {off.status}
+                        {off.witnesses?.some((w) => w._id === loggedUser._id)
+                          ? "You are a witness"
+                          : off.status}
                       </span>
 
                       {(() => {

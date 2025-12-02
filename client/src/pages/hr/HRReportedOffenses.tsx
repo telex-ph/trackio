@@ -24,6 +24,7 @@ interface Offense {
   _id: string;
   agentName: string;
   employeeId?: string;
+  respondantId?: string;
   agentRole?: string;
   offenseCategory: string;
   offenseType: string;
@@ -59,7 +60,9 @@ const HRReportedOffenses = () => {
   const [historyEndDate, setHistoryEndDate] = useState<string>("");
  
   const today: string = DateTime.now().toISODate()!;
- 
+
+  const loggedUser = useStore((state) => state.user);
+
   const decrementUnreadOffensesHR = useStore(
     (state) => state.decrementUnreadOffensesHR
   );
@@ -228,12 +231,15 @@ const HRReportedOffenses = () => {
     witnesses: { _id: string; name: string; employeeId: string }[]
   ) => {
     try {
+      const now = new Date();
+
       const payload = {
         ...formData,
         status: "Scheduled for hearing",
         isReadByRespondant: false,
         hearingDate,
         witnesses,
+        schedHearingDateTime: now.toISOString(),
       };
 
       await api.put(`/offenses/${editingId}`, payload);
@@ -306,7 +312,7 @@ const HRReportedOffenses = () => {
     }
   };
 
-  const handleAfterHearing = async () => {
+  const handleUploadMOM = async () => {
     if (!editingId) return;
 
     const now = new Date();
@@ -314,10 +320,10 @@ const HRReportedOffenses = () => {
     try {
       const payload = {
         ...formData,
-        isAcknowledged: false,
-        status: "After Hearing",
+        status: "MOM Uploaded",
         isReadByRespondant: false,
         afterHearingDateTime: now.toISOString(),
+        momSentDateTime: now.toISOString(),
       };
 
       if (selectedMOMFile) {
@@ -344,6 +350,38 @@ const HRReportedOffenses = () => {
           },
         ];
       }
+
+      // --- API Call ---
+      await api.put(`/offenses/${editingId}`, payload);
+
+      showNotification("Documents uploaded successfully!", "success");
+
+      // --- Reset ---
+      resetForm();
+      setSelectedMOMFile(null);
+      setSelectedNDAFile(null);
+
+      fetchOffenses();
+    } catch (error) {
+      console.error("Error updating offense:", error);
+      showNotification("Failed to update. Please try again.", "error");
+    }
+  };
+
+  const handleUploadNDA = async () => {
+    if (!editingId) return;
+
+    const now = new Date();
+
+    try {
+      const payload = {
+        ...formData,
+        isAcknowledged: false,
+        status: "For Acknowledgement",
+        isReadByRespondant: false,
+        afterHearingDateTime: now.toISOString(),
+        ndaSentDateTime: now.toISOString(),
+      };
 
       if (selectedNDAFile) {
         console.log("NDA FIle: ", selectedNDAFile);
@@ -427,6 +465,7 @@ const HRReportedOffenses = () => {
   const filteredOffenses = offenses.filter(
     (off) =>
       !["Invalid", "Acknowledged"].includes(off.status) &&
+      off.respondantId !== loggedUser._id &&
       [
         off.agentName,
         off.offenseType,
@@ -502,7 +541,8 @@ const HRReportedOffenses = () => {
           onFormChange={handleFormChange}
           handleValid={handleValid}
           handleHearingDate={handleHearingDate}
-          handleAfterHearing={handleAfterHearing}
+          handleUploadMOM={handleUploadMOM}
+          handleUploadNDA={handleUploadNDA}
           rejectOffense={rejectOffense}
           selectedFile={selectedFile}
           setSelectedFile={setSelectedFile}
