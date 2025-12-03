@@ -3,6 +3,7 @@ import { useStore } from "../store/useStore";
 import Role from "../constants/roles";
 import AgentSidebar from "./sidebars/AgentSidebar";
 import TeamLeaderSidebar from "./sidebars/TeamLeaderSidebar";
+import TraineeQualityAssuranceSidebar from "./sidebars/TraineeQualityAssuranceSidebar";
 import OperationsAssociateSidebar from "./sidebars/OperationsAssociateSidebar";
 import BackOfficeHeadSidebar from "./sidebars/BackOfficeHeadSidebar";
 import ManagerSidebar from "./sidebars/ManagerSidebar";
@@ -72,6 +73,15 @@ export const Sidebar = ({ isCollapsed }) => {
       case Role.AGENT:
         return (
           <AgentSidebar
+            isCollapsed={isCollapsed}
+            activeDropdown={activeDropdown}
+            setActiveDropdown={setActiveDropdown}
+            unreadOffenses={unreadOffenses}
+          />
+        );
+      case Role.TRAINER_QUALITY_ASSURANCE:
+        return (
+          <TraineeQualityAssuranceSidebar
             isCollapsed={isCollapsed}
             activeDropdown={activeDropdown}
             setActiveDropdown={setActiveDropdown}

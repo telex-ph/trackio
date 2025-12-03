@@ -15,6 +15,7 @@ import ResetPassword from "../pages/global/ResetPassword";
 import LiveMonitoring from "../pages/global/LiveMonitoring";
 import AGENT_ROUTES from "./AgentRoutes";
 import TEAM_LEADER_ROUTES from "./TeamLeaderRoutes";
+import TRAINER_QUALITY_ASSURANCE_ROUTES from "./TrainerQualityAssurance";
 import OPERATIONS_ASSOCIATE from "./OperationsAssociateRoutes";
 import BACK_OFFICE_HEAD_ROUTES from "./BackOfficeHeadRoutes";
 import MANAGER_ROUTES from "./ManagerRoutes";
@@ -103,6 +104,12 @@ const router = createBrowserRouter([
             element: <ProtectedRoutes role={Roles.OPERATION_ASSOCIATE} />,
             path: "operations-associate",
             children: OPERATIONS_ASSOCIATE,
+          },
+
+          {
+            element: <ProtectedRoutes role={Roles.TRAINER_QUALITY_ASSURANCE} />,
+            path: "trainer-quality-assurance",
+            children: TRAINER_QUALITY_ASSURANCE_ROUTES,
           },
 
           // Team Leader Routes
