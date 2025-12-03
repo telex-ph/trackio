@@ -120,7 +120,7 @@ const SharedMyOffences = () => {
 
   const today = DateTime.now().toISODate();
 
-  const [offenseType, setOffenseType] = useState("IR");
+  const [offenseType, setOffenseType] = useState("COACHING");
 
   const [notification, setNotification] = useState({
     message: "",
@@ -639,7 +639,7 @@ const SharedMyOffences = () => {
             Offense Management
             {/* Offense Type Toggle */}
             <div className="bg-gray-200 rounded-full p-1 flex shadow-inner">
-              {["IR", "Coaching"].map((type) => (
+              {["COACHING", "IR"].map((type) => (
                 <button
                   key={type}
                   onClick={() => {

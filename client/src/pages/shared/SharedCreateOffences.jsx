@@ -31,7 +31,7 @@ const SharedCreateOffences = () => {
   });
 
   // Data
-  const [offenseType, setOffenseType] = useState("IR"); // "IR" or "Coaching"
+  const [offenseType, setOffenseType] = useState("COACHING");
 
   const [offenses, setOffenses] = useState([]);
   const loggedUser = useStore((state) => state.user);
@@ -704,7 +704,7 @@ const SharedCreateOffences = () => {
                   loggedUser.role
                 ) && (
                   <div className="bg-gray-200 rounded-full p-1 flex shadow-inner">
-                    {["IR", "Coaching"].map((type) => (
+                    {["COACHING", "IR"].map((type) => (
                       <button
                         key={type}
                         onClick={() => {
