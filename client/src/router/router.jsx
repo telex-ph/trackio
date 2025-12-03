@@ -15,7 +15,7 @@ import ResetPassword from "../pages/global/ResetPassword";
 import LiveMonitoring from "../pages/global/LiveMonitoring";
 import AGENT_ROUTES from "./AgentRoutes";
 import TEAM_LEADER_ROUTES from "./TeamLeaderRoutes";
-import TRAINER_QUALITY_ASSURANCE_ROUTES from "./TrainerQualityAssurance";
+import TRAINER_QUALITY_ASSURANCE_ROUTES from "./TrainerQualityAssuranceRoutes";
 import OPERATIONS_ASSOCIATE from "./OperationsAssociateRoutes";
 import BACK_OFFICE_HEAD_ROUTES from "./BackOfficeHeadRoutes";
 import MANAGER_ROUTES from "./ManagerRoutes";

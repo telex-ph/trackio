@@ -168,8 +168,8 @@ class Attendance {
               {
                 $lookup: {
                   from: "groups",
-                  localField: "user._id", // <-- USER ID (CORRECT)
-                  foreignField: "teamLeaderId", // <-- TL stored in group
+                  localField: "user._id",
+                  foreignField: "teamLeaderId",
                   as: "asTeamLeaderOfGroup",
                 },
               },
