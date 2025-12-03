@@ -180,7 +180,6 @@ const CoachingDetails = ({
               </div>
             )}
             {[
-              "Coaching Log",
               "Respondent Explained",
               "For Acknowledgement",
               "Acknowledged",
@@ -357,7 +356,10 @@ const CoachingDetails = ({
                 Cancel
               </button>
               <button
-                onClick={(handleUploadNDA, setShowNDAModal(false))}
+                onClick={() => {
+                  handleUploadNDA();
+                  setShowNDAModal(false);
+                }}
                 disabled={loading}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center gap-2"
               >

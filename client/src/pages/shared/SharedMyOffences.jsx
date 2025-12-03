@@ -483,7 +483,11 @@ const SharedMyOffences = () => {
   const filteredIROffenses = safeOffenses.filter((off) => {
     const isInvolved =
       off.respondantId === loggedUser._id ||
-      off.witnesses?.some((w) => w._id === loggedUser._id);
+      off.witnesses?.some(
+        (w) =>
+          w._id === loggedUser._id &&
+          ["Pending Review", "Invalid", "Acknowledged"].includes(off.status)
+      );
 
     if (!isInvolved) return false;
     if (["Pending Review", "Invalid", "Acknowledged"].includes(off.status))

@@ -106,6 +106,7 @@ const CasesInProgress = ({
                           NTE: "isReadByRespondant",
                           "Scheduled for hearing": "isReadByRespondant",
                           "After Hearing": "isReadByRespondant",
+                          "For Acknowledgement": "isReadByRespondant",
                           Invalid: "isReadByReporter",
                         };
 

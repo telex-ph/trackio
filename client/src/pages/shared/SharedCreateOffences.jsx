@@ -97,10 +97,10 @@ const SharedCreateOffences = () => {
   );
 
   useEffect(() => {
-    const idsToFetch = offenses.flatMap((o) => [
-      o.agentId,
-      o.reportedById,
-      o.coachId,
+    const idsToFetch = offenses.flatMap((offense) => [
+      offense.agentId,
+      offense.reportedById,
+      offense.coachId,
     ]);
     fetchUsersByIds(idsToFetch);
   }, [offenses, fetchUsersByIds]);
@@ -361,6 +361,7 @@ const SharedCreateOffences = () => {
 
     setFormData({
       agentName: off.agentName,
+      reportedById: off.reportedById,
       employeeId: off.employeeId || "",
       agentRole: off.agentRole || "",
       offenseCategory: off.offenseCategory,
