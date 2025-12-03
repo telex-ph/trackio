@@ -246,7 +246,7 @@ const HR_OffenseDetails = ({
                     return (
                       <div key={idx} className="flex flex-col gap-3">
                         <div className="flex items-center gap-2 min-w-0">
-                          <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                          <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 shrink-0" />
                           <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
                             {ev.fileName}
                           </p>
@@ -295,7 +295,7 @@ const HR_OffenseDetails = ({
                     return (
                       <div key={idx} className="flex flex-col gap-3">
                         <div className="flex items-center gap-2 min-w-0">
-                          <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                          <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 shrink-0" />
                           <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
                             {nte.fileName}
                           </p>
@@ -371,7 +371,7 @@ const HR_OffenseDetails = ({
                     return (
                       <div key={idx} className="flex flex-col gap-3">
                         <div className="flex items-center gap-2 min-w-0">
-                          <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                          <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 shrink-0" />
                           <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
                             {mom.fileName}
                           </p>
@@ -418,7 +418,7 @@ const HR_OffenseDetails = ({
                     return (
                       <div key={idx} className="flex flex-col gap-3">
                         <div className="flex items-center gap-2 min-w-0">
-                          <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                          <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 shrink-0" />
                           <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
                             {nda.fileName}
                           </p>
@@ -490,7 +490,7 @@ const HR_OffenseDetails = ({
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={() => setShowValidModal(true)}
-                  className="flex-1 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white p-3 sm:p-4 rounded-2xl hover:from-indigo-700 hover:to-indigo-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                  className="flex-1 bg-linear-to-r from-indigo-600 to-indigo-700 text-white p-3 sm:p-4 rounded-2xl hover:from-indigo-700 hover:to-indigo-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
                 >
                   Valid
                 </button>
@@ -515,8 +515,55 @@ const HR_OffenseDetails = ({
                         Are you sure you want to validate this offense and send
                         an NTE message to the respondent?
                       </p>
+                      <div className="space-y-2 mb-3">
+                        <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                          Offense Category *
+                        </label>
+                        <select
+                          name="offenseCategory"
+                          value={formData.offenseCategory || ""}
+                          onChange={(e) =>
+                            onFormChange({
+                              target: {
+                                name: "offenseCategory",
+                                value: e.target.value,
+                              },
+                            })
+                          }
+                          className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
+                        >
+                          <option value="">Select category</option>
+                          <option value="Attendance and Punctuality">
+                            Attendance and Punctuality
+                          </option>
+                          <option value="Behavior and Conduct">
+                            Behavior and Conduct
+                          </option>
+                          <option value="Good Morals and Work Ethics">
+                            Good Morals and Work Ethics
+                          </option>
+                          <option value="Negligence in the Performance of Duty">
+                            Negligence in the Performance of Duty
+                          </option>
+                          <option value="Company Interest/Insubordination">
+                            Company Interest/Insubordination
+                          </option>
+                          <option value="Company Funds and Property">
+                            Company Funds and Property
+                          </option>
+                          <option value="Sanitation, Safety and Security at Work">
+                            Sanitation, Safety and Security at Work
+                          </option>
+                          <option value="Securing or Divulging Confidential Information">
+                            Securing or Divulging Confidential Information
+                          </option>
+                        </select>
+                      </div>
 
                       {/* Drag-and-drop Attachment Input */}
+                      <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                        NTE FILE *
+                      </label>
                       <div
                         className={`mb-4 p-4 border-2 rounded-xl border-dashed text-center cursor-pointer transition-colors ${
                           isDragOver
@@ -568,7 +615,12 @@ const HR_OffenseDetails = ({
                         </button>
                         <button
                           onClick={handleValid}
-                          disabled={loading || !selectedFile}
+                          disabled={
+                            loading ||
+                            !selectedFile ||
+                            !formData.offenseCategory ||
+                            formData.offenseCategory === ""
+                          }
                           className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                         >
                           {loading && (
@@ -583,7 +635,7 @@ const HR_OffenseDetails = ({
 
                 <button
                   onClick={() => setShowInvalidModal(true)}
-                  className="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                  className="flex-1 bg-linear-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
                 >
                   Invalid
                 </button>
@@ -642,7 +694,7 @@ const HR_OffenseDetails = ({
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={() => setShowHearingModal(true)}
-                  className="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                  className="flex-1 bg-linear-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
                 >
                   Set Hearing Date
                 </button>

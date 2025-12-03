@@ -13,8 +13,8 @@ export const offenseBadge = (set) => ({
       let unreadRespondent = 0;
       let unreadReporter = 0;
 
-      data.forEach((o) => {
-        const status = o.status;
+      data.forEach((offense) => {
+        const status = offense.status;
 
         // ---------- HR logic ----------
         if (role === "HR") {
@@ -23,13 +23,13 @@ export const offenseBadge = (set) => ({
               status
             )
           ) {
-            if (!o.isReadByHR) unreadHR++;
+            if (!offense.isReadByHR) unreadHR++;
           } else if (
             ["NTE", "Scheduled for hearing", "After Hearing"].includes(status)
           ) {
-            if (!o.isReadByRespondant) unreadRespondent++;
+            if (!offense.isReadByRespondant) unreadRespondent++;
           } else if (status === "Invalid") {
-            if (!o.isReadByReporter) unreadReporter++;
+            if (!offense.isReadByReporter) unreadReporter++;
           }
         }
 
@@ -38,32 +38,32 @@ export const offenseBadge = (set) => ({
           if (
             ["NTE", "Scheduled for hearing", "After Hearing"].includes(status)
           ) {
-            if (!o.isReadByRespondant && o.employeeId === employeeId) unreadRespondent++;
+            if (!offense.isReadByRespondant && offense.employeeId === employeeId) unreadRespondent++;
           } else if (status === "Invalid") {
-            if (!o.isReadByReporter) unreadReporter++;
+            if (!offense.isReadByReporter) unreadReporter++;
           } else if (
             ["Pending Review", "Respondent Explained", "Acknowledged"].includes(
               status
             )
           ) {
-            if (!o.isReadByHR) unreadHR++;
+            if (!offense.isReadByHR) unreadHR++;
           }
         }
 
         // ---------- Reporter logic ----------
         if (role === "REPORTER") {
           if (status === "Invalid") {
-            if (!o.isReadByReporter) unreadReporter++;
+            if (!offense.isReadByReporter) unreadReporter++;
           } else if (
             ["Pending Review", "Respondent Explained", "Acknowledged"].includes(
               status
             )
           ) {
-            if (!o.isReadByHR) unreadHR++;
+            if (!offense.isReadByHR) unreadHR++;
           } else if (
             ["NTE", "Scheduled for hearing", "After Hearing"].includes(status)
           ) {
-            if (!o.isReadByRespondant) unreadRespondent++;
+            if (!offense.isReadByRespondant) unreadRespondent++;
           }
         }
       });

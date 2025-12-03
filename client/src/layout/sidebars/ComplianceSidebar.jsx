@@ -1,5 +1,6 @@
 import {
   LayoutGrid,
+  Trophy,
   Bell,
   Clock,
   Megaphone,
@@ -25,6 +26,12 @@ const ComplianceSidebar = ({
       to="/compliance/dashboard"
       icon={LayoutGrid}
       label="Dashboard"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
+      to="/compliance/recognition"
+      icon={Trophy}
+      label="Recognition Wall"
       isCollapsed={isCollapsed}
     />
     <SidebarLink

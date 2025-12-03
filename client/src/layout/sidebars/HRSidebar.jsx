@@ -1,5 +1,6 @@
 import {
   LayoutGrid,
+  Trophy,
   Bell,
   Clock,
   Calendar,

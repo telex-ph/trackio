@@ -3,6 +3,7 @@ import MonitoringLayout from "../layout/MonitoringLayout";
 
 // Admin Routes
 import AdminDashboard from "../pages/admin/AdminDashboard";
+import AdminRecognition from "../pages/admin/AdminRecognition";
 import AdminAnnouncement from "../pages/admin/AdminAnnouncement";
 import AdminAgentRequest from "../pages/admin/AdminAgentRequest";
 import AdminOffences from "../pages/admin/AdminOffences";
@@ -27,6 +28,7 @@ import TeamLeaderCreateOffenses from "../pages/team-leader/TeamLeaderCreateOffen
 const ADMIN_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
   { path: "dashboard", element: <AdminDashboard /> },
+  { path: "recognition", element: <AdminRecognition />},
   { path: "attendance", element: <SharedAttendance /> },
   { path: "ticket", element: <SharedTicket /> },
   {
