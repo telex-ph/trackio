@@ -121,6 +121,73 @@ class Attendance {
             as: "accounts",
           },
         },
+
+        // If the user is manager
+        ...(role === Roles.MANAGER
+          ? [
+              {
+                $match: {
+                  $or: [
+                    // Include BO Head, OA, Trainer QA
+                    {
+                      "user.role": {
+                        $in: [
+                          Roles.BACK_OFFICE_HEAD,
+                          Roles.OPERATION_ASSOCIATE,
+                          Roles.TRAINER_QUALITY_ASSURANCE,
+                        ],
+                      },
+                    },
+
+                    // Include users whose GROUP has this accountId
+                    {
+                      "group.accountIds": new ObjectId(
+                        "64f600000000000000000003"
+                      ),
+                    },
+                  ],
+                },
+              },
+            ]
+          : []),
+
+        // If the user is manager
+        ...(role === Roles.BACK_OFFICE_HEAD
+          ? [
+              {
+                $match: {
+                  "user.role": Roles.TRAINER_QUALITY_ASSURANCE,
+                },
+              },
+            ]
+          : []),
+
+        ...(role === Roles.OPERATION_ASSOCIATE
+          ? [
+              // Find groups where THIS USER is the Team Leader
+              {
+                $lookup: {
+                  from: "groups",
+                  localField: "user._id", // <-- USER ID (CORRECT)
+                  foreignField: "teamLeaderId", // <-- TL stored in group
+                  as: "asTeamLeaderOfGroup",
+                },
+              },
+              {
+                $unwind: {
+                  path: "$asTeamLeaderOfGroup",
+                  preserveNullAndEmptyArrays: false,
+                },
+              },
+              {
+                $match: {
+                  "asTeamLeaderOfGroup.accountIds": new ObjectId(
+                    "64f600000000000000000003"
+                  ),
+                },
+              },
+            ]
+          : []),
         {
           $project: {
             "user.password": 0,

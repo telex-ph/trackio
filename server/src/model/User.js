@@ -104,9 +104,53 @@ class User {
       query.$or = conditions;
     }
 
-    // Fetch filtered users (excluding deleted ones)
     const users = await collection
-      .find(query, { projection: { password: 0 } })
+      .aggregate([
+        { $match: query },
+
+        // Lookup group
+        {
+          $lookup: {
+            from: "groups",
+            localField: "groupId",
+            foreignField: "_id",
+            as: "group",
+          },
+        },
+        { $unwind: { path: "$group", preserveNullAndEmptyArrays: true } },
+
+        // Lookup accounts from group.accountIds
+        {
+          $lookup: {
+            from: "accounts",
+            localField: "group.accountIds",
+            foreignField: "_id",
+            as: "accounts",
+          },
+        },
+
+        // Add only account names for convenience
+        {
+          $addFields: {
+            accountNames: {
+              $cond: [
+                { $gt: [{ $size: "$accounts" }, 0] },
+                { $map: { input: "$accounts", as: "acc", in: "$$acc.name" } },
+                [],
+              ],
+            },
+          },
+        },
+
+        // Exclude sensitive or redundant fields
+        {
+          $project: {
+            password: 0,
+            group: 0,
+            accounts: 0,
+          },
+        },
+      ])
       .toArray();
 
     return users;
@@ -125,6 +169,9 @@ class User {
       case Roles.TEAM_LEADER:
         query.teamLeaderId = new ObjectId(id);
         break;
+      case Roles.OPERATION_ASSOCIATE:
+      case Roles.BACK_OFFICE_HEAD:
+      case Roles.MANAGER:
       case Roles.OM:
       case Roles.ADMIN:
       case Roles.ADMIN_HR_HEAD:
@@ -156,6 +203,69 @@ class User {
           },
         },
         { $unwind: { path: "$group", preserveNullAndEmptyArrays: true } },
+
+        //  Filter users by group.agentIds and group.accountIds
+        ...(role === Roles.MANAGER
+          ? [
+              {
+                $match: {
+                  $or: [
+                    // Include BO Head, OA, Trainer QA
+                    {
+                      role: {
+                        $in: [
+                          Roles.BACK_OFFICE_HEAD,
+                          Roles.OPERATION_ASSOCIATE,
+                          Roles.TRAINER_QUALITY_ASSURANCE,
+                        ],
+                      },
+                    },
+                    {
+                      "group.accountIds": new ObjectId(
+                        "64f600000000000000000003"
+                      ),
+                    },
+                  ],
+                },
+              },
+            ]
+          : []),
+
+        ...(role === Roles.BACK_OFFICE_HEAD
+          ? [
+              {
+                $match: {
+                  role: Roles.TRAINER_QUALITY_ASSURANCE,
+                },
+              },
+            ]
+          : []),
+
+        ...(role === Roles.OPERATION_ASSOCIATE
+          ? [
+              {
+                $lookup: {
+                  from: "groups",
+                  localField: "_id",
+                  foreignField: "teamLeaderId",
+                  as: "asTeamLeaderOfGroup",
+                },
+              },
+              {
+                $unwind: {
+                  path: "$asTeamLeaderOfGroup",
+                  preserveNullAndEmptyArrays: false,
+                },
+              },
+              {
+                $match: {
+                  "asTeamLeaderOfGroup.accountIds": new ObjectId(
+                    "64f600000000000000000003"
+                  ),
+                },
+              },
+            ]
+          : []),
 
         // Lookup all accounts associated with that group
         {
