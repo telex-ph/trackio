@@ -175,10 +175,10 @@ const OffenseDetails = ({
             </div>
           )}
 
-          {formData.fileMOM &&
+          {(formData.fileMOM &&
             formData.fileMOM.length > 0 &&
-            formData.respondantId?.some((w) => w._id === loggedUser._id) &&
-            formData.respondantId !== loggedUser._id && (
+            formData.respondantId?.some((w) => w._id === loggedUser._id)) ||
+            (formData.reportedById === loggedUser._id && (
               <div>
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Minutes of the meeting
@@ -218,11 +218,12 @@ const OffenseDetails = ({
                   })}
                 </div>
               </div>
-            )}
-          {formData.fileNDA &&
+            ))}
+          {(formData.fileNDA &&
             formData.fileNDA.length > 0 &&
             formData.witnesses?.some((w) => w._id === loggedUser._id) &&
-            formData.respondantId === loggedUser._id && (
+            formData.respondantId === loggedUser._id) ||
+            (formData.reportedById === loggedUser._id && (
               <div>
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   Notice of Disciplinary Action
@@ -262,7 +263,7 @@ const OffenseDetails = ({
                   })}
                 </div>
               </div>
-            )}
+            ))}
           {formData.isAcknowledged === true && (
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">

@@ -229,7 +229,7 @@ const OffenseDetails = ({
                 Submit
               </button>
             )}
-            {formData.status === "For Acknowledgement" && (
+            {formData.status === "For Acknowledgement" && !isWitness && (
               <button
                 onClick={() => setShowAcknowledgeModal(true)}
                 className="flex-1 bg-linear-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
