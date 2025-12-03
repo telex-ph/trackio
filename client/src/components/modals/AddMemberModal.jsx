@@ -9,23 +9,10 @@ import { useStore } from "../../store/useStore";
 
 const AddMemberModal = ({ isOpen, onClose, onConfirm, teamId }) => {
   const user = useStore((state) => state.user);
-  const [form, setForm] = useState({
-    employeeId: "",
-    firstName: "",
-    lastName: "",
-    email: "",
-    phoneNumber: "",
-  });
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
-
-  // Handle text input
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
 
   // Search function
   const handleSearch = async (value) => {
