@@ -39,12 +39,10 @@ export default function LiveBreaks() {
     });
 
     socket.on("on-break", (onBreak) => {
-      console.log("on-break: ", onBreak);
       setOnBreaks(onBreak);
     });
 
     socket.on("over-break", (overBreak) => {
-      console.log("over-break: ", overBreak);
       setOverBreaks(overBreak);
     });
 
