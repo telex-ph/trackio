@@ -22,6 +22,7 @@ const AdminAccountManagement = () => {
       { headerName: "First Name", field: "firstName", flex: 1 },
       { headerName: "Last Name", field: "lastName", flex: 1 },
       { headerName: "Email", field: "email", flex: 1.5 },
+      { headerName: "Accounts", field: "accountNames", flex: 1.5 },
       { headerName: "Phone Number", field: "phoneNumber", flex: 1 },
       { headerName: "Role", field: "role", flex: 1 },
       {
