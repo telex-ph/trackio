@@ -11,13 +11,14 @@ import {
   User,
 } from "lucide-react";
 import { DateTime } from "luxon";
-const CasesInProgress = ({
+const CoachingInProgress = ({
   offenses,
   searchQuery,
   onSearchChange,
   onView,
   isLoading,
   formatDisplayDate,
+  userMap,
 }) => {
   const safeOffenses = Array.isArray(offenses)
     ? offenses.filter((o) => o && o._id)
@@ -31,7 +32,7 @@ const CasesInProgress = ({
             <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
           </div>
           <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
-            Cases In Progress
+            Coaching In Progress
           </h3>
         </div>
         <span className="bg-red-100 text-red-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
@@ -70,21 +71,16 @@ const CasesInProgress = ({
                     </h4>
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
                       <span className="text-xs text-gray-500">
-                        Date: {formatDisplayDate(off.dateOfOffense)}
+                        Date: {formatDisplayDate(off.dateOfMistake)}
                       </span>
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
                           {
                             "Pending Review":
                               "bg-amber-100 text-amber-700 border border-amber-200",
-                            NTE: "bg-blue-100 text-blue-700 border border-blue-200",
-                            Invalid:
-                              "bg-red-100 text-red-700 border border-red-200",
                             "Respondent Explained":
                               "bg-purple-100 text-purple-700 border border-purple-200",
-                            "Scheduled for hearing":
-                              "bg-indigo-100 text-indigo-700 border border-indigo-200",
-                            "After Hearing":
+                            "For Acknowledgement":
                               "bg-teal-100 text-teal-700 border border-teal-200",
                             Acknowledged:
                               "bg-green-100 text-green-700 border border-green-200",
@@ -100,13 +96,10 @@ const CasesInProgress = ({
 
                         // Map status to which "reader" we care about
                         const statusReaderMap = {
-                          "Pending Review": "isReadByHR",
-                          "Respondent Explained": "isReadByHR",
-                          Acknowledged: "isReadByHR",
-                          NTE: "isReadByRespondant",
-                          "Scheduled for hearing": "isReadByRespondant",
-                          "After Hearing": "isReadByRespondant",
-                          Invalid: "isReadByReporter",
+                          "Coaching Log": "isReadByRespondant",
+                          "Respondent Explained": "isReadByCoach",
+                          "For Acknowledgement": "isReadByRespondant",
+                          Acknowledged: "isReadByCoach",
                         };
 
                         const readerKey = statusReaderMap[status];
@@ -114,17 +107,13 @@ const CasesInProgress = ({
 
                         // Determine label based on status
                         const labelMap = {
-                          isReadByHR: {
-                            read: "Read by HR",
-                            unread: "Unread by HR",
+                          isReadByCoach: {
+                            read: "Read by Coach",
+                            unread: "Unread by Coach",
                           },
                           isReadByRespondant: {
                             read: "Read by Respondent",
                             unread: "Unread by Respondent",
-                          },
-                          isReadByReporter: {
-                            read: "Read by You",
-                            unread: "Unread by You",
                           },
                         };
 
@@ -168,12 +157,24 @@ const CasesInProgress = ({
                 <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
                   <User className="w-3 h-3 sm:w-4 sm:h-4" />
                   Respondant:{" "}
-                  <span className="font-medium">{off.agentName}</span>
+                  <span className="font-medium">
+                    {userMap[off.agentId]
+                      ? `${userMap[off.agentId].firstName} ${
+                          userMap[off.agentId].lastName
+                        }`
+                      : "N/A"}
+                  </span>
                 </p>
                 <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                  <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
-                  Category:{" "}
-                  <span className="font-medium">{off.offenseCategory}</span>
+                  <User className="w-3 h-3 sm:w-4 sm:h-4" />
+                  Coach:{" "}
+                  <span className="font-medium">
+                    {userMap[off.coachId]
+                      ? `${userMap[off.coachId].firstName} ${
+                          userMap[off.coachId].lastName
+                        }`
+                      : "N/A"}
+                  </span>
                 </p>
                 {off.hearingDate && (
                   <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
@@ -273,4 +274,4 @@ const CasesInProgress = ({
   );
 };
 
-export default CasesInProgress;
+export default CoachingInProgress;

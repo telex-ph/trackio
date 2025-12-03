@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { DateTime } from "luxon";
 import api from "../../utils/axios";
 import socket from "../../utils/socket";
- 
+
 // Import components
 import Notification from "../../components/incident-reports/Notification";
 // MODIFIED: Import the new .tsx file. No extension needed.
@@ -10,7 +10,7 @@ import HR_OffenseDetails from "../../components/HRIncidentReport/ReportedIR/HR_O
 import HR_CasesInProgress from "../../components/HRIncidentReport/ReportedIR/HR_CasesInProgress";
 import HR_CaseHistory from "../../components/HRIncidentReport/ReportedIR/HR_CaseHistory";
 import { useStore } from "../../store/useStore";
- 
+
 // Define TypeScript Interfaces
 interface FileUpload {
   fileName: string;
@@ -19,7 +19,7 @@ interface FileUpload {
   public_id: string;
   url: string;
 }
- 
+
 interface Offense {
   _id: string;
   agentName: string;
@@ -31,6 +31,7 @@ interface Offense {
   offenseLevel?: string;
   dateOfOffense: string;
   status: string;
+  type: string;
   actionTaken: string;
   remarks?: string;
   evidence?: FileUpload[];
@@ -53,12 +54,12 @@ const HRReportedOffenses = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [offenses, setOffenses] = useState<Offense[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
- 
+
   // History states
   const [historySearchQuery, setHistorySearchQuery] = useState<string>("");
   const [historyStartDate, setHistoryStartDate] = useState<string>("");
   const [historyEndDate, setHistoryEndDate] = useState<string>("");
- 
+
   const today: string = DateTime.now().toISODate()!;
 
   const loggedUser = useStore((state) => state.user);
@@ -66,7 +67,7 @@ const HRReportedOffenses = () => {
   const decrementUnreadOffensesHR = useStore(
     (state) => state.decrementUnreadOffensesHR
   );
- 
+
   const [notification, setNotification] = useState({
     message: "",
     type: "",
@@ -105,11 +106,11 @@ const HRReportedOffenses = () => {
     fileMOM: [],
     fileNDA: [],
   });
- 
+
   const showNotification = (message: string, type: string) => {
     setNotification({ message, type, isVisible: true });
   };
- 
+
   // Fetch all offenses
   const fetchOffenses = async () => {
     try {
@@ -123,11 +124,11 @@ const HRReportedOffenses = () => {
       setIsLoading(false);
     }
   };
- 
+
   useEffect(() => {
     fetchOffenses();
   }, []);
- 
+
   useEffect(() => {
     const handleAdded = (newOffense: Offense) => {
       if (!newOffense?._id) return;
@@ -177,7 +178,7 @@ const HRReportedOffenses = () => {
     setIsViewMode(false);
     setEditingId(null);
   };
- 
+
   // Handle clicking "View" on a card
   const handleView = async (off: Offense) => {
     setIsViewMode(true);
@@ -195,7 +196,7 @@ const HRReportedOffenses = () => {
       fileNDA: off.fileNDA || [],
       fileNTE: off.fileNTE || [],
     });
- 
+
     try {
       const { data: offense } = await api.get(`/offenses/${off._id}`);
       console.log(offense.isReadByHR);
@@ -212,7 +213,7 @@ const HRReportedOffenses = () => {
       showNotification("Failed to update. Please try again.", "error");
     }
   };
- 
+
   // NEW: Handle form field changes
   const handleFormChange = (
     e: React.ChangeEvent<
@@ -267,6 +268,7 @@ const HRReportedOffenses = () => {
     try {
       const payload = {
         ...formData,
+        offenseCategory: formData.offenseCategory, // ✅ Inserted offense category
         isReadByRespondant: false,
         status: "NTE",
         nteSentDateTime: now.toISOString(),
@@ -274,18 +276,16 @@ const HRReportedOffenses = () => {
       };
 
       if (selectedFile) {
-        console.log("NTE FIle: ", selectedFile);
+        console.log("NTE File: ", selectedFile);
 
-        const formData = new FormData();
-        formData.append("file", selectedFile);
+        const fileForm = new FormData();
+        fileForm.append("file", selectedFile);
 
-        const uploadRes = await api.post("/upload/nte", formData, {
+        const uploadRes = await api.post("/upload/nte", fileForm, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         });
-
-        console.log(uploadRes.data);
 
         payload.fileNTE = [
           {
@@ -297,7 +297,6 @@ const HRReportedOffenses = () => {
           },
         ];
       }
-      // -------------------------------------------
 
       await api.put(`/offenses/${editingId}`, payload);
 
@@ -424,10 +423,10 @@ const HRReportedOffenses = () => {
       showNotification("Failed to update. Please try again.", "error");
     }
   };
- 
+
   const [showInvalidModal, setShowInvalidModal] = useState(false);
   const [invalidReason, setInvalidReason] = useState("");
- 
+
   const rejectOffense = async (invalidReason: string) => {
     try {
       const payload = {
@@ -436,7 +435,7 @@ const HRReportedOffenses = () => {
         invalidReason,
         isReadByReporter: false,
       };
- 
+
       await api.put(`/offenses/${editingId}`, payload);
       showNotification("Case has been rejected.", "success");
       resetForm();
@@ -448,24 +447,24 @@ const HRReportedOffenses = () => {
       showNotification("Failed to reject. Please try again.", "error");
     }
   };
- 
+
   // Format date for display
   const formatDisplayDate = (dateStr: string | undefined): string =>
     dateStr
       ? DateTime.fromISO(dateStr).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)
       : "";
- 
+
   // Reset history date filters
   const handleHistoryDateReset = () => {
     setHistoryStartDate("");
     setHistoryEndDate("");
   };
- 
+
   // Filter for "Cases In Progress"
   const filteredOffenses = offenses.filter(
     (off) =>
       !["Invalid", "Acknowledged"].includes(off.status) &&
-      off.respondantId !== loggedUser._id &&
+      off.respondantId !== loggedUser._id && off.type === "IR" &&
       [
         off.agentName,
         off.offenseType,
@@ -481,12 +480,12 @@ const HRReportedOffenses = () => {
         .toLowerCase()
         .includes(searchQuery.toLowerCase())
   );
- 
+
   // Filter for "Case History"
   const resolvedOffenses = offenses.filter((off) => {
     const isResolved = ["Acknowledged"].includes(off.status);
     if (!isResolved) return false;
- 
+
     const textMatch = [
       off.agentName,
       off.offenseType,
@@ -501,7 +500,7 @@ const HRReportedOffenses = () => {
       .toLowerCase()
       .includes(historySearchQuery.toLowerCase());
     if (!textMatch) return false;
- 
+
     const offenseDate = DateTime.fromISO(off.dateOfOffense!).startOf("day");
     const start = historyStartDate
       ? DateTime.fromISO(historyStartDate).startOf("day")
@@ -513,7 +512,7 @@ const HRReportedOffenses = () => {
     const isBeforeEndDate = end ? offenseDate <= end : true;
     return isAfterStartDate && isBeforeEndDate;
   });
- 
+
   return (
     <div>
       {notification.isVisible && (
@@ -531,7 +530,7 @@ const HRReportedOffenses = () => {
           View all reported disciplinary offenses.
         </p>
       </section>
- 
+
       <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
         {/* Offense Details Panel */}
         <HR_OffenseDetails
@@ -557,7 +556,7 @@ const HRReportedOffenses = () => {
           isDragOverNDA={isDragOverNDA}
           setIsDragOverNDA={setIsDragOverNDA}
         />
- 
+
         {/* Cases in Progress Panel */}
         <HR_CasesInProgress
           offenses={filteredOffenses}
@@ -570,7 +569,7 @@ const HRReportedOffenses = () => {
           formatDisplayDate={formatDisplayDate}
         />
       </div>
- 
+
       {/* Case History Panel */}
       <HR_CaseHistory
         offenses={resolvedOffenses}
@@ -593,5 +592,5 @@ const HRReportedOffenses = () => {
     </div>
   );
 };
- 
+
 export default HRReportedOffenses;

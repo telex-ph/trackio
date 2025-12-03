@@ -11,6 +11,11 @@ import CaseHistory from "../../components/incident-reports/CaseHistory";
 import Notification from "../../components/incident-reports/Notification";
 
 import { useStore } from "../../store/useStore";
+import CoachingForm from "../../components/incident-reports/coaching/CoachingForm";
+import CoachingInProgress from "../../components/incident-reports/coaching/CoachingInProgress";
+import CoachingHistory from "../../components/incident-reports/coaching/CoachingHistory";
+import CoachingDetails from "../../components/incident-reports/coaching/CoachingDetails";
+import { fetchUserById } from "../../store/stores/getUserById";
 
 // -----------------------------
 // Component
@@ -26,6 +31,8 @@ const SharedCreateOffences = () => {
   });
 
   // Data
+  const [offenseType, setOffenseType] = useState("COACHING");
+
   const [offenses, setOffenses] = useState([]);
   const loggedUser = useStore((state) => state.user);
   const [_currentUser, setCurrentUser] = useState(null);
@@ -35,17 +42,8 @@ const SharedCreateOffences = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const [formData, setFormData] = useState({
-    agentName: "",
-    employeeId: "",
-    agentRole: "",
-    offenseCategory: "",
-    offenseLevel: "",
-    dateOfOffense: "",
-    status: "",
-    remarks: "",
-    evidence: [],
-  });
+  const [selectedNDAFile, setSelectedNDAFile] = useState(null);
+  const [isDragOverNDA, setIsDragOverNDA] = useState(false);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -63,8 +61,50 @@ const SharedCreateOffences = () => {
   }, []);
 
   // -----------------------------
+  // Form Data
+  // -----------------------------
+
+  const [formData, setFormData] = useState({
+    coachId: "",
+    agentId: "",
+    agentName: "",
+    employeeId: "",
+    agentRole: "",
+    offenseLevel: "",
+    dateOfOffense: "",
+    status: "",
+    remarks: "",
+    evidence: [],
+  });
+
+  // -----------------------------
   // API Calls
   // -----------------------------
+
+  const [userMap, setUserMap] = useState({});
+
+  const fetchUsersByIds = useCallback(
+    async (ids = []) => {
+      const uniqueIds = [...new Set(ids.filter(Boolean))];
+      uniqueIds.forEach(async (id) => {
+        if (!userMap[id]) {
+          const user = await fetchUserById(id);
+          setUserMap((prev) => ({ ...prev, [id]: user }));
+        }
+      });
+    },
+    [userMap]
+  );
+
+  useEffect(() => {
+    const idsToFetch = offenses.flatMap((o) => [
+      o.agentId,
+      o.reportedById,
+      o.coachId,
+    ]);
+    fetchUsersByIds(idsToFetch);
+  }, [offenses, fetchUsersByIds]);
+
   const fetchCurrentUser = useCallback(async () => {
     try {
       const res = await api.get("/auth/get-auth-user");
@@ -135,6 +175,19 @@ const SharedCreateOffences = () => {
 
   useEffect(() => setupSocketListeners(), [setupSocketListeners]);
 
+  const fetchOffenses = async () => {
+    try {
+      setIsLoading(true);
+      const response = await api.get("/offenses");
+      setOffenses(response.data || []);
+    } catch (error) {
+      console.error("Error fetching offenses:", error);
+      showNotification("Failed to load offenses. Please try again.", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // -----------------------------
   // Handlers
   // -----------------------------
@@ -158,20 +211,26 @@ const SharedCreateOffences = () => {
     setPanelMode("create");
   }, []);
 
-  const handleSubmit = useCallback(async () => {
-    if (
-      !formData.agentName ||
-      !formData.offenseCategory ||
-      !formData.dateOfOffense
-    ) {
+  const handleIRSubmit = useCallback(async () => {
+    if (!formData.agentName || !formData.dateOfOffense) {
       showNotification("Please fill all required fields", "error");
       return;
     }
 
     try {
       setIsLoading(true);
-      const payload = { ...formData };
-      delete payload.isRead;
+
+      const payload = {
+        respondantId: formData.respondantId,
+        agentName: formData.agentName,
+        offenseLevel: formData.offenseLevel,
+        dateOfOffense: formData.dateOfOffense,
+        remarks: formData.remarks,
+        evidence: formData.evidence || [],
+        status: "Pending Review",
+        isReadByHR: false,
+        type: "IR",
+      };
 
       if (selectedFile) {
         console.log("Evidence FIle: ", selectedFile);
@@ -224,7 +283,80 @@ const SharedCreateOffences = () => {
     showNotification,
   ]);
 
-  const handleView = async (off) => {
+  const handleCoachingSubmit = useCallback(async () => {
+    if (
+      !formData.agentName ||
+      !formData.dateOfMistake ||
+      !formData.coachingMistake
+    ) {
+      showNotification("Please fill all required fields", "error");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const payload = {
+        agentId: formData.agentId,
+        coachId: formData.coachId,
+        dateOfMistake: formData.dateOfMistake,
+        coachingDate: formData.coachingDate,
+        coachingMistake: formData.coachingMistake,
+        evidence: formData.evidence || [],
+        status: "Coaching Log",
+        isReadByRespondant: false,
+        type: "COACHING",
+      };
+
+      if (selectedFile) {
+        const uploadForm = new FormData();
+        uploadForm.append("file", selectedFile);
+
+        const uploadRes = await api.post("/upload/evidence", uploadForm, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+
+        payload.evidence = [
+          {
+            fileName: uploadRes.data.fileName,
+            size: uploadRes.data.size,
+            type: uploadRes.data.type,
+            url: uploadRes.data.url,
+            public_id: uploadRes.data.public_id,
+          },
+        ];
+      }
+
+      if (panelMode === "edit") {
+        await api.put(`/offenses/${editingId}`, payload);
+        showNotification("Coaching log updated!", "success");
+      } else {
+        await api.post("/offenses", payload);
+        showNotification("Coaching log created!", "success");
+      }
+
+      // Reset form and refresh list
+      resetFormAndPanel();
+      fetchTeamOffenses();
+    } catch (err) {
+      console.error("Submit error", err);
+      showNotification("Failed to submit coaching log", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [
+    formData,
+    panelMode,
+    editingId,
+    selectedFile,
+    resetFormAndPanel,
+    fetchTeamOffenses,
+    showNotification,
+  ]);
+
+  const handleIRView = async (off) => {
     if (!off) return;
 
     setFormData({
@@ -261,6 +393,113 @@ const SharedCreateOffences = () => {
       } catch (err) {
         console.error("Mark as read failed", err);
       }
+    }
+  };
+
+  const handleCoachingView = async (off) => {
+    if (!off) return;
+
+    let agentUser = userMap[off.agentId];
+    if (off.agentId && !agentUser) {
+      agentUser = await fetchUserById(off.agentId);
+      setUserMap((prev) => ({ ...prev, [off.agentId]: agentUser }));
+    }
+
+    let coachUser = userMap[off.coachId];
+    if (off.coachId && !coachUser) {
+      coachUser = await fetchUserById(off.coachId);
+      setUserMap((prev) => ({ ...prev, [off.coachId]: coachUser }));
+    }
+
+    setFormData({
+      reportedById: off.reportedById,
+      agentId: off.agentId,
+      agentName: agentUser
+        ? `${agentUser.firstName} ${agentUser.lastName}`
+        : "Unknown",
+      coachId: off.coachId || "",
+      coachName: coachUser
+        ? `${coachUser.firstName} ${coachUser.lastName}`
+        : "Unknown",
+      dateOfMistake: off.dateOfMistake,
+      coachingDate: off.coachingDate,
+      coachingMistake: off.coachingMistake || "",
+      status: off.status,
+      respondantExplanation: off.respondantExplanation,
+      isAcknowledged: off.isAcknowledged,
+      ackMessage: off.ackMessage,
+      evidence: off.evidence || [],
+      fileNDA: off.fileNDA || [],
+    });
+
+    setEditingId(off._id);
+    setPanelMode("view");
+
+    if (off.isReadByCoach === false) {
+      try {
+        await api.put(`/offenses/${off._id}`, {
+          ...off,
+          isReadByCoach: true,
+        });
+        setOffenses((prev) =>
+          prev.map((o) =>
+            o._id === off._id ? { ...o, isReadByCoach: true } : o
+          )
+        );
+      } catch (err) {
+        console.error("Mark as read failed", err);
+      }
+    }
+  };
+
+  const handleUploadNDA = async () => {
+    if (!editingId) return;
+
+    const now = new Date();
+
+    try {
+      const payload = {
+        isAcknowledged: false,
+        status: "For Acknowledgement",
+        isReadByRespondant: false,
+        ndaSentDateTime: now.toISOString(),
+      };
+
+      if (selectedNDAFile) {
+        console.log("NDA FIle: ", selectedNDAFile);
+
+        const formData = new FormData();
+        formData.append("file", selectedNDAFile);
+
+        const uploadRes = await api.post("/upload/nda", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+
+        console.log(uploadRes.data);
+
+        payload.fileNDA = [
+          {
+            fileName: uploadRes.data.fileName,
+            size: uploadRes.data.size,
+            type: uploadRes.data.type,
+            url: uploadRes.data.url,
+            public_id: uploadRes.data.public_id,
+          },
+        ];
+      }
+
+      // --- API Call ---
+      await api.put(`/offenses/${editingId}`, payload);
+      showNotification("Documents uploaded successfully!", "success");
+
+      setSelectedNDAFile(null);
+
+      fetchOffenses();
+    } catch (error) {
+      console.error("Error updating offense:", error);
+      showNotification("Failed to update. Please try again.", "error");
     }
   };
 
@@ -306,10 +545,11 @@ const SharedCreateOffences = () => {
     [offenses]
   );
 
-  const filteredOffensesForList = useMemo(() => {
+  const filteredOffensesList = useMemo(() => {
     return safeOffenses.filter((off) => {
       if (off.reportedById !== loggedUser._id) return false;
       if (["Invalid", "Acknowledged"].includes(off.status)) return false;
+      if (off.type === "COACHING") return false;
 
       return [
         off.agentName,
@@ -327,13 +567,77 @@ const SharedCreateOffences = () => {
     });
   }, [safeOffenses, searchQuery, loggedUser, formatDisplayDate]);
 
-  const resolvedOffensesForHistory = useMemo(() => {
+  const filteredCoachingList = useMemo(() => {
+    return safeOffenses.filter((off) => {
+      if (off.reportedById !== loggedUser._id) return false;
+      if (["Invalid", "Acknowledged"].includes(off.status)) return false;
+      if (off.type === "IR") return false;
+
+      return [
+        off.agentName,
+        off.offenseType,
+        off.offenseCategory,
+        off.offenseLevel || "",
+        off.status,
+        off.actionTaken,
+        off.remarks || "",
+        formatDisplayDate(off.dateOfOffense),
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+    });
+  }, [safeOffenses, searchQuery, loggedUser, formatDisplayDate]);
+
+  const resolvedOffensesHistory = useMemo(() => {
     return safeOffenses.filter((off) => {
       const isResolved =
         loggedUser &&
         off.reportedById === loggedUser._id &&
         ["Invalid", "Acknowledged"].includes(off.status);
       if (!isResolved) return false;
+      if (off.type !== "IR") return false;
+
+      const textMatch = [
+        off.offenseType,
+        off.offenseLevel || "",
+        off.status,
+        off.remarks || "",
+        formatDisplayDate(off.dateOfOffense),
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(historySearchQuery.toLowerCase());
+
+      if (!textMatch) return false;
+
+      const offenseDate = DateTime.fromISO(off.dateOfOffense).startOf("day");
+      const start = historyStartDate
+        ? DateTime.fromISO(historyStartDate).startOf("day")
+        : null;
+      const end = historyEndDate
+        ? DateTime.fromISO(historyEndDate).startOf("day")
+        : null;
+
+      return (!start || offenseDate >= start) && (!end || offenseDate <= end);
+    });
+  }, [
+    safeOffenses,
+    historySearchQuery,
+    historyStartDate,
+    historyEndDate,
+    loggedUser,
+    formatDisplayDate,
+  ]);
+
+  const resolvedCoachingHistory = useMemo(() => {
+    return safeOffenses.filter((off) => {
+      const isResolved =
+        loggedUser &&
+        off.reportedById === loggedUser._id &&
+        ["Invalid", "Acknowledged"].includes(off.status);
+      if (!isResolved) return false;
+      if (off.type !== "COACHING") return false;
 
       const textMatch = [
         off.offenseType,
@@ -380,79 +684,182 @@ const SharedCreateOffences = () => {
         />
       )}
 
-      {loggedUser.role === "human-resources" ? (
-        <section className="flex flex-col mb-2">
-          <h2>Offense Management</h2>
-          <p className="text-gray-600 mt-1">
-            Create, view, and manage offenses.
-          </p>
-        </section>
-      ) : (
-        <section className="flex flex-col mb-2">
-          <h2>Team Offense Management</h2>
-          <p className="text-gray-600 mt-1">
-            Create, view, and manage offenses for your team.
-          </p>
-        </section>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
+      {/* Header + optional Offense Type Toggle */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
-          {panelMode === "create" || panelMode === "edit" ? (
-            <OffenseForm
-              formData={formData}
-              setFormData={setFormData}
-              selectedFile={selectedFile}
-              setSelectedFile={setSelectedFile}
-              isDragOver={isDragOver}
-              setIsDragOver={setIsDragOver}
-              isEditMode={panelMode === "edit"}
-              resetForm={resetFormAndPanel}
-              handleSubmit={handleSubmit}
-              showNotification={showNotification}
-              isLoading={isLoading}
-            />
+          {loggedUser.role === "human-resources" ? (
+            <>
+              <h2 className="text-2xl font-bold text-gray-900">
+                Offense Management
+              </h2>
+              <p className="text-gray-600 mt-1">
+                Create, view, and manage offenses.
+              </p>
+            </>
           ) : (
-            <OffenseDetails
-              isViewMode={true}
-              formData={formData}
-              onClose={resetFormAndPanel}
-              onDelete={handleDelete}
-              formatDisplayDate={formatDisplayDate}
-              onEditClick={() => handleEditClick(formData)}
-              loggedUser={loggedUser}
-            />
+            <>
+              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-4">
+                Team Offense Management
+                {["team-leader", "operations-manager"].includes(
+                  loggedUser.role
+                ) && (
+                  <div className="bg-gray-200 rounded-full p-1 flex shadow-inner">
+                    {["COACHING", "IR"].map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => {
+                          setOffenseType(type);
+                          resetFormAndPanel();
+                        }}
+                        className={`px-4 py-1 rounded-full text-sm font-medium transition-all ${
+                          offenseType === type
+                            ? type === "IR"
+                              ? "bg-red-600 text-white shadow"
+                              : "bg-blue-600 text-white shadow"
+                            : "text-gray-700 hover:bg-gray-300"
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </h2>
+              <p className="text-gray-600 mt-1">
+                Create, view, and manage offenses for your team.
+              </p>
+            </>
           )}
         </div>
-
-        <CasesInProgress
-          offenses={filteredOffensesForList}
-          searchQuery={searchQuery}
-          onSearchChange={(e) => setSearchQuery(e.target.value)}
-          onView={handleView}
-          isLoading={isLoading}
-          formatDisplayDate={formatDisplayDate}
-        />
       </div>
 
-      <CaseHistory
-        offenses={resolvedOffensesForHistory}
-        filters={{
-          searchQuery: historySearchQuery,
-          startDate: historyStartDate,
-          endDate: historyEndDate,
-        }}
-        setFilters={{
-          setSearchQuery: setHistorySearchQuery,
-          setStartDate: setHistoryStartDate,
-          setEndDate: setHistoryEndDate,
-        }}
-        onDateReset={handleHistoryDateReset}
-        isLoading={isLoading}
-        formatDisplayDate={formatDisplayDate}
-        today={today}
-        onView={handleView}
-      />
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
+        <div>
+          {/* Define forms based on role + offenseType */}
+          {(() => {
+            const isTLOrOM = ["team-leader", "operations-manager"].includes(
+              loggedUser.role
+            );
+
+            // If not TL/OM → always IR
+            const effectiveType = isTLOrOM ? offenseType : "IR";
+
+            const FormComponent =
+              effectiveType === "IR" ? OffenseForm : CoachingForm;
+
+            const DetailComponent =
+              effectiveType === "IR" ? OffenseDetails : CoachingDetails;
+
+            if (panelMode === "create" || panelMode === "edit") {
+              return (
+                <FormComponent
+                  formData={formData}
+                  setFormData={setFormData}
+                  selectedFile={selectedFile}
+                  setSelectedFile={setSelectedFile}
+                  isDragOver={isDragOver}
+                  setIsDragOver={setIsDragOver}
+                  isEditMode={panelMode === "edit"}
+                  resetForm={resetFormAndPanel}
+                  showNotification={showNotification}
+                  isLoading={isLoading}
+                  userMap={userMap}
+                  {...(effectiveType === "IR"
+                    ? { handleIRSubmit }
+                    : { handleCoachingSubmit })}
+                />
+              );
+            } else {
+              return (
+                <DetailComponent
+                  isViewMode={true}
+                  formData={formData}
+                  onClose={resetFormAndPanel}
+                  onDelete={handleDelete}
+                  formatDisplayDate={formatDisplayDate}
+                  onEditClick={() => handleEditClick(formData)}
+                  handleUploadNDA={handleUploadNDA}
+                  selectedNDAFile={selectedNDAFile}
+                  setSelectedNDAFile={setSelectedNDAFile}
+                  isDragOverNDA={isDragOverNDA}
+                  setIsDragOverNDA={setIsDragOverNDA}
+                  loggedUser={loggedUser}
+                />
+              );
+            }
+          })()}
+        </div>
+
+        {/* Cases In Progress */}
+        {(() => {
+          const isTLOrOM = ["team-leader", "operations-manager"].includes(
+            loggedUser.role
+          );
+
+          // Force IR for non-TL/OM
+          const effectiveType = isTLOrOM ? offenseType : "IR";
+
+          // Component selection
+          const CasesComponent =
+            effectiveType === "IR" ? CasesInProgress : CoachingInProgress;
+
+          return (
+            <CasesComponent
+              offenses={
+                effectiveType === "IR"
+                  ? filteredOffensesList
+                  : filteredCoachingList
+              }
+              searchQuery={searchQuery}
+              onSearchChange={(e) => setSearchQuery(e.target.value)}
+              onView={
+                effectiveType === "IR" ? handleIRView : handleCoachingView
+              }
+              isLoading={isLoading}
+              formatDisplayDate={formatDisplayDate}
+              userMap={userMap}
+            />
+          );
+        })()}
+      </div>
+
+      {/* Case History */}
+      {(() => {
+        const isTLOrOM = ["team-leader", "operations-manager"].includes(
+          loggedUser.role
+        );
+
+        const effectiveType = isTLOrOM ? offenseType : "IR";
+
+        const HistoryComponent =
+          effectiveType === "IR" ? CaseHistory : CoachingHistory;
+
+        return (
+          <HistoryComponent
+            offenses={
+              effectiveType === "IR"
+                ? resolvedOffensesHistory
+                : resolvedCoachingHistory
+            }
+            filters={{
+              searchQuery: historySearchQuery,
+              startDate: historyStartDate,
+              endDate: historyEndDate,
+            }}
+            setFilters={{
+              setSearchQuery: setHistorySearchQuery,
+              setStartDate: setHistoryStartDate,
+              setEndDate: setHistoryEndDate,
+            }}
+            onDateReset={handleHistoryDateReset}
+            isLoading={isLoading}
+            formatDisplayDate={formatDisplayDate}
+            today={today}
+            onView={effectiveType === "IR" ? handleIRView : handleCoachingView}
+          />
+        );
+      })()}
     </div>
   );
 };
