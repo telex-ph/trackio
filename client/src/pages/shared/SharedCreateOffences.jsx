@@ -700,7 +700,7 @@ const SharedCreateOffences = () => {
             <>
               <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-4">
                 Team Offense Management
-                {["team-leader", "operations-manager"].includes(
+                {["team-leader", "operations-manager", "trainer-quality-assurance"].includes(
                   loggedUser.role
                 ) && (
                   <div className="bg-gray-200 rounded-full p-1 flex shadow-inner">
@@ -738,7 +738,7 @@ const SharedCreateOffences = () => {
         <div>
           {/* Define forms based on role + offenseType */}
           {(() => {
-            const isTLOrOM = ["team-leader", "operations-manager"].includes(
+            const isTLOrOM = ["team-leader", "operations-manager", "trainer-quality-assurance"].includes(
               loggedUser.role
             );
 
@@ -793,7 +793,7 @@ const SharedCreateOffences = () => {
 
         {/* Cases In Progress */}
         {(() => {
-          const isTLOrOM = ["team-leader", "operations-manager"].includes(
+          const isTLOrOM = ["team-leader", "operations-manager", "trainer-quality-assurance"].includes(
             loggedUser.role
           );
 
@@ -826,7 +826,7 @@ const SharedCreateOffences = () => {
 
       {/* Case History */}
       {(() => {
-        const isTLOrOM = ["team-leader", "operations-manager"].includes(
+        const isTLOrOM = ["team-leader", "operations-manager", "trainer-quality-assurance"].includes(
           loggedUser.role
         );
 
