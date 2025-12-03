@@ -107,7 +107,7 @@ const SharedMyOffences = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [offenses, setOffenses] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentUser, setCurrentUser] = useState(null);
+  const [_currentUser, setCurrentUser] = useState(null);
   const loggedUser = useStore((state) => state.user);
 
   const [showAcknowledgeModal, setShowAcknowledgeModal] = useState(false);
