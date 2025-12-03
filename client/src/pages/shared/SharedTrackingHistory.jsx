@@ -47,61 +47,20 @@ const SharedTrackingHistory = () => {
     setIsModalOpen(true);
   };
 
-  const handleUpdate = () => {
-    if (!selectedRow) return;
-    setData((prev) =>
-      prev.map((item) =>
-        item.id === selectedRow.id
-          ? { ...item, notes: selectedRow.notes }
-          : item
-      )
-    );
-  };
-
-  const openCalendarModal = () => setIsCalendarModalOpen(true);
-
-  const timeToMinutes = (timeStr) => {
-    // TODO: fix
-    if (!timeStr) return "---";
-
-    const [hourMin, period] = timeStr.split(" ");
-    let [hour, min] = hourMin.split(":");
-    hour = parseInt(hour, 10);
-    min = min ? parseInt(min, 10) : 0;
-    // TODO: fix
-    // if (period.toUpperCase() === "PM" && hour !== 12) hour += 12;
-    // if (period.toUpperCase() === "AM" && hour === 12) hour = 0;
-    return hour * 60 + min;
-  };
-
-  const formatDuration = (minutes) => {
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    return `${h}h ${m}m`;
-  };
-
-  const calculateDurations = (row) => {
-    const scheduledStart = timeToMinutes(row.scheduledStart);
-    const scheduledEnd = timeToMinutes(row.scheduledEnd);
-    const timeIn = timeToMinutes(row.timeIn);
-    const timeOut = timeToMinutes(row.timeOut);
-
-    const late = timeIn > scheduledStart ? timeIn - scheduledStart : 0;
-    const undertime = timeOut < scheduledEnd ? scheduledEnd - timeOut : 0;
-    const overtime = timeOut > scheduledEnd ? timeOut - scheduledEnd : 0;
-
-    return {
-      Late: formatDuration(late),
-      Undertime: formatDuration(undertime),
-      Overtime: formatDuration(overtime),
-      "Work Duration": row.workDuration,
-    };
-  };
-
   const columns = [
     { headerName: "ID", field: "employeeId", flex: 1 },
     { headerName: "Date", field: "date", flex: 1 },
     { headerName: "Name", field: "name", flex: 1 },
+    {
+      headerName: "Shift",
+      field: "shift",
+      flex: 2,
+      filter: false,
+      cellRenderer: (params) => {
+        const data = params.data;
+        return `${data.shiftStart} - ${data.shiftEnd}`;
+      },
+    },
     { headerName: "Time In", field: "timeIn", filter: false, flex: 1 },
     { headerName: "Time Out", field: "timeOut", filter: false, flex: 1 },
     {
