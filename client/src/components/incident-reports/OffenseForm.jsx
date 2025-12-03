@@ -23,7 +23,7 @@ const OffenseForm = ({
   setIsDragOver,
   isEditMode,
   resetForm,
-  handleSubmit,
+  handleIRSubmit,
   showNotification,
   isLoading
 }) => {
@@ -232,43 +232,7 @@ const OffenseForm = ({
         </div>
 
         {/* Offense Category / Type */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <div className="space-y-2">
-            <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-              Offense Category *
-            </label>
-            <select
-              value={formData.offenseCategory}
-              onChange={(e) =>
-                handleInputChange("offenseCategory", e.target.value)
-              }
-              className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-            >
-              <option value="">Select category</option>
-              <option value="Attendance and Punctuality">
-                Attendance and Punctuality
-              </option>
-              <option value="Behavior and Conduct">Behavior and Conduct</option>
-              <option value="Good Morals and Work Ethics">
-                Good Morals and Work Ethics
-              </option>
-              <option value="Negligence in the Performance of Duty">
-                Negligence in the Performance of Duty
-              </option>
-              <option value="Company Interest/Insubordination">
-                Company Interest/Insubordination
-              </option>
-              <option value="Company Funds and Property">
-                Company Funds and Property
-              </option>
-              <option value="Sanitation, Safety and Security at Work">
-                Sanitation, Safety and Security at Work
-              </option>
-              <option value="Securing or Divulging Confidential Information">
-                Securing or Divulging Confidential Information
-              </option>
-            </select>
-          </div>
+        <div className="gap-4 sm:gap-6">
           <div className="space-y-2">
             <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
               Date of Offense *
@@ -311,7 +275,7 @@ const OffenseForm = ({
             <div className="border-2 border-dashed rounded-2xl p-4 border-green-400 bg-green-50">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
-                  <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-green-500 flex-shrink-0" />
+                  <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-green-500 shrink-0" />
                   <p className="font-medium text-green-700 text-xs sm:text-sm truncate">
                     {selectedFile.name}
                   </p>
@@ -334,7 +298,7 @@ const OffenseForm = ({
                 return (
                   <div key={idx} className="flex flex-col gap-3">
                     <div className="flex items-center gap-2 min-w-0">
-                      <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                      <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 shrink-0" />
                       <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
                         {ev.fileName}
                       </p>
@@ -403,9 +367,9 @@ const OffenseForm = ({
           )}
         </div>
         <button
-          onClick={handleSubmit}
+          onClick={handleIRSubmit}
           disabled={isLoading}
-          className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all duration-300 font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+          className="w-full bg-linear-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all duration-300 font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
         >
           {isEditMode ? "Update Offense" : "Submit Offense"}
         </button>
