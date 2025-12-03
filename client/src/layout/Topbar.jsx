@@ -50,6 +50,18 @@ const Topbar = ({ toggleSidebar }) => {
       case Roles.OM:
         navigator("/operation-manager/account-settings");
         break;
+      case Roles.MANAGER:
+        navigator("/manager/account-settings");
+        break;
+      case Roles.BACK_OFFICE_HEAD:
+        navigator("/back-office-head/account-settings");
+        break;
+      case Roles.OPERATION_ASSOCIATE:
+        navigator("/operations-associate/account-settings");
+        break;
+      case Roles.TRAINER_QUALITY_ASSURANCE:
+        navigator("/trainer-quality-assurance/account-settings");
+        break;
       case Roles.TEAM_LEADER:
         navigator("/team-leader/account-settings");
         break;

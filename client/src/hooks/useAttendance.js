@@ -53,12 +53,6 @@ export const useAttendance = (userId, filter) => {
         const formattedTimeOut = formatTime(item.timeOut);
         const formattedShiftStart = formatTime(item.shiftStart);
         const formattedShiftEnd = formatTime(item.shiftEnd);
-        const formattedFirstBreakStart = formatTime(item.firstBreakStart);
-        const formattedFirstBreakEnd = formatTime(item.firstBreakEnd);
-        const formattedSecondBreakStart = formatTime(item.secondBreakStart);
-        const formattedSecondBreakEnd = formatTime(item.secondBreakEnd);
-        const formattedLunchStart = formatTime(item.lunchStart);
-        const formattedLunchEnd = formatTime(item.lunchEnd);
 
         // Punctuality
         let punctuality = "N/A";
@@ -114,15 +108,6 @@ export const useAttendance = (userId, filter) => {
 
           shiftStart: formattedShiftStart,
           shiftEnd: formattedShiftEnd,
-
-          firstBreakStart: formattedFirstBreakStart,
-          firstBreakEnd: formattedFirstBreakEnd,
-
-          secondBreakStart: formattedSecondBreakStart,
-          secondBreakEnd: formattedSecondBreakEnd,
-
-          lunchStart: formattedLunchStart,
-          lunchEnd: formattedLunchEnd,
 
           timeIn: formattedTimeIn,
           timeOut: formattedTimeOut,

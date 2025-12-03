@@ -15,6 +15,10 @@ import ResetPassword from "../pages/global/ResetPassword";
 import LiveMonitoring from "../pages/global/LiveMonitoring";
 import AGENT_ROUTES from "./AgentRoutes";
 import TEAM_LEADER_ROUTES from "./TeamLeaderRoutes";
+import TRAINER_QUALITY_ASSURANCE_ROUTES from "./TrainerQualityAssuranceRoutes";
+import OPERATIONS_ASSOCIATE from "./OperationsAssociateRoutes";
+import BACK_OFFICE_HEAD_ROUTES from "./BackOfficeHeadRoutes";
+import MANAGER_ROUTES from "./ManagerRoutes";
 import HR_ROUTES from "./HRRoutes";
 import OM_ROUTES from "./OMRoutes";
 import ADMIN_HR_HEAD_ROUTES from "./AdminHRHeadRoutes";
@@ -39,7 +43,7 @@ const router = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
-          // Compliance Routes
+          // President Routes
           {
             element: <ProtectedRoutes role={Roles.PRESIDENT} />,
             path: "president",
@@ -82,6 +86,30 @@ const router = createBrowserRouter([
             element: <ProtectedRoutes role={Roles.HR} />,
             path: "human-resources",
             children: HR_ROUTES,
+          },
+
+          {
+            element: <ProtectedRoutes role={Roles.MANAGER} />,
+            path: "manager",
+            children: MANAGER_ROUTES,
+          },
+
+          {
+            element: <ProtectedRoutes role={Roles.BACK_OFFICE_HEAD} />,
+            path: "back-office-head",
+            children: BACK_OFFICE_HEAD_ROUTES,
+          },
+
+          {
+            element: <ProtectedRoutes role={Roles.OPERATION_ASSOCIATE} />,
+            path: "operations-associate",
+            children: OPERATIONS_ASSOCIATE,
+          },
+
+          {
+            element: <ProtectedRoutes role={Roles.TRAINER_QUALITY_ASSURANCE} />,
+            path: "trainer-quality-assurance",
+            children: TRAINER_QUALITY_ASSURANCE_ROUTES,
           },
 
           // Team Leader Routes

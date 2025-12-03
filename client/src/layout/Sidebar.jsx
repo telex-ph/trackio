@@ -3,6 +3,10 @@ import { useStore } from "../store/useStore";
 import Role from "../constants/roles";
 import AgentSidebar from "./sidebars/AgentSidebar";
 import TeamLeaderSidebar from "./sidebars/TeamLeaderSidebar";
+import TraineeQualityAssuranceSidebar from "./sidebars/TraineeQualityAssuranceSidebar";
+import OperationsAssociateSidebar from "./sidebars/OperationsAssociateSidebar";
+import BackOfficeHeadSidebar from "./sidebars/BackOfficeHeadSidebar";
+import ManagerSidebar from "./sidebars/ManagerSidebar";
 import OMSidebar from "./sidebars/OMSidebar";
 import HRSidebar from "./sidebars/HRSidebar";
 import AdminSidebar from "./sidebars/AdminSidebar";
@@ -20,7 +24,8 @@ export const Sidebar = ({ isCollapsed }) => {
   const fetchUnreadOffenses = useStore((state) => state.fetchUnreadOffenses);
 
   const unreadOffenses = useStore((state) => {
-    if ([Role.HR, Role.ADMIN_HR_HEAD].includes(user.role)) return state.unreadOffensesHR;
+    if ([Role.HR, Role.ADMIN_HR_HEAD].includes(user.role))
+      return state.unreadOffensesHR;
     if (![Role.HR, Role.ADMIN_HR_HEAD].includes(user.role))
       return state.unreadOffensesRespondent;
     return 0;
@@ -74,9 +79,45 @@ export const Sidebar = ({ isCollapsed }) => {
             unreadOffenses={unreadOffenses}
           />
         );
+      case Role.TRAINER_QUALITY_ASSURANCE:
+        return (
+          <TraineeQualityAssuranceSidebar
+            isCollapsed={isCollapsed}
+            activeDropdown={activeDropdown}
+            setActiveDropdown={setActiveDropdown}
+            unreadOffenses={unreadOffenses}
+          />
+        );
       case Role.TEAM_LEADER:
         return (
           <TeamLeaderSidebar
+            isCollapsed={isCollapsed}
+            activeDropdown={activeDropdown}
+            setActiveDropdown={setActiveDropdown}
+            unreadOffenses={unreadOffenses}
+          />
+        );
+      case Role.OPERATION_ASSOCIATE:
+        return (
+          <OperationsAssociateSidebar
+            isCollapsed={isCollapsed}
+            activeDropdown={activeDropdown}
+            setActiveDropdown={setActiveDropdown}
+            unreadOffenses={unreadOffenses}
+          />
+        );
+      case Role.BACK_OFFICE_HEAD:
+        return (
+          <BackOfficeHeadSidebar
+            isCollapsed={isCollapsed}
+            activeDropdown={activeDropdown}
+            setActiveDropdown={setActiveDropdown}
+            unreadOffenses={unreadOffenses}
+          />
+        );
+      case Role.MANAGER:
+        return (
+          <ManagerSidebar
             isCollapsed={isCollapsed}
             activeDropdown={activeDropdown}
             setActiveDropdown={setActiveDropdown}

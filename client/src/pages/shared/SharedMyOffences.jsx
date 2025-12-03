@@ -18,9 +18,9 @@ import CaseHistory from "../../components/incident-reports/my-offences/CaseHisto
 import { useStore } from "../../store/useStore";
 import CasesInProgress from "../../components/incident-reports/my-offences/CasesInProgress";
 import OffenseDetails from "../../components/incident-reports/my-offences/OffenseDetails";
-import MyCoachingDetails from "../../components/incident-reports/coaching/my-coaching/myCoachingDetails";
-import MyCoachingInProgress from "../../components/incident-reports/coaching/my-coaching/myCoachingInProgress";
-import MyCoachingHistory from "../../components/incident-reports/coaching/my-coaching/myCoachingHistory";
+import MyCoachingDetails from "../../components/incident-reports/coaching/my-coaching/MyCoachingDetails";
+import MyCoachingInProgress from "../../components/incident-reports/coaching/my-coaching/MyCoachingInProgress";
+import MyCoachingHistory from "../../components/incident-reports/coaching/my-coaching/MyCoachingHistory";
 import { fetchUserById } from "../../store/stores/getUserById";
 
 const Notification = ({ message, type, onClose }) => {

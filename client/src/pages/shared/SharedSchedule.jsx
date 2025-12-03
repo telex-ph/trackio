@@ -30,6 +30,7 @@ const SharedSchedule = ({ role }) => {
     { headerName: "ID", field: "employeeId", flex: 1 },
     { headerName: "Name", field: "name", flex: 1 },
     { headerName: "Email", field: "email", flex: 1 },
+    { headerName: "Account", field: "accounts", flex: 1 },
     {
       headerName: "Upcoming Schedules",
       field: "upcomingScheduleCount",
@@ -126,8 +127,7 @@ const SharedSchedule = ({ role }) => {
         <>
           {/* Frontoffice Table */}
           {frontoffice?.length > 0 && (
-            <div>
-              <h3 className="text-lg font-bold my-2">Frontoffice</h3>
+            <div className="my-8">
               <Table data={frontoffice} columns={frontofficeColumns} />
               {/* <Table> */}
             </div>
@@ -135,8 +135,7 @@ const SharedSchedule = ({ role }) => {
 
           {/* Backoffice Table */}
           {backoffice?.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-lg font-bold my-2">Backoffice</h3>
+            <div>
               <Table data={backoffice} columns={backofficeColumns} />
             </div>
           )}

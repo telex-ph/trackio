@@ -15,12 +15,17 @@ const useUser = () => {
       const response = await api.get("/user/get-users");
 
       // Map only if array exists
-      const formattedData = response.data.map((item) => ({
-        id: item._id,
-        date: formatDate(item.createdAt),
-        name: `${item.firstName} ${item.lastName}`,
-        email: item.email,
-      }));
+      const formattedData = response.data.map((item) => {
+        const accounts = item.accountNames.join(", ");
+
+        return {
+          id: item._id,
+          date: formatDate(item.createdAt),
+          name: `${item.firstName} ${item.lastName}`,
+          email: item.email,
+          accounts,
+        };
+      });
 
       return formattedData;
     } catch (error) {
@@ -70,6 +75,10 @@ const useUser = () => {
     Roles.COMPLIANCE_HEAD,
     Roles.OM,
     Roles.TEAM_LEADER,
+    Roles.MANAGER,
+    Roles.BACK_OFFICE_HEAD,
+    Roles.OPERATION_ASSOCIATE,
+    Roles.TRAINER_QUALITY_ASSURANCE,
   ];
 
   const { data: userByRoleScope, isLoading: loading } = useQuery({

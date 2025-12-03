@@ -10,6 +10,13 @@ const Roles = Object.freeze({
   COMPLIANCE_HEAD: "compliance-head",
   COMPLIANCE: "compliance",
 
+  // vidaXl
+  MANAGER: "manager",
+  BACK_OFFICE_HEAD: "back-office-head",
+  OPERATION_ASSOCIATE: "operations-associate",
+  TRAINER_QUALITY_ASSURANCE: "trainer-quality-assurance",
+  QUALITY_ASSURANCE: "quality-assurance",
+
   PRESIDENT: "president",
 });
 

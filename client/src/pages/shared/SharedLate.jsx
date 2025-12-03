@@ -68,11 +68,16 @@ const SharedLate = () => {
       flex: 2,
     },
     {
-      headerName: "Email Address",
+      headerName: "Email",
       field: "email",
       sortable: true,
       filter: true,
       flex: 2,
+    },
+    {
+      headerName: "Account",
+      field: "accounts",
+      flex: 1,
     },
     {
       headerName: "Shift Start",

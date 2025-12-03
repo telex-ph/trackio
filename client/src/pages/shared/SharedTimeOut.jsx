@@ -109,6 +109,11 @@ const SharedTimeOut = () => {
       flex: 2,
     },
     {
+      headerName: "Account",
+      field: "accounts",
+      flex: 1,
+    },
+    {
       headerName: "Shift End",
       field: "shiftEnd",
       sortable: true,
