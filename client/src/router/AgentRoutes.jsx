@@ -1,5 +1,6 @@
 // Agent Routes
 import AgentDashboard from "../pages/agent/AgentDashboard";
+import AgentRecognition from "../pages/agent/AgentRecognition"
 import AgentCoaching from "../pages/agent/AgentCoaching";
 import AgentOffences from "../pages/agent/AgentOffences";
 import AgentCreateOffenses from "../pages/agent/AgentCreateOffenses";
@@ -11,6 +12,7 @@ import { Navigate } from "react-router-dom";
 const AGENT_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
   { path: "dashboard", element: <AgentDashboard /> },
+  { path: "recognition", element: <AgentRecognition /> },
   {
     path: "attendance",
     element: <SharedAttendance readOnly={true} />,

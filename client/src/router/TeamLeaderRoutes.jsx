@@ -2,6 +2,7 @@ import TrackingLayout from "../layout/TrackingLayout";
 import MonitoringLayout from "../layout/MonitoringLayout";
 // Team Leader Routes
 import TeamLeaderDashboard from "../pages/team-leader/TeamLeaderDashboard";
+import TeamLeaderRecognition from "../pages/team-leader/TeamLeaderRecognition";
 import TeamLeaderPerformance from "../pages/team-leader/TeamLeaderPerformance";
 import TeamLeaderCoaching from "../pages/team-leader/TeamLeaderCoaching";
 import TeamLeaderAgentRequest from "../pages/team-leader/TeamLeaderAgentRequest";
@@ -26,6 +27,7 @@ import SharedTicket from "../pages/shared/SharedTicket";
 const TEAM_LEADER_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
   { path: "dashboard", element: <TeamLeaderDashboard /> },
+  { path: "recognition", element: <TeamLeaderRecognition />},
   {
     path: "attendance",
     element: <SharedAttendance readOnly={true} />,

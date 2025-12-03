@@ -6,7 +6,6 @@ import {
   Eye,
   Pin,
   PinOff,
-  Download,
   ZoomIn,
   ZoomOut,
   RotateCw,
@@ -62,10 +61,8 @@ const AnnouncementDetailModal = ({
     }
   }, [announcement, currentUser]);
 
-
   useEffect(() => {
     if (isOpen && announcement && currentUser && trackView) {
-
       if (!viewTrackedRef.current) {
         console.log("📊 Tracking view for announcement:", announcement._id);
         
@@ -76,7 +73,6 @@ const AnnouncementDetailModal = ({
         });
 
         viewTrackedRef.current = true;
-
         trackView(announcement._id, currentUser._id);
         
         console.log("✅ View tracked successfully");
@@ -91,7 +87,6 @@ const AnnouncementDetailModal = ({
     }
   }, [isOpen]);
 
-  
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -111,35 +106,6 @@ const AnnouncementDetailModal = ({
   
   const isPdf = announcement.attachment && 
     announcement.attachment.type === 'application/pdf';
-
-  const handleFileDownload = (file) => {
-    try {
-      if (!file.data) {
-        console.error("File data not available");
-        return;
-      }
-
-      const base64Data = file.data.split(",")[1];
-      const byteCharacters = atob(base64Data);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: file.type });
-
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = file.name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error downloading file:", error);
-    }
-  };
 
   const handleLikeClick = async () => {
     if (!onLike || !currentUser || isLikeDisabled) {
@@ -233,7 +199,6 @@ const AnnouncementDetailModal = ({
 
   return (
     <>
-
       {isOpen && (
         <>
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={onClose} />
@@ -293,14 +258,6 @@ const AnnouncementDetailModal = ({
                       className="w-full h-full object-contain cursor-zoom-in hover:opacity-90 transition-opacity"
                       onClick={openImageViewer}
                     />
-                    
-                    <button
-                      onClick={() => handleFileDownload(announcement.attachment)}
-                      className="absolute top-2 right-2 sm:top-4 sm:right-4 p-2 bg-black/70 text-white rounded-full hover:bg-black transition-all backdrop-blur-sm"
-                      title="Download image"
-                    >
-                      <Download className="w-4 h-4" />
-                    </button>
 
                     <div className="absolute bottom-2 left-2 sm:bottom-4 sm:left-4 bg-black/70 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1 backdrop-blur-sm">
                       <ZoomIn className="w-3 h-3" />
@@ -362,7 +319,6 @@ const AnnouncementDetailModal = ({
                       </button>
                     </div>
                   
-                    
                     <div className="flex items-center gap-3 sm:gap-4">
                       <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                         <User className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
@@ -405,7 +361,7 @@ const AnnouncementDetailModal = ({
                             {isPdf ? (
                               <FileText className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-red-600" />
                             ) : (
-                              <Download className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-blue-600" />
+                              <FileText className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-blue-600" />
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -436,13 +392,6 @@ const AnnouncementDetailModal = ({
                               <span>Preview</span>
                             </button>
                           )}
-                          <button
-                            onClick={() => handleFileDownload(announcement.attachment)}
-                            className="flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm sm:text-base w-full xs:w-auto"
-                          >
-                            <Download className="w-4 h-4 sm:w-5 sm:h-5" />
-                            <span>Download</span>
-                          </button>
                         </div>
                       </div>
                     </div>
@@ -469,10 +418,8 @@ const AnnouncementDetailModal = ({
         </>
       )}
 
-
       {isImageViewerOpen && hasImages && (
         <>
-
           <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[70]" onClick={closeImageViewer} />
           <div className="fixed inset-2 sm:inset-4 bg-black rounded-xl sm:rounded-2xl shadow-2xl z-[80] flex flex-col overflow-hidden">
             <div className="flex flex-col xs:flex-row xs:items-center justify-between p-3 sm:p-4 bg-black/80 border-b border-gray-700 shrink-0 gap-2 xs:gap-0 backdrop-blur-sm">
@@ -489,16 +436,6 @@ const AnnouncementDetailModal = ({
                   </h3>
                   <p className="text-xs sm:text-sm text-gray-300">Image Preview</p>
                 </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleFileDownload(announcement.attachment)}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-all text-white"
-                  title="Download Image"
-                >
-                  <Download className="w-5 h-5" />
-                </button>
               </div>
             </div>
             <div className="flex-1 flex items-center justify-center bg-black p-2 sm:p-4 min-h-0">
@@ -534,12 +471,10 @@ const AnnouncementDetailModal = ({
                     <RotateCw className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
 
-             
                   <span className="mx-1 sm:mx-2 text-sm font-medium min-w-[50px] sm:min-w-[60px] text-center flex-shrink-0 text-white">
                     {Math.round(zoomLevel * 100)}%
                   </span>
 
-             
                   <button
                     onClick={zoomIn}
                     disabled={zoomLevel >= 3}
@@ -549,7 +484,6 @@ const AnnouncementDetailModal = ({
                     <ZoomIn className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
 
-       
                   <button
                     onClick={rotateImage}
                     className="p-1 sm:p-2 hover:bg-white/20 rounded-full transition-all flex-shrink-0 text-white"
@@ -566,7 +500,6 @@ const AnnouncementDetailModal = ({
 
       {isPdfViewerOpen && isPdf && (
         <>
-
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70]" onClick={closePdfViewer} />
           <div className="fixed inset-2 sm:inset-4 bg-white rounded-xl sm:rounded-2xl shadow-2xl z-[80] flex flex-col overflow-hidden">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between p-3 sm:p-4 bg-white border-b border-gray-200 shrink-0 gap-3 lg:gap-0">
@@ -610,14 +543,6 @@ const AnnouncementDetailModal = ({
                     <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                 </div>
-
-                <button
-                  onClick={() => handleFileDownload(announcement.attachment)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-all flex-shrink-0"
-                  title="Download PDF"
-                >
-                  <Download className="w-5 h-5" />
-                </button>
               </div>
             </div>
 

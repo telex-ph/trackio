@@ -184,7 +184,7 @@ const WorkHoursChart = () => {
       {/* Header section */}
       <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 xs:gap-0 mb-3 sm:mb-4">
         <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
-          <LineChart className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600 flex-shrink-0" />
+          <LineChart className="w-4 h-3 sm:w-5 sm:h-5 text-slate-600 flex-shrink-0" />
           <h3 className="text-xs sm:text-sm md:text-base font-semibold text-slate-800 leading-tight">
             <span className="inline">Work Hours Analysis</span>
           </h3>
