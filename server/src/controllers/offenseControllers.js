@@ -35,18 +35,12 @@ export const getOffenseById = async (req, res) => {
 export const addOffense = async (req, res) => {
   try {
     const offenseData = req.body;
-    const user = req.user; // Galing sa auth middleware
-
-    console.log("Backend req.user:", user);
+    const user = req.user;
 
     const newOffenseData = {
       ...offenseData,
 
-      reportedById: new ObjectId(user._id),
-
-      reporterName: `${user.firstName} ${user.lastName}`,
-      status: "Pending Review",
-      isReadByHR: false,
+      reportedById: user._id,
     };
 
     const newOffense = await Offense.create(newOffenseData);
