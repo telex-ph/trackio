@@ -108,6 +108,41 @@ class User {
       .aggregate([
         { $match: query },
 
+        // Lookup Team Leader
+        {
+          $lookup: {
+            from: "users",
+            localField: "teamLeaderId",
+            foreignField: "_id",
+            as: "teamLeader",
+          },
+        },
+        {
+          $unwind: {
+            path: "$teamLeader",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+
+        // Add computed Team Leader full name
+        {
+          $addFields: {
+            teamLeaderName: {
+              $cond: [
+                { $ifNull: ["$teamLeader", false] },
+                {
+                  $concat: [
+                    "$teamLeader.firstName",
+                    " ",
+                    "$teamLeader.lastName",
+                  ],
+                },
+                null,
+              ],
+            },
+          },
+        },
+
         // Lookup group
         {
           $lookup: {
