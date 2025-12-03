@@ -7,6 +7,7 @@ import {
   List,
   GalleryVerticalEnd,
   Ticket,
+  Video,
 } from "lucide-react";
 import SidebarLink from "../sidebars/SidebarLink";
 import CustomCollapse from "../sidebars/CustomCollapse";
@@ -80,6 +81,12 @@ const AgentSidebar = ({
       label="Ticket"
       isCollapsed={isCollapsed}
     />
+     {/* <SidebarLink
+      to="/agent/courses"
+      icon={Video}
+      label="Video Courses"
+      isCollapsed={isCollapsed}
+    /> */}
   </div>
 );
 
