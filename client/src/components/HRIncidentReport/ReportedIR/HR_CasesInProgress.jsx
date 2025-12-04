@@ -22,7 +22,6 @@ const HR_CasesInProgress = ({
   onSearchChange,
   onView,
   isLoading,
-  formatDisplayDate,
   userMap,
 }) => {
   const safeOffenses = Array.isArray(offenses)
@@ -113,7 +112,7 @@ const HR_CasesInProgress = ({
                               NTE: "bg-blue-100 text-blue-700 border border-blue-200",
                               Invalid:
                                 "bg-red-100 text-red-700 border border-red-200",
-                              "Respondent Explained":
+                              "Respondant Explained":
                                 "bg-purple-100 text-purple-700 border border-purple-200",
                               "Scheduled for hearing":
                                 "bg-indigo-100 text-indigo-700 border border-indigo-200",
@@ -142,7 +141,7 @@ const HR_CasesInProgress = ({
 
                           const statusReaderMap = {
                             "Pending Review": "isReadByHR",
-                            "Respondent Explained": "isReadByHR",
+                            "Respondant Explained": "isReadByHR",
                             Acknowledged: "isReadByHR",
                             NTE: "isReadByRespondant",
                             "Scheduled for hearing": "isReadByRespondant",
@@ -160,8 +159,8 @@ const HR_CasesInProgress = ({
                               unread: "Unread",
                             },
                             isReadByRespondant: {
-                              read: "Read by Respondent",
-                              unread: "Unread by Respondent",
+                              read: "Read by Respondant",
+                              unread: "Unread by Respondant",
                             },
                             isReadByReporter: {
                               read: "Read by Reporter",
@@ -218,11 +217,21 @@ const HR_CasesInProgress = ({
                     </span>
                   </p>
 
-                  <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                    <Tag className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Category:{" "}
-                    <span className="font-medium">{off.offenseCategory}</span>
-                  </p>
+                  <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                    <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="font-medium">Category:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {Array.isArray(off.offenseCategory) &&
+                        off.offenseCategory.map((cat, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs"
+                          >
+                            {cat}
+                          </span>
+                        ))}
+                    </div>
+                  </div>
 
                   {off.hearingDate && (
                     <div className="space-y-3 mb-4">

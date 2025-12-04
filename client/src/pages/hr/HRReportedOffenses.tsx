@@ -47,7 +47,6 @@ interface Offense {
   reporterRole?: string;
   createdAt?: string;
   updatedAt?: string;
-  agentId: string;
   coachId: string;
   reporterName?: string;
 }
@@ -133,7 +132,7 @@ const HRReportedOffenses = () => {
 
   useEffect(() => {
     const idsToFetch = offenses.flatMap((offense) => [
-      offense.agentId,
+      offense.respondantId,
       offense.reportedById,
       offense.coachId,
     ]);
@@ -215,7 +214,14 @@ const HRReportedOffenses = () => {
     setIsViewMode(true);
     setEditingId(off._id);
 
-    // --- Fetch reporter user (same logic as handleCoachingView) ---
+    let agentUser = userMap[off.respondantId || ""];
+    if (off.respondantId && !agentUser) {
+      agentUser = await fetchUserById(off.respondantId);
+      setUserMap((prev) => ({
+        ...prev,
+        [off.respondantId as string]: agentUser,
+      }));
+    }
     let reporterUser = userMap[off.reportedById || ""];
     if (off.reportedById && !reporterUser) {
       reporterUser = await fetchUserById(off.reportedById);
@@ -228,7 +234,9 @@ const HRReportedOffenses = () => {
     // --- Set form data (clean + safe) ---
     setFormData({
       ...off,
-      agentName: off.agentName || "",
+      agentName: agentUser
+        ? `${agentUser.firstName} ${agentUser.lastName}`
+        : "Unknown",
       offenseCategory: off.offenseCategory || "",
       offenseLevel: off.offenseLevel || "",
       dateOfOffense: off.dateOfOffense || "",
@@ -317,7 +325,11 @@ const HRReportedOffenses = () => {
     try {
       const payload = {
         ...formData,
-        offenseCategory: formData.offenseCategory, // ✅ Inserted offense category
+        offenseCategory: Array.isArray(formData.offenseCategory)
+          ? formData.offenseCategory
+          : formData.offenseCategory
+          ? [formData.offenseCategory]
+          : [],
         isReadByRespondant: false,
         status: "NTE",
         nteSentDateTime: now.toISOString(),
@@ -617,7 +629,6 @@ const HRReportedOffenses = () => {
           }
           onView={handleView}
           isLoading={isLoading}
-          formatDisplayDate={formatDisplayDate}
           userMap={userMap}
         />
       </div>
