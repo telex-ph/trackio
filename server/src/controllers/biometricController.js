@@ -1,7 +1,6 @@
 import Attendance from "../model/Attendance.js";
 import User from "../model/User.js";
 import { STATUS } from "../../constants/status.js";
-import webhook from "../utils/webhook.js";
 import {
   biometricIn,
   biometricOut,
@@ -164,7 +163,6 @@ export const getEvents = async (req, res) => {
                       `Employee: ${user.firstName} ${user.lastName}, ID: ${ac.employeeNoString}\n\n` +
                       `**Technical details:**\n\n` +
                       `\`\`\`\n${stack}\n\`\`\``;
-                    await webhook(message);
                   }
                 } else if (status === STATUS.ON_BREAK) {
                   console.log(
@@ -184,10 +182,7 @@ export const getEvents = async (req, res) => {
                       `Employee: ${user.firstName} ${user.lastName}, ID: ${ac.employeeNoString}\n\n` +
                       `**Technical details:**\n\n` +
                       `\`\`\`\n${stack}\n\`\`\``;
-                    await webhook(message);
                   }
-                } else {
-                  await webhook("Errorr!");
                 }
               }
             } else {
@@ -206,7 +201,6 @@ export const getEvents = async (req, res) => {
                   `\`\`\`\n${stack}\n\`\`\``;
 
                 console.log(error);
-                // await webhook(message);
               }
             }
           } else {
