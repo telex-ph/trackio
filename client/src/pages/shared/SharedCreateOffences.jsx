@@ -292,19 +292,46 @@ const SharedCreateOffences = () => {
   };
 
   // Add new evidence (max 2 for supporting evidence)
-  const handleAddEvidence = (e) => {
+  const handleAddEvidence = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const newEvidence = {
-      fileName: file.name,
-      url: URL.createObjectURL(file),
-    };
+    if (!editingId) return;
 
-    setFormData((prev) => ({
-      ...prev,
-      evidence: [...prev.evidence, newEvidence].slice(0, 2),
-    }));
+    try {
+      const formDataToUpload = new FormData();
+      formDataToUpload.append("file", file);
+
+      // Upload file to the server
+      const uploadRes = await api.post("/upload/evidence", formDataToUpload, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      // Prepare new evidence object
+      const newEvidence = {
+        fileName: uploadRes.data.fileName,
+        size: uploadRes.data.size,
+        type: uploadRes.data.type,
+        url: uploadRes.data.url,
+        public_id: uploadRes.data.public_id,
+      };
+
+      await api.put(`/offenses/${editingId}`, {
+        evidence: [...(formData.evidence || []), newEvidence],
+      });
+
+      setFormData((prev) => ({
+        ...prev,
+        evidence: [...(prev.evidence || []), newEvidence],
+      }));
+
+      showNotification("Evidence uploaded successfully!", "success");
+    } catch (error) {
+      console.error("Error uploading evidence:", error);
+      showNotification("Failed to upload evidence. Please try again.", "error");
+    }
   };
 
   const handleEdit = async () => {
