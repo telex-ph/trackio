@@ -18,7 +18,8 @@ const CasesInProgress = ({
   onView,
   isLoading,
   formatDisplayDate,
-  loggedUser
+  loggedUser,
+  userMap
 }) => {
   const safeOffenses = Array.isArray(offenses)
     ? offenses.filter((o) => o && o._id)
@@ -57,7 +58,7 @@ const CasesInProgress = ({
           {safeOffenses.map((off) => (
             <div
               key={off._id}
-              className="group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border border-gray-100"
+              className="group p-4 sm:p-6 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-linear-to-br from-white to-gray-50 border border-gray-100"
             >
               <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
                 {/* Card Header Content */}
@@ -81,7 +82,7 @@ const CasesInProgress = ({
                             NTE: "bg-blue-100 text-blue-700 border border-blue-200",
                             Invalid:
                               "bg-red-100 text-red-700 border border-red-200",
-                            "Respondent Explained":
+                            "Respondant Explained":
                               "bg-purple-100 text-purple-700 border border-purple-200",
                             "Scheduled for hearing": off.witnesses?.some(
                               (w) => w._id === loggedUser._id
@@ -107,11 +108,12 @@ const CasesInProgress = ({
                         // Map status to which "reader" we care about
                         const statusReaderMap = {
                           "Pending Review": "isReadByHR",
-                          "Respondent Explained": "isReadByHR",
+                          "Respondant Explained": "isReadByHR",
                           Acknowledged: "isReadByHR",
                           NTE: "isReadByRespondant",
                           "Scheduled for hearing": "isReadByRespondant",
                           "After Hearing": "isReadByRespondant",
+                          "For Acknowledgement": "isReadByRespondant",
                           Invalid: "isReadByReporter",
                         };
 
@@ -125,8 +127,8 @@ const CasesInProgress = ({
                             unread: "Unread by HR",
                           },
                           isReadByRespondant: {
-                            read: "Read by Respondent",
-                            unread: "Unread by Respondent",
+                            read: "Read by Respondant",
+                            unread: "Unread by Respondant",
                           },
                           isReadByReporter: {
                             read: "Read by You",
@@ -173,14 +175,31 @@ const CasesInProgress = ({
                 {/* Card Body Content */}
                 <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
                   <User className="w-3 h-3 sm:w-4 sm:h-4" />
-                  Respondant:{" "}
-                  <span className="font-medium">{off.agentName}</span>
+                  Reporter:{" "}
+                  <span className="font-medium">
+                    {" "}
+                    {userMap[off.reportedById]
+                      ? `${userMap[off.reportedById].firstName} ${
+                          userMap[off.reportedById].lastName
+                        }`
+                      : "N/A"}
+                  </span>
                 </p>
-                <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
                   <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
-                  Category:{" "}
-                  <span className="font-medium">{off.offenseCategory}</span>
-                </p>
+                  <span className="font-medium">Category:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {Array.isArray(off.offenseCategory) &&
+                      off.offenseCategory.map((cat, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs"
+                        >
+                          {cat}
+                        </span>
+                      ))}
+                  </div>
+                </div>
                 {off.hearingDate && (
                   <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
                     Hearing date:{" "}
@@ -210,7 +229,7 @@ const CasesInProgress = ({
                 {off.evidence?.length > 0 && (
                   <div className="bg-purple-50 rounded-xl p-3 sm:p-4 border-l-4 border-purple-500">
                     <div className="flex items-center gap-2 mb-2">
-                      <FileText className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                      <FileText className="w-4 h-4 text-purple-600 shrink-0" />
                       <span className="font-semibold text-gray-800 text-sm">
                         Evidence:
                       </span>
@@ -228,7 +247,7 @@ const CasesInProgress = ({
                               {ev.fileName}
                             </span>
 
-                            <div className="flex items-center gap-1 flex-shrink-0">
+                            <div className="flex items-center gap-1 shrink-0">
                               {/* View Button */}
                               <a
                                 href={viewUrl}
@@ -258,7 +277,7 @@ const CasesInProgress = ({
               <div className="flex gap-3">
                 <button
                   onClick={() => off && off._id && onView(off)}
-                  className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
+                  className="flex-1 bg-linear-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
                 >
                   View
                 </button>

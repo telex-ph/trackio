@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { DateTime } from "luxon";
 import api from "../../utils/axios";
 import socket from "../../utils/socket";
@@ -10,6 +10,7 @@ import HR_OffenseDetails from "../../components/HRIncidentReport/ReportedIR/HR_O
 import HR_CasesInProgress from "../../components/HRIncidentReport/ReportedIR/HR_CasesInProgress";
 import HR_CaseHistory from "../../components/HRIncidentReport/ReportedIR/HR_CaseHistory";
 import { useStore } from "../../store/useStore";
+import { fetchUserById } from "../../store/stores/getUserById";
 
 // Define TypeScript Interfaces
 interface FileUpload {
@@ -46,6 +47,8 @@ interface Offense {
   reporterRole?: string;
   createdAt?: string;
   updatedAt?: string;
+  coachId: string;
+  reporterName?: string;
 }
 
 const HRReportedOffenses = () => {
@@ -110,6 +113,31 @@ const HRReportedOffenses = () => {
   const showNotification = (message: string, type: string) => {
     setNotification({ message, type, isVisible: true });
   };
+
+  const [userMap, setUserMap] = useState<Record<string, any>>({});
+
+  const fetchUsersByIds = useCallback(
+    async (ids: (string | undefined)[] = []) => {
+      const uniqueIds = ids.filter((id): id is string => Boolean(id));
+
+      for (const id of uniqueIds) {
+        if (!userMap[id]) {
+          const user = await fetchUserById(id);
+          setUserMap((prev) => ({ ...prev, [id]: user }));
+        }
+      }
+    },
+    [userMap]
+  );
+
+  useEffect(() => {
+    const idsToFetch = offenses.flatMap((offense) => [
+      offense.respondantId,
+      offense.reportedById,
+      offense.coachId,
+    ]);
+    fetchUsersByIds(idsToFetch);
+  }, [offenses, fetchUsersByIds]);
 
   // Fetch all offenses
   const fetchOffenses = async () => {
@@ -181,36 +209,65 @@ const HRReportedOffenses = () => {
 
   // Handle clicking "View" on a card
   const handleView = async (off: Offense) => {
+    if (!off) return;
+
     setIsViewMode(true);
     setEditingId(off._id);
+
+    let agentUser = userMap[off.respondantId || ""];
+    if (off.respondantId && !agentUser) {
+      agentUser = await fetchUserById(off.respondantId);
+      setUserMap((prev) => ({
+        ...prev,
+        [off.respondantId as string]: agentUser,
+      }));
+    }
+    let reporterUser = userMap[off.reportedById || ""];
+    if (off.reportedById && !reporterUser) {
+      reporterUser = await fetchUserById(off.reportedById);
+      setUserMap((prev) => ({
+        ...prev,
+        [off.reportedById as string]: reporterUser,
+      }));
+    }
+
+    // --- Set form data (clean + safe) ---
     setFormData({
       ...off,
-      agentName: off.agentName,
-      offenseCategory: off.offenseCategory,
+      agentName: agentUser
+        ? `${agentUser.firstName} ${agentUser.lastName}`
+        : "Unknown",
+      offenseCategory: off.offenseCategory || "",
       offenseLevel: off.offenseLevel || "",
-      dateOfOffense: off.dateOfOffense,
-      status: off.status,
+      dateOfOffense: off.dateOfOffense || "",
+      status: off.status || "",
       remarks: off.remarks || "",
       evidence: off.evidence || [],
       fileMOM: off.fileMOM || [],
       fileNDA: off.fileNDA || [],
       fileNTE: off.fileNTE || [],
+      reporterName: reporterUser
+        ? `${reporterUser.firstName} ${reporterUser.lastName}`
+        : "Unknown",
     });
 
+    // --- Update "read" status like in handleCoachingView ---
     try {
       const { data: offense } = await api.get(`/offenses/${off._id}`);
-      console.log(offense.isReadByHR);
 
       if (offense.isReadByHR === false) {
-        const payload = { ...off, isReadByHR: true };
-        await api.put(`/offenses/${off._id}`, payload);
+        await api.put(`/offenses/${off._id}`, {
+          ...off,
+          isReadByHR: true,
+        });
+
         decrementUnreadOffensesHR();
-        showNotification("New offense have been read!", "success");
+        showNotification("New offense has been marked as read!", "success");
         fetchOffenses();
       }
-    } catch (error) {
-      console.error("Error updating offense:", error);
-      showNotification("Failed to update. Please try again.", "error");
+    } catch (err) {
+      console.error("Error marking as read:", err);
+      showNotification("Failed to update offense. Please try again.", "error");
     }
   };
 
@@ -268,7 +325,11 @@ const HRReportedOffenses = () => {
     try {
       const payload = {
         ...formData,
-        offenseCategory: formData.offenseCategory, // ✅ Inserted offense category
+        offenseCategory: Array.isArray(formData.offenseCategory)
+          ? formData.offenseCategory
+          : formData.offenseCategory
+          ? [formData.offenseCategory]
+          : [],
         isReadByRespondant: false,
         status: "NTE",
         nteSentDateTime: now.toISOString(),
@@ -464,7 +525,8 @@ const HRReportedOffenses = () => {
   const filteredOffenses = offenses.filter(
     (off) =>
       !["Invalid", "Acknowledged"].includes(off.status) &&
-      off.respondantId !== loggedUser._id && off.type === "IR" &&
+      off.respondantId !== loggedUser._id &&
+      off.type === "IR" &&
       [
         off.agentName,
         off.offenseType,
@@ -485,6 +547,7 @@ const HRReportedOffenses = () => {
   const resolvedOffenses = offenses.filter((off) => {
     const isResolved = ["Acknowledged"].includes(off.status);
     if (!isResolved) return false;
+    if (off.type === "COACHING") return false;
 
     const textMatch = [
       off.agentName,
@@ -566,7 +629,7 @@ const HRReportedOffenses = () => {
           }
           onView={handleView}
           isLoading={isLoading}
-          formatDisplayDate={formatDisplayDate}
+          userMap={userMap}
         />
       </div>
 

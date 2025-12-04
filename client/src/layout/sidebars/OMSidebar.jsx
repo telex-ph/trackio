@@ -16,8 +16,12 @@ const OMSidebar = ({
   isCollapsed,
   activeDropdown,
   setActiveDropdown,
-  unreadOffenses,
-}) => (
+    unreadIR,
+  unreadCoaching,
+}) => {
+  const totalUnread = (unreadIR || 0) + (unreadCoaching || 0);
+
+return(
   <div className="space-y-1">
     <SidebarLink
       to="/operations-manager/dashboard"
@@ -85,7 +89,7 @@ const OMSidebar = ({
       onToggle={() =>
         setActiveDropdown(activeDropdown === "offenses" ? null : "offenses")
       }
-      badge={unreadOffenses}
+      badge={totalUnread}
     >
       <SidebarLink
         to={`/operations-manager/createoffense`}
@@ -96,20 +100,13 @@ const OMSidebar = ({
       <SidebarLink
         to={`/operations-manager/offenses`}
         icon={GalleryVerticalEnd}
-        label={
-          <>
-            My Offenses
-            {!isCollapsed && unreadOffenses > 0 && (
-              <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
-                {unreadOffenses}
-              </span>
-            )}
-          </>
-        }
-        isCollapsed={isCollapsed}
+          label="My Offenses"
+          isCollapsed={isCollapsed}
+          badge={!isCollapsed ? totalUnread : 0}
       />
     </CustomCollapse>
   </div>
 );
+}
 
 export default OMSidebar;

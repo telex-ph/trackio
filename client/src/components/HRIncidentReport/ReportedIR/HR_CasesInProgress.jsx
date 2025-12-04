@@ -22,7 +22,7 @@ const HR_CasesInProgress = ({
   onSearchChange,
   onView,
   isLoading,
-  formatDisplayDate,
+  userMap,
 }) => {
   const safeOffenses = Array.isArray(offenses)
     ? offenses.filter((o) => o && typeof o === "object" && o._id)
@@ -79,7 +79,7 @@ const HR_CasesInProgress = ({
                 ${
                   isOverdue
                     ? "bg-red-50 border-red-500 pulse-red" // 🔴 Card pulses
-                    : "bg-gradient-to-br from-white to-gray-50 border-gray-100"
+                    : "bg-linear-to-br from-white to-gray-50 border-gray-100"
                 }`}
               >
                 <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
@@ -112,7 +112,7 @@ const HR_CasesInProgress = ({
                               NTE: "bg-blue-100 text-blue-700 border border-blue-200",
                               Invalid:
                                 "bg-red-100 text-red-700 border border-red-200",
-                              "Respondent Explained":
+                              "Respondant Explained":
                                 "bg-purple-100 text-purple-700 border border-purple-200",
                               "Scheduled for hearing":
                                 "bg-indigo-100 text-indigo-700 border border-indigo-200",
@@ -141,11 +141,12 @@ const HR_CasesInProgress = ({
 
                           const statusReaderMap = {
                             "Pending Review": "isReadByHR",
-                            "Respondent Explained": "isReadByHR",
+                            "Respondant Explained": "isReadByHR",
                             Acknowledged: "isReadByHR",
                             NTE: "isReadByRespondant",
                             "Scheduled for hearing": "isReadByRespondant",
                             "After Hearing": "isReadByRespondant",
+                            "For Acknowledgement": "isReadByRespondant",
                             Invalid: "isReadByReporter",
                           };
 
@@ -158,8 +159,8 @@ const HR_CasesInProgress = ({
                               unread: "Unread",
                             },
                             isReadByRespondant: {
-                              read: "Read by Respondent",
-                              unread: "Unread by Respondent",
+                              read: "Read by Respondant",
+                              unread: "Unread by Respondant",
                             },
                             isReadByReporter: {
                               read: "Read by Reporter",
@@ -208,15 +209,29 @@ const HR_CasesInProgress = ({
                     <User className="w-3 h-3 sm:w-4 sm:h-4" />
                     Reporter:{" "}
                     <span className="font-medium">
-                      {off.reporterName || "N/A"}
+                      {userMap[off.reportedById]
+                        ? `${userMap[off.reportedById].firstName} ${
+                            userMap[off.reportedById].lastName
+                          }`
+                        : "N/A"}
                     </span>
                   </p>
 
-                  <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                    <Tag className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Category:{" "}
-                    <span className="font-medium">{off.offenseCategory}</span>
-                  </p>
+                  <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                    <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="font-medium">Category:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {Array.isArray(off.offenseCategory) &&
+                        off.offenseCategory.map((cat, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs"
+                          >
+                            {cat}
+                          </span>
+                        ))}
+                    </div>
+                  </div>
 
                   {off.hearingDate && (
                     <div className="space-y-3 mb-4">
@@ -261,7 +276,7 @@ const HR_CasesInProgress = ({
                   {off.evidence?.length > 0 && (
                     <div className="bg-purple-50 rounded-xl p-3 sm:p-4 border-l-4 border-purple-500">
                       <div className="flex items-center gap-2 mb-2">
-                        <FileText className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                        <FileText className="w-4 h-4 text-purple-600 shrink-0" />
                         <span className="font-semibold text-gray-800 text-sm">
                           Evidence:
                         </span>
@@ -277,7 +292,7 @@ const HR_CasesInProgress = ({
                               {ev.fileName}
                             </span>
 
-                            <div className="flex items-center gap-1 flex-shrink-0">
+                            <div className="flex items-center gap-1 shrink-0">
                               <a
                                 href={ev.url}
                                 target="_blank"
@@ -305,7 +320,7 @@ const HR_CasesInProgress = ({
                 <div className="flex gap-3">
                   <button
                     onClick={() => off && off._id && onView(off)}
-                    className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
+                    className="flex-1 bg-linear-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
                   >
                     View
                   </button>

@@ -107,7 +107,7 @@ const SharedMyOffences = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [offenses, setOffenses] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentUser, setCurrentUser] = useState(null);
+  const [_currentUser, setCurrentUser] = useState(null);
   const loggedUser = useStore((state) => state.user);
 
   const [showAcknowledgeModal, setShowAcknowledgeModal] = useState(false);
@@ -160,10 +160,10 @@ const SharedMyOffences = () => {
   );
 
   useEffect(() => {
-    const idsToFetch = offenses.flatMap((o) => [
-      o.agentId,
-      o.reportedById,
-      o.coachId,
+    const idsToFetch = offenses.flatMap((offense) => [
+      offense.respondantId,
+      offense.reportedById,
+      offense.coachId,
     ]);
     fetchUsersByIds(idsToFetch);
   }, [offenses, fetchUsersByIds]);
@@ -212,13 +212,15 @@ const SharedMyOffences = () => {
     const onUpdate = (updated) => {
       if (!updated?._id) return;
       setOffenses((prev) =>
-        prev.map((o) => (o._id === updated._id ? { ...o, ...updated } : o))
+        prev.map((offense) =>
+          offense._id === updated._id ? { ...offense, ...updated } : offense
+        )
       );
     };
 
     const onDelete = (id) => {
       if (!id) return;
-      setOffenses((prev) => prev.filter((o) => o._id !== id));
+      setOffenses((prev) => prev.filter((offense) => offense._id !== id));
     };
 
     socket.on("offenseAdded", onAdd);
@@ -269,7 +271,7 @@ const SharedMyOffences = () => {
       const payload = {
         ...formData,
         respondantExplanation: formData.respondantExplanation,
-        status: "Respondent Explained",
+        status: "Respondant Explained",
         isReadByHR: false,
         explanationDateTime: now.toISOString(),
       };
@@ -302,10 +304,10 @@ const SharedMyOffences = () => {
 
     try {
       const payload = {
-        ...formData,
         respondantExplanation: formData.respondantExplanation,
-        status: "Respondent Explained",
+        status: "Respondant Explained",
         isReadByCoach: false,
+        isReadByRespondant: true,
         explanationDateTime: now.toISOString(),
       };
 
@@ -358,6 +360,7 @@ const SharedMyOffences = () => {
         ackMessage,
         isAcknowledged: true,
         isReadByCoach: true,
+        isReadByRespondant: true,
         acknowledgedDateTime: now.toISOString(),
       };
 
@@ -376,16 +379,25 @@ const SharedMyOffences = () => {
   const handleIRView = async (off) => {
     setIsViewMode(true);
     setEditingId(off._id);
+
+    let reporterUser = userMap[off.reportedById];
+    if (off.reportedById && !reporterUser) {
+      reporterUser = await fetchUserById(off.reportedById);
+      setUserMap((prev) => ({ ...prev, [off.reportedById]: reporterUser }));
+    }
+
     setFormData({
       ...off,
-      agentName: off.agentName,
+      reporterName: reporterUser
+        ? `${reporterUser.firstName} ${reporterUser.lastName}`
+        : "Unknown",
       offenseCategory: off.offenseCategory,
       offenseLevel: off.offenseLevel || "",
       dateOfOffense: off.dateOfOffense,
       status: off.status,
       remarks: off.remarks || "",
       evidence: off.evidence || [],
-      isReadByRespondant: off.isReadByRespondant || false, // for agents
+      isReadByRespondant: off.isReadByRespondant || false,
     });
 
     setOriginalExplanation(off.respondantExplanation || "");
@@ -412,10 +424,10 @@ const SharedMyOffences = () => {
     setIsViewMode(true);
     setEditingId(off._id);
 
-    let agentUser = userMap[off.agentId];
-    if (off.agentId && !agentUser) {
-      agentUser = await fetchUserById(off.agentId);
-      setUserMap((prev) => ({ ...prev, [off.agentId]: agentUser }));
+    let agentUser = userMap[off.respondantId];
+    if (off.respondantId && !agentUser) {
+      agentUser = await fetchUserById(off.respondantId);
+      setUserMap((prev) => ({ ...prev, [off.respondantId]: agentUser }));
     }
 
     let coachUser = userMap[off.coachId];
@@ -425,7 +437,7 @@ const SharedMyOffences = () => {
     }
 
     setFormData({
-      agentId: off.agentId,
+      respondantId: off.respondantId,
       agentName: agentUser
         ? `${agentUser.firstName} ${agentUser.lastName}`
         : "Unknown",
@@ -476,21 +488,21 @@ const SharedMyOffences = () => {
   };
 
   const safeOffenses = useMemo(
-    () => offenses.filter((o) => o && o._id),
+    () => offenses.filter((offense) => offense && offense._id),
     [offenses]
   );
 
   const filteredIROffenses = safeOffenses.filter((off) => {
     const isInvolved =
       off.respondantId === loggedUser._id ||
-      off.witnesses?.some((w) => w._id === loggedUser._id);
+      off.witnesses?.some((witness) => witness._id === loggedUser._id);
 
     if (!isInvolved) return false;
     if (["Pending Review", "Invalid", "Acknowledged"].includes(off.status))
       return false;
     if (off.type !== "IR") return false;
 
-    // Only filter by search for respondents
+    // Only filter by search for Respondants
     if (off.respondantId === loggedUser._id) {
       return [
         off.agentName,
@@ -503,6 +515,7 @@ const SharedMyOffences = () => {
         formatDisplayDate(off.dateOfOffense),
       ]
         .join(" ")
+
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
     }
@@ -512,14 +525,14 @@ const SharedMyOffences = () => {
 
   const filteredCoachingOffenses = safeOffenses.filter((off) => {
     const isInvolved =
-      off.agentId === loggedUser._id &&
+      off.respondantId === loggedUser._id &&
       !["Invalid", "Acknowledged"].includes(off.status);
 
     if (!isInvolved) return false;
     if (off.type !== "COACHING") return false;
 
-    // Only filter by search for respondents
-    if (off.agentId === loggedUser._id) {
+    // Only filter by search for Respondants
+    if (off.respondantId === loggedUser._id) {
       return [
         off.agentName,
         off.offenseType,
@@ -586,7 +599,7 @@ const SharedMyOffences = () => {
     return safeOffenses.filter((off) => {
       const isResolved =
         loggedUser &&
-        off.agentId === loggedUser._id &&
+        off.respondantId === loggedUser._id &&
         ["Invalid", "Acknowledged"].includes(off.status) &&
         off.type !== "IR";
       if (!isResolved) return false;
@@ -683,6 +696,7 @@ const SharedMyOffences = () => {
             setAckMessage={setAckMessage}
             handleAcknowledge={handleIRAcknowledge}
             loggedUser={loggedUser}
+            userMap={userMap}
           />
         ) : (
           <MyCoachingDetails
@@ -712,6 +726,7 @@ const SharedMyOffences = () => {
             isLoading={isLoading}
             formatDisplayDate={formatDisplayDate}
             loggedUser={loggedUser}
+            userMap={userMap}
           />
         ) : (
           <MyCoachingInProgress

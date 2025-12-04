@@ -1,4 +1,5 @@
 // controllers/offenseControllers.js
+import { DateTime } from "luxon";
 import Offense from "../model/Offense.js";
 import { ObjectId } from "mongodb";
 
@@ -36,11 +37,24 @@ export const addOffense = async (req, res) => {
   try {
     const offenseData = req.body;
     const user = req.user;
+    const dateOfOffense = offenseData.dateOfOffense
+      ? DateTime.fromISO(offenseData.dateOfOffense, { zone: "utc" }).toJSDate()
+      : new Date();
+    const dateOfMistake = offenseData.dateOfMistake
+      ? DateTime.fromISO(offenseData.dateOfMistake, { zone: "utc" }).toJSDate()
+      : new Date();
+    const coachingDate = offenseData.coachingDate
+      ? DateTime.fromISO(offenseData.coachingDate, { zone: "utc" }).toJSDate()
+      : new Date();
 
     const newOffenseData = {
       ...offenseData,
-
-      reportedById: user._id,
+      respondantId: new ObjectId(offenseData.respondantId),
+      reportedById: new ObjectId(user._id),
+      ...(offenseData.dateOfOffense && { dateOfOffense: dateOfOffense }),
+      ...(offenseData.dateOfMistake && { dateOfMistake: dateOfMistake }),
+      ...(offenseData.coachingDate && { coachingDate: coachingDate }),
+      ...(offenseData.coachId && { coachId: new ObjectId(offenseData.coachId) }),
     };
 
     const newOffense = await Offense.create(newOffenseData);
@@ -71,23 +85,51 @@ export const updateOffense = async (req, res) => {
       return res.status(404).json({ message: "Offense not found" });
     }
 
-    const updatedOffense = await Offense.update(id, req.body);
+    const payload = { ...req.body };
 
-    // --- EMIT SOCKET EVENT ---
+    ["agentName", "reporterName"].forEach((field) => delete payload[field]);
+
+    [
+      "respondantId",
+      "coachId",
+      "reportedById"
+    ].forEach((field) => {
+      if (payload[field] && ObjectId.isValid(payload[field])) {
+        payload[field] = new ObjectId(payload[field]);
+      }
+    });
+
+    [
+      "createdAt",
+      "dateOfMistake",
+      "coachingDate",
+      "explanationDateTime",
+      "ndaSentDateTime",
+      "acknowledgedDateTime",
+      "dateOfOffense",
+      "nteSentDateTime",
+      "hearingDate",
+      "schedHearingDateTime",
+      "afterHearingDateTime",
+      "momSentDateTime",
+      "ndaSentDateTime"
+    ].forEach((field) => {
+      if (payload[field]) {
+        payload[field] = DateTime.fromISO(payload[field], { zone: "utc" }).toJSDate();
+      }
+    });
+
+    const updatedOffense = await Offense.update(id, payload);
+
     if (req.app.get("io")) {
-      const io = req.app.get("io");
-      io.emit("offenseUpdated", updatedOffense);
+      req.app.get("io").emit("offenseUpdated", updatedOffense);
       console.log("Emitted offenseUpdated event");
-    } else {
-      console.log("Socket IO not attached to app — cannot emit event.");
     }
 
     res.status(200).json(updatedOffense);
   } catch (error) {
     console.error("Update error details:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to update offense", error: error.message });
+    res.status(500).json({ message: "Failed to update offense", error: error.message });
   }
 };
 

@@ -11,7 +11,7 @@ const FileDisplay = ({ files, title }) => {
         {title}
       </label>
       <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
-        {files.slice(0, 1).map((file, idx) => (
+        {files.slice(0, 2).map((file, idx) => (
           <div key={idx} className="flex flex-col gap-3">
             <div className="flex items-center gap-2 min-w-0">
               <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 shrink-0" />
@@ -116,19 +116,33 @@ const OffenseDetails = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Respondant
+                Reporter
               </label>
               <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
-                {formData.agentName}
+                {formData.reporterName}
               </p>
             </div>
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                 Offense Category
               </label>
-              <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl text-gray-800 text-sm sm:text-base">
-                {formData.offenseCategory || "N/A"}
-              </p>
+              <div className="flex flex-wrap gap-2 p-2 border border-gray-200 rounded-xl bg-gray-50 min-h-10">
+                {Array.isArray(formData.offenseCategory) &&
+                formData.offenseCategory.length > 0 ? (
+                  formData.offenseCategory.map((cat, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full"
+                    >
+                      {cat}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-gray-400 text-xs">
+                    No category selected
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -229,7 +243,7 @@ const OffenseDetails = ({
                 Submit
               </button>
             )}
-            {formData.status === "For Acknowledgement" && (
+            {formData.status === "For Acknowledgement" && !isWitness && (
               <button
                 onClick={() => setShowAcknowledgeModal(true)}
                 className="flex-1 bg-linear-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
