@@ -228,6 +228,7 @@ const SharedCreateOffences = () => {
         evidence: formData.evidence || [],
         status: "Pending Review",
         isReadByHR: false,
+        isReadByReporter: true,
         type: "IR",
       };
 
@@ -382,6 +383,7 @@ const SharedCreateOffences = () => {
         evidence: formData.evidence || [],
         status: "Coaching Log",
         isReadByRespondant: false,
+        isReadByCoach: true,
         type: "COACHING",
       };
 
@@ -638,8 +640,8 @@ const SharedCreateOffences = () => {
       if (off.type === "COACHING") return false;
 
       return [
+        off.respondantId,
         off.agentName,
-        off.offenseType,
         off.offenseCategory,
         off.offenseLevel || "",
         off.status,
@@ -660,8 +662,8 @@ const SharedCreateOffences = () => {
       if (off.type === "IR") return false;
 
       return [
+        off.respondantId,
         off.agentName,
-        off.offenseType,
         off.offenseCategory,
         off.offenseLevel || "",
         off.status,

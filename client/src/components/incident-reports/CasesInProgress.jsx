@@ -21,7 +21,7 @@ const CasesInProgress = ({
   userMap,
 }) => {
   const safeOffenses = Array.isArray(offenses)
-    ? offenses.filter((o) => o && o._id)
+    ? offenses.filter((offense) => offense && offense._id)
     : [];
 
   return (
