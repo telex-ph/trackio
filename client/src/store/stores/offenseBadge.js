@@ -1,91 +1,53 @@
+import Roles from "../../constants/roles";
 import api from "../../utils/axios";
+import socket from "../../utils/socket";
 
-export const offenseBadge = (set) => ({
-  unreadOffensesHR: 0,
-  unreadOffensesRespondent: 0,
-  unreadOffensesReporter: 0, // for Reporter side
+export const offenseBadge = (set, get) => ({
+  unreadIR: 0,
 
-  fetchUnreadOffenses: async ({ role, employeeId }) => {
+  fetchUnreadOffenses: async (user) => {
     try {
       const { data } = await api.get("/offenses");
 
-      let unreadHR = 0;
-      let unreadRespondent = 0;
-      let unreadReporter = 0;
+      let unreadIR = 0;
 
       data.forEach((offense) => {
-        const status = offense.status;
+        if (offense.type !== "IR") return;
 
-        // ---------- HR logic ----------
-        if (role === "HR") {
-          if (
-            ["Pending Review", "Respondent Explained", "Acknowledged"].includes(
-              status
-            )
-          ) {
-            if (!offense.isReadByHR) unreadHR++;
-          } else if (
-            ["NTE", "Scheduled for hearing", "After Hearing"].includes(status)
-          ) {
-            if (!offense.isReadByRespondant) unreadRespondent++;
-          } else if (status === "Invalid") {
-            if (!offense.isReadByReporter) unreadReporter++;
-          }
+        if ([Roles.HR, Roles.ADMIN_HR_HEAD].includes(user.role)) {
+          if (!offense.isReadByHR) unreadIR++;
         }
 
-        // ---------- Respondent logic ----------
-        if (role === "RESPONDENT") {
-          if (
-            ["NTE", "Scheduled for hearing", "After Hearing"].includes(status)
-          ) {
-            if (!offense.isReadByRespondant && offense.employeeId === employeeId) unreadRespondent++;
-          } else if (status === "Invalid") {
-            if (!offense.isReadByReporter) unreadReporter++;
-          } else if (
-            ["Pending Review", "Respondent Explained", "Acknowledged"].includes(
-              status
-            )
-          ) {
-            if (!offense.isReadByHR) unreadHR++;
-          }
+        if (!offense.isReadByRespondant && offense.status !== "Pending Review" && offense.respondantId === user._id) {
+          unreadIR++;
         }
 
-        // ---------- Reporter logic ----------
-        if (role === "REPORTER") {
-          if (status === "Invalid") {
-            if (!offense.isReadByReporter) unreadReporter++;
-          } else if (
-            ["Pending Review", "Respondent Explained", "Acknowledged"].includes(
-              status
-            )
-          ) {
-            if (!offense.isReadByHR) unreadHR++;
-          } else if (
-            ["NTE", "Scheduled for hearing", "After Hearing"].includes(status)
-          ) {
-            if (!offense.isReadByRespondant) unreadRespondent++;
-          }
+        if (!offense.isReadByReporter && offense.reportedById === user._id) {
+          unreadIR++;
         }
       });
 
-      set({
-        unreadOffensesHR: unreadHR,
-        unreadOffensesRespondent: unreadRespondent,
-        unreadOffensesReporter: unreadReporter,
-      });
-    } catch (error) {
-      console.error("Error fetching unread offenses:", error);
+      set({ unreadIR });
+    } catch (err) {
+      console.error("Error fetching unread offenses:", err);
     }
   },
 
-  decrementUnreadOffensesHR: () =>
-    set((state) => ({ unreadOffensesHR: Math.max(state.unreadOffensesHR - 1, 0) })),
-  decrementUnreadOffensesRespondent: () =>
-    set((state) => ({
-      unreadOffensesRespondent: Math.max(state.unreadOffensesRespondent - 1, 0),
-    })),
-  decrementUnreadOffensesReporter: () =>
-    set((state) => ({
-      unreadOffensesReporter: Math.max(state.unreadOffensesReporter - 1, 0),
-    })),
+  attachOffenseSocketListeners: () => {
+    const refresh = () => {
+      const user = get().user;
+      if (!user?._id) return;
+      get().fetchUnreadOffenses(user);
+    };
+
+    socket.on("offenseCreated", refresh);
+    socket.on("offenseUpdated", refresh);
+    socket.on("offenseDeleted", refresh);
+  },
+
+  removeOffenseSocketListeners: () => {
+    socket.off("offenseCreated");
+    socket.off("offenseUpdated");
+    socket.off("offenseDeleted");
+  },
 });

@@ -5,6 +5,7 @@ import { trackingPages } from "./stores/trackingPages";
 import { monitoringPages } from "./stores/monitoringPages";
 import { offenseBadge } from "./stores/offenseBadge";
 import { fetchUserById } from "./stores/getUserById";
+import { coachingBadge } from "./stores/coachingBadge";
 
 export const useStore = create((...a) => ({
   ...user(...a),
@@ -12,5 +13,6 @@ export const useStore = create((...a) => ({
   ...trackingPages(...a),
   ...monitoringPages(...a),
   ...offenseBadge(...a),
+  ...coachingBadge(...a),
   ...fetchUserById(...a),
 }));
