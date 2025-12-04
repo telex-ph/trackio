@@ -222,7 +222,6 @@ const SharedCreateOffences = () => {
 
       const payload = {
         respondantId: formData.respondantId,
-        agentName: formData.agentName,
         offenseLevel: formData.offenseLevel,
         dateOfOffense: formData.dateOfOffense,
         remarks: formData.remarks,
@@ -283,6 +282,57 @@ const SharedCreateOffences = () => {
     showNotification,
   ]);
 
+  // Update form fields dynamically
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  // Add new evidence (max 2 for supporting evidence)
+  const handleAddEvidence = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const newEvidence = {
+      fileName: file.name,
+      url: URL.createObjectURL(file),
+    };
+
+    setFormData((prev) => ({
+      ...prev,
+      evidence: [...prev.evidence, newEvidence].slice(0, 2),
+    }));
+  };
+
+  const handleEdit = async () => {
+    if (!editingId) return;
+
+    try {
+      setIsLoading(true);
+
+      const payload = {
+        dateOfOffense: formData.dateOfOffense,
+        remarks: formData.remarks,
+        evidence: formData.evidence,
+      };
+
+      await api.put(`/offenses/${editingId}`, payload);
+      showNotification("Offense updated successfully!", "success");
+
+      // Refresh list
+      fetchTeamOffenses();
+      resetFormAndPanel();
+    } catch (err) {
+      console.error("Edit failed", err);
+      showNotification("Failed to update offense", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleCoachingSubmit = useCallback(async () => {
     if (
       !formData.agentName ||
@@ -297,7 +347,7 @@ const SharedCreateOffences = () => {
       setIsLoading(true);
 
       const payload = {
-        agentId: formData.agentId,
+        respondantId: formData.agentId,
         coachId: formData.coachId,
         dateOfMistake: formData.dateOfMistake,
         coachingDate: formData.coachingDate,
@@ -359,8 +409,16 @@ const SharedCreateOffences = () => {
   const handleIRView = async (off) => {
     if (!off) return;
 
+    let agentUser = userMap[off.respondantId];
+    if (off.respondantId && !agentUser) {
+      agentUser = await fetchUserById(off.respondantId);
+      setUserMap((prev) => ({ ...prev, [off.respondantId]: agentUser }));
+    }
+
     setFormData({
-      agentName: off.agentName,
+      agentName: agentUser
+        ? `${agentUser.firstName} ${agentUser.lastName}`
+        : "Unknown",
       reportedById: off.reportedById,
       employeeId: off.employeeId || "",
       agentRole: off.agentRole || "",
@@ -401,9 +459,9 @@ const SharedCreateOffences = () => {
     if (!off) return;
 
     let agentUser = userMap[off.agentId];
-    if (off.agentId && !agentUser) {
-      agentUser = await fetchUserById(off.agentId);
-      setUserMap((prev) => ({ ...prev, [off.agentId]: agentUser }));
+    if (off.respondantId && !agentUser) {
+      agentUser = await fetchUserById(off.respondantId);
+      setUserMap((prev) => ({ ...prev, [off.respondantId]: agentUser }));
     }
 
     let coachUser = userMap[off.coachId];
@@ -414,7 +472,7 @@ const SharedCreateOffences = () => {
 
     setFormData({
       reportedById: off.reportedById,
-      agentId: off.agentId,
+      respondantId: off.respondantId,
       agentName: agentUser
         ? `${agentUser.firstName} ${agentUser.lastName}`
         : "Unknown",
@@ -701,9 +759,11 @@ const SharedCreateOffences = () => {
             <>
               <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-4">
                 Team Offense Management
-                {["team-leader", "operations-manager", "trainer-quality-assurance"].includes(
-                  loggedUser.role
-                ) && (
+                {[
+                  "team-leader",
+                  "operations-manager",
+                  "trainer-quality-assurance",
+                ].includes(loggedUser.role) && (
                   <div className="bg-gray-200 rounded-full p-1 flex shadow-inner">
                     {["COACHING", "IR"].map((type) => (
                       <button
@@ -739,9 +799,11 @@ const SharedCreateOffences = () => {
         <div>
           {/* Define forms based on role + offenseType */}
           {(() => {
-            const isTLOrOM = ["team-leader", "operations-manager", "trainer-quality-assurance"].includes(
-              loggedUser.role
-            );
+            const isTLOrOM = [
+              "team-leader",
+              "operations-manager",
+              "trainer-quality-assurance",
+            ].includes(loggedUser.role);
 
             // If not TL/OM → always IR
             const effectiveType = isTLOrOM ? offenseType : "IR";
@@ -786,6 +848,9 @@ const SharedCreateOffences = () => {
                   isDragOverNDA={isDragOverNDA}
                   setIsDragOverNDA={setIsDragOverNDA}
                   loggedUser={loggedUser}
+                  onFormChange={handleFormChange}
+                  onAddEvidence={handleAddEvidence}
+                  onSubmitEdit={handleEdit}
                 />
               );
             }
@@ -794,9 +859,11 @@ const SharedCreateOffences = () => {
 
         {/* Cases In Progress */}
         {(() => {
-          const isTLOrOM = ["team-leader", "operations-manager", "trainer-quality-assurance"].includes(
-            loggedUser.role
-          );
+          const isTLOrOM = [
+            "team-leader",
+            "operations-manager",
+            "trainer-quality-assurance",
+          ].includes(loggedUser.role);
 
           // Force IR for non-TL/OM
           const effectiveType = isTLOrOM ? offenseType : "IR";
@@ -827,9 +894,11 @@ const SharedCreateOffences = () => {
 
       {/* Case History */}
       {(() => {
-        const isTLOrOM = ["team-leader", "operations-manager", "trainer-quality-assurance"].includes(
-          loggedUser.role
-        );
+        const isTLOrOM = [
+          "team-leader",
+          "operations-manager",
+          "trainer-quality-assurance",
+        ].includes(loggedUser.role);
 
         const effectiveType = isTLOrOM ? offenseType : "IR";
 

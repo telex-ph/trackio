@@ -170,16 +170,25 @@ const HR_OffenseDetails = ({
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                 Offense Category
               </label>
-              {/* This could be a <select> if you have predefined categories */}
-              <input
-                type="text"
-                name="offenseCategory"
-                value={formData.offenseCategory || ""}
-                onChange={onFormChange}
-                className={inputStyle}
-                disabled={true}
-              />
+              <div className="flex flex-wrap gap-2 p-2 border border-gray-200 rounded-xl bg-gray-50 min-h-10">
+                {Array.isArray(formData.offenseCategory) &&
+                formData.offenseCategory.length > 0 ? (
+                  formData.offenseCategory.map((cat, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full"
+                    >
+                      {cat}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-gray-400 text-xs">
+                    No category selected
+                  </span>
+                )}
+              </div>
             </div>
+
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                 Offense Level
@@ -241,7 +250,7 @@ const HR_OffenseDetails = ({
                   Evidence
                 </label>
                 <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
-                  {formData.evidence.slice(0, 1).map((ev, idx) => {
+                  {formData.evidence.slice(0, 2).map((ev, idx) => {
                     const viewUrl = ev.url;
                     return (
                       <div key={idx} className="flex flex-col gap-3">
@@ -326,9 +335,9 @@ const HR_OffenseDetails = ({
               </div>
             )}
             {[
-              "Respondent Explained",
+              "Respondant Explained",
               "Scheduled for hearing",
-              "Respondent Explained",
+              "Respondant Explained",
               "MOM Uploaded",
               "For Acknowledgement",
               "Acknowledged",
@@ -485,7 +494,7 @@ const HR_OffenseDetails = ({
           {/* NEW Buttons */}
           {!formData.nteSentDateTime &&
           formData.status !== "Invalid" &&
-          formData.status !== "Respondent Explained" ? (
+          formData.status !== "Respondant Explained" ? (
             <div className="space-y-3 pt-4">
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
@@ -513,51 +522,102 @@ const HR_OffenseDetails = ({
                       {/* Body */}
                       <p className="text-gray-700 mb-4">
                         Are you sure you want to validate this offense and send
-                        an NTE message to the respondent?
+                        an NTE message to the Respondant?
                       </p>
                       <div className="space-y-2 mb-3">
                         <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                           Offense Category *
                         </label>
-                        <select
-                          name="offenseCategory"
-                          value={formData.offenseCategory || ""}
-                          onChange={(e) =>
-                            onFormChange({
-                              target: {
-                                name: "offenseCategory",
-                                value: e.target.value,
-                              },
-                            })
-                          }
-                          className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm sm:text-base"
-                        >
-                          <option value="">Select category</option>
-                          <option value="Attendance and Punctuality">
-                            Attendance and Punctuality
-                          </option>
-                          <option value="Behavior and Conduct">
-                            Behavior and Conduct
-                          </option>
-                          <option value="Good Morals and Work Ethics">
-                            Good Morals and Work Ethics
-                          </option>
-                          <option value="Negligence in the Performance of Duty">
-                            Negligence in the Performance of Duty
-                          </option>
-                          <option value="Company Interest/Insubordination">
-                            Company Interest/Insubordination
-                          </option>
-                          <option value="Company Funds and Property">
-                            Company Funds and Property
-                          </option>
-                          <option value="Sanitation, Safety and Security at Work">
-                            Sanitation, Safety and Security at Work
-                          </option>
-                          <option value="Securing or Divulging Confidential Information">
-                            Securing or Divulging Confidential Information
-                          </option>
-                        </select>
+
+                        {/* Styled Dropdown Container */}
+                        <div className="relative">
+                          <select
+                            name="offenseCategory"
+                            multiple
+                            value={
+                              Array.isArray(formData.offenseCategory)
+                                ? formData.offenseCategory
+                                : []
+                            }
+                            onChange={(e) => {
+                              const selectedValues = Array.from(
+                                e.target.selectedOptions,
+                                (option) => option.value
+                              );
+
+                              onFormChange({
+                                target: {
+                                  name: "offenseCategory",
+                                  value: selectedValues,
+                                },
+                              });
+                            }}
+                            className="w-full p-3 sm:p-4 bg-gray-50 border-2 border-gray-200 rounded-xl 
+                 focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 
+                 text-sm sm:text-base min-h-[120px]"
+                            style={{ overflowY: "auto" }}
+                          >
+                            <option value="Attendance and Punctuality">
+                              Attendance and Punctuality
+                            </option>
+                            <option value="Behavior and Conduct">
+                              Behavior and Conduct
+                            </option>
+                            <option value="Good Morals and Work Ethics">
+                              Good Morals and Work Ethics
+                            </option>
+                            <option value="Negligence in the Performance of Duty">
+                              Negligence in the Performance of Duty
+                            </option>
+                            <option value="Company Interest/Insubordination">
+                              Company Interest/Insubordination
+                            </option>
+                            <option value="Company Funds and Property">
+                              Company Funds and Property
+                            </option>
+                            <option value="Sanitation, Safety and Security at Work">
+                              Sanitation, Safety and Security at Work
+                            </option>
+                            <option value="Securing or Divulging Confidential Information">
+                              Securing or Divulging Confidential Information
+                            </option>
+                          </select>
+                        </div>
+
+                        {/* Chips Display */}
+                        {Array.isArray(formData.offenseCategory) &&
+                          formData.offenseCategory.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {formData.offenseCategory.map(
+                                (category, index) => (
+                                  <span
+                                    key={index}
+                                    className="flex items-center gap-2 px-3 py-1 bg-red-100 text-red-700 
+                       text-xs rounded-full border border-red-200"
+                                  >
+                                    {category}
+                                    <button
+                                      onClick={() => {
+                                        const updated =
+                                          formData.offenseCategory.filter(
+                                            (c) => c !== category
+                                          );
+                                        onFormChange({
+                                          target: {
+                                            name: "offenseCategory",
+                                            value: updated,
+                                          },
+                                        });
+                                      }}
+                                      className="text-red-600 hover:text-red-800 font-bold"
+                                    >
+                                      ×
+                                    </button>
+                                  </span>
+                                )
+                              )}
+                            </div>
+                          )}
                       </div>
 
                       {/* Drag-and-drop Attachment Input */}
@@ -689,7 +749,7 @@ const HR_OffenseDetails = ({
               </div>
             </div>
           ) : null}
-          {formData.status === "Respondent Explained" && (
+          {formData.status === "Respondant Explained" && (
             <div className="space-y-3 pt-4">
               <div className="flex flex-col sm:flex-row gap-3">
                 <button

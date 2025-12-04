@@ -158,9 +158,9 @@ const Details = ({
             </div>
           )}
           {[
-            "Respondent Explained",
+            "Respondant Explained",
             "Scheduled for hearing",
-            "Respondent Explained",
+            "Respondant Explained",
             "MOM Uploaded",
             "For Acknowledgement",
             "Acknowledged",
