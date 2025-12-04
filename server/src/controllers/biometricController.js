@@ -113,18 +113,6 @@ export const getEvents = async (req, res) => {
               console.log(
                 `Name: ${ac.name} ID: ${userId} shiftEnd: ${shiftEnd} nowTime: ${nowTime}`
               );
-              // TODO: remove soon;
-              console.log(
-                `Attendance selection for ${ac.name}: ` +
-                  `List: [${attendances
-                    .map((a) => a._id.toString())
-                    .join(", ")}] ` +
-                  `| Selected -> ID: ${attendance._id.toString()}, ` +
-                  `shiftDate: ${attendance.shiftDate}, ` +
-                  `shiftStart: ${attendance.shiftStart}, ` +
-                  `shiftEnd: ${attendance.shiftEnd}`
-              );
-
               if (shiftEnd < nowTime) {
                 if (status === STATUS.ON_BREAK) {
                   await biometricBreakOut(attendanceId, breaks);
