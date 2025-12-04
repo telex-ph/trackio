@@ -67,7 +67,6 @@ app.use("/api/biometric", biometricRoute);
 
 // Health check
 app.get("/", async (req, res) => {
-  await webhook("testing");
   res.json({
     message: "Trackio API is running",
     status: "success",
