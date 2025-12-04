@@ -5,7 +5,7 @@ import { STATUS } from "../../../client/src/constants/status.js";
 
 export const addAttendance = async (userId) => {
   const TARDINESS_TOLERANCE_HOURS = 2;
-  const EARLY_GRACE_HOURS = 4;
+  const EARLY_GRACE_HOURS = 6;
 
   const timeIn = DateTime.now().toUTC();
   const minShiftStart = timeIn.minus({ hours: TARDINESS_TOLERANCE_HOURS });
