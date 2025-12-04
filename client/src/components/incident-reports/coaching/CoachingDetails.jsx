@@ -180,7 +180,7 @@ const CoachingDetails = ({
               </div>
             )}
             {[
-              "Respondent Explained",
+              "Respondant Explained",
               "For Acknowledgement",
               "Acknowledged",
             ].includes(formData.status) && (
@@ -262,7 +262,7 @@ const CoachingDetails = ({
 
             {/* Buttons */}
             <div className="flex gap-4">
-              {formData.status === "Respondent Explained" && (
+              {formData.status === "Respondant Explained" && (
                 <button
                   onClick={() => setShowNDAModal(true)}
                   className="flex-1 bg-linear-to-r from-indigo-600 to-indigo-700 text-white p-3 sm:p-4 rounded-2xl hover:from-indigo-700 hover:to-indigo-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"

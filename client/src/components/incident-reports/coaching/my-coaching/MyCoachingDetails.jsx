@@ -180,7 +180,7 @@ const MyCoachingDetails = ({
               </div>
             )}
             {[
-              "Respondent Explained",
+              "Respondant Explained",
               "For Acknowledgement",
               "Acknowledged",
             ].includes(formData.status) && (
@@ -215,7 +215,7 @@ const MyCoachingDetails = ({
 
             {formData.fileNDA &&
               formData.fileNDA.length > 0 &&
-              formData.agentId === loggedUser._id && (
+              formData.respondantId === loggedUser._id && (
                 <div>
                   <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                     Notice of Disciplinary Action

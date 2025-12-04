@@ -111,7 +111,7 @@ const CoachingHistory = ({
                             NTE: "bg-blue-100 text-blue-700 border border-blue-200",
                             Invalid:
                               "bg-red-100 text-red-700 border border-red-200",
-                            "Respondent Explained":
+                            "Respondant Explained":
                               "bg-purple-100 text-purple-700 border border-purple-200",
                             "Scheduled for hearing":
                               "bg-indigo-100 text-indigo-700 border border-indigo-200",

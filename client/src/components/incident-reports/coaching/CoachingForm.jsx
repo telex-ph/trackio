@@ -31,7 +31,7 @@ const CoachingForm = ({
   const [teamLeaderQuery, setTeamLeaderQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
+  const [_isSearching, setIsSearching] = useState(false);
 
   const searchRef = useRef(null);
   const debounceTimer = useRef(null);

@@ -78,7 +78,7 @@ const CoachingInProgress = ({
                           {
                             "Pending Review":
                               "bg-amber-100 text-amber-700 border border-amber-200",
-                            "Respondent Explained":
+                            "Respondant Explained":
                               "bg-purple-100 text-purple-700 border border-purple-200",
                             "For Acknowledgement":
                               "bg-teal-100 text-teal-700 border border-teal-200",
@@ -97,7 +97,7 @@ const CoachingInProgress = ({
                         // Map status to which "reader" we care about
                         const statusReaderMap = {
                           "Coaching Log": "isReadByRespondant",
-                          "Respondent Explained": "isReadByCoach",
+                          "Respondant Explained": "isReadByCoach",
                           "For Acknowledgement": "isReadByRespondant",
                           Acknowledged: "isReadByCoach",
                         };
@@ -112,8 +112,8 @@ const CoachingInProgress = ({
                             unread: "Unread by Coach",
                           },
                           isReadByRespondant: {
-                            read: "Read by Respondent",
-                            unread: "Unread by Respondent",
+                            read: "Read by Respondant",
+                            unread: "Unread by Respondant",
                           },
                         };
 
@@ -158,9 +158,9 @@ const CoachingInProgress = ({
                   <User className="w-3 h-3 sm:w-4 sm:h-4" />
                   Respondant:{" "}
                   <span className="font-medium">
-                    {userMap[off.agentId]
-                      ? `${userMap[off.agentId].firstName} ${
-                          userMap[off.agentId].lastName
+                    {userMap[off.respondantId]
+                      ? `${userMap[off.respondantId].firstName} ${
+                          userMap[off.respondantId].lastName
                         }`
                       : "N/A"}
                   </span>
