@@ -18,7 +18,7 @@ const HRSidebar = ({
   isCollapsed,
   activeDropdown,
   setActiveDropdown,
-  unreadOffenses,
+  unreadIR,
 }) => (
   <div className="space-y-1">
     <SidebarLink
@@ -61,12 +61,14 @@ const HRSidebar = ({
         isCollapsed={isCollapsed}
       />
     </CustomCollapse>
+
     <SidebarLink
       to="/human-resources/monitoring"
       icon={Activity}
       label="Monitoring"
       isCollapsed={isCollapsed}
     />
+
     <CustomCollapse
       icon={<Clock className="w-5 h-5" />}
       label="Offenses"
@@ -75,7 +77,7 @@ const HRSidebar = ({
       onToggle={() =>
         setActiveDropdown(activeDropdown === "offenses" ? null : "offenses")
       }
-      badge={unreadOffenses}
+      badge={unreadIR}
     >
       <SidebarLink
         to={`/human-resources/createoffense`}
@@ -86,18 +88,18 @@ const HRSidebar = ({
       <SidebarLink
         to={`/human-resources/offenses`}
         icon={GalleryVerticalEnd}
-        label={<>My Offenses</>}
+        label="My Offenses"
         isCollapsed={isCollapsed}
-        badge={!isCollapsed ? unreadOffenses : 0}
       />
       <SidebarLink
         to={`/human-resources/reported-ir`}
         icon={GalleryVerticalEnd}
         label="Reported IR"
         isCollapsed={isCollapsed}
-        badge={!isCollapsed ? unreadOffenses : 0}
+        badge={!isCollapsed ? unreadIR : 0}
       />
     </CustomCollapse>
+
     <SidebarLink
       to="/human-resources/team"
       icon={Users2Icon}
