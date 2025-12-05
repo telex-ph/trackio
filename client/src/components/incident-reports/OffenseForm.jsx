@@ -25,7 +25,7 @@ const OffenseForm = ({
   resetForm,
   handleIRSubmit,
   showNotification,
-  isLoading
+  isUploading,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -368,10 +368,19 @@ const OffenseForm = ({
         </div>
         <button
           onClick={handleIRSubmit}
-          disabled={isLoading}
+          disabled={isUploading}
           className="w-full bg-linear-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all duration-300 font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
         >
-          {isEditMode ? "Update Offense" : "Submit Offense"}
+          {isUploading ? (
+            <>
+              <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+              {isEditMode ? "Updating..." : "Submitting..."}
+            </>
+          ) : isEditMode ? (
+            "Update Offense"
+          ) : (
+            "Submit Offense"
+          )}
         </button>
       </div>
     </div>

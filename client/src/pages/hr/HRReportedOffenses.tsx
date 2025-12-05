@@ -100,6 +100,9 @@ const HRReportedOffenses = () => {
   const [selectedNDAFile, setSelectedNDAFile] = useState<File | null>(null);
   const [isDragOverNDA, setIsDragOverNDA] = useState(false);
 
+  //Loader state
+  const [isUploading, setIsUploading] = useState(false);
+
   // Form data for selected offense
   const [formData, setFormData] = useState<Partial<Offense>>({
     agentName: "",
@@ -284,40 +287,6 @@ const HRReportedOffenses = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Hearing modal states
-  const [_showHearingModal, setShowHearingModal] = useState<boolean>(false);
-  const [_hearingDate, setHearingDate] = React.useState("");
-
-  // Set hearing schedule
-  const handleHearingDate = async (
-    hearingDate: string,
-    witnesses: { _id: string; name: string; employeeId: string }[]
-  ) => {
-    try {
-      const now = new Date();
-
-      const payload = {
-        ...formData,
-        status: "Scheduled for hearing",
-        isReadByRespondant: false,
-        hearingDate,
-        witnesses,
-        schedHearingDateTime: now.toISOString(),
-      };
-
-      await api.put(`/offenses/${editingId}`, payload);
-
-      showNotification("Hearing has been set.", "success");
-      resetForm();
-      fetchOffenses();
-      setHearingDate("");
-      setShowHearingModal(false);
-    } catch (error) {
-      console.error("Error setting hearing:", error);
-      showNotification("Failed to set hearing date.", "error");
-    }
-  };
-
   // Validate offense → send NTE
   const handleValid = async () => {
     if (!editingId) return;
@@ -325,6 +294,8 @@ const HRReportedOffenses = () => {
     const now = new Date();
 
     try {
+      setIsUploading(true);
+
       const payload = {
         ...formData,
         offenseCategory: Array.isArray(formData.offenseCategory)
@@ -368,6 +339,45 @@ const HRReportedOffenses = () => {
     } catch (error) {
       console.error("Error updating offense:", error);
       showNotification("Failed to update.", "error");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Hearing modal states
+  const [_showHearingModal, setShowHearingModal] = useState<boolean>(false);
+  const [_hearingDate, setHearingDate] = React.useState("");
+
+  // Set hearing schedule
+  const handleHearingDate = async (
+    hearingDate: string,
+    witnesses: { _id: string; name: string; employeeId: string }[]
+  ) => {
+    try {
+      setIsUploading(true);
+      const now = new Date();
+
+      const payload = {
+        ...formData,
+        status: "Scheduled for hearing",
+        isReadByRespondant: false,
+        hearingDate,
+        witnesses,
+        schedHearingDateTime: now.toISOString(),
+      };
+
+      await api.put(`/offenses/${editingId}`, payload);
+
+      showNotification("Hearing has been set.", "success");
+      resetForm();
+      fetchOffenses();
+      setHearingDate("");
+      setShowHearingModal(false);
+    } catch (error) {
+      console.error("Error setting hearing:", error);
+      showNotification("Failed to set hearing date.", "error");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -378,6 +388,7 @@ const HRReportedOffenses = () => {
     const now = new Date();
 
     try {
+      setIsUploading(true);
       const payload = {
         ...formData,
         status: "MOM Uploaded",
@@ -416,6 +427,8 @@ const HRReportedOffenses = () => {
     } catch (error) {
       console.error("Error updating offense:", error);
       showNotification("Failed to upload.", "error");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -426,6 +439,7 @@ const HRReportedOffenses = () => {
     const now = new Date();
 
     try {
+      setIsUploading(true);
       const payload = {
         ...formData,
         isAcknowledged: false,
@@ -466,6 +480,8 @@ const HRReportedOffenses = () => {
     } catch (error) {
       console.error("Error updating offense:", error);
       showNotification("Failed to upload.", "error");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -476,6 +492,7 @@ const HRReportedOffenses = () => {
   // Reject offense
   const rejectOffense = async (invalidReason: string) => {
     try {
+      setIsUploading(true);
       const payload = {
         ...formData,
         status: "Invalid",
@@ -492,6 +509,8 @@ const HRReportedOffenses = () => {
     } catch (error) {
       console.error("Error rejecting case:", error);
       showNotification("Failed to reject.", "error");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -610,6 +629,7 @@ const HRReportedOffenses = () => {
           setIsDragOverMOM={setIsDragOverMOM}
           isDragOverNDA={isDragOverNDA}
           setIsDragOverNDA={setIsDragOverNDA}
+          isUploading={isUploading}
         />
 
         {/* Cases in progress */}

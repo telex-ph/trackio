@@ -23,7 +23,7 @@ const CoachingForm = ({
   resetForm,
   handleCoachingSubmit,
   showNotification,
-  isLoading,
+  isUploading,
 }) => {
   const [searchField, setSearchField] = useState(""); // which field is currently being searched
   const [agentQuery, setAgentQuery] = useState("");
@@ -373,10 +373,19 @@ const CoachingForm = ({
 
         <button
           onClick={handleCoachingSubmit}
-          disabled={isLoading}
+          disabled={isUploading}
           className="w-full bg-red-600 text-white p-3 rounded-2xl hover:bg-red-700 font-semibold text-base shadow-xl"
         >
-          {isEditMode ? "Update Coaching Log" : "Submit Coaching Log"}
+          {isUploading ? (
+            <>
+              <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+              {isEditMode ? "Updating..." : "Submitting..."}
+            </>
+          ) : isEditMode ? (
+            "Update Coaching Log"
+          ) : (
+            "Submit Coaching Log"
+          )}
         </button>
       </div>
     </div>

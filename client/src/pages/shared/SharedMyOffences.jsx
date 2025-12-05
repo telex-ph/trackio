@@ -122,6 +122,9 @@ const SharedMyOffences = () => {
 
   const [offenseType, setOffenseType] = useState("COACHING");
 
+  //Loader state
+  const [isUploading, setIsUploading] = useState(false);
+
   const [notification, setNotification] = useState({
     message: "",
     type: "",
@@ -268,6 +271,7 @@ const SharedMyOffences = () => {
     const now = new Date();
 
     try {
+      setIsUploading(true);
       const payload = {
         ...formData,
         respondantExplanation: formData.respondantExplanation,
@@ -288,6 +292,8 @@ const SharedMyOffences = () => {
         "Failed to submit explanation. Please try again.",
         "error"
       );
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -303,6 +309,7 @@ const SharedMyOffences = () => {
     const now = new Date();
 
     try {
+      setIsUploading(true);
       const payload = {
         respondantExplanation: formData.respondantExplanation,
         status: "Respondant Explained",
@@ -323,11 +330,14 @@ const SharedMyOffences = () => {
         "Failed to submit explanation. Please try again.",
         "error"
       );
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const handleIRAcknowledge = async (ackMessage) => {
     try {
+      setIsUploading(true);
       const now = new Date();
 
       const payload = {
@@ -348,11 +358,14 @@ const SharedMyOffences = () => {
     } catch (error) {
       console.error("Error acknowledging case:", error);
       showNotification("Failed to acknowledge. Please try again.", "error");
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const handleCoachingAcknowledge = async (ackMessage) => {
     try {
+      setIsUploading(true);
       const now = new Date();
 
       const payload = {
@@ -373,6 +386,8 @@ const SharedMyOffences = () => {
     } catch (error) {
       console.error("Error acknowledging case:", error);
       showNotification("Failed to acknowledge. Please try again.", "error");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -403,6 +418,7 @@ const SharedMyOffences = () => {
     setOriginalExplanation(off.respondantExplanation || "");
 
     try {
+      setIsUploading(true);
       // Fetch the latest offense data
       const { data: offense } = await api.get(`/offenses/${off._id}`);
 
@@ -417,6 +433,8 @@ const SharedMyOffences = () => {
     } catch (error) {
       console.error("Error updating offense:", error);
       showNotification("Failed to update offense. Please try again.", "error");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -460,6 +478,7 @@ const SharedMyOffences = () => {
     setOriginalExplanation(off.respondantExplanation || "");
 
     try {
+      setIsUploading(true);
       // Fetch the latest offense data
       const { data: offense } = await api.get(`/offenses/${off._id}`);
 
@@ -474,6 +493,8 @@ const SharedMyOffences = () => {
     } catch (error) {
       console.error("Error updating offense:", error);
       showNotification("Failed to update offense. Please try again.", "error");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -696,6 +717,7 @@ const SharedMyOffences = () => {
             handleAcknowledge={handleIRAcknowledge}
             loggedUser={loggedUser}
             userMap={userMap}
+            isUploading={isUploading}
           />
         ) : (
           <MyCoachingDetails
@@ -712,6 +734,7 @@ const SharedMyOffences = () => {
             setAckMessage={setAckMessage}
             handleAcknowledge={handleCoachingAcknowledge}
             loggedUser={loggedUser}
+            isUploading={isUploading}
           />
         )}
 

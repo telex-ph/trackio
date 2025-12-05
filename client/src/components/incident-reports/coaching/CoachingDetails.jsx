@@ -13,8 +13,8 @@ const CoachingDetails = ({
   isDragOverNDA,
   setIsDragOverNDA,
   loggedUser,
+  isUploading,
 }) => {
-  const [loading] = React.useState(false);
   const [showNDAModal, setShowNDAModal] = React.useState(false);
 
   return (
@@ -265,9 +265,17 @@ const CoachingDetails = ({
               {formData.status === "Respondant Explained" && (
                 <button
                   onClick={() => setShowNDAModal(true)}
+                  disabled={isUploading}
                   className="flex-1 bg-linear-to-r from-indigo-600 to-indigo-700 text-white p-3 sm:p-4 rounded-2xl hover:from-indigo-700 hover:to-indigo-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
                 >
-                  Upload NDA
+                  {isUploading ? (
+                    <>
+                      <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+                      Uploading...
+                    </>
+                  ) : (
+                    "Send NDA"
+                  )}
                 </button>
               )}
               <button
@@ -279,9 +287,17 @@ const CoachingDetails = ({
               {formData.isReadByHR && (
                 <button
                   onClick={onDelete}
+                  disabled={isUploading}
                   className="flex-1 bg-linear-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
                 >
-                  Delete
+                  {isUploading ? (
+                    <>
+                      <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+                      Deleting...
+                    </>
+                  ) : (
+                    "Delete"
+                  )}
                 </button>
               )}
             </div>
@@ -360,13 +376,17 @@ const CoachingDetails = ({
                   handleUploadNDA();
                   setShowNDAModal(false);
                 }}
-                disabled={loading}
+                disabled={isUploading}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center gap-2"
               >
-                {loading && (
-                  <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+                {isUploading ? (
+                  <>
+                    <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+                    Uploading...
+                  </>
+                ) : (
+                  "Send NDA"
                 )}
-                Upload NDA
               </button>
             </div>
           </div>

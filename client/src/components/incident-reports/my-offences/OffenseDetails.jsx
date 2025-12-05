@@ -55,6 +55,7 @@ const OffenseDetails = ({
   setAckMessage,
   handleAcknowledge,
   loggedUser,
+  isUploading,
 }) => {
   const [showAcknowledgeModal, setShowAcknowledgeModal] = React.useState(false);
 
@@ -238,9 +239,17 @@ const OffenseDetails = ({
             {formData.status === "NTE" && (
               <button
                 onClick={handleSubmit}
+                disabled={isUploading}
                 className="flex-1 bg-linear-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
               >
-                Submit
+                {isUploading ? (
+                  <>
+                    <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+                    Submiting...
+                  </>
+                ) : (
+                  "Submit"
+                )}
               </button>
             )}
             {formData.status === "For Acknowledgement" && !isWitness && (
@@ -296,10 +305,17 @@ const OffenseDetails = ({
 
               <button
                 className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
-                disabled={!ackMessage.trim()}
+                disabled={isUploading}
                 onClick={() => handleAcknowledge(ackMessage)}
               >
-                Acknowledge
+                {isUploading ? (
+                  <>
+                    <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+                    Acknowledging...
+                  </>
+                ) : (
+                  "Acknowledge"
+                )}
               </button>
             </div>
           </div>
