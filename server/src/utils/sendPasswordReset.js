@@ -49,7 +49,7 @@ export const sendPasswordReset = async (to, resetLink) => {
           </p>
 
          <p style="font-size: 12px; color: #aaa; text-align: center;">
-            Created with ❤️ by the Tech Team
+            Created with ❤️ by the Innovation Team
           </p>
         </div>
       `,
