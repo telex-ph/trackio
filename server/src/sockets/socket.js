@@ -37,7 +37,7 @@ const socket = async (server, app) => {
   await onBreakWatcher(io);
   await overBreakWatcher(io);
   await offenseWatcher(io);
-  await announcementWatcher(io);
+  // await announcementWatcher(io);
 };
 
 export default socket;
