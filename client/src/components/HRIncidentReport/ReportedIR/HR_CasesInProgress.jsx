@@ -206,12 +206,24 @@ const HR_CasesInProgress = ({
                 {/* BODY CONTENT (unchanged) */}
                 <div className="space-y-3 mb-4">
                   <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
-                    <User className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <User className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500" />
                     Reporter:{" "}
                     <span className="font-medium">
                       {userMap[off.reportedById]
                         ? `${userMap[off.reportedById].firstName} ${
                             userMap[off.reportedById].lastName
+                          }`
+                        : "N/A"}
+                    </span>
+                  </p>
+
+                  <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
+                    <User className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
+                    Respondant:{" "}
+                    <span className="font-medium">
+                      {userMap[off.respondantId]
+                        ? `${userMap[off.respondantId].firstName} ${
+                            userMap[off.respondantId].lastName
                           }`
                         : "N/A"}
                     </span>
@@ -257,18 +269,6 @@ const HR_CasesInProgress = ({
                             ? off.witnesses.map((w) => w.name).join(", ")
                             : "None"}
                         </span>
-                      </p>
-                    </div>
-                  )}
-
-                  {off.remarks && (
-                    <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border-l-4 border-gray-400">
-                      <p className="text-xs sm:text-sm text-gray-700 flex items-start gap-2">
-                        <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4 mt-0.5 text-gray-600" />
-                        <span className="font-semibold text-gray-800">
-                          Remarks:
-                        </span>{" "}
-                        {off.remarks}
                       </p>
                     </div>
                   )}
