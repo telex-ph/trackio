@@ -137,7 +137,6 @@ const HR_OffenseDetails = ({
 
       {isViewMode ? (
         <div className="space-y-6">
-          {/* Reporter  (Read-only) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -164,7 +163,6 @@ const HR_OffenseDetails = ({
             </div>
           </div>
 
-          {/* Category & Level */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -204,7 +202,7 @@ const HR_OffenseDetails = ({
               />
             </div>
           </div>
-          {/* Date */}
+
           <div className="gap-4 sm:gap-6">
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -228,7 +226,7 @@ const HR_OffenseDetails = ({
               </div>
             </div>
           </div>
-          {/* Remarks */}
+
           <div className="space-y-2">
             <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
               Remarks
@@ -242,7 +240,6 @@ const HR_OffenseDetails = ({
             />
           </div>
 
-          {/* Evidence Section (Still view-only) */}
           <div className="space-y-2">
             {formData.evidence && formData.evidence.length > 0 && (
               <div>
@@ -286,6 +283,7 @@ const HR_OffenseDetails = ({
               </div>
             )}
           </div>
+
           <div className="space-y-2">
             {formData.fileNTE && formData.fileNTE.length > 0 && (
               <div>
@@ -476,7 +474,7 @@ const HR_OffenseDetails = ({
               </div>
             )}
           </div>
-          {/* End of Evidence Section */}
+
           {formData.status === "Invalid" && (
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -491,414 +489,408 @@ const HR_OffenseDetails = ({
               />
             </div>
           )}
-          {/* NEW Buttons */}
+
           {!formData.nteSentDateTime &&
-          formData.status !== "Invalid" &&
-          formData.status !== "Respondant Explained" ? (
-            <div className="space-y-3 pt-4">
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={() => setShowValidModal(true)}
-                  className="flex-1 bg-linear-to-r from-indigo-600 to-indigo-700 text-white p-3 sm:p-4 rounded-2xl hover:from-indigo-700 hover:to-indigo-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
-                >
-                  Valid
-                </button>
-                {showValidModal && (
-                  <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
-                      {/* Header */}
-                      <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-bold text-gray-900">
-                          Send NTE Confirmation
-                        </h2>
-                        <button
-                          onClick={() => setShowValidModal(false)}
-                          className="text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
-                      </div>
-
-                      {/* Body */}
-                      <p className="text-gray-700 mb-4">
-                        Are you sure you want to validate this offense and send
-                        an NTE message to the Respondant?
-                      </p>
-                      <div className="space-y-2 mb-3">
-                        <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                          Offense Category *
-                        </label>
-
-                        {/* Styled Dropdown Container */}
-                        <div className="relative">
-                          <select
-                            name="offenseCategory"
-                            multiple
-                            value={
-                              Array.isArray(formData.offenseCategory)
-                                ? formData.offenseCategory
-                                : []
-                            }
-                            onChange={(e) => {
-                              const selectedValues = Array.from(
-                                e.target.selectedOptions,
-                                (option) => option.value
-                              );
-
-                              onFormChange({
-                                target: {
-                                  name: "offenseCategory",
-                                  value: selectedValues,
-                                },
-                              });
-                            }}
-                            className="w-full p-3 sm:p-4 bg-gray-50 border-2 border-gray-200 rounded-xl 
-                 focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 
-                 text-sm sm:text-base min-h-[120px]"
-                            style={{ overflowY: "auto" }}
-                          >
-                            <option value="Attendance and Punctuality">
-                              Attendance and Punctuality
-                            </option>
-                            <option value="Behavior and Conduct">
-                              Behavior and Conduct
-                            </option>
-                            <option value="Good Morals and Work Ethics">
-                              Good Morals and Work Ethics
-                            </option>
-                            <option value="Negligence in the Performance of Duty">
-                              Negligence in the Performance of Duty
-                            </option>
-                            <option value="Company Interest/Insubordination">
-                              Company Interest/Insubordination
-                            </option>
-                            <option value="Company Funds and Property">
-                              Company Funds and Property
-                            </option>
-                            <option value="Sanitation, Safety and Security at Work">
-                              Sanitation, Safety and Security at Work
-                            </option>
-                            <option value="Securing or Divulging Confidential Information">
-                              Securing or Divulging Confidential Information
-                            </option>
-                          </select>
-                        </div>
-
-                        {/* Chips Display */}
-                        {Array.isArray(formData.offenseCategory) &&
-                          formData.offenseCategory.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              {formData.offenseCategory.map(
-                                (category, index) => (
-                                  <span
-                                    key={index}
-                                    className="flex items-center gap-2 px-3 py-1 bg-red-100 text-red-700 
-                       text-xs rounded-full border border-red-200"
-                                  >
-                                    {category}
-                                    <button
-                                      onClick={() => {
-                                        const updated =
-                                          formData.offenseCategory.filter(
-                                            (c) => c !== category
-                                          );
-                                        onFormChange({
-                                          target: {
-                                            name: "offenseCategory",
-                                            value: updated,
-                                          },
-                                        });
-                                      }}
-                                      className="text-red-600 hover:text-red-800 font-bold"
-                                    >
-                                      ×
-                                    </button>
-                                  </span>
-                                )
-                              )}
-                            </div>
-                          )}
-                      </div>
-
-                      {/* Drag-and-drop Attachment Input */}
-                      <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                        NTE FILE *
-                      </label>
-                      <div
-                        className={`mb-4 p-4 border-2 rounded-xl border-dashed text-center cursor-pointer transition-colors ${
-                          isDragOver
-                            ? "border-green-500 bg-green-50"
-                            : "border-gray-300 bg-white"
-                        }`}
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          setIsDragOver(true);
-                        }}
-                        onDragLeave={() => setIsDragOver(false)}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          setIsDragOver(false);
-                          if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                            setSelectedFile(e.dataTransfer.files[0]);
-                          }
-                        }}
-                        onClick={() =>
-                          document.getElementById("nteFileInput")?.click()
-                        }
-                      >
-                        {selectedFile ? (
-                          <p className="text-gray-700 text-sm">
-                            Selected file: {selectedFile.name}
-                          </p>
-                        ) : (
-                          <p className="text-gray-500 text-sm">
-                            Drag and drop a file here, or click to select
-                          </p>
-                        )}
-                        <input
-                          type="file"
-                          id="nteFileInput"
-                          className="hidden"
-                          onChange={(e) =>
-                            setSelectedFile(e.target.files?.[0] || null)
-                          }
-                        />
-                      </div>
-
-                      {/* Buttons */}
-                      <div className="mt-6 flex justify-end gap-3">
-                        <button
-                          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors"
-                          onClick={() => setShowValidModal(false)}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={handleValid}
-                          disabled={
-                            loading ||
-                            !selectedFile ||
-                            !formData.offenseCategory ||
-                            formData.offenseCategory === ""
-                          }
-                          className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-                        >
-                          {loading && (
-                            <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
-                          )}
-                          Send NTE
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <button
-                  onClick={() => setShowInvalidModal(true)}
-                  className="flex-1 bg-linear-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
-                >
-                  Invalid
-                </button>
-                {showInvalidModal && (
-                  <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
-                      {/* Header */}
-                      <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-bold text-gray-900">
-                          Reason for Invalidation
-                        </h2>
-                        <button
-                          onClick={() => setShowInvalidModal(false)}
-                          className="text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
-                      </div>
-
-                      {/* Textarea */}
-                      <textarea
-                        className="w-full border border-gray-300 rounded-xl p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
-                        rows={4}
-                        value={invalidReason}
-                        onChange={(e) => setInvalidReason(e.target.value)}
-                        placeholder="Provide reason for marking this offense as invalid"
-                      />
-
-                      {/* Buttons */}
-                      <div className="mt-6 flex justify-end gap-3">
-                        <button
-                          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors"
-                          onClick={() => setShowInvalidModal(false)}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50"
-                          onClick={() => {
-                            if (!invalidReason.trim()) return;
-                            rejectOffense(invalidReason);
-                          }}
-                          disabled={!invalidReason.trim()}
-                        >
-                          Mark as Invalid
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
+            !["Invalid", "Respondant Explained"].includes(formData.status) && (
+              <div className="space-y-3 pt-4">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={() => setShowValidModal(true)}
+                    className="flex-1 bg-linear-to-r from-indigo-600 to-indigo-700 text-white p-3 sm:p-4 rounded-2xl hover:from-indigo-700 hover:to-indigo-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                  >
+                    Valid
+                  </button>
+                  <button
+                    onClick={() => setShowInvalidModal(true)}
+                    className="flex-1 bg-linear-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                  >
+                    Invalid
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : null}
-          {formData.status === "Respondant Explained" && (
-            <div className="space-y-3 pt-4">
-              <div className="flex flex-col sm:flex-row gap-3">
+            )}
+
+          <div className="space-y-3 pt-4">
+            <div className="flex flex-col sm:flex-row gap-3">
+              {formData.status === "Respondant Explained" && (
                 <button
                   onClick={() => setShowHearingModal(true)}
                   className="flex-1 bg-linear-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
                 >
                   Set Hearing Date
                 </button>
-                {showHearingModal && (
-                  <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
-                      {/* Header */}
-                      <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-bold text-gray-900">
-                          Schedule Hearing
-                        </h2>
-                        <button
-                          onClick={() => setShowHearingModal(false)}
-                          className="text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
-                      </div>
+              )}
+              {["Respondant Explained", "MOM Uploaded"].includes(
+                formData.status
+              ) && (
+                <button
+                  onClick={() => setShowNDAModal(true)}
+                  className="flex-1 bg-linear-to-r from-indigo-600 to-indigo-700 text-white p-3 sm:p-4 rounded-2xl hover:from-indigo-700 hover:to-indigo-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                >
+                  Upload NDA
+                </button>
+              )}
+              {formData.status === "Scheduled for hearing" && (
+                <button
+                  onClick={() => setShowMOMModal(true)}
+                  className="flex-1 bg-linear-to-r from-indigo-600 to-indigo-700 text-white p-3 sm:p-4 rounded-2xl hover:from-indigo-700 hover:to-indigo-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                >
+                  Upload Minutes of Meeting
+                </button>
+              )}
+            </div>
+          </div>
 
-                      {/* DATE-TIME PICKER */}
-                      <label className="block text-sm font-semibold text-gray-700 mb-1">
-                        Hearing Date & Time
-                      </label>
-                      <input
-                        type="datetime-local"
-                        className="w-full border border-gray-300 rounded-xl p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent mb-4"
-                        value={hearingDate}
-                        onChange={(e) => setHearingDate(e.target.value)}
-                        min={new Date().toISOString().slice(0, 16)} // disable past dates
-                      />
+          {showValidModal && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-gray-900">
+                    Send NTE Confirmation
+                  </h2>
+                  <button
+                    onClick={() => setShowValidModal(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
 
-                      {/* WITNESS SEARCH */}
-                      <div className="mb-4" ref={witnessRef}>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                          Witnesses
-                        </label>
+                {/* Body */}
+                <p className="text-gray-700 mb-4">
+                  Are you sure you want to validate this offense and send an NTE
+                  message to the Respondant?
+                </p>
+                <div className="space-y-2 mb-3">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                    Offense Category *
+                  </label>
 
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  {/* Styled Dropdown Container */}
+                  <div className="relative">
+                    <select
+                      name="offenseCategory"
+                      multiple
+                      value={
+                        Array.isArray(formData.offenseCategory)
+                          ? formData.offenseCategory
+                          : []
+                      }
+                      onChange={(e) => {
+                        const selectedValues = Array.from(
+                          e.target.selectedOptions,
+                          (option) => option.value
+                        );
 
-                          <input
-                            type="text"
-                            value={witnessQuery}
-                            onChange={handleWitnessSearch}
-                            placeholder="Search employee..."
-                            className="w-full pl-10 pr-3 py-2 border rounded-xl bg-gray-50 focus:border-red-500 focus:bg-white text-gray-700"
-                          />
-
-                          {/* Dropdown suggestions */}
-                          {showWitnessSuggestions && (
-                            <ul className="absolute w-full bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-40 overflow-y-auto z-20">
-                              {isSearchingWitness ? (
-                                <li className="p-3 text-gray-500 text-sm">
-                                  Searching...
-                                </li>
-                              ) : witnessResults.length > 0 ? (
-                                witnessResults.map((emp) => (
-                                  <li
-                                    key={emp._id}
-                                    onClick={() => selectWitness(emp)}
-                                    className="p-3 hover:bg-gray-100 cursor-pointer text-sm text-gray-800"
-                                  >
-                                    {emp.firstName} {emp.lastName} (
-                                    {emp.employeeId})
-                                  </li>
-                                ))
-                              ) : (
-                                <li className="p-3 text-gray-500 text-sm">
-                                  No matches found
-                                </li>
-                              )}
-                            </ul>
-                          )}
-                        </div>
-
-                        {/* Show Selected Witnesses */}
-                        {witnessList.length > 0 && (
-                          <div className="mt-3 space-y-2">
-                            {witnessList.map((w, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center justify-between p-2 bg-purple-50 border border-purple-200 rounded-lg"
-                              >
-                                <span className="text-sm font-medium text-purple-700">
-                                  {w.name} ({w.employeeId})
-                                </span>
-                                <button
-                                  onClick={() => removeWitness(index)}
-                                  className="text-red-500 hover:text-red-700"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Buttons */}
-                      <div className="mt-6 flex justify-end gap-3">
-                        <button
-                          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors"
-                          onClick={() => setShowHearingModal(false)}
-                        >
-                          Cancel
-                        </button>
-
-                        <button
-                          className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50"
-                          onClick={() =>
-                            handleHearingDate(hearingDate, witnessList)
-                          }
-                          disabled={!hearingDate.trim()}
-                        >
-                          Set Hearing
-                        </button>
-                      </div>
-                    </div>
+                        onFormChange({
+                          target: {
+                            name: "offenseCategory",
+                            value: selectedValues,
+                          },
+                        });
+                      }}
+                      className="w-full p-3 sm:p-4 bg-gray-50 border-2 border-gray-200 rounded-xl 
+                 focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 
+                 text-sm sm:text-base min-h-[120px]"
+                      style={{ overflowY: "auto" }}
+                    >
+                      <option value="Attendance and Punctuality">
+                        Attendance and Punctuality
+                      </option>
+                      <option value="Behavior and Conduct">
+                        Behavior and Conduct
+                      </option>
+                      <option value="Good Morals and Work Ethics">
+                        Good Morals and Work Ethics
+                      </option>
+                      <option value="Negligence in the Performance of Duty">
+                        Negligence in the Performance of Duty
+                      </option>
+                      <option value="Company Interest/Insubordination">
+                        Company Interest/Insubordination
+                      </option>
+                      <option value="Company Funds and Property">
+                        Company Funds and Property
+                      </option>
+                      <option value="Sanitation, Safety and Security at Work">
+                        Sanitation, Safety and Security at Work
+                      </option>
+                      <option value="Securing or Divulging Confidential Information">
+                        Securing or Divulging Confidential Information
+                      </option>
+                    </select>
                   </div>
-                )}
+
+                  {/* Chips Display */}
+                  {Array.isArray(formData.offenseCategory) &&
+                    formData.offenseCategory.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {formData.offenseCategory.map((category, index) => (
+                          <span
+                            key={index}
+                            className="flex items-center gap-2 px-3 py-1 bg-red-100 text-red-700 
+                       text-xs rounded-full border border-red-200"
+                          >
+                            {category}
+                            <button
+                              onClick={() => {
+                                const updated = formData.offenseCategory.filter(
+                                  (c) => c !== category
+                                );
+                                onFormChange({
+                                  target: {
+                                    name: "offenseCategory",
+                                    value: updated,
+                                  },
+                                });
+                              }}
+                              className="text-red-600 hover:text-red-800 font-bold"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                </div>
+
+                {/* Drag-and-drop Attachment Input */}
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  NTE FILE *
+                </label>
+                <div
+                  className={`mb-4 p-4 border-2 rounded-xl border-dashed text-center cursor-pointer transition-colors ${
+                    isDragOver
+                      ? "border-green-500 bg-green-50"
+                      : "border-gray-300 bg-white"
+                  }`}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragOver(true);
+                  }}
+                  onDragLeave={() => setIsDragOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragOver(false);
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                      setSelectedFile(e.dataTransfer.files[0]);
+                    }
+                  }}
+                  onClick={() =>
+                    document.getElementById("nteFileInput")?.click()
+                  }
+                >
+                  {selectedFile ? (
+                    <p className="text-gray-700 text-sm">
+                      Selected file: {selectedFile.name}
+                    </p>
+                  ) : (
+                    <p className="text-gray-500 text-sm">
+                      Drag and drop a file here, or click to select
+                    </p>
+                  )}
+                  <input
+                    type="file"
+                    id="nteFileInput"
+                    className="hidden"
+                    onChange={(e) =>
+                      setSelectedFile(e.target.files?.[0] || null)
+                    }
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="mt-6 flex justify-end gap-3">
+                  <button
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors"
+                    onClick={() => setShowValidModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleValid}
+                    disabled={
+                      loading ||
+                      !selectedFile ||
+                      !formData.offenseCategory ||
+                      formData.offenseCategory === ""
+                    }
+                    className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {loading && (
+                      <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+                    )}
+                    Send NTE
+                  </button>
+                </div>
               </div>
             </div>
           )}
 
-          {/* Button triggers */}
-          {formData.status === "Scheduled for hearing" && (
-            <button
-              onClick={() => setShowMOMModal(true)}
-              className="flex-1 bg-linear-to-r from-indigo-600 to-indigo-700 text-white p-3 sm:p-4 rounded-2xl hover:from-indigo-700 hover:to-indigo-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
-            >
-              Upload Minutes of Meeting
-            </button>
+          {showInvalidModal && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-gray-900">
+                    Reason for Invalidation
+                  </h2>
+                  <button
+                    onClick={() => setShowInvalidModal(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Textarea */}
+                <textarea
+                  className="w-full border border-gray-300 rounded-xl p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                  rows={4}
+                  value={invalidReason}
+                  onChange={(e) => setInvalidReason(e.target.value)}
+                  placeholder="Provide reason for marking this offense as invalid"
+                />
+
+                {/* Buttons */}
+                <div className="mt-6 flex justify-end gap-3">
+                  <button
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors"
+                    onClick={() => setShowInvalidModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50"
+                    onClick={() => {
+                      if (!invalidReason.trim()) return;
+                      rejectOffense(invalidReason);
+                    }}
+                    disabled={!invalidReason.trim()}
+                  >
+                    Mark as Invalid
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
 
-          {formData.status === "MOM Uploaded" && (
-            <button
-              onClick={() => setShowNDAModal(true)}
-              className="flex-1 bg-linear-to-r from-indigo-600 to-indigo-700 text-white p-3 sm:p-4 rounded-2xl hover:from-indigo-700 hover:to-indigo-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
-            >
-              Upload NDA
-            </button>
+          {showHearingModal && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-gray-900">
+                    Schedule Hearing
+                  </h2>
+                  <button
+                    onClick={() => setShowHearingModal(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* DATE-TIME PICKER */}
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Hearing Date & Time
+                </label>
+                <input
+                  type="datetime-local"
+                  className="w-full border border-gray-300 rounded-xl p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent mb-4"
+                  value={hearingDate}
+                  onChange={(e) => setHearingDate(e.target.value)}
+                  min={new Date().toISOString().slice(0, 16)} // disable past dates
+                />
+
+                {/* WITNESS SEARCH */}
+                <div className="mb-4" ref={witnessRef}>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Witnesses
+                  </label>
+
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+
+                    <input
+                      type="text"
+                      value={witnessQuery}
+                      onChange={handleWitnessSearch}
+                      placeholder="Search employee..."
+                      className="w-full pl-10 pr-3 py-2 border rounded-xl bg-gray-50 focus:border-red-500 focus:bg-white text-gray-700"
+                    />
+
+                    {/* Dropdown suggestions */}
+                    {showWitnessSuggestions && (
+                      <ul className="absolute w-full bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-40 overflow-y-auto z-20">
+                        {isSearchingWitness ? (
+                          <li className="p-3 text-gray-500 text-sm">
+                            Searching...
+                          </li>
+                        ) : witnessResults.length > 0 ? (
+                          witnessResults.map((emp) => (
+                            <li
+                              key={emp._id}
+                              onClick={() => selectWitness(emp)}
+                              className="p-3 hover:bg-gray-100 cursor-pointer text-sm text-gray-800"
+                            >
+                              {emp.firstName} {emp.lastName} ({emp.employeeId})
+                            </li>
+                          ))
+                        ) : (
+                          <li className="p-3 text-gray-500 text-sm">
+                            No matches found
+                          </li>
+                        )}
+                      </ul>
+                    )}
+                  </div>
+
+                  {/* Show Selected Witnesses */}
+                  {witnessList.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {witnessList.map((w, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-2 bg-purple-50 border border-purple-200 rounded-lg"
+                        >
+                          <span className="text-sm font-medium text-purple-700">
+                            {w.name} ({w.employeeId})
+                          </span>
+                          <button
+                            onClick={() => removeWitness(index)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Buttons */}
+                <div className="mt-6 flex justify-end gap-3">
+                  <button
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors"
+                    onClick={() => setShowHearingModal(false)}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50"
+                    onClick={() => handleHearingDate(hearingDate, witnessList)}
+                    disabled={!hearingDate.trim()}
+                  >
+                    Set Hearing
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
 
-          {/* ================= MOM Modal ================= */}
           {showMOMModal && (
             <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">
               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
@@ -980,7 +972,6 @@ const HR_OffenseDetails = ({
             </div>
           )}
 
-          {/* ================= NDA Modal ================= */}
           {showNDAModal && (
             <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">
               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
