@@ -9,7 +9,8 @@ const CaseHistory = ({
   isLoading,
   formatDisplayDate,
   today,
-  onView
+  userMap,
+  onView,
 }) => {
   return (
     <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
@@ -100,7 +101,11 @@ const CaseHistory = ({
                       {off.offenseCategory}
                     </td>
                     <td className="p-4 text-sm text-gray-600">
-                      {off.agentName || "N/A"}
+                      {userMap[off.respondantId]
+                        ? `${userMap[off.respondantId].firstName} ${
+                            userMap[off.respondantId].lastName
+                          }`
+                        : "N/A"}
                     </td>
                     <td className="p-4">
                       <span
