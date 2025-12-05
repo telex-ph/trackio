@@ -191,16 +191,6 @@ const MyCoachingInProgress = ({
                     </span>
                   </p>
                 )}
-                {off.remarks && (
-                  <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border-l-4 border-gray-400">
-                    <p className="text-xs sm:text-sm text-gray-700">
-                      <span className="font-semibold text-gray-800">
-                        Remarks:
-                      </span>{" "}
-                      {off.remarks}
-                    </p>
-                  </div>
-                )}
 
                 {off.evidence?.length > 0 && (
                   <div className="bg-purple-50 rounded-xl p-3 sm:p-4 border-l-4 border-purple-500">
