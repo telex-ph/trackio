@@ -783,6 +783,7 @@ const SharedMyOffences = () => {
           formatDisplayDate={formatDisplayDate}
           today={today}
           onView={handleIRView}
+          userMap={userMap}
         />
       ) : (
         <MyCoachingHistory
@@ -802,6 +803,7 @@ const SharedMyOffences = () => {
           formatDisplayDate={formatDisplayDate}
           today={today}
           onView={handleCoachingView}
+          userMap={userMap}
         />
       )}
     </div>

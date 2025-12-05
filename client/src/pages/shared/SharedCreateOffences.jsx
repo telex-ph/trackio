@@ -101,7 +101,7 @@ const SharedCreateOffences = () => {
 
   useEffect(() => {
     const idsToFetch = offenses.flatMap((offense) => [
-      offense.agentId,
+      offense.respondantId,
       offense.reportedById,
       offense.coachId,
     ]);
@@ -971,6 +971,7 @@ const SharedCreateOffences = () => {
             formatDisplayDate={formatDisplayDate}
             today={today}
             onView={effectiveType === "IR" ? handleIRView : handleCoachingView}
+            userMap={userMap}
           />
         );
       })()}
