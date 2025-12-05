@@ -3,16 +3,20 @@ import { DateTime } from "luxon";
 import api from "../../utils/axios";
 import socket from "../../utils/socket";
 
-// Import components
+// Components
 import Notification from "../../components/incident-reports/Notification";
-// MODIFIED: Import the new .tsx file. No extension needed.
 import HR_OffenseDetails from "../../components/HRIncidentReport/ReportedIR/HR_OffenseDetails";
 import HR_CasesInProgress from "../../components/HRIncidentReport/ReportedIR/HR_CasesInProgress";
 import HR_CaseHistory from "../../components/HRIncidentReport/ReportedIR/HR_CaseHistory";
+
 import { useStore } from "../../store/useStore";
 import { fetchUserById } from "../../store/stores/getUserById";
 
-// Define TypeScript Interfaces
+// --------------------------------------------------------
+// Interfaces
+// --------------------------------------------------------
+
+// File structure for uploads
 interface FileUpload {
   fileName: string;
   size: number;
@@ -21,6 +25,7 @@ interface FileUpload {
   url: string;
 }
 
+// Main offense structure
 interface Offense {
   _id: string;
   agentName: string;
@@ -52,31 +57,40 @@ interface Offense {
 }
 
 const HRReportedOffenses = () => {
+  // UI modes and editing state
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Loading + data states
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [offenses, setOffenses] = useState<Offense[]>([]);
+
+  // Search states (Cases In Progress)
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  // History states
+  // Search states (Case History)
   const [historySearchQuery, setHistorySearchQuery] = useState<string>("");
   const [historyStartDate, setHistoryStartDate] = useState<string>("");
   const [historyEndDate, setHistoryEndDate] = useState<string>("");
 
   const today: string = DateTime.now().toISODate()!;
 
+  // Logged in HR user
   const loggedUser = useStore((state) => state.user);
 
+  // Decrement unread IR count
   const decrementUnreadOffensesHR = useStore(
     (state) => state.decrementUnreadOffensesHR
   );
 
+  // Notification popup
   const [notification, setNotification] = useState({
     message: "",
     type: "",
     isVisible: false,
   });
 
+  // File upload states
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
 
@@ -86,17 +100,7 @@ const HRReportedOffenses = () => {
   const [selectedNDAFile, setSelectedNDAFile] = useState<File | null>(null);
   const [isDragOverNDA, setIsDragOverNDA] = useState(false);
 
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-
-      reader.onload = () => resolve(reader.result as string); // FIX
-      reader.onerror = (error) => reject(error);
-
-      reader.readAsDataURL(file);
-    });
-  };
-
+  // Form data for selected offense
   const [formData, setFormData] = useState<Partial<Offense>>({
     agentName: "",
     offenseCategory: "",
@@ -110,12 +114,15 @@ const HRReportedOffenses = () => {
     fileNDA: [],
   });
 
+  // Show toast-style notifications
   const showNotification = (message: string, type: string) => {
     setNotification({ message, type, isVisible: true });
   };
 
+  // Cache users from IDs for performance
   const [userMap, setUserMap] = useState<Record<string, any>>({});
 
+  // Fetch user details only once per ID
   const fetchUsersByIds = useCallback(
     async (ids: (string | undefined)[] = []) => {
       const uniqueIds = ids.filter((id): id is string => Boolean(id));
@@ -130,6 +137,7 @@ const HRReportedOffenses = () => {
     [userMap]
   );
 
+  // Whenever offenses load, fetch all related user info
   useEffect(() => {
     const idsToFetch = offenses.flatMap((offense) => [
       offense.respondantId,
@@ -139,7 +147,7 @@ const HRReportedOffenses = () => {
     fetchUsersByIds(idsToFetch);
   }, [offenses, fetchUsersByIds]);
 
-  // Fetch all offenses
+  // Fetch offense list
   const fetchOffenses = async () => {
     try {
       setIsLoading(true);
@@ -153,38 +161,37 @@ const HRReportedOffenses = () => {
     }
   };
 
+  // Initial load
   useEffect(() => {
     fetchOffenses();
   }, []);
 
+  // Live socket updates (add/update/delete)
   useEffect(() => {
     const handleAdded = (newOffense: Offense) => {
-      if (!newOffense?._id) return;
-      setOffenses((prev) => [newOffense, ...(prev || [])]);
+      if (newOffense?._id) setOffenses((prev) => [newOffense, ...(prev || [])]);
     };
 
     const handleUpdated = (updatedOffense: Offense) => {
-      if (!updatedOffense?._id) return;
-      setOffenses((prev) =>
-        (prev || []).map((off) =>
-          off._id === updatedOffense._id ? updatedOffense : off
-        )
-      );
+      if (updatedOffense?._id)
+        setOffenses((prev) =>
+          (prev || []).map((off) =>
+            off._id === updatedOffense._id ? updatedOffense : off
+          )
+        );
     };
 
     const handleDeleted = (deletedId: string) => {
-      if (!deletedId) return;
-      setOffenses((prev) =>
-        (prev || []).filter((off) => off._id !== deletedId)
-      );
+      if (deletedId)
+        setOffenses((prev) =>
+          (prev || []).filter((off) => off._id !== deletedId)
+        );
     };
 
-    // Attach once
     socket.on("offenseAdded", handleAdded);
     socket.on("offenseUpdated", handleUpdated);
     socket.on("offenseDeleted", handleDeleted);
 
-    // Cleanup on unmount
     return () => {
       socket.off("offenseAdded", handleAdded);
       socket.off("offenseUpdated", handleUpdated);
@@ -192,7 +199,7 @@ const HRReportedOffenses = () => {
     };
   }, []);
 
-  // Reset form/view
+  // Reset view + form
   const resetForm = () => {
     setFormData({
       agentName: "",
@@ -207,35 +214,34 @@ const HRReportedOffenses = () => {
     setEditingId(null);
   };
 
-  // Handle clicking "View" on a card
+  // When HR clicks "View"
   const handleView = async (off: Offense) => {
     if (!off) return;
 
     setIsViewMode(true);
     setEditingId(off._id);
 
+    // Load respondent + reporter names
     let agentUser = userMap[off.respondantId || ""];
     if (off.respondantId && !agentUser) {
       agentUser = await fetchUserById(off.respondantId);
-      setUserMap((prev) => ({
-        ...prev,
-        [off.respondantId as string]: agentUser,
-      }));
+      setUserMap((prev) => ({ ...prev, [off.respondantId!]: agentUser }));
     }
+
     let reporterUser = userMap[off.reportedById || ""];
     if (off.reportedById && !reporterUser) {
       reporterUser = await fetchUserById(off.reportedById);
-      setUserMap((prev) => ({
-        ...prev,
-        [off.reportedById as string]: reporterUser,
-      }));
+      setUserMap((prev) => ({ ...prev, [off.reportedById!]: reporterUser }));
     }
 
-    // --- Set form data (clean + safe) ---
+    // Fill form with selected offense
     setFormData({
       ...off,
       agentName: agentUser
         ? `${agentUser.firstName} ${agentUser.lastName}`
+        : "Unknown",
+      reporterName: reporterUser
+        ? `${reporterUser.firstName} ${reporterUser.lastName}`
         : "Unknown",
       offenseCategory: off.offenseCategory || "",
       offenseLevel: off.offenseLevel || "",
@@ -246,12 +252,9 @@ const HRReportedOffenses = () => {
       fileMOM: off.fileMOM || [],
       fileNDA: off.fileNDA || [],
       fileNTE: off.fileNTE || [],
-      reporterName: reporterUser
-        ? `${reporterUser.firstName} ${reporterUser.lastName}`
-        : "Unknown",
     });
 
-    // --- Update "read" status like in handleCoachingView ---
+    // Auto-mark as read
     try {
       const { data: offense } = await api.get(`/offenses/${off._id}`);
 
@@ -267,11 +270,11 @@ const HRReportedOffenses = () => {
       }
     } catch (err) {
       console.error("Error marking as read:", err);
-      showNotification("Failed to update offense. Please try again.", "error");
+      showNotification("Failed to update offense.", "error");
     }
   };
 
-  // NEW: Handle form field changes
+  // Update form fields
   const handleFormChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -281,9 +284,11 @@ const HRReportedOffenses = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const [showHearingModal, setShowHearingModal] = useState<boolean>(false);
-  const [hearingDate, setHearingDate] = React.useState("");
+  // Hearing modal states
+  const [_showHearingModal, setShowHearingModal] = useState<boolean>(false);
+  const [_hearingDate, setHearingDate] = React.useState("");
 
+  // Set hearing schedule
   const handleHearingDate = async (
     hearingDate: string,
     witnesses: { _id: string; name: string; employeeId: string }[]
@@ -308,15 +313,12 @@ const HRReportedOffenses = () => {
       setHearingDate("");
       setShowHearingModal(false);
     } catch (error) {
-      console.error("Error setting hearing date:", error);
-      showNotification(
-        "Failed to set hearing date. Please try again.",
-        "error"
-      );
+      console.error("Error setting hearing:", error);
+      showNotification("Failed to set hearing date.", "error");
     }
   };
 
-  // NEW: Handle Update button
+  // Validate offense → send NTE
   const handleValid = async () => {
     if (!editingId) return;
 
@@ -336,16 +338,13 @@ const HRReportedOffenses = () => {
         isReadByHR: true,
       };
 
+      // Upload NTE file
       if (selectedFile) {
-        console.log("NTE File: ", selectedFile);
+        const form = new FormData();
+        form.append("file", selectedFile);
 
-        const fileForm = new FormData();
-        fileForm.append("file", selectedFile);
-
-        const uploadRes = await api.post("/upload/nte", fileForm, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+        const uploadRes = await api.post("/upload/nte", form, {
+          headers: { "Content-Type": "multipart/form-data" },
         });
 
         payload.fileNTE = [
@@ -361,17 +360,18 @@ const HRReportedOffenses = () => {
 
       await api.put(`/offenses/${editingId}`, payload);
 
-      showNotification("Offense is validated. NTE!", "success");
+      showNotification("Offense validated. NTE sent!", "success");
 
       resetForm();
       setSelectedFile(null);
       fetchOffenses();
     } catch (error) {
       console.error("Error updating offense:", error);
-      showNotification("Failed to update. Please try again.", "error");
+      showNotification("Failed to update.", "error");
     }
   };
 
+  // Upload MOM
   const handleUploadMOM = async () => {
     if (!editingId) return;
 
@@ -387,18 +387,12 @@ const HRReportedOffenses = () => {
       };
 
       if (selectedMOMFile) {
-        console.log("MOM FIle: ", selectedMOMFile);
-
         const formData = new FormData();
         formData.append("file", selectedMOMFile);
 
         const uploadRes = await api.post("/upload/mom", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          headers: { "Content-Type": "multipart/form-data" },
         });
-
-        console.log(uploadRes.data);
 
         payload.fileMOM = [
           {
@@ -411,23 +405,21 @@ const HRReportedOffenses = () => {
         ];
       }
 
-      // --- API Call ---
       await api.put(`/offenses/${editingId}`, payload);
 
-      showNotification("Documents uploaded successfully!", "success");
+      showNotification("MOM uploaded!", "success");
 
-      // --- Reset ---
       resetForm();
       setSelectedMOMFile(null);
       setSelectedNDAFile(null);
-
       fetchOffenses();
     } catch (error) {
       console.error("Error updating offense:", error);
-      showNotification("Failed to update. Please try again.", "error");
+      showNotification("Failed to upload.", "error");
     }
   };
 
+  // Upload NDA
   const handleUploadNDA = async () => {
     if (!editingId) return;
 
@@ -444,18 +436,12 @@ const HRReportedOffenses = () => {
       };
 
       if (selectedNDAFile) {
-        console.log("NDA FIle: ", selectedNDAFile);
-
         const formData = new FormData();
         formData.append("file", selectedNDAFile);
 
         const uploadRes = await api.post("/upload/nda", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          headers: { "Content-Type": "multipart/form-data" },
         });
-
-        console.log(uploadRes.data);
 
         payload.fileNDA = [
           {
@@ -468,12 +454,10 @@ const HRReportedOffenses = () => {
         ];
       }
 
-      // --- API Call ---
       await api.put(`/offenses/${editingId}`, payload);
 
-      showNotification("Documents uploaded successfully!", "success");
+      showNotification("NDA uploaded!", "success");
 
-      // --- Reset ---
       resetForm();
       setSelectedMOMFile(null);
       setSelectedNDAFile(null);
@@ -481,13 +465,15 @@ const HRReportedOffenses = () => {
       fetchOffenses();
     } catch (error) {
       console.error("Error updating offense:", error);
-      showNotification("Failed to update. Please try again.", "error");
+      showNotification("Failed to upload.", "error");
     }
   };
 
-  const [showInvalidModal, setShowInvalidModal] = useState(false);
-  const [invalidReason, setInvalidReason] = useState("");
+  // Reject modal states
+  const [_showInvalidModal, setShowInvalidModal] = useState(false);
+  const [_invalidReason, setInvalidReason] = useState("");
 
+  // Reject offense
   const rejectOffense = async (invalidReason: string) => {
     try {
       const payload = {
@@ -498,30 +484,30 @@ const HRReportedOffenses = () => {
       };
 
       await api.put(`/offenses/${editingId}`, payload);
-      showNotification("Case has been rejected.", "success");
+      showNotification("Case rejected.", "success");
       resetForm();
       fetchOffenses();
       setShowInvalidModal(false);
       setInvalidReason("");
     } catch (error) {
       console.error("Error rejecting case:", error);
-      showNotification("Failed to reject. Please try again.", "error");
+      showNotification("Failed to reject.", "error");
     }
   };
 
-  // Format date for display
+  // Formatting helper for front-end display
   const formatDisplayDate = (dateStr: string | undefined): string =>
     dateStr
       ? DateTime.fromISO(dateStr).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)
       : "";
 
-  // Reset history date filters
+  // Clear history filters
   const handleHistoryDateReset = () => {
     setHistoryStartDate("");
     setHistoryEndDate("");
   };
 
-  // Filter for "Cases In Progress"
+  // Filter active cases
   const filteredOffenses = offenses.filter(
     (off) =>
       !["Invalid", "Acknowledged"].includes(off.status) &&
@@ -536,14 +522,14 @@ const HRReportedOffenses = () => {
         off.actionTaken,
         off.remarks || "",
         formatDisplayDate(off.dateOfOffense),
-        off.reportedByName || "", // Add reporter name to search
+        off.reportedByName || "",
       ]
         .join(" ")
         .toLowerCase()
         .includes(searchQuery.toLowerCase())
   );
 
-  // Filter for "Case History"
+  // Filter resolved cases (history)
   const resolvedOffenses = offenses.filter((off) => {
     const isResolved = ["Acknowledged"].includes(off.status);
     if (!isResolved) return false;
@@ -557,7 +543,7 @@ const HRReportedOffenses = () => {
       off.actionTaken,
       off.remarks || "",
       formatDisplayDate(off.dateOfOffense),
-      off.reportedByName || "", // Add reporter name to search
+      off.reportedByName || "",
     ]
       .join(" ")
       .toLowerCase()
@@ -571,13 +557,17 @@ const HRReportedOffenses = () => {
     const end = historyEndDate
       ? DateTime.fromISO(historyEndDate).startOf("day")
       : null;
-    const isAfterStartDate = start ? offenseDate >= start : true;
-    const isBeforeEndDate = end ? offenseDate <= end : true;
-    return isAfterStartDate && isBeforeEndDate;
+
+    return (!start || offenseDate >= start) && (!end || offenseDate <= end);
   });
+
+  // --------------------------------------------------------
+  // UI Rendering
+  // --------------------------------------------------------
 
   return (
     <div>
+      {/* Notification popup */}
       {notification.isVisible && (
         <Notification
           message={notification.message}
@@ -585,6 +575,8 @@ const HRReportedOffenses = () => {
           onClose={() => setNotification({ ...notification, isVisible: false })}
         />
       )}
+
+      {/* Page header */}
       <section className="flex flex-col mb-2">
         <div className="flex items-center gap-1">
           <h2>Reported Offenses</h2>
@@ -595,10 +587,10 @@ const HRReportedOffenses = () => {
       </section>
 
       <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
-        {/* Offense Details Panel */}
+        {/* Offense details */}
         <HR_OffenseDetails
           isViewMode={isViewMode}
-          formData={formData as Offense} // Casting here is fine
+          formData={formData as Offense}
           onClose={resetForm}
           onFormChange={handleFormChange}
           handleValid={handleValid}
@@ -620,7 +612,7 @@ const HRReportedOffenses = () => {
           setIsDragOverNDA={setIsDragOverNDA}
         />
 
-        {/* Cases in Progress Panel */}
+        {/* Cases in progress */}
         <HR_CasesInProgress
           offenses={filteredOffenses}
           searchQuery={searchQuery}
@@ -633,7 +625,7 @@ const HRReportedOffenses = () => {
         />
       </div>
 
-      {/* Case History Panel */}
+      {/* Case history section */}
       <HR_CaseHistory
         offenses={resolvedOffenses}
         filters={{
