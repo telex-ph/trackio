@@ -26,7 +26,11 @@ export const sendOtp = async (to, otpCode) => {
           </p>
 
           <p style="font-size: 14px;">
-            <strong>This OTP is valid for 30 minutes.</strong> Do not share it with anyone.
+            <strong>This OTP is valid for 15 minutes.</strong> Do not share it with anyone.
+          </p>
+
+          <p style="font-size: 14px; color: #555;">
+            If you received multiple OTPs, please use <strong>the most recent OTP</strong> to complete your verification.
           </p>
 
           <p style="font-size: 14px; color: #555;">

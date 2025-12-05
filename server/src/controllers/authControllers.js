@@ -53,7 +53,7 @@ export const login = async (req, res) => {
         _id: String(user._id),
       })
         .setProtectedHeader({ alg: "RS256" })
-        .setExpirationTime("5m")
+        .setExpirationTime("15m")
         .sign(privateKey);
 
       return res.status(401).json({

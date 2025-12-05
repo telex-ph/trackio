@@ -92,13 +92,7 @@ const VerifyCode = () => {
           <div className="mt-1">
             <span>
               This requirement is part of our security compliance guidelines and
-              helps ensure that our system remains secure — as recommended by
-              our
-              <strong>
-                {" "}
-                esteemed and very beautiful Audit and Compliance Head
-              </strong>
-              .
+              helps ensure that our system remains secure.
             </span>
           </div>
         </Alert>
