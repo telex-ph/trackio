@@ -802,6 +802,7 @@ const SharedCreateOffences = () => {
                   "team-leader",
                   "operations-manager",
                   "trainer-quality-assurance",
+                  "manager"
                 ].includes(loggedUser.role) && (
                   <div className="bg-gray-200 rounded-full p-1 flex shadow-inner">
                     {["COACHING", "IR"].map((type) => (
@@ -842,6 +843,7 @@ const SharedCreateOffences = () => {
               "team-leader",
               "operations-manager",
               "trainer-quality-assurance",
+              "manager"
             ].includes(loggedUser.role);
 
             // If not TL/OM → always IR
@@ -903,6 +905,7 @@ const SharedCreateOffences = () => {
             "team-leader",
             "operations-manager",
             "trainer-quality-assurance",
+            "manager"
           ].includes(loggedUser.role);
 
           // Force IR for non-TL/OM
@@ -938,6 +941,7 @@ const SharedCreateOffences = () => {
           "team-leader",
           "operations-manager",
           "trainer-quality-assurance",
+          "manager"
         ].includes(loggedUser.role);
 
         const effectiveType = isTLOrOM ? offenseType : "IR";
