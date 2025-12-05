@@ -6,6 +6,7 @@ import NotFound from "../pages/global/NotFound";
 import Login from "../pages/global/Login";
 import Unauthorized from "../pages/global/Unauthorized";
 import ForgotPassword from "../pages/global/ForgotPassword";
+import VerifyCode from "../pages/global/VerifyCode";
 
 // Others
 import { createBrowserRouter, Navigate } from "react-router-dom";
@@ -33,6 +34,7 @@ const router = createBrowserRouter([
   { path: "forgot-password", element: <ForgotPassword /> },
   { path: "reset-password", element: <ResetPassword /> },
   { path: "live-monitoring", element: <LiveMonitoring /> },
+  { path: "verify", element: <VerifyCode /> },
 
   // Protected App Routes
   {

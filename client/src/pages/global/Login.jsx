@@ -1,19 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Label, TextInput, Checkbox, Alert } from "flowbite-react";
+import { Button, Label, TextInput, Alert } from "flowbite-react";
 import { HiInformationCircle } from "react-icons/hi";
-
-import {
-  checkRole,
-  getMicrosoftUser,
-  microsoftLogin,
-} from "../../auth/authService";
-import api from "../../utils/axios";
 import { Eye, EyeClosed } from "lucide-react";
-import microsoftLogo from "../../assets/logos/microsoft.svg";
 import trackio from "../../assets/logos/trackio.svg";
-import ellipse from "../../assets/shapes/ellipse.svg";
-import telexvid from "../../assets/video/telexvid.mp4";
 import Spinner from "../../assets/loaders/Spinner";
 import { useAuth } from "../../hooks/useAuth";
 import Wristwatch from "../../assets/illustrations/Wristwatch";

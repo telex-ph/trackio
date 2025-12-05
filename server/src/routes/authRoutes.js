@@ -9,6 +9,7 @@ import {
   getStatus,
   login,
   verifyForgotPassword,
+  verifyOtpCode,
 } from "../controllers/authControllers.js";
 import { verifyJWT } from "../middlewares/verifyJWT.js";
 // import { handleExpiredToken } from "../middlewares/handleExpiredToken.js";
@@ -24,6 +25,8 @@ router.post("/forgot-password", forgotPassword);
 
 // Verify the payload
 router.post("/verify-forgot-password", verifyForgotPassword);
+
+router.post("/verify-code", verifyOtpCode);
 
 // Creation of access token and refresh token
 router.post("/create-token", createToken);
