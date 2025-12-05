@@ -8,11 +8,13 @@ export const useAuth = () => {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const bearerToken = "Bearer standard_077ed3b9b01c0863d40827030797f5e602b32b89fe2f3f94cc495b475802c16512013466aaf82efa0d966bff7d6cf837d00e0bfdc9e91f4f290e893ba28c4d6330310f6428f7befc9ad39cd5a55f3b3ba09822aed74a922bf1e6ca958b2f844fab5259c0d69318160bb91d4ab2bf2bec0c72f6d94bf0666a59559c3992aa8b47";
+  const bearerToken =
+    "Bearer standard_077ed3b9b01c0863d40827030797f5e602b32b89fe2f3f94cc495b475802c16512013466aaf82efa0d966bff7d6cf837d00e0bfdc9e91f4f290e893ba28c4d6330310f6428f7befc9ad39cd5a55f3b3ba09822aed74a922bf1e6ca958b2f844fab5259c0d69318160bb91d4ab2bf2bec0c72f6d94bf0666a59559c3992aa8b47";
 
   const createAccountTicket = async (name, email) => {
     try {
-      const url = "https://ticketing-system-2u0k.onrender.com/api/auth/register/trackio";
+      const url =
+        "https://ticketing-system-2u0k.onrender.com/api/auth/register/trackio";
 
       const body = {
         name: name,
@@ -57,10 +59,16 @@ export const useAuth = () => {
         }
       }
     } catch (error) {
+      // Issue a verification code
+      if (error.response.data.code === "SESSION_EXPIRED") {
+        const pendingToken = error.response.data.pendingToken;
+        return navigate(`/verify?token=${pendingToken}`);
+      }
+
       setError({
         message: error.response?.data
-          ? "Oops! We couldn't log you in. Please check your email and password."
-          : error.message,
+          ? error.response?.data.error
+          : "Oops! We couldn't log you in. Please check your email and password.",
         hasError: true,
       });
       console.error("Error: ", error);
