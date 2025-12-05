@@ -680,7 +680,6 @@ const SharedMyOffences = () => {
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
-        {/* --- OFFENSE DETAILS --- */}
         {offenseType === "IR" ? (
           <OffenseDetails
             isViewMode={isViewMode}
