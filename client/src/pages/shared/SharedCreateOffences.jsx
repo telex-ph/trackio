@@ -53,6 +53,9 @@ const SharedCreateOffences = () => {
 
   const today = DateTime.now().toISODate();
 
+  //Loader state
+  const [isUploading, setIsUploading] = useState(false);
+
   // -----------------------------
   // Notifications
   // -----------------------------
@@ -218,7 +221,7 @@ const SharedCreateOffences = () => {
     }
 
     try {
-      setIsLoading(true);
+      setIsUploading(true);
 
       const payload = {
         respondantId: formData.respondantId,
@@ -271,7 +274,7 @@ const SharedCreateOffences = () => {
       console.error("Submit error", err);
       showNotification("Failed to submit offense", "error");
     } finally {
-      setIsLoading(false);
+      setIsUploading(false);
     }
   }, [
     formData,
@@ -339,7 +342,7 @@ const SharedCreateOffences = () => {
     if (!editingId) return;
 
     try {
-      setIsLoading(true);
+      setIsUploading(true);
 
       const payload = {
         dateOfOffense: formData.dateOfOffense,
@@ -357,7 +360,7 @@ const SharedCreateOffences = () => {
       console.error("Edit failed", err);
       showNotification("Failed to update offense", "error");
     } finally {
-      setIsLoading(false);
+      setIsUploading(false);
     }
   };
 
@@ -372,7 +375,7 @@ const SharedCreateOffences = () => {
     }
 
     try {
-      setIsLoading(true);
+      setIsUploading(true);
 
       const payload = {
         respondantId: formData.agentId,
@@ -423,7 +426,7 @@ const SharedCreateOffences = () => {
       console.error("Submit error", err);
       showNotification("Failed to submit coaching log", "error");
     } finally {
-      setIsLoading(false);
+      setIsUploading(false);
     }
   }, [
     formData,
@@ -546,6 +549,7 @@ const SharedCreateOffences = () => {
     const now = new Date();
 
     try {
+      setIsUploading(true);
       const payload = {
         isAcknowledged: false,
         status: "For Acknowledgement",
@@ -588,6 +592,8 @@ const SharedCreateOffences = () => {
     } catch (error) {
       console.error("Error updating offense:", error);
       showNotification("Failed to update. Please try again.", "error");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -601,6 +607,8 @@ const SharedCreateOffences = () => {
 
   const handleDelete = async () => {
     try {
+      setIsUploading(true);
+
       await api.delete(`/offenses/${editingId}`);
       showNotification("Deleted successfully", "success");
       resetFormAndPanel();
@@ -609,6 +617,8 @@ const SharedCreateOffences = () => {
       const msg =
         err?.response?.data?.message || err.message || "Unknown error";
       showNotification(`Delete failed: ${msg}`, "error");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -855,7 +865,7 @@ const SharedCreateOffences = () => {
                   isEditMode={panelMode === "edit"}
                   resetForm={resetFormAndPanel}
                   showNotification={showNotification}
-                  isLoading={isLoading}
+                  isUploading={isUploading}
                   userMap={userMap}
                   {...(effectiveType === "IR"
                     ? { handleIRSubmit }
@@ -880,6 +890,7 @@ const SharedCreateOffences = () => {
                   onFormChange={handleFormChange}
                   onAddEvidence={handleAddEvidence}
                   onSubmitEdit={handleEdit}
+                  isUploading={isUploading}
                 />
               );
             }

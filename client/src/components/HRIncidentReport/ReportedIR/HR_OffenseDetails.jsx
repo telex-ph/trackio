@@ -39,9 +39,9 @@ const HR_OffenseDetails = ({
   setIsDragOverMOM,
   isDragOverNDA,
   setIsDragOverNDA,
+  isUploading,
 }) => {
   const [showValidModal, setShowValidModal] = React.useState(false);
-  const [loading] = React.useState(false);
 
   const [showInvalidModal, setShowInvalidModal] = React.useState(false);
   const [invalidReason, setInvalidReason] = React.useState("");
@@ -705,23 +705,28 @@ const HR_OffenseDetails = ({
                   <button
                     className="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors"
                     onClick={() => setShowValidModal(false)}
+                    disabled={isUploading}
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleValid}
                     disabled={
-                      loading ||
+                      isUploading ||
                       !selectedFile ||
                       !formData.offenseCategory ||
-                      formData.offenseCategory === ""
+                      formData.offenseCategory.length === 0
                     }
                     className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                   >
-                    {loading && (
-                      <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+                    {isUploading ? (
+                      <>
+                        <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+                        Uploading...
+                      </>
+                    ) : (
+                      "Send NTE"
                     )}
-                    Send NTE
                   </button>
                 </div>
               </div>
@@ -767,9 +772,16 @@ const HR_OffenseDetails = ({
                       if (!invalidReason.trim()) return;
                       rejectOffense(invalidReason);
                     }}
-                    disabled={!invalidReason.trim()}
+                    disabled={isUploading || !invalidReason.trim()}
                   >
-                    Mark as Invalid
+                    {isUploading ? (
+                      <>
+                        <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+                        Marking...
+                      </>
+                    ) : (
+                      "Mark as Invalid"
+                    )}
                   </button>
                 </div>
               </div>
@@ -882,9 +894,16 @@ const HR_OffenseDetails = ({
                   <button
                     className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50"
                     onClick={() => handleHearingDate(hearingDate, witnessList)}
-                    disabled={!hearingDate.trim()}
+                    disabled={isUploading || !hearingDate.trim()}
                   >
-                    Set Hearing
+                    {isUploading ? (
+                      <>
+                        <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+                        Setting Hearing...
+                      </>
+                    ) : (
+                      "Set Hearing"
+                    )}
                   </button>
                 </div>
               </div>
@@ -959,13 +978,17 @@ const HR_OffenseDetails = ({
                   </button>
                   <button
                     onClick={handleUploadMOM}
-                    disabled={loading}
+                    disabled={isUploading || !selectedMOMFile}
                     className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                   >
-                    {loading && (
-                      <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+                    {isUploading ? (
+                      <>
+                        <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+                        Uploading...
+                      </>
+                    ) : (
+                      "Send MOM"
                     )}
-                    Upload MOM
                   </button>
                 </div>
               </div>
@@ -1039,14 +1062,18 @@ const HR_OffenseDetails = ({
                     Cancel
                   </button>
                   <button
-                    onClick={handleUploadNDA}
-                    disabled={loading}
+                    onClick={handleUploadNDA || !selectedNDAFile}
+                    disabled={isUploading}
                     className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                   >
-                    {loading && (
-                      <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+                    {isUploading ? (
+                      <>
+                        <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+                        Uploading...
+                      </>
+                    ) : (
+                      "Send NDA"
                     )}
-                    Upload NDA
                   </button>
                 </div>
               </div>

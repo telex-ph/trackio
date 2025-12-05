@@ -14,6 +14,7 @@ const MyCoachingDetails = ({
   setAckMessage,
   handleAcknowledge,
   loggedUser,
+  isUploading,
 }) => {
   const [showAcknowledgeModal, setShowAcknowledgeModal] = React.useState(false);
 
@@ -285,17 +286,33 @@ const MyCoachingDetails = ({
               {formData.status === "Coaching Log" && (
                 <button
                   onClick={handleSubmit}
+                  disabled={isUploading}
                   className="flex-1 bg-linear-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
                 >
-                  Submit
+                  {isUploading ? (
+                    <>
+                      <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+                      Submitting...
+                    </>
+                  ) : (
+                    "Submit"
+                  )}
                 </button>
               )}
               {formData.status === "For Acknowledgement" && (
                 <button
                   onClick={() => setShowAcknowledgeModal(true)}
+                  disabled={isUploading}
                   className="flex-1 bg-linear-to-r from-red-500 to-red-600 text-white p-2 sm:p-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-md hover:shadow-lg text-sm sm:text-base"
                 >
-                  Acknowledge
+                  {isUploading ? (
+                    <>
+                      <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+                      Acknowledging...
+                    </>
+                  ) : (
+                    "Acknowledge"
+                  )}
                 </button>
               )}
               <button
@@ -307,9 +324,17 @@ const MyCoachingDetails = ({
               {formData.isReadByHR && (
                 <button
                   onClick={onDelete}
+                  disabled={isUploading}
                   className="flex-1 bg-linear-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
                 >
-                  Delete
+                  {isUploading ? (
+                    <>
+                      <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+                      Deleting...
+                    </>
+                  ) : (
+                    "Delete"
+                  )}
                 </button>
               )}
             </div>
