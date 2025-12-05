@@ -10,13 +10,6 @@ export class Recognition {
     this.tags = data.tags || [];
     this.images = data.images || []; 
     this.status = data.status || 'draft';
-    this.engagement = {
-      likes: 0,
-      comments: 0,
-      views: 0,
-      shares: 0,
-      likedBy: []
-    };
     this.metadata = {
       department: data.department || '',
       isFeatured: false,

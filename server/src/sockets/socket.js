@@ -5,6 +5,8 @@ import {
 } from "./handlers/statusWatcher.js";
 import offenseWatcher from "./handlers/offenseWatcher.js";
 import announcementWatcher from "./handlers/announcementWatcher.js";
+import recognitionWatcher from "./handlers/RecognitionWatcher.js";
+
 
 let io;
 
@@ -38,6 +40,7 @@ const socket = async (server, app) => {
   await overBreakWatcher(io);
   await offenseWatcher(io);
   await announcementWatcher(io);
+  await recognitionWatcher(io);
 };
 
 export default socket;

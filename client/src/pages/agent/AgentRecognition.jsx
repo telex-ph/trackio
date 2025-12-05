@@ -1,105 +1,33 @@
-// pages/agent/AgentRecognition.jsx
 import React, { useState, useEffect } from 'react';
 import { 
-
   Eye, 
-  MessageCircle, 
-  Heart, 
   Trophy, 
   Star, 
   Award, 
   Users, 
   X, 
-  TrendingUp as TrendUp,
   BarChart3, 
   Users as Group, 
   Sparkles, 
-  ArrowUpRight, 
+  ArrowUpRight,
   RefreshCw,
   Loader, 
   ChevronLeft, 
   ChevronRight as ChevronRightIcon
-  
 } from 'lucide-react';
 import api from '../../utils/axios';
+import socket from '../../utils/socket';
 
-// Post Details Modal with Image Carousel
-const PostDetailsModal = ({ post, isOpen, onClose, onLike }) => {
-  const [comments, setComments] = useState([]);
-  const [newComment, setNewComment] = useState('');
-  const [liked, setLiked] = useState(false);
-  const [commenting, setCommenting] = useState(false);
+// Post Details Modal without engagement features
+const PostDetailsModal = ({ post, isOpen, onClose }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     if (isOpen && post) {
-      // Fetch comments for this post
-      fetchComments();
-      
-      // Check if user already liked this post
-      const likedPosts = JSON.parse(localStorage.getItem('likedRecognitionPosts') || '[]');
-      setLiked(likedPosts.includes(post._id));
-      
       // Reset image index when modal opens
       setCurrentImageIndex(0);
     }
   }, [isOpen, post]);
-
-  const fetchComments = async () => {
-    try {
-      const response = await api.get(`/recognition/${post._id}/comments`);
-      if (response.data.success) {
-        setComments(response.data.data);
-      }
-    } catch (error) {
-      console.error('Error fetching comments:', error);
-    }
-  };
-
-  const handleLike = async () => {
-    try {
-      await api.patch(`/recognition/${post._id}/like`);
-      setLiked(!liked);
-      onLike(post._id);
-      
-      // Update localStorage
-      const likedPosts = JSON.parse(localStorage.getItem('likedRecognitionPosts') || '[]');
-      if (!liked) {
-        likedPosts.push(post._id);
-      } else {
-        const index = likedPosts.indexOf(post._id);
-        if (index > -1) {
-          likedPosts.splice(index, 1);
-        }
-      }
-      localStorage.setItem('likedRecognitionPosts', JSON.stringify(likedPosts));
-    } catch (error) {
-      console.error('Error liking post:', error);
-    }
-  };
-
-  const handleAddComment = async () => {
-    if (!newComment.trim()) return;
-    
-    setCommenting(true);
-    try {
-      const response = await api.post(`/recognition/${post._id}/comments`, {
-        content: newComment.trim()
-      });
-      
-      if (response.data.success) {
-        setComments(prev => [response.data.data, ...prev]);
-        setNewComment('');
-        
-        // Update post comments count
-        onLike(post._id); // This will trigger a refresh
-      }
-    } catch (error) {
-      console.error('Error adding comment:', error);
-    } finally {
-      setCommenting(false);
-    }
-  };
 
   // Image carousel navigation
   const nextImage = () => {
@@ -166,40 +94,6 @@ const PostDetailsModal = ({ post, isOpen, onClose, onLike }) => {
   };
 
   const typeInfo = getRecognitionTypeInfo(post.recognitionType);
-  const avatarInitials = post.employee?.name 
-    ? post.employee.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
-    : 'EE';
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  // Format time for display next to employee name
-  const formatTime = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffMinutes = Math.floor(diffMs / (1000 * 60));
-    
-    if (diffDays > 0) {
-      return `${diffDays}d ago`;
-    } else if (diffHours > 0) {
-      return `${diffHours}h ago`;
-    } else if (diffMinutes > 0) {
-      return `${diffMinutes}m ago`;
-    } else {
-      return 'Just now';
-    }
-  };
 
   // Check if there are images
   const hasImages = post.images && post.images.length > 0;
@@ -255,7 +149,6 @@ const PostDetailsModal = ({ post, isOpen, onClose, onLike }) => {
                         <ChevronLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
                       </button>
                       
-                   
                       <button
                         onClick={nextImage}
                         className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all group"
@@ -286,13 +179,6 @@ const PostDetailsModal = ({ post, isOpen, onClose, onLike }) => {
                       </div>
                     </>
                   )}
-                  
-                  {/* Department Badge */}
-                  <div className="absolute top-3 right-3">
-                    <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium text-gray-900 shadow-sm">
-                      {post.department || post.employee?.department || 'Department'}
-                    </div>
-                  </div>
                   
                   {/* Recognition Type Badge */}
                   <div className="absolute top-3 left-3">
@@ -346,15 +232,9 @@ const PostDetailsModal = ({ post, isOpen, onClose, onLike }) => {
                       <div>
                         <h4 className="font-bold text-gray-900 text-lg">{post.employee?.name || 'Employee'}</h4>
                         <div className="text-sm text-gray-600">
-                          <div>{post.employee?.department || post.department || 'Department'}</div>
                           {post.employee?.position && (
                             <div className="text-gray-500">{post.employee.position}</div>
                           )}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xs text-gray-500">
-                          {formatTime(post.createdAt)}
                         </div>
                       </div>
                     </div>
@@ -362,130 +242,37 @@ const PostDetailsModal = ({ post, isOpen, onClose, onLike }) => {
                 </div>
               </div>
 
-              {/* Stats Card */}
+              {/* Stats Card - Simplified without engagement stats */}
               <div className="bg-white border border-gray-200 rounded-xl p-5">
                 <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <BarChart3 size={18} />
-                  Engagement Stats
+                  Recognition Details
                 </h3>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Likes</span>
-                    <span className="font-bold text-gray-900">{post.engagement?.likes || 0}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Comments</span>
-                    <span className="font-bold text-gray-900">{post.engagement?.comments || 0}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Views</span>
-                    <span className="font-bold text-gray-900">{post.engagement?.views || 0}</span>
+                    <span className="text-gray-600">Type</span>
+                    <span className="font-bold text-gray-900">{typeInfo.label}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Published</span>
                     <span className="font-medium text-gray-900">
                       {new Date(post.createdAt).toLocaleDateString('en-US', { 
                         month: 'short', 
-                        day: 'numeric' 
+                        day: 'numeric',
+                        year: 'numeric'
                       })}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Action Buttons */}
+              {/* Action Buttons - Simplified */}
               <div className="space-y-3">
-                <button
-                  onClick={handleLike}
-                  className={`w-full flex items-center justify-center gap-2 py-3 rounded-lg font-medium transition-all ${
-                    liked 
-                      ? 'bg-red-50 text-red-600 border border-red-200'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  <Heart size={18} fill={liked ? "currentColor" : "none"} />
-                  {liked ? 'Liked' : 'Like this Post'}
-                </button>
-                
-                 <div className="w-full flex items-center justify-center gap-2 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium">
+                <div className="w-full flex items-center justify-center gap-2 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium">
                   <Eye size={18} />
-                  {post.engagement?.views || 0} Views
+                  View Only
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Comments Section */}
-          <div className="border-t pt-6">
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <MessageCircle size={18} />
-              Comments ({comments.length})
-            </h3>
-
-            {/* Add Comment */}
-            <div className="mb-6">
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Add a comment..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
-                    rows="3"
-                  />
-                </div>
-                <button
-                  onClick={handleAddComment}
-                  disabled={commenting || !newComment.trim()}
-                  className="self-end px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {commenting ? (
-                    <Loader size={18} className="animate-spin" />
-                  ) : (
-                    <>
-                      <MessageCircle size={18} />
-                      Post
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Comments List */}
-            <div className="space-y-4">
-              {comments.length > 0 ? (
-                comments.map((comment) => (
-                  <div key={comment._id} className="bg-gray-50 rounded-xl p-4">
-                    <div className="flex items-start gap-3">
-
-                      <div className="w-10 h-10 bg-gradient-to-r from-gray-600 to-gray-500 rounded-full flex items-center justify-center text-white font-bold">
-                        {comment.author?.name?.charAt(0) || 'U'}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start mb-1">
-                          <div>
-                            <h4 className="font-semibold text-gray-900">{comment.author?.name || 'User'}</h4>
-                          </div>
-                          <span className="text-xs text-gray-500">
-                            {new Date(comment.createdAt).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </span>
-                        </div>
-                        <p className="text-gray-700 mt-2">{comment.content}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <MessageCircle size={32} className="mx-auto mb-2 opacity-50" />
-                  <p>No comments yet. Be the first to comment!</p>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -498,7 +285,7 @@ const PostDetailsModal = ({ post, isOpen, onClose, onLike }) => {
 const AgentRecognition = () => {
   const [activeCategory, setActiveCategory] = useState('Recent posts');
   const [posts, setPosts] = useState([]);
-  const [topRanking, setTopRanking] = useState([]);
+  // const [topRanking, setTopRanking] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
@@ -509,23 +296,96 @@ const AgentRecognition = () => {
 
   // Categories for navigation
   const categories = [
-    { id: 'recent', name: "Recent posts"},
-    { id: 'popular', name: "Popular"},
-    { id: 'discussed', name: "Most Discussed"},
-    { id: 'top', name: "Top Performers" },
-    { id: 'month', name: "Employee of Month"},
-    { id: 'all', name: "All Awards"}
+    { id: 'recent', name: "Recent posts" },
+    { id: 'all', name: "All Awards" },
+    { id: 'employee_of_month', name: "Employee of Month" },
+    { id: 'excellence_award', name: "Excellence Award" },
+    { id: 'innovation', name: "Innovation Award" },
+    { id: 'team_player', name: "Team Player Award" }
   ];
+
+  // Initialize Socket.io
+  useEffect(() => {
+    console.log("🔌 Initializing Socket.io connection for Agent...");
+
+    // Join agent room for real-time updates
+    socket.emit("joinAgentRoom");
+
+    // Request initial data
+    socket.emit("getAgentRecognitionData");
+
+    // Listen for initial data
+    socket.on("initialAgentRecognitionData", (data) => {
+      console.log("📥 Received initial agent recognition data:", data.length);
+      setPosts(data);
+      setLoading(false);
+    });
+
+    // Listen for new recognition posts
+    socket.on("newRecognition", (newPost) => {
+      console.log("🆕 New recognition from socket:", newPost.title);
+      setPosts(prev => {
+        const exists = prev.some(post => post._id === newPost._id);
+        if (exists) {
+          return prev.map(post => post._id === newPost._id ? newPost : post);
+        }
+        return [newPost, ...prev];
+      });
+    });
+
+    // Listen for updated recognition posts
+    socket.on("recognitionUpdated", (updatedPost) => {
+      console.log("📝 Recognition updated from socket:", updatedPost.title);
+      setPosts(prev => 
+        prev.map(post => post._id === updatedPost._id ? updatedPost : post)
+      );
+    });
+
+    // Listen for archived recognitions
+    socket.on("recognitionArchived", (data) => {
+      console.log("🗄️ Recognition archived from socket:", data.recognitionId);
+      setPosts(prev => prev.filter(post => post._id !== data.recognitionId));
+    });
+
+    // Listen for restored recognitions
+    socket.on("recognitionRestored", (data) => {
+      console.log("♻️ Recognition restored from socket:", data.recognitionId);
+      // Refresh data to get the restored post
+      socket.emit("getAgentRecognitionData");
+    });
+
+    // Listen for refresh requests
+    socket.on("refreshRecognitionData", () => {
+      console.log("🔄 Refresh requested via socket");
+      fetchRecognitions();
+    });
+
+    // Listen for errors
+    socket.on("error", (error) => {
+      console.error("Socket error:", error);
+    });
+
+    // Cleanup on unmount
+    return () => {
+      socket.off("initialAgentRecognitionData");
+      socket.off("newRecognition");
+      socket.off("recognitionUpdated");
+      socket.off("recognitionArchived");
+      socket.off("recognitionRestored");
+      socket.off("refreshRecognitionData");
+      socket.off("error");
+    };
+  }, []);
 
   // Fetch data on component mount and when category or page changes
   useEffect(() => {
     fetchRecognitions();
   }, [activeCategory, currentPage]);
 
-  // Fetch top performers separately
-  useEffect(() => {
-    fetchTopPerformers();
-  }, []);
+  // // Fetch top performers separately
+  // useEffect(() => {
+  //   fetchTopPerformers();
+  // }, []);
 
   const fetchRecognitions = async () => {
     try {
@@ -541,33 +401,40 @@ const AgentRecognition = () => {
 
       // Adjust params based on selected category
       switch(activeCategory) {
-        case 'Popular':
-          params.sortBy = 'engagement.likes';
-          break;
-        case 'Most Discussed':
-          params.sortBy = 'engagement.comments';
-          break;
         case 'Employee of Month':
           params.recognitionType = 'employee_of_month';
           break;
-        case 'All Awards':
-          // For all awards, get more posts
-          params.limit = postsPerPage;
+        case 'Excellence Award':
+          params.recognitionType = 'excellence_award';
           break;
+        case 'Innovation Award':
+          params.recognitionType = 'innovation';
+          break;
+        case 'Team Player Award':
+          params.recognitionType = 'team_player';
+          break;
+        // For 'Recent posts' and 'All Awards', use default params
       }
 
       const response = await api.get('/recognition', { params });
       
       if (response.data.success) {
-        setPosts(response.data.data);
+        setPosts(response.data.data || []);
         
         // Calculate total pages from API response
-        const totalCount = response.data.total || response.data.count || 0;
-        setTotalPages(Math.ceil(totalCount / postsPerPage));
+        const pagination = response.data.pagination;
+        if (pagination) {
+          setTotalPages(pagination.pages || 1);
+        } else {
+          const totalCount = response.data.total || response.data.count || posts.length;
+          setTotalPages(Math.ceil(totalCount / postsPerPage));
+        }
+      } else {
+        setPosts([]);
+        setTotalPages(1);
       }
     } catch (error) {
       console.error('Error fetching recognitions:', error);
-      // WALANG mock data - display empty state
       setPosts([]);
       setTotalPages(1);
     } finally {
@@ -576,47 +443,25 @@ const AgentRecognition = () => {
     }
   };
 
-  const fetchTopPerformers = async () => {
-    try {
-      const response = await api.get('/recognition/top-performers');
-      if (response.data.success) {
-        setTopRanking(response.data.data);
-      }
-    } catch (error) {
-      console.error('Error fetching top performers:', error);
-      // WALANG mock data
-      setTopRanking([]);
-    }
-  };
-
-  // Generate top performers from current posts if API fails or returns empty
-  const generateTopPerformersFromPosts = () => {
-    if (posts.length === 0) return [];
-    
-    // Get unique employees from posts
-    const uniqueEmployees = [];
-    const seenNames = new Set();
-    
-    posts.forEach(post => {
-      if (post.employee?.name && !seenNames.has(post.employee.name)) {
-        seenNames.add(post.employee.name);
-        uniqueEmployees.push({
-          id: post._id,
-          name: post.employee.name,
-          department: post.employee.department || post.department || 'Unknown Department'
-        });
-      }
-    });
-    
-    // Return top 5 unique employees
-    return uniqueEmployees.slice(0, 5);
-  };
+  // const fetchTopPerformers = async () => {
+  //   try {
+  //     const response = await api.get('/recognition/top-performers');
+  //     if (response.data.success) {
+  //       setTopRanking(response.data.data || []);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching top performers:', error);
+  //     setTopRanking([]);
+  //   }
+  // };
 
   const handleRefresh = () => {
     setRefreshing(true);
     setCurrentPage(1);
     fetchRecognitions();
-    fetchTopPerformers();
+    // fetchTopPerformers();
+    // Request refresh from socket
+    socket.emit("getAgentRecognitionData");
   };
 
   // Get recognition type icon and color
@@ -665,28 +510,6 @@ const AgentRecognition = () => {
     }
   };
 
-  // Handle like post
-  const handleLikePost = async (postId) => {
-    try {
-      await api.patch(`/recognition/${postId}/like`);
-      
-      // Update local state
-      setPosts(prev => prev.map(post => 
-        post._id === postId 
-          ? { 
-              ...post, 
-              engagement: {
-                ...post.engagement,
-                likes: (post.engagement?.likes || 0) + 1
-              }
-            }
-          : post
-      ));
-    } catch (error) {
-      console.error('Error liking post:', error);
-    }
-  };
-
   // Handle view post details
   const handleViewPost = (post) => {
     setSelectedPost(post);
@@ -720,6 +543,16 @@ const AgentRecognition = () => {
     }
   };
 
+  // Format date with time
+  const formatDateTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    }) + ' • ' + formatTime(dateString);
+  };
+
   // Loading state
   if (loading && posts.length === 0) {
     return (
@@ -728,7 +561,6 @@ const AgentRecognition = () => {
           <div className="relative">
             <Trophy className="w-16 h-16 text-red-500 mx-auto mb-4 animate-pulse" />
             <div className="absolute -top-2 -right-2 w-8 h-8">
-              <div className="w-full h-full border-4 border-red-200 border-t-red-600 rounded-full animate-spin"></div>
             </div>
           </div>
           <p className="text-gray-600 mt-2">Loading recognitions...</p>
@@ -737,10 +569,10 @@ const AgentRecognition = () => {
     );
   }
 
-  // Get current top performers (use API data or generate from posts)
-  const currentTopPerformers = topRanking.length > 0 
-    ? topRanking 
-    : generateTopPerformersFromPosts();
+  // // Get current top performers
+  // const currentTopPerformers = topRanking.length > 0 
+  //   ? topRanking 
+  //   : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
@@ -752,7 +584,6 @@ const AgentRecognition = () => {
           setShowPostModal(false);
           setSelectedPost(null);
         }}
-        onLike={fetchRecognitions}
       />
       
       <div className="max-w-7xl mx-auto">
@@ -800,7 +631,6 @@ const AgentRecognition = () => {
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-gray-400'
                 }`}
               >
-                <span>{category.icon}</span>
                 <span>{category.name}</span>
               </button>
             ))}
@@ -829,7 +659,7 @@ const AgentRecognition = () => {
               <div className="text-center py-12 bg-white rounded-2xl border border-gray-200 shadow-sm">
                 <Trophy size={48} className="mx-auto mb-4 text-gray-400" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">No recognitions found</h3>
-                <p className="text-gray-600">No published recognitions available at the moment.</p>
+                <p className="text-gray-600">No published recognitions available for this category.</p>
               </div>
             ) : (
               <>
@@ -855,11 +685,6 @@ const AgentRecognition = () => {
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
-                            <div className="absolute top-3 right-3">
-                              <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium text-gray-900 shadow-sm">
-                                {post.department || post.employee?.department || 'Department'}
-                              </div>
-                            </div>
                             <div className="absolute bottom-3 left-3">
                               <div className={`px-3 py-1 rounded-full text-sm font-medium ${typeInfo.bgColor} ${typeInfo.color} backdrop-blur-sm`}>
                                 {typeInfo.label}
@@ -873,11 +698,6 @@ const AgentRecognition = () => {
                                 {React.cloneElement(typeInfo.icon, { className: "w-8 h-8 text-white" })}
                               </div>
                               <h3 className="text-lg font-bold text-gray-800 text-center">{typeInfo.label}</h3>
-                            </div>
-                            <div className="absolute top-3 right-3">
-                              <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium text-gray-900 shadow-sm">
-                                {post.department || post.employee?.department || 'Department'}
-                              </div>
                             </div>
                           </div>
                         )}
@@ -907,55 +727,29 @@ const AgentRecognition = () => {
                             {post.description}
                           </p>
 
-                          {/* 4. Author Info with Time on right side */}
-                          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg mb-4 group-hover:bg-gray-100 transition-colors">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-10 h-10 bg-gradient-to-r ${typeInfo.gradient} rounded-full flex items-center justify-center text-white font-bold shadow-sm`}>
-                                {avatarInitials}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-center">
-                                  <div>
-                                    <h4 className="font-semibold text-gray-900 truncate">{post.employee?.name || 'Employee'}</h4>
-                                    <p className="text-xs text-gray-600 truncate">
-                                      {post.employee?.department || post.department || 'Department'}
-                                      {post.employee?.position && ` • ${post.employee.position}`}
-                                    </p>
-                                  </div>
-                                  <div className="text-right ml-4">
-                                    <div className="text-xs text-gray-500">
-                                      {formatTime(post.createdAt)}
-                                    </div>
-                                  </div>
+                          {/* 4. Author Info */}
+                          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-4 group-hover:bg-gray-100 transition-colors">
+                            <div className={`w-10 h-10 bg-gradient-to-r ${typeInfo.gradient} rounded-full flex items-center justify-center text-white font-bold shadow-sm`}>
+                              {avatarInitials}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <h4 className="font-semibold text-gray-900 truncate">{post.employee?.name || 'Employee'}</h4>
+                                  <p className="text-xs text-gray-600 truncate">
+                                    {post.employee?.position || 'Employee'}
+                                  </p>
                                 </div>
                               </div>
                             </div>
                           </div>
 
-                          {/* Card Footer - Engagement Stats */}
+                          {/* Card Footer - Date with Time */}
                           <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t border-gray-200">
-                            <div className="flex items-center gap-4">
-                              <div className="flex items-center gap-1.5 text-gray-600 hover:text-red-600 transition-colors group/like">
-                                <Heart 
-                                  size={14} 
-                                  className="group-hover/like:scale-110 transition-transform"
-                                  fill="none"
-                                />
-                                <span className="font-medium">{post.engagement?.likes || 0}</span>
-                              </div>
-                              <div className="flex items-center gap-1.5 text-gray-600 hover:text-blue-600 transition-colors group/comment">
-                                <MessageCircle 
-                                  size={14} 
-                                  className="group-hover/comment:scale-110 transition-transform"
-                                />
-                                <span className="font-medium">{post.engagement?.comments || 0}</span>
-                              </div>
-                              <div className="flex items-center gap-1.5 text-gray-600">
-                                <Eye size={14} />
-                                <span className="font-medium">{post.engagement?.views || 0}</span>
-                              </div>
+                            <div className="text-xs text-gray-500">
+                              {formatDateTime(post.createdAt)}
                             </div>
-                            <div  className="bg-gradient-to-r from-red-600 to-red-700 text-white px-3 py-1.5 rounded-full text-xs font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-300 flex items-center gap-1.5 shadow-md hover:shadow-lg group/view">
+                            <div className="bg-gradient-to-r from-red-600 to-red-700 text-white px-3 py-1.5 rounded-full text-xs font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-300 flex items-center gap-1.5 shadow-md hover:shadow-lg group/view">
                               <span>View Details</span>
                               <ArrowUpRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
                             </div>
@@ -1029,7 +823,7 @@ const AgentRecognition = () => {
           {/* Right Column */}
           <div className="space-y-8">
             
-            {/* Top Ranking */}
+            {/* Top Ranking
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
               <div className="flex justify-between items-center mb-5">
                 <h3 className="text-xl font-bold text-gray-900 flex items-center">
@@ -1040,17 +834,22 @@ const AgentRecognition = () => {
               
               <div className="space-y-3">
                 {currentTopPerformers.length > 0 ? (
-                  currentTopPerformers.map((person) => (
+                  currentTopPerformers.map((person, index) => (
                     <div key={person.id || person._id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors group">
                       <div className="flex items-center gap-3">
-                        <div>
+                        <div className="relative">
                           <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-r from-red-600 to-red-500 flex items-center justify-center text-white font-bold shadow-sm">
                             {person.name ? person.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '??'}
                           </div>
+                          {index < 3 && (
+                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                              {index + 1}
+                            </div>
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="font-semibold text-gray-900 truncate">{person.name || 'Unknown'}</div>
-                          <div className="text-xs text-gray-600 truncate">{person.department || 'No Department'}</div>
+                          <div className="text-xs text-gray-600 truncate">{person.position || 'Employee'}</div>
                         </div>
                       </div>
                     </div>
@@ -1061,7 +860,7 @@ const AgentRecognition = () => {
                   </div>
                 )}
               </div>
-            </div>
+            </div> */}
 
             {/* Weekly Stats Card */}
             <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-xl p-5 text-white shadow-lg">
@@ -1075,41 +874,30 @@ const AgentRecognition = () => {
                     <div className="p-1.5 bg-white/20 rounded-lg">
                       <Sparkles size={14} />
                     </div>
-                    <span>New Recognitions</span>
+                    <span>Total Recognitions</span>
                   </div>
                   <span className="font-bold text-lg">{posts.length}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     <div className="p-1.5 bg-white/20 rounded-lg">
-                      <TrendUp size={14} />
+                      <Users size={14} />
                     </div>
-                    <span>Total Engagements</span>
-                  </div>
-                  <span className="font-bold text-lg">
-                    {posts.reduce((sum, post) => sum + (post.engagement?.likes || 0) + (post.engagement?.comments || 0), 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-white/20 rounded-lg">
-                      <MessageCircle size={14} />
-                    </div>
-                    <span>Total Comments</span>
-                  </div>
-                  <span className="font-bold text-lg">
-                    {posts.reduce((sum, post) => sum + (post.engagement?.comments || 0), 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-white/20 rounded-lg">
-                      <Trophy size={14} />
-                    </div>
-                    <span>Active Employees</span>
+                    <span>Featured Employees</span>
                   </div>
                   <span className="font-bold text-lg">
                     {new Set(posts.map(post => post.employee?.name).filter(Boolean)).size}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-white/20 rounded-lg">
+                      <Award size={14} />
+                    </div>
+                    <span>Award Types</span>
+                  </div>
+                  <span className="font-bold text-lg">
+                    {new Set(posts.map(post => post.recognitionType).filter(Boolean)).size}
                   </span>
                 </div>
               </div>
