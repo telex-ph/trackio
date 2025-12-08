@@ -426,7 +426,7 @@ const SharedMyOffences = () => {
       if (offense.isReadByRespondant === false) {
         const payload = { ...offense, isReadByRespondant: true };
         await api.put(`/offenses/${off._id}`, payload);
-
+        
         showNotification("Marked as read successfully!", " success");
         fetchOffenses(); // Refresh the list
       }
