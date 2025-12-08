@@ -15,6 +15,7 @@ const folderMap = {
   nte: "trackio/offense/NTE",
   mom: "trackio/offense/MOM",
   nda: "trackio/offense/NDA",
+  announcement: "trackio/announcement",
 };
 
 // Reusable upload handler
@@ -68,5 +69,6 @@ router.post("/:type", upload.single("file"), async (req, res) => {
 
   handleUpload(req, res, folder);
 });
+
 
 export default router;

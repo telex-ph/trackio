@@ -14,7 +14,9 @@ import {
   Heart,
   Filter,
   Search,
-  RotateCcw
+  RotateCcw,
+  CheckCircle,
+  Shield
 } from "lucide-react";
 import { DateTime } from "luxon";
 import { useStore } from "../../store/useStore";
@@ -30,19 +32,23 @@ import ViewsModal from "../../components/modals/ViewsModal";
 import LikesModal from "../../components/modals/LikesModal";
 import FileViewModal from "../../components/modals/FileViewModal";
 
+// ✅ UPDATED: Import the Roles object correctly
+import Roles from "../../constants/roles";
+
 const AdminAnnouncement = () => {
   const [announcements, setAnnouncements] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Filter states - SEARCH ONLY
+  // Filter states
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('active');
+  const [activeTab, setActiveTab] = useState('pending'); // Default to 'pending' tab
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [notification, setNotification] = useState({
     message: "",
@@ -67,6 +73,7 @@ const AdminAnnouncement = () => {
 
   const user = useStore((state) => state.user);
 
+  // ✅ CORRECTED: Get user's full name
   const getUserFullName = useCallback(() => {
     if (user && user.firstName && user.lastName) {
       return `${user.firstName} ${user.lastName}`.trim();
@@ -83,19 +90,29 @@ const AdminAnnouncement = () => {
     return "Admin User";
   }, [user]);
 
-  // ✅ FIXED: REAL-TIME CURRENT DATE/TIME WITH LIVE UPDATES EVERY SECOND
+  // ✅ CORRECTED: Check if current user can approve announcements
+  const canCurrentUserApprove = useMemo(() => {
+    return user?.role === Roles.ADMIN_HR_HEAD || user?.role === Roles.COMPLIANCE_HEAD;
+  }, [user?.role]);
+
+  // ✅ Check if current user can auto-post (no approval needed)
+  const canAutoPost = useMemo(() => {
+    return canCurrentUserApprove; // Same users who can approve can also auto-post
+  }, [canCurrentUserApprove]);
+
+  // ✅ REAL-TIME CURRENT DATE/TIME
   const [currentDateTime, setCurrentDateTime] = useState(() => DateTime.local());
 
   // Update current time every second for real-time display
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentDateTime(DateTime.local());
-    }, 1000); // Update every second for real-time feel
+    }, 1000);
 
     return () => clearInterval(interval);
   }, []);
 
-  // ✅ FIXED: REAL-TIME TIME DISPLAY FUNCTION
+  // ✅ REAL-TIME TIME DISPLAY FUNCTION
   const getCurrentDateTime = useCallback(() => {
     const now = DateTime.local();
     return {
@@ -106,6 +123,7 @@ const AdminAnnouncement = () => {
     };
   }, []);
 
+  // ✅ FIXED: Initialize form data with current date/time
   const [formData, setFormData] = useState(() => {
     const currentDateTime = getCurrentDateTime();
     const userName = getUserFullName();
@@ -116,24 +134,25 @@ const AdminAnnouncement = () => {
       postedBy: userName, 
       agenda: "",
       priority: "Medium",
+      category: "Department", // Default
+      duration: "1w", // Default
       dateInput: currentDateTime.dateInput,
       timeInput: currentDateTime.timeInput,
     };
   });
 
-  // ✅ FIXED: AUTO-UPDATE FORM TIME WHEN CURRENT TIME CHANGES (FOR NEW ANNOUNCEMENTS ONLY)
+  // ✅ FIXED: Auto-update form time for NEW announcements only
   useEffect(() => {
     if (!isEditMode) {
-      const updatedDateTime = getCurrentDateTime();
       setFormData(prev => ({
         ...prev,
-        dateInput: updatedDateTime.dateInput,
-        timeInput: updatedDateTime.timeInput
+        dateInput: getCurrentDateTime().dateInput,
+        timeInput: getCurrentDateTime().timeInput
       }));
     }
   }, [currentDateTime, isEditMode, getCurrentDateTime]);
 
-  // ✅ FIXED: BETTER ERROR HANDLING
+  // ✅ FIXED: FETCH ANNOUNCEMENTS - CORRECT FILTERING LOGIC
   const fetchAnnouncements = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -141,20 +160,46 @@ const AdminAnnouncement = () => {
       console.log("🔄 Fetching announcements from database...");
       const response = await api.get("/announcements");
       
-      // ✅ CHECK IF RESPONSE IS VALID
       if (response.data && Array.isArray(response.data)) {
         console.log("✅ Successfully loaded", response.data.length, "announcements");
         
-        const processedAnnouncements = response.data.map(announcement => ({
-          ...announcement,
-          // ✅ ADDED: Store original creation time for inactive announcements
-          originalDateTime: announcement.dateTime,
-          // ✅ ADDED: Store cancellation time for time freezing
-          frozenTimeAgo: announcement.status === "Inactive" ? 
-            formatTimeAgo(announcement.cancelledAt || announcement.dateTime) : null
-        }));
+        const now = DateTime.local();
+        const processedAnnouncements = response.data.map(announcement => {
+          // ✅ FIXED: Check expiry correctly
+          const expiresAt = announcement.expiresAt ? DateTime.fromISO(announcement.expiresAt) : null;
+          const isExpired = expiresAt && expiresAt <= now;
+          
+          // ✅ FIXED: Determine actual status
+          let actualStatus = announcement.status;
+          if (announcement.approvalStatus === 'Pending') {
+            actualStatus = 'Pending';
+          } else if (announcement.status === 'Active' && isExpired) {
+            actualStatus = 'Expired';
+          }
 
+          return {
+            ...announcement,
+            originalDateTime: announcement.dateTime,
+            isExpired: isExpired,
+            actualStatus: actualStatus,
+            frozenTimeAgo: announcement.status === "Inactive" ? 
+              formatTimeAgo(announcement.cancelledAt || announcement.dateTime) : null
+          };
+        });
+
+        // ✅ FIXED: Sort by actual status
         const sortedAll = processedAnnouncements.sort((a, b) => {
+          const statusOrder = { 
+            'Pending': 4, 
+            'Active': 3, 
+            'Expired': 2, 
+            'Inactive': 1 
+          };
+          
+          if (statusOrder[b.actualStatus] !== statusOrder[a.actualStatus]) {
+            return statusOrder[b.actualStatus] - statusOrder[a.actualStatus];
+          }
+
           const priorityA = a.priority === "High" ? 3 : a.priority === "Medium" ? 2 : 1;
           const priorityB = b.priority === "High" ? 3 : b.priority === "Medium" ? 2 : 1;
 
@@ -166,8 +211,14 @@ const AdminAnnouncement = () => {
         });
 
         setAnnouncements(sortedAll);
+        console.log("📊 Announcements loaded:", {
+          total: sortedAll.length,
+          pending: sortedAll.filter(a => a.actualStatus === 'Pending').length,
+          active: sortedAll.filter(a => a.actualStatus === 'Active').length,
+          expired: sortedAll.filter(a => a.actualStatus === 'Expired').length,
+          inactive: sortedAll.filter(a => a.actualStatus === 'Inactive').length
+        });
       } else {
-        // Only show error if no data at all
         console.warn("⚠️ No data received from API");
         setAnnouncements([]);
       }
@@ -175,7 +226,6 @@ const AdminAnnouncement = () => {
     } catch (err) {
       console.error("❌ API Error:", err);
       
-      // ✅ ONLY SHOW ERROR FOR REAL FAILURES
       if (err.response?.status >= 400 || err.message?.includes("Network")) {
         setError("Failed to load announcements. Using real-time data only.");
       } else {
@@ -187,7 +237,7 @@ const AdminAnnouncement = () => {
     }
   }, []);
 
-  // ✅ IMPROVED SOCKET LISTENERS FOR BETTER REAL-TIME SYNC
+  // ✅ FIXED: IMPROVED SOCKET LISTENERS WITH CORRECT STATUS HANDLING
   useEffect(() => {
     if (!socket) {
       console.log("❌ Socket not available, using API only");
@@ -204,16 +254,40 @@ const AdminAnnouncement = () => {
       console.log("📥 Received initial admin data via socket:", socketAnnouncements?.length);
       
       if (Array.isArray(socketAnnouncements) && socketAnnouncements.length > 0) {
-        const processedAnnouncements = socketAnnouncements.map(announcement => ({
-          ...announcement,
-          // ✅ ADDED: Store original creation time for inactive announcements
-          originalDateTime: announcement.dateTime,
-          // ✅ ADDED: Store cancellation time for time freezing
-          frozenTimeAgo: announcement.status === "Inactive" ? 
-            formatTimeAgo(announcement.cancelledAt || announcement.dateTime) : null
-        }));
+        const now = DateTime.local();
+        const processedAnnouncements = socketAnnouncements.map(announcement => {
+          const expiresAt = announcement.expiresAt ? DateTime.fromISO(announcement.expiresAt) : null;
+          const isExpired = expiresAt && expiresAt <= now;
+          
+          let actualStatus = announcement.status;
+          if (announcement.approvalStatus === 'Pending') {
+            actualStatus = 'Pending';
+          } else if (announcement.status === 'Active' && isExpired) {
+            actualStatus = 'Expired';
+          }
+
+          return {
+            ...announcement,
+            originalDateTime: announcement.dateTime,
+            isExpired: isExpired,
+            actualStatus: actualStatus,
+            frozenTimeAgo: announcement.status === "Inactive" ? 
+              formatTimeAgo(announcement.cancelledAt || announcement.dateTime) : null
+          };
+        });
 
         const sortedAll = processedAnnouncements.sort((a, b) => {
+          const statusOrder = { 
+            'Pending': 4, 
+            'Active': 3, 
+            'Expired': 2, 
+            'Inactive': 1 
+          };
+          
+          if (statusOrder[b.actualStatus] !== statusOrder[a.actualStatus]) {
+            return statusOrder[b.actualStatus] - statusOrder[a.actualStatus];
+          }
+
           const priorityA = a.priority === "High" ? 3 : a.priority === "Medium" ? 2 : 1;
           const priorityB = b.priority === "High" ? 3 : b.priority === "Medium" ? 2 : 1;
 
@@ -230,16 +304,12 @@ const AdminAnnouncement = () => {
       }
     };
 
-    // ✅ IMPROVED: REAL-TIME LIKES/VIEWS UPDATES
+    // Listen for admin stats updates
     const handleAdminUpdate = (detailedStats) => {
       console.log("📈 Real-time admin stats update:", detailedStats);
       
       setAnnouncements(prev => prev.map(ann => {
         if (ann._id === detailedStats.announcementId) {
-          console.log("🔄 Updating announcement:", ann.title);
-          console.log("👀 New views count:", detailedStats.totalViews);
-          console.log("❤️ New likes count:", detailedStats.totalLikes);
-          
           return {
             ...ann,
             views: detailedStats.viewedBy || ann.views,
@@ -252,20 +322,45 @@ const AdminAnnouncement = () => {
 
     // Listen for new announcements
     const handleNewAnnouncement = (newAnnouncement) => {
-      console.log("🆕 New announcement received via socket");
+      console.log("🆕 New announcement received via socket:", newAnnouncement);
+      
+      const now = DateTime.local();
+      const expiresAt = newAnnouncement.expiresAt ? DateTime.fromISO(newAnnouncement.expiresAt) : null;
+      const isExpired = expiresAt && expiresAt <= now;
+      
+      let actualStatus = newAnnouncement.status;
+      if (newAnnouncement.approvalStatus === 'Pending') {
+        actualStatus = 'Pending';
+      } else if (newAnnouncement.status === 'Active' && isExpired) {
+        actualStatus = 'Expired';
+      }
       
       const processedAnnouncement = {
         ...newAnnouncement,
-        // ✅ ADDED: Store original creation time
         originalDateTime: newAnnouncement.dateTime,
+        isExpired: isExpired,
+        actualStatus: actualStatus,
         frozenTimeAgo: null
       };
       
       setAnnouncements(prev => {
         const exists = prev.find(a => a._id === processedAnnouncement._id);
-        if (exists) return prev;
+        if (exists) return prev.map(a => 
+          a._id === processedAnnouncement._id ? processedAnnouncement : a
+        );
         
         return [processedAnnouncement, ...prev].sort((a, b) => {
+          const statusOrder = { 
+            'Pending': 4, 
+            'Active': 3, 
+            'Expired': 2, 
+            'Inactive': 1 
+          };
+          
+          if (statusOrder[b.actualStatus] !== statusOrder[a.actualStatus]) {
+            return statusOrder[b.actualStatus] - statusOrder[a.actualStatus];
+          }
+
           const priorityA = a.priority === "High" ? 3 : a.priority === "Medium" ? 2 : 1;
           const priorityB = b.priority === "High" ? 3 : b.priority === "Medium" ? 2 : 1;
 
@@ -276,18 +371,36 @@ const AdminAnnouncement = () => {
         });
       });
       
-      showNotification("New announcement posted!", "success");
-
+      // Show appropriate notification based on status
+      if (newAnnouncement.approvalStatus === 'Pending') {
+        showNotification("Announcement submitted for approval!", "success");
+        setActiveTab('pending');
+      } else {
+        showNotification("New announcement posted!", "success");
+        setActiveTab('active');
+      }
     };
 
     // Listen for announcement updates
     const handleAnnouncementUpdated = (updatedAnnouncement) => {
       console.log("📝 Announcement updated via socket");
       
+      const now = DateTime.local();
+      const expiresAt = updatedAnnouncement.expiresAt ? DateTime.fromISO(updatedAnnouncement.expiresAt) : null;
+      const isExpired = expiresAt && expiresAt <= now;
+      
+      let actualStatus = updatedAnnouncement.status;
+      if (updatedAnnouncement.approvalStatus === 'Pending') {
+        actualStatus = 'Pending';
+      } else if (updatedAnnouncement.status === 'Active' && isExpired) {
+        actualStatus = 'Expired';
+      }
+      
       const processedAnnouncement = {
         ...updatedAnnouncement,
-        // ✅ PRESERVE ORIGINAL TIME DATA
         originalDateTime: updatedAnnouncement.originalDateTime || updatedAnnouncement.dateTime,
+        isExpired: isExpired,
+        actualStatus: actualStatus,
         frozenTimeAgo: updatedAnnouncement.status === "Inactive" ? 
           formatTimeAgo(updatedAnnouncement.cancelledAt || updatedAnnouncement.dateTime) : null
       };
@@ -297,7 +410,7 @@ const AdminAnnouncement = () => {
       ));
     };
 
-    // ✅ FIXED: CANCELLATION WITH PROPER TIME FREEZING
+    // Listen for cancellations
     const handleAnnouncementCancelled = (data) => {
       console.log("🔴 Cancellation confirmed via socket:", data.announcementId);
       
@@ -307,9 +420,10 @@ const AdminAnnouncement = () => {
             ? { 
                 ...ann, 
                 status: "Inactive",
+                approvalStatus: 'Approved',
+                actualStatus: 'Inactive',
                 cancelledBy: data.cancelledBy,
                 cancelledAt: data.cancelledAt || new Date().toISOString(),
-                // ✅ FREEZE THE TIME - Use cancellation time for "time ago"
                 frozenTimeAgo: formatTimeAgo(data.cancelledAt || new Date().toISOString()),
                 views: [],
                 acknowledgements: []
@@ -319,17 +433,23 @@ const AdminAnnouncement = () => {
       );
     };
 
-    // ✅ FIXED: REPOST WITH FRESH TIME DATA
+    // Listen for reposts
     const handleAnnouncementReposted = (repostedAnnouncement) => {
       console.log("🟢 Repost confirmed via socket:", repostedAnnouncement._id);
       
       const currentTime = new Date().toISOString();
+      const now = DateTime.local();
+      const expiresAt = repostedAnnouncement.expiresAt ? DateTime.fromISO(repostedAnnouncement.expiresAt) : null;
+      const isExpired = expiresAt && expiresAt <= now;
+      
       const processedAnnouncement = {
         ...repostedAnnouncement,
         status: "Active",
-        // ✅ RESET TIME TO CURRENT TIME
+        approvalStatus: 'Approved',
+        actualStatus: 'Active',
         dateTime: currentTime,
         originalDateTime: currentTime,
+        isExpired: isExpired,
         frozenTimeAgo: null,
         cancelledAt: null,
         cancelledBy: null,
@@ -346,6 +466,35 @@ const AdminAnnouncement = () => {
       );
     };
 
+    // ✅ ADDED: Listen for approval events
+    const handleAnnouncementApproved = (approvedAnnouncement) => {
+      console.log("✅ Approval confirmed via socket:", approvedAnnouncement._id);
+      
+      const now = DateTime.local();
+      const expiresAt = approvedAnnouncement.expiresAt ? DateTime.fromISO(approvedAnnouncement.expiresAt) : null;
+      const isExpired = expiresAt && expiresAt <= now;
+      
+      setAnnouncements(prev => 
+        prev.map(ann => 
+          ann._id === approvedAnnouncement._id 
+            ? {
+                ...ann,
+                approvalStatus: 'Approved',
+                status: 'Active',
+                actualStatus: 'Active',
+                approvedBy: approvedAnnouncement.approvedBy,
+                dateTime: approvedAnnouncement.dateTime || new Date().toISOString(),
+                originalDateTime: approvedAnnouncement.dateTime || new Date().toISOString(),
+                isExpired: isExpired,
+                frozenTimeAgo: null,
+                views: [],
+                acknowledgements: []
+              }
+            : ann
+        )
+      );
+    };
+
     // Register event listeners
     socket.on("initialAdminData", handleInitialData);
     socket.on("adminAnnouncementUpdate", handleAdminUpdate);
@@ -353,6 +502,7 @@ const AdminAnnouncement = () => {
     socket.on("announcementUpdated", handleAnnouncementUpdated);
     socket.on("announcementCancelled", handleAnnouncementCancelled);
     socket.on("announcementReposted", handleAnnouncementReposted);
+    socket.on("announcementApproved", handleAnnouncementApproved);
 
     // Request initial data via socket
     socket.emit("getAdminData");
@@ -374,9 +524,11 @@ const AdminAnnouncement = () => {
       socket.off("announcementUpdated", handleAnnouncementUpdated);
       socket.off("announcementCancelled", handleAnnouncementCancelled);
       socket.off("announcementReposted", handleAnnouncementReposted);
+      socket.off("announcementApproved", handleAnnouncementApproved);
     };
   }, [fetchAnnouncements]);
 
+  // Update form with user's name
   useEffect(() => {
     const userName = getUserFullName();
     setFormData(prev => ({
@@ -385,23 +537,55 @@ const AdminAnnouncement = () => {
     }));
   }, [getUserFullName]);
 
+  // ✅ FIXED: CORRECT FILTER LOGIC WITH PROPER STATUS HANDLING
   const filteredAnnouncements = useMemo(() => {
-    return announcements.filter(announcement => {
+    const filtered = announcements.filter(announcement => {
       const searchMatch = searchTerm === '' || 
         announcement.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         announcement.agenda?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         announcement.postedBy?.toLowerCase().includes(searchTerm.toLowerCase());
       
-      return searchMatch;
-    });
-  }, [announcements, searchTerm]);
+      if (!searchMatch) return false;
 
-  // Counts for tabs
+      if (activeTab === 'pending') {
+        return announcement.actualStatus === 'Pending';
+      } else if (activeTab === 'active') {
+        return announcement.actualStatus === 'Active';
+      } else {
+        // History tab: Show both Expired and Inactive
+        return announcement.actualStatus === 'Expired' || 
+               announcement.actualStatus === 'Inactive';
+      }
+    });
+
+    return filtered.sort((a, b) => {
+      if (activeTab === 'pending') {
+        return DateTime.fromISO(a.createdAt || a.dateTime).toMillis() - 
+               DateTime.fromISO(b.createdAt || b.dateTime).toMillis();
+      } else {
+        const priorityA = a.priority === "High" ? 3 : a.priority === "Medium" ? 2 : 1;
+        const priorityB = b.priority === "High" ? 3 : b.priority === "Medium" ? 2 : 1;
+
+        if (priorityB !== priorityA) {
+          return priorityB - priorityA;
+        }
+        return DateTime.fromISO(b.dateTime).toMillis() - DateTime.fromISO(a.dateTime).toMillis();
+      }
+    });
+  }, [announcements, searchTerm, activeTab]);
+
+  // ✅ FIXED: CORRECT COUNTS USING actualStatus
   const activeCount = useMemo(() => 
-    announcements.filter(a => a.status === "Active").length, [announcements]);
+    announcements.filter(a => a.actualStatus === "Active").length, 
+    [announcements]);
   
   const inactiveCount = useMemo(() => 
-    announcements.filter(a => a.status === "Inactive").length, [announcements]);
+    announcements.filter(a => a.actualStatus === "Inactive" || a.actualStatus === "Expired").length, 
+    [announcements]);
+  
+  const pendingCount = useMemo(() => 
+    announcements.filter(a => a.actualStatus === "Pending").length, 
+    [announcements]);
 
   const clearFilters = () => {
     setSearchTerm('');
@@ -512,6 +696,8 @@ const AdminAnnouncement = () => {
       postedBy: userName,
       agenda: "",
       priority: "Medium",
+      category: "Department",
+      duration: "1w",
       dateInput: currentDT.dateInput,
       timeInput: currentDT.timeInput,
     });
@@ -519,15 +705,6 @@ const AdminAnnouncement = () => {
     setSelectedFile(null);
     setIsEditMode(false);
     setEditingId(null);
-  };
-
-  const fileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
   };
 
   const handlePreview = () => {
@@ -549,44 +726,94 @@ const AdminAnnouncement = () => {
     setIsPreviewModalOpen(true);
   };
 
-  // ✅ FIXED: COMPLETE HANDLE SUBMIT WITH PROPER SOCKET EMISSION
+  // ✅ FIXED: CALCULATE EXPIRES_AT BASED ON DURATION
+  const calculateExpiresAt = (dateTime, duration) => {
+    const dt = DateTime.fromISO(dateTime);
+    
+    switch(duration) {
+      case '24h':
+        return dt.plus({ hours: 24 }).toISO();
+      case '3d':
+        return dt.plus({ days: 3 }).toISO();
+      case '1w':
+        return dt.plus({ weeks: 1 }).toISO();
+      case '1m':
+        return dt.plus({ months: 1 }).toISO();
+      case 'permanent':
+        return null; // No expiry for permanent
+      default:
+        return dt.plus({ weeks: 1 }).toISO();
+    }
+  };
+
+  // ✅ FIXED: HANDLE SUBMIT WITH CORRECT STATUS AND EXPIRY LOGIC
   const handleSubmit = async () => {
     try {
+      setIsSubmitting(true);
+      
       const combinedDateTime = DateTime.fromISO(`${formData.dateInput}T${formData.timeInput}`);
 
       if (!combinedDateTime.isValid) {
         showNotification("Invalid date or time format", "error");
+        setIsSubmitting(false);
         return;
       }
 
+      let announcementAttachment = null;
+
+      // ✅ CLOUDINARY UPLOAD
+      if (selectedFile) {
+        showNotification("Uploading file to Cloudinary...", "info");
+        
+        const formDataObj = new FormData();
+        formDataObj.append("file", selectedFile);
+        
+        try {
+          const uploadResponse = await api.post(
+            "/upload/announcement", 
+            formDataObj, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          });
+
+          announcementAttachment = uploadResponse.data;
+          console.log("✅ File uploaded to Cloudinary:", announcementAttachment);
+          showNotification("File uploaded successfully to Cloudinary.", "success");
+        } catch (uploadError) {
+          console.error("❌ Cloudinary upload failed:", uploadError);
+          showNotification("Failed to upload file. Please try again.", "error");
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // ✅ CALCULATE EXPIRES_AT
+      const expiresAt = calculateExpiresAt(combinedDateTime.toISO(), formData.duration);
+      
+      // ✅ I-prepare ang final payload
+      const isAutoApproved = canAutoPost;
+      
       const payload = {
         title: formData.title,
         postedBy: formData.postedBy,
         agenda: formData.agenda,
         priority: formData.priority,
+        category: formData.category,
+        duration: formData.duration,
+        expiresAt: expiresAt,
         dateTime: combinedDateTime.toISO(),
-        status: "Active"
+        // ✅ SET CORRECT STATUS BASED ON USER ROLE
+        status: isAutoApproved ? "Active" : "Pending",
+        approvalStatus: isAutoApproved ? "Approved" : "Pending",
+        userRole: user?.role,
+        department: user?.department || 'Unknown',
+        views: [],
+        acknowledgements: [],
+        attachment: announcementAttachment
       };
 
-      if (selectedFile) {
-        if (selectedFile instanceof File) {
-          try {
-            const base64File = await fileToBase64(selectedFile);
-            payload.attachment = {
-              name: selectedFile.name,
-              size: selectedFile.size,
-              type: selectedFile.type,
-              data: base64File,
-            };
-          } catch (error) {
-            console.error("Error converting file to base64:", error);
-            showNotification("Error processing file attachment", "error");
-            return;
-          }
-        } else {
-          payload.attachment = selectedFile;
-        }
-      }
+      console.log("📤 Submitting payload:", payload);
 
       let response;
       if (isEditMode) {
@@ -594,28 +821,28 @@ const AdminAnnouncement = () => {
         response = await api.put(`/announcements/${editingId}`, payload);
 
         if (response.status === 200) {
-          showNotification("Announcement updated successfully!", "success");
+          const isAutoApprovedEdit = canAutoPost;
+          const successMessage = isAutoApprovedEdit 
+            ? "Announcement updated and auto-approved!" 
+            : "Announcement updated! Waiting for approval.";
           
-          // ✅ FIXED: COMPLETE ANNOUNCEMENT DATA FOR SOCKET
+          showNotification(successMessage, "success");
+          
           const updatedAnnouncement = {
             ...response.data,
             _id: editingId,
-            status: "Active",
-            // ✅ ENSURE ALL REQUIRED FIELDS ARE INCLUDED
+            status: isAutoApprovedEdit ? "Active" : "Pending",
+            approvalStatus: isAutoApprovedEdit ? "Approved" : "Pending",
+            actualStatus: isAutoApprovedEdit ? "Active" : "Pending",
             views: response.data.views || [],
             acknowledgements: response.data.acknowledgements || [],
-            isPinned: response.data.isPinned || false,
-            // ✅ PRESERVE ORIGINAL TIME DATA
             originalDateTime: response.data.originalDateTime || response.data.dateTime,
             frozenTimeAgo: null
           };
           
           if (socket) {
-            // ✅ EMIT MULTIPLE EVENTS FOR COMPATIBILITY
-            console.log("📢 Emitting announcement update via socket");
             socket.emit("announcementUpdated", updatedAnnouncement);
-            socket.emit("updatedAnnouncement", updatedAnnouncement); // Alternative event
-            socket.emit("newAnnouncement", updatedAnnouncement); // Fallback for agents
+            socket.emit("newAnnouncement", updatedAnnouncement);
           }
         } else {
           throw new Error(`Update failed with status: ${response.status}`);
@@ -624,13 +851,20 @@ const AdminAnnouncement = () => {
         console.log("📝 Creating new announcement");
         response = await api.post(`/announcements`, payload);
 
-        if (response.status === 201) {
-          showNotification("Announcement posted successfully!", "success");
+        if (response.status === 201 || response.status === 200) {
+          if (response.data.approvalStatus === 'Pending') {
+            showNotification("Announcement submitted for approval to Department Head.", "success");
+            setActiveTab('pending');
+          } else {
+            showNotification("Announcement posted and automatically approved.", "success");
+            setActiveTab('active');
+          }
+          
           if (socket && response.data) {
             const newAnnouncement = {
               ...response.data,
-              // ✅ ADD ORIGINAL TIME DATA
               originalDateTime: response.data.dateTime,
+              actualStatus: response.data.approvalStatus === 'Pending' ? 'Pending' : 'Active',
               frozenTimeAgo: null
             };
             socket.emit("newAnnouncement", newAnnouncement);
@@ -643,15 +877,78 @@ const AdminAnnouncement = () => {
       resetForm();
       setIsPreviewModalOpen(false);
 
-      // ✅ Force refresh data
+      // Force refresh data
       if (socket) {
         socket.emit("getAdminData");
-        socket.emit("getAgentData"); // Force agent refresh
+        socket.emit("getAgentData");
       }
 
     } catch (error) {
       console.error("❌ Error submitting announcement:", error);
       showNotification(`Failed to ${isEditMode ? "update" : "create"} announcement. Please try again.`, "error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // ✅ FIXED: APPROVE HANDLER WITH EXPIRES_AT UPDATE
+  const handleApprove = async (id) => {
+    if (!canCurrentUserApprove) {
+      showNotification("Error: Only ADMIN_HR_HEAD or COMPLIANCE_HEAD can approve announcements.", "error");
+      return;
+    }
+
+    try {
+      const announcementToApprove = announcements.find(a => a._id === id);
+      if (!announcementToApprove) {
+        showNotification("Announcement not found", "error");
+        return;
+      }
+
+      const currentTime = new Date().toISOString();
+      const expiresAt = calculateExpiresAt(currentTime, announcementToApprove.duration || '1w');
+      
+      const response = await api.post(`/announcements/${id}/approve`, {
+        approverName: getUserFullName(),
+        approverRole: user?.role,
+        approvedAt: currentTime,
+        dateTime: currentTime, // ✅ Reset time when approved
+        expiresAt: expiresAt    // ✅ Set new expiry based on current time
+      });
+      
+      if (response.status === 200) {
+        showNotification(`Announcement approved by ${getUserFullName()}! Time starts now.`, "success");
+        
+        const approvedAnnouncement = {
+          ...response.data,
+          _id: id,
+          approvalStatus: 'Approved',
+          status: 'Active',
+          actualStatus: 'Active',
+          approvedBy: getUserFullName(),
+          dateTime: currentTime,
+          expiresAt: expiresAt,
+          originalDateTime: currentTime,
+          frozenTimeAgo: null,
+          views: [],
+          acknowledgements: []
+        };
+        
+        setAnnouncements(prev => prev.map(a => 
+          a._id === id ? approvedAnnouncement : a
+        ));
+        
+        setActiveTab('active');
+        
+        if (socket) {
+          socket.emit("announcementApproved", approvedAnnouncement);
+          socket.emit("announcementUpdated", approvedAnnouncement);
+          socket.emit("newAnnouncement", approvedAnnouncement);
+        }
+      }
+    } catch (error) {
+      console.error("Approval failed", error);
+      showNotification("Failed to approve announcement.", "error");
     }
   };
 
@@ -668,6 +965,8 @@ const AdminAnnouncement = () => {
       postedBy: userName,
       agenda: announcement.agenda,
       priority: announcement.priority,
+      category: announcement.category || "Department",
+      duration: announcement.duration || "1w",
       dateInput: dt.toISODate(),
       timeInput: dt.toFormat("HH:mm"),
     });
@@ -684,7 +983,7 @@ const AdminAnnouncement = () => {
     setIsConfirmationModalOpen(true);
   };
 
-  // ✅ FIXED: CANCELLATION WITH PROPER TIME FREEZING AND CORRECT SOCKET EVENT
+  // ✅ FIXED: CANCELLATION WITH CORRECT STATUS
   const handleConfirmCancel = async () => {
     try {
       const announcementToCancel = announcements.find(a => a._id === itemToCancel);
@@ -695,16 +994,14 @@ const AdminAnnouncement = () => {
 
       console.log("🗑️ Cancelling announcement:", itemToCancel);
 
-      // ✅ FIXED: USE CURRENT REAL-TIME FOR CANCELLATION
       const currentTime = new Date().toISOString();
       
-      // ✅ RESET LIKES AND VIEWS WHEN CANCELLING
       const payload = {
         status: "Inactive",
-        cancelledAt: currentTime, // ✅ Use current real-time
+        actualStatus: "Inactive",
+        cancelledAt: currentTime,
         cancelledBy: getUserFullName(),
         updatedAt: currentTime,
-        // ✅ RESET LIKES AND VIEWS
         views: [],
         acknowledgements: []
       };
@@ -714,16 +1011,13 @@ const AdminAnnouncement = () => {
         response = await api.patch(`/announcements/${itemToCancel}`, payload);
         console.log("✅ PATCH response:", response.data);
         
-        // ✅ CRITICAL: Update local state immediately for better UX
         setAnnouncements(prev => 
           prev.map(ann => 
             ann._id === itemToCancel 
               ? { 
                   ...ann, 
                   ...payload,
-                  // ✅ FREEZE THE TIME - Use cancellation time for "time ago"
                   frozenTimeAgo: formatTimeAgo(currentTime),
-                  // ✅ ENSURE LIKES/VIEWS ARE RESET IN FRONTEND
                   views: [],
                   acknowledgements: []
                 }
@@ -732,24 +1026,21 @@ const AdminAnnouncement = () => {
         );
         
         if (socket) {
-          // ✅ CRITICAL FIX: Use the correct event name that AgentDashboard is listening for
           socket.emit("announcementCancelled", {
             announcementId: itemToCancel,
             cancelledBy: getUserFullName(),
-            cancelledAt: currentTime // ✅ Use current real-time
+            cancelledAt: currentTime
           });
-          
-          console.log("📢 Emitted announcementCancelled event for agents");
         }
       } catch (patchError) {
         console.log("🔄 PATCH failed, trying PUT:", patchError);
         const putPayload = {
           ...announcementToCancel,
           status: "Inactive",
-          cancelledAt: currentTime, // ✅ Use current real-time
+          actualStatus: "Inactive",
+          cancelledAt: currentTime,
           cancelledBy: getUserFullName(),
           updatedAt: currentTime,
-          // ✅ RESET LIKES AND VIEWS
           views: [],
           acknowledgements: []
         };
@@ -758,16 +1049,13 @@ const AdminAnnouncement = () => {
         response = await api.put(`/announcements/${itemToCancel}`, putPayload);
         console.log("✅ PUT response:", response.data);
         
-        // ✅ CRITICAL: Update local state immediately
         setAnnouncements(prev => 
           prev.map(ann => 
             ann._id === itemToCancel 
               ? { 
                   ...ann, 
                   ...putPayload,
-                  // ✅ FREEZE THE TIME - Use cancellation time for "time ago"
                   frozenTimeAgo: formatTimeAgo(currentTime),
-                  // ✅ ENSURE LIKES/VIEWS ARE RESET IN FRONTEND
                   views: [],
                   acknowledgements: []
                 }
@@ -776,31 +1064,20 @@ const AdminAnnouncement = () => {
         );
         
         if (socket) {
-          // ✅ CRITICAL FIX: Use the correct event name
           socket.emit("announcementCancelled", {
             announcementId: itemToCancel,
             cancelledBy: getUserFullName(),
-            cancelledAt: currentTime // ✅ Use current real-time
+            cancelledAt: currentTime
           });
         }
       }
 
-      showNotification("Announcement cancelled successfully! Likes and views have been reset.", "success");
-      
-      // ✅ Switch to inactive tab to show the cancelled announcement
+      showNotification("Announcement cancelled successfully!", "success");
       setActiveTab('inactive');
 
     } catch (error) {
       console.error("❌ Error cancelling announcement:", error);
-      let errorMessage = "Failed to cancel announcement. Please try again.";
-      if (error.response?.status === 404) {
-        errorMessage = "Announcement not found in database.";
-      } else if (error.response?.status === 500) {
-        errorMessage = "Server error. Please try again later.";
-      } else if (error.message?.includes("Network Error")) {
-        errorMessage = "Cannot connect to server. Please check your connection.";
-      }
-      showNotification(errorMessage, "error");
+      showNotification("Failed to cancel announcement.", "error");
     } finally {
       setIsConfirmationModalOpen(false);
       setItemToCancel(null);
@@ -812,7 +1089,7 @@ const AdminAnnouncement = () => {
     setIsRepostModalOpen(true);
   };
 
-  // ✅ FIXED: REPOSTING WITH CURRENT REAL-TIME AND TIME RESET
+  // ✅ FIXED: REPOSTING WITH NEW EXPIRES_AT
   const handleConfirmRepost = async () => {
     try {
       const announcementToRepost = announcements.find(a => a._id === itemToRepost);
@@ -823,16 +1100,17 @@ const AdminAnnouncement = () => {
 
       console.log("🔄 Reposting announcement:", itemToRepost);
 
-      // ✅ FIXED: USE CURRENT REAL-TIME FOR REPOST
       const currentTime = new Date().toISOString();
+      const expiresAt = calculateExpiresAt(currentTime, announcementToRepost.duration || '1w');
 
       const payload = {
         status: "Active",
-        dateTime: currentTime, // ✅ RESET TO CURRENT TIME
+        actualStatus: "Active",
+        dateTime: currentTime,
+        expiresAt: expiresAt,
         updatedAt: currentTime,
         cancelledAt: null,
         cancelledBy: null,
-        // ✅ KEEP LIKES/VIEWS EMPTY WHEN REPOSTING (FRESH START)
         views: [],
         acknowledgements: []
       };
@@ -842,17 +1120,14 @@ const AdminAnnouncement = () => {
         response = await api.patch(`/announcements/${itemToRepost}`, payload);
         console.log("✅ PATCH response:", response.data);
         
-        // ✅ CRITICAL: Update local state immediately for better UX
         setAnnouncements(prev => 
           prev.map(ann => 
             ann._id === itemToRepost 
               ? { 
                   ...ann, 
                   ...payload,
-                  // ✅ RESET TIME DATA - Fresh start with current time
                   originalDateTime: currentTime,
                   frozenTimeAgo: null,
-                  // ✅ ENSURE LIKES/VIEWS ARE EMPTY IN FRONTEND
                   views: [],
                   acknowledgements: []
                 }
@@ -861,16 +1136,14 @@ const AdminAnnouncement = () => {
         );
         
         if (socket) {
-          // ✅ CRITICAL FIX: Emit repost event for agents
-          socket.emit("announcementReposted", {
+          const repostedAnnouncement = {
             ...announcementToRepost,
             ...payload,
             _id: itemToRepost,
             originalDateTime: currentTime,
             frozenTimeAgo: null
-          });
-          
-          console.log("📢 Emitted announcementReposted event for agents");
+          };
+          socket.emit("announcementReposted", repostedAnnouncement);
         }
         
       } catch (patchError) {
@@ -878,11 +1151,12 @@ const AdminAnnouncement = () => {
         const putPayload = {
           ...announcementToRepost,
           status: "Active",
-          dateTime: currentTime, // ✅ RESET TO CURRENT TIME
+          actualStatus: "Active",
+          dateTime: currentTime,
+          expiresAt: expiresAt,
           updatedAt: currentTime,
           cancelledAt: null,
           cancelledBy: null,
-          // ✅ KEEP LIKES/VIEWS EMPTY WHEN REPOSTING
           views: [],
           acknowledgements: []
         };
@@ -891,17 +1165,14 @@ const AdminAnnouncement = () => {
         response = await api.put(`/announcements/${itemToRepost}`, putPayload);
         console.log("✅ PUT response:", response.data);
         
-        // ✅ CRITICAL: Update local state immediately
         setAnnouncements(prev => 
           prev.map(ann => 
             ann._id === itemToRepost 
               ? { 
                   ...ann, 
                   ...putPayload,
-                  // ✅ RESET TIME DATA - Fresh start with current time
                   originalDateTime: currentTime,
                   frozenTimeAgo: null,
-                  // ✅ ENSURE LIKES/VIEWS ARE EMPTY IN FRONTEND
                   views: [],
                   acknowledgements: []
                 }
@@ -910,33 +1181,23 @@ const AdminAnnouncement = () => {
         );
         
         if (socket) {
-          // ✅ CRITICAL FIX: Emit repost event for agents
-          socket.emit("announcementReposted", {
+          const repostedAnnouncement = {
             ...announcementToRepost,
             ...putPayload,
             _id: itemToRepost,
             originalDateTime: currentTime,
             frozenTimeAgo: null
-          });
+          };
+          socket.emit("announcementReposted", repostedAnnouncement);
         }
       }
 
-      showNotification("Announcement reposted successfully! Ready for new likes and views with fresh time.", "success");
-      
-      // ✅ Switch to active tab to show the reposted announcement
+      showNotification("Announcement reposted successfully!", "success");
       setActiveTab('active');
 
     } catch (error) {
       console.error("❌ Error reposting announcement:", error);
-      let errorMessage = "Failed to repost announcement. Please try again.";
-      if (error.response?.status === 404) {
-        errorMessage = "Announcement not found in database.";
-      } else if (error.response?.status === 500) {
-        errorMessage = "Server error. Please try again later.";
-      } else if (error.message?.includes("Network Error")) {
-        errorMessage = "Cannot connect to server. Please check your connection.";
-      }
-      showNotification(errorMessage, "error");
+      showNotification("Failed to repost announcement.", "error");
     } finally {
       setIsRepostModalOpen(false);
       setItemToRepost(null);
@@ -945,28 +1206,17 @@ const AdminAnnouncement = () => {
 
   const handleFileDownload = (file) => {
     try {
-      if (!file.data) {
+      if (!file || !file.url) {
         showNotification("File data not available", "error");
         return;
       }
 
-      const base64Data = file.data.split(",")[1];
-      const byteCharacters = atob(base64Data);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: file.type });
-
-      const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = url;
-      link.download = file.name;
+      link.href = file.url;
+      link.download = file.originalName || file.name || "announcement_file";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
 
       showNotification("File downloaded successfully!", "success");
     } catch (error) {
@@ -992,53 +1242,39 @@ const AdminAnnouncement = () => {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Active": return "bg-green-100 text-green-700";
-      case "Inactive": return "bg-red-100 text-red-600";
+  // ✅ FIXED: STATUS COLOR USING actualStatus
+  const getStatusColor = (actualStatus) => {
+    switch(actualStatus) {
+      case 'Pending': return "bg-orange-100 text-orange-600";
+      case 'Active': return "bg-green-100 text-green-700";
+      case 'Expired': return "bg-pink-100 text-pink-600";
+      case 'Inactive': return "bg-red-100 text-red-600";
       default: return "bg-gray-100 text-gray-600";
     }
   };
 
-  const formatDisplayDate = (isoDateStr) => {
-    if (!isoDateStr) return "";
-    const date = DateTime.fromISO(isoDateStr);
-    return date.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY);
-  };
-
-  const formatDisplayTime = (isoDateStr) => {
-    if (!isoDateStr) return "";
-    const time = DateTime.fromISO(isoDateStr);
-    return time.toLocaleString(DateTime.TIME_SIMPLE);
-  };
-
-  // ✅ FIXED: REAL-TIME TIME AGO FUNCTION WITH FREEZING FOR INACTIVE ANNOUNCEMENTS
+  // ✅ TIME AGO FUNCTION
   const formatTimeAgo = (isoDateStr) => {
     if (!isoDateStr) return "";
     const announcementTime = DateTime.fromISO(isoDateStr);
     if (!announcementTime.isValid) return "";
     
-    const now = DateTime.local();
-    const diff = now.diff(announcementTime, ["years", "months", "days", "hours", "minutes", "seconds"]);
-
-    if (diff.years > 0) return `${Math.floor(diff.years)} year${Math.floor(diff.years) > 1 ? "s" : ""} ago`;
-    if (diff.months > 0) return `${Math.floor(diff.months)} month${Math.floor(diff.months) > 1 ? "s" : ""} ago`;
-    if (diff.days > 0) return `${Math.floor(diff.days)} day${Math.floor(diff.days) > 1 ? "s" : ""} ago`;
-    if (diff.hours > 0) return `${Math.floor(diff.hours)} hour${Math.floor(diff.hours) > 1 ? "s" : ""} ago`;
-    if (diff.minutes > 0) return `${Math.floor(diff.minutes)} minute${Math.floor(diff.minutes) > 1 ? "s" : ""} ago`;
-    
-    const seconds = Math.floor(diff.seconds);
-    return seconds <= 1 ? "just now" : `${seconds} seconds ago`;
+    return announcementTime.toRelative();
   };
 
-  // ✅ ADDED: SMART TIME DISPLAY THAT FREEZES FOR INACTIVE ANNOUNCEMENTS
+  // ✅ SMART TIME DISPLAY USING actualStatus
   const getSmartTimeAgo = (announcement) => {
-    if (announcement.status === "Inactive") {
-      // ✅ FROZEN TIME: Show time since cancellation (doesn't update)
-      return announcement.frozenTimeAgo || formatTimeAgo(announcement.cancelledAt || announcement.dateTime);
-    } else {
-      // ✅ LIVE TIME: Real-time updates for active announcements
-      return formatTimeAgo(announcement.dateTime);
+    switch(announcement.actualStatus) {
+      case 'Pending':
+        return '⏸️ Waiting for approval';
+      case 'Inactive':
+        return announcement.frozenTimeAgo || formatTimeAgo(announcement.cancelledAt || announcement.dateTime);
+      case 'Expired':
+        return 'Expired';
+      case 'Active':
+        return formatTimeAgo(announcement.dateTime);
+      default:
+        return formatTimeAgo(announcement.dateTime);
     }
   };
 
@@ -1074,6 +1310,7 @@ const AdminAnnouncement = () => {
         onConfirm={handleSubmit}
         formData={formData}
         selectedFile={selectedFile}
+        isSubmitting={isSubmitting}
       />
 
       <FileViewModal
@@ -1105,6 +1342,9 @@ const AdminAnnouncement = () => {
               Real-time
             </span>
           </div>
+          <div className="text-xs text-gray-500">
+            Role: <span className="font-semibold text-blue-600">{user?.role || "Unknown"}</span>
+          </div>
         </div>
         <p className="text-gray-600 text-sm">Manage and view all company announcements with real-time updates.</p>
       </section>
@@ -1130,6 +1370,7 @@ const AdminAnnouncement = () => {
                 {isEditMode ? "Edit Announcement" : "Create New Announcement"}
               </h3>
             </div>
+
             {isEditMode && (
               <button
                 onClick={resetForm}
@@ -1139,6 +1380,7 @@ const AdminAnnouncement = () => {
               </button>
             )}
           </div>
+
           <div className="space-y-4">
             <div className="space-y-1">
               <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
@@ -1152,6 +1394,40 @@ const AdminAnnouncement = () => {
                 className="w-full p-3 bg-gray-50/50 border-2 border-gray-100 rounded-xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm"
               />
             </div>
+
+            {/* Category and Duration Selectors */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                  Category
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => handleInputChange("category", e.target.value)}
+                  className="w-full p-3 bg-gray-50/50 border-2 border-gray-100 rounded-xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm"
+                >
+                  <option value="Department">Department Specific</option>
+                  <option value="General">General (All Company)</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                  Duration
+                </label>
+                <select
+                  value={formData.duration}
+                  onChange={(e) => handleInputChange("duration", e.target.value)}
+                  className="w-full p-3 bg-gray-50/50 border-2 border-gray-100 rounded-xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm"
+                >
+                  <option value="24h">24 Hours</option>
+                  <option value="3d">3 Days</option>
+                  <option value="1w">1 Week</option>
+                  <option value="1m">1 Month</option>
+                  <option value="permanent">Permanent</option>
+                </select>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
@@ -1185,13 +1461,14 @@ const AdminAnnouncement = () => {
                     className="w-full pl-10 pr-3 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm"
                   />
                 </div>
-                {/* ✅ REAL-TIME TIME INDICATOR - FIXED */}
+                {/* REAL-TIME TIME INDICATOR */}
                 <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                   <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
                   <span>Current time: {getCurrentDateTime().displayTime}</span>
                 </div>
               </div>
             </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
@@ -1228,6 +1505,7 @@ const AdminAnnouncement = () => {
                 </select>
               </div>
             </div>
+            
             <div className="space-y-1">
               <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
                 Attachment
@@ -1255,7 +1533,7 @@ const AdminAnnouncement = () => {
                       <FileText className="w-4 h-4 text-green-500" />
                       <div>
                         <p className="font-medium text-green-700 text-xs">
-                          {selectedFile.name}
+                          {selectedFile.name || selectedFile.originalName || "Uploaded file"}
                         </p>
                         <button
                           onClick={(e) => {
@@ -1275,7 +1553,7 @@ const AdminAnnouncement = () => {
                         Drop file or{" "}
                         <span className="text-red-600">browse</span>
                       </p>
-                      <p className="text-xs text-gray-400 mt-1">Max 10MB</p>
+                      <p className="text-xs text-gray-400 mt-1">Max 10MB (Will be uploaded to Cloudinary)</p>
                     </div>
                   )}
                 </div>
@@ -1294,10 +1572,32 @@ const AdminAnnouncement = () => {
             </div>
             <button
               onClick={handlePreview}
-              className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white p-3 rounded-xl hover:from-red-700 hover:to-red-800 transition-all duration-300 font-semibold text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              disabled={isSubmitting}
+              className={`w-full bg-gradient-to-r from-red-600 to-red-700 text-white p-3 rounded-xl hover:from-red-700 hover:to-red-800 transition-all duration-300 font-semibold text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              {isEditMode ? "Update Announcement" : "Preview & Post Announcement"}
+              {isSubmitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Processing...
+                </span>
+              ) : isEditMode ? (
+                "Update Announcement"
+              ) : canAutoPost ? (
+                "Preview & Auto-Post"
+              ) : (
+                "Preview & Submit for Approval"
+              )}
             </button>
+            {!isEditMode && !canAutoPost && (
+              <p className="text-xs text-center text-orange-600 mt-1">
+                ⚠️ Your post requires approval from Admin&HR Head or Compliance  before going live.
+              </p>
+            )}
+            {!isEditMode && canAutoPost && (
+              <p className="text-xs text-center text-green-600 mt-1">
+                ✅ As a Department Head, your posts are automatically approved.
+              </p>
+            )}
           </div>
         </div>
 
@@ -1315,18 +1615,18 @@ const AdminAnnouncement = () => {
               </h3>
             </div>
             
-            {/* SEARCH AND TABS SECTION - IMPROVED LAYOUT */}
+            {/* SEARCH AND TABS SECTION */}
             <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
-              {/* SEARCH SECTION - IMPROVED */}
+              {/* SEARCH SECTION */}
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <div className="relative flex-1 sm:flex-none">
-                  <Search className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 transform -translate-y-1/2" />
+                  <Search className="w-4 h-4 text-gray-400 absolute left-2 top-1/2 transform -translate-y-1/2" />
                   <input
                     type="text"
                     placeholder="Search announcements..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-7 pr-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white w-full sm:w-40"
+                    className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white sm:w-48"
                   />
                 </div>
                 
@@ -1341,8 +1641,18 @@ const AdminAnnouncement = () => {
                 )}
               </div>
               
-              {/* TABS - IMPROVED WITH SLIMMER DESIGN */}
+              {/* TABS */}
               <div className="flex bg-gray-100 rounded-lg p-0.5 w-full sm:w-auto">
+                <button
+                  onClick={() => setActiveTab('pending')}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex-1 sm:flex-none ${
+                    activeTab === 'pending' 
+                      ? 'bg-white text-orange-600 shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  Approvals ({pendingCount})
+                </button>
                 <button
                   onClick={() => setActiveTab('active')}
                   className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex-1 sm:flex-none ${
@@ -1361,7 +1671,7 @@ const AdminAnnouncement = () => {
                       : 'text-gray-600 hover:text-gray-800'
                   }`}
                 >
-                  Inactive ({inactiveCount})
+                  History ({inactiveCount})
                 </button>
               </div>
             </div>
@@ -1375,49 +1685,50 @@ const AdminAnnouncement = () => {
             <div className="flex items-center justify-center py-6 text-red-500 italic text-sm">
               {error}
             </div>
-          ) : filteredAnnouncements.filter(a => 
-            activeTab === 'active' ? a.status === 'Active' : a.status === 'Inactive'
-          ).length > 0 ? (
+          ) : filteredAnnouncements.length > 0 ? (
             <div className="space-y-3 overflow-y-auto max-h-[60vh] pr-1">
-              {filteredAnnouncements
-                .filter(a => activeTab === 'active' ? a.status === 'Active' : a.status === 'Inactive')
-                .map((a) => (
+              {filteredAnnouncements.map((a) => (
                 <div
                   key={a._id}
                   className={`group p-3 rounded-xl shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 ${
-                    a.status === 'Inactive' 
+                    a.actualStatus === 'Inactive' || a.actualStatus === 'Pending'
                       ? 'bg-gray-100 border border-gray-300 opacity-90' 
                       : 'bg-gradient-to-br from-white to-gray-50 border border-gray-100'
                   }`}
                 >
-                  {/* INACTIVE BADGE */}
-                  {a.status === 'Inactive' && (
-                    <div className="flex justify-between items-center mb-2 p-2 bg-red-50 rounded-lg border border-red-200">
-                      <div className="flex items-center gap-2">
-                        <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-medium">
-                          🗑️ INACTIVE
-                        </span>
-                        <span className="text-xs text-red-600">
-                          Cancelled by {a.cancelledBy} • {getSmartTimeAgo(a)}
-                          {/* ✅ ADDED: FROZEN TIME INDICATOR */}
-                          <span className="ml-1 text-gray-500"></span>
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                  
+                  {/* CATEGORY & EXPIRY BADGE */}
+                  <div className="flex items-center gap-2 mb-2">
+                    {a.category === 'General' && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200 flex items-center gap-1">
+                        <Shield className="w-3 h-3" /> GENERAL
+                      </span>
+                    )}
+                    {a.expiresAt && (
+                      <span className={`text-[10px] border border-gray-200 px-1 rounded font-medium ${
+                        a.isExpired 
+                          ? 'bg-pink-100 text-pink-700' 
+                          : 'text-gray-500 bg-gray-50'
+                      }`}>
+                        {a.isExpired 
+                          ? 'EXPIRED' 
+                          : `Expires: ${DateTime.fromISO(a.expiresAt).toRelative()}`
+                        }
+                      </span>
+                    )}
+                  </div>
+
                   <div className="flex flex-col sm:flex-row justify-between items-start mb-2">
                     <div className="flex items-start gap-2 w-full">
-                      <div className={`p-1 rounded-lg group-hover:bg-indigo-200 transition-colors mt-1 ${
-                        a.status === 'Inactive' ? 'bg-gray-300' : 'bg-indigo-100'
+                      <div className={`p-1 rounded-lg mt-1 ${
+                        a.actualStatus === 'Inactive' ? 'bg-gray-300' : 'bg-indigo-100'
                       }`}>
                         <Bell className={`w-3 h-3 ${
-                          a.status === 'Inactive' ? 'text-gray-600' : 'text-indigo-600'
+                          a.actualStatus === 'Inactive' ? 'text-gray-600' : 'text-indigo-600'
                         }`} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className={`text-sm font-bold mb-1 group-hover:text-indigo-600 transition-colors truncate ${
-                          a.status === 'Inactive' ? 'text-gray-600' : 'text-gray-800'
+                          a.actualStatus === 'Inactive' ? 'text-gray-600' : 'text-gray-800'
                         }`}>
                           {a.title}
                         </h4>
@@ -1429,36 +1740,37 @@ const AdminAnnouncement = () => {
                           >
                             {a.priority}
                           </span>
-                          <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(a.status)}`}>
-                            {a.status}
+                          <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(a.actualStatus)}`}>
+                            {a.actualStatus === 'Pending' ? 'Pending Approval' : a.actualStatus}
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className={`text-xs ${
+                            a.actualStatus === 'Pending' 
+                              ? 'text-orange-600 font-medium' 
+                              : 'text-gray-500'
+                          }`}>
                             {getSmartTimeAgo(a)}
-                            {/* ✅ ADDED: LIVE INDICATOR FOR ACTIVE ANNOUNCEMENTS */}
-                            {a.status === 'Active' && (
-                              <span className="ml-1 text-green-500"></span>
-                            )}
                           </span>
                         </div>
                       </div>
                     </div>
                   </div>
+                  
                   <div className="space-y-2 mb-3">
                     <p className="text-xs text-gray-600 flex items-center gap-1">
                       <User className="w-3 h-3" />
                       Posted by:{" "}
                       <span className="font-medium truncate">{a.postedBy}</span>
                     </p>
-                    <div className="flex flex-wrap gap-2 text-xs text-gray-700">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3 text-red-500" />
-                        {formatDisplayDate(a.dateTime)}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-red-500" />
-                        {formatDisplayTime(a.dateTime)}
-                      </span>
-                    </div>
+                    
+                    {/* APPROVED BY SECTION */}
+                    {a.approvalStatus === 'Approved' && a.approvedBy && (
+                      <p className="text-xs text-gray-600 flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3 text-green-500" />
+                        Approved by:{" "}
+                        <span className="font-medium text-green-700">{a.approvedBy}</span>
+                      </p>
+                    )}
+                    
                     <div className="bg-gray-50 rounded-lg p-2 border-l-2 border-red-500">
                       <p className="text-xs text-gray-700 line-clamp-2">
                         <span className="font-semibold text-gray-800">
@@ -1471,24 +1783,38 @@ const AdminAnnouncement = () => {
                     <div className="flex items-center gap-3 text-xs text-gray-500">
                       <button
                         onClick={() => handleViewDetails(a)}
-                        disabled={a.isLoadingViews}
-                        className="flex items-center gap-1 hover:text-blue-600 transition-colors disabled:opacity-50"
-                        title="View who viewed this announcement"
+                        disabled={a.actualStatus === 'Pending' || a.isLoadingViews}
+                        className={`flex items-center gap-1 transition-colors ${
+                          a.actualStatus === 'Pending' 
+                            ? 'text-gray-400 cursor-not-allowed' 
+                            : 'hover:text-blue-600'
+                        }`}
+                        title={a.actualStatus === 'Pending' ? "Views will start after approval" : "View who viewed this"}
                       >
                         <Eye className="w-3 h-3" />
                         <span>{Array.isArray(a.views) ? a.views.length : 0} views</span>
+                        {a.actualStatus === 'Pending' && (
+                          <span className="text-[10px] text-gray-400">(locked)</span>
+                        )}
                         {a.isLoadingViews && (
                           <div className="ml-1 w-2 h-2 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                         )}
                       </button>
                       <button
                         onClick={() => handleLikeDetails(a)}
-                        disabled={a.isLoadingLikes}
-                        className="flex items-center gap-1 hover:text-red-600 transition-colors disabled:opacity-50"
-                        title="View who liked this announcement"
+                        disabled={a.actualStatus === 'Pending' || a.isLoadingLikes}
+                        className={`flex items-center gap-1 transition-colors ${
+                          a.actualStatus === 'Pending' 
+                            ? 'text-gray-400 cursor-not-allowed' 
+                            : 'hover:text-red-600'
+                        }`}
+                        title={a.actualStatus === 'Pending' ? "Likes will start after approval" : "View who liked this"}
                       >
-                        <Heart className="w-3 h-3 text-red-500" fill="currentColor" />
+                        <Heart className="w-3 h-3 text-red-500" fill={a.actualStatus === 'Pending' ? 'none' : 'currentColor'} />
                         <span>{Array.isArray(a.acknowledgements) ? a.acknowledgements.length : 0} Likes</span>
+                        {a.actualStatus === 'Pending' && (
+                          <span className="text-[10px] text-gray-400">(locked)</span>
+                        )}
                         {a.isLoadingLikes && (
                           <div className="ml-1 w-2 h-2 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
                         )}
@@ -1510,35 +1836,53 @@ const AdminAnnouncement = () => {
                     )}
                   </div>
 
-                  {/* DIFFERENT BUTTONS FOR ACTIVE vs INACTIVE */}
-                  {a.status !== 'Inactive' ? (
-                    // ACTIVE ANNOUNCEMENT BUTTONS (Cancel & Edit)
-                    <div className="flex gap-2">
+                  {/* ACTION BUTTONS */}
+                  <div className="flex gap-2">
+                    {/* PENDING TAB BUTTONS (Approval Flow) */}
+                    {activeTab === 'pending' && a.actualStatus === 'Pending' && canCurrentUserApprove && (
                       <button
-                        onClick={() => handleCancelClick(a._id)}
-                        className="flex-1 bg-white border border-red-500 text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-all font-medium text-xs shadow-sm hover:shadow"
+                        onClick={() => handleApprove(a._id)}
+                        className="flex-1 bg-green-500 text-white p-1.5 rounded-lg hover:bg-green-600 transition-all font-medium text-xs shadow-sm flex items-center justify-center gap-1"
                       >
-                        Cancel
+                        <CheckCircle className="w-3 h-3" /> Approve & Start Time
                       </button>
-                      <button
-                        onClick={() => handleEdit(a)}
-                        className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-1.5 rounded-lg hover:from-red-600 hover:to-red-700 transition-all font-medium text-xs shadow-sm hover:shadow"
-                      >
-                        Edit
-                      </button>
-                    </div>
-                  ) : (
-                    // INACTIVE ANNOUNCEMENT BUTTONS (Repost)
-                    <div className="flex gap-2">
+                    )}
+                    
+                    {activeTab === 'pending' && a.actualStatus === 'Pending' && !canCurrentUserApprove && (
+                      <span className="flex-1 text-center text-xs text-orange-600 bg-orange-50 p-1.5 rounded-lg border border-orange-200 font-medium">
+                        ⏸️ Waiting for Head's approval
+                      </span>
+                    )}
+
+                    {/* ACTIVE TAB BUTTONS (Cancel & Edit) */}
+                    {activeTab === 'active' && a.actualStatus === 'Active' && (
+                      <>
+                        <button
+                          onClick={() => handleCancelClick(a._id)}
+                          className="flex-1 bg-white border border-red-500 text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-all font-medium text-xs shadow-sm hover:shadow"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => handleEdit(a)}
+                          className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-1.5 rounded-lg hover:from-red-600 hover:to-red-700 transition-all font-medium text-xs shadow-sm hover:shadow"
+                        >
+                          Edit
+                        </button>
+                      </>
+                    )}
+
+                    {/* INACTIVE TAB BUTTONS (Repost) */}
+                    {activeTab === 'inactive' && (a.actualStatus === 'Inactive' || a.actualStatus === 'Expired') && (
                       <button
                         onClick={() => handleRepostClick(a._id)}
                         className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white p-1.5 rounded-lg hover:from-green-600 hover:to-green-700 transition-all font-medium text-xs shadow-sm hover:shadow flex items-center justify-center gap-1"
                       >
                         <RotateCcw className="w-3 h-3" />
-                        Repost
+                        Repost with Fresh Time
                       </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -1556,9 +1900,23 @@ const AdminAnnouncement = () => {
                   </button>
                 </>
               ) : activeTab === 'active' ? (
-                <p>No active announcements found.</p>
+                <>
+                  <CheckCircle className="w-8 h-8 text-green-400 mx-auto mb-2" />
+                  <p>No active announcements found.</p>
+                  <p className="text-xs text-gray-400 mt-1">Create a new announcement or check pending approvals.</p>
+                </>
+              ) : activeTab === 'pending' ? (
+                <>
+                  <Bell className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p>No announcements pending approval.</p>
+                  <p className="text-xs text-gray-400 mt-1">All announcements have been approved or there are no new submissions.</p>
+                </>
               ) : (
-                <p>No inactive announcements found.</p>
+                <>
+                  <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p>No inactive announcements found.</p>
+                  <p className="text-xs text-gray-400 mt-1">No announcements have been cancelled or expired yet.</p>
+                </>
               )}
             </div>
           )}

@@ -9,6 +9,12 @@ import {
   Menu,
   X,
   Search,
+  Shield,
+  CheckCircle,
+  User,
+  Calendar,
+  Clock,
+  Heart,
 } from "lucide-react";
 import telexcover from "../../assets/background/telex-cover.jpg";
 import api from "../../utils/axios";
@@ -32,6 +38,8 @@ import {
 } from "../../utils/announcementUtils";
 
 import { DateTime } from "luxon";
+
+import Roles from "../../constants/roles";
 
 const getUniqueViewers = (announcement) => {
   if (!announcement.views || !Array.isArray(announcement.views)) {
@@ -94,6 +102,11 @@ const processAnnouncementData = (announcement) => {
   const uniqueViewers = getUniqueViewers(announcement);
   const uniqueAcknowledgements = getUniqueAcknowledgements(announcement);
 
+  // ✅ ADDED: Check if announcement is expired
+  const now = DateTime.local();
+  const expiresAt = announcement.expiresAt ? DateTime.fromISO(announcement.expiresAt) : null;
+  const isExpired = expiresAt && expiresAt <= now;
+
   return {
     ...announcement,
     processedViews: uniqueViewers,
@@ -102,7 +115,12 @@ const processAnnouncementData = (announcement) => {
     totalAcknowledgements: uniqueAcknowledgements.length,
     formattedDateTime: new Date(announcement.dateTime).toLocaleDateString(),
     realTimeFormatted: DateTime.fromISO(announcement.dateTime).toLocaleString(DateTime.DATETIME_MED),
-    timeAgo: "", 
+    timeAgo: "",
+    // ✅ ADDED: Expiry status and other metadata
+    isExpired: isExpired,
+    expiresAtFormatted: expiresAt ? expiresAt.toLocaleString(DateTime.DATETIME_MED) : null,
+    // ✅ ADDED: Ensure category field exists
+    category: announcement.category || "Department",
   };
 };
 
@@ -124,10 +142,29 @@ const getRealTimeAgo = (isoDateStr) => {
   return seconds <= 1 ? "just now" : `${seconds} seconds ago`;
 };
 
+// Helper function para malaman ang file type mula sa URL
+const getFileTypeFromUrl = (url) => {
+  if (!url) return 'application/octet-stream';
+  const extension = url.split('.').pop().toLowerCase().split('?')[0]; // Remove query parameters
+  const mimeTypes = {
+    pdf: 'application/pdf',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    gif: 'image/gif',
+    txt: 'text/plain',
+    doc: 'application/msword',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    xls: 'application/vnd.ms-excel',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  };
+  return mimeTypes[extension] || 'application/octet-stream';
+};
+
 // ==================== RESPONSIVE FILE ATTACHMENT COMPONENT ====================
 const FileAttachment = ({ file, onDownload, onView }) => {
   const getFileIcon = (fileName) => {
-    const extension = fileName.split(".").pop().toLowerCase();
+    const extension = fileName.split('.').pop().toLowerCase().split('?')[0];
     switch (extension) {
       case "pdf":
         return <FileText className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />;
@@ -148,22 +185,35 @@ const FileAttachment = ({ file, onDownload, onView }) => {
   };
 
   const canPreview = (fileName) => {
-    const extension = fileName.split(".").pop().toLowerCase();
+    const extension = fileName.split('.').pop().toLowerCase().split('?')[0];
     return ["pdf", "jpg", "jpeg", "png", "gif", "txt"].includes(extension);
   };
+
+  // Extract filename from URL if fileName is not provided
+  const getFileName = () => {
+    if (file.name) return file.name;
+    if (file.fileName) return file.fileName;
+    if (file.url) {
+      const urlParts = file.url.split('/');
+      return urlParts[urlParts.length - 1].split('?')[0];
+    }
+    return 'Attachment';
+  };
+
+  const fileName = getFileName();
 
   return (
     <div className="flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded-lg mt-2">
       <div className="flex items-center gap-2 flex-1 min-w-0">
-        {getFileIcon(file.name)}
+        {getFileIcon(fileName)}
         <div className="flex-1 min-w-0">
           <span className="text-xs font-medium text-gray-700 truncate block">
-            {file.name}
+            {fileName}
           </span>
         </div>
       </div>
       <div className="flex gap-1 ml-2 flex-shrink-0">
-        {canPreview(file.name) && (
+        {canPreview(fileName) && (
           <button
             onClick={() => onView(file)}
             className="p-1 text-green-600 hover:text-green-800 hover:bg-green-100 rounded transition-colors"
@@ -231,13 +281,17 @@ const AgentDashboard = () => {
       const updatedAnnouncements = announcements.map(announcement => ({
         ...announcement,
         timeAgo: getRealTimeAgo(announcement.dateTime),
-        realTimeFormatted: DateTime.fromISO(announcement.dateTime).toLocaleString(DateTime.DATETIME_MED)
+        realTimeFormatted: DateTime.fromISO(announcement.dateTime).toLocaleString(DateTime.DATETIME_MED),
+        // ✅ ADDED: Check expiry status in real-time
+        isExpired: announcement.expiresAt ? 
+          DateTime.fromISO(announcement.expiresAt) <= currentTime : false,
       }));
       
       // Only update if there are actual changes to prevent unnecessary re-renders
       setAnnouncements(prev => {
         const hasChanges = prev.some((ann, index) => 
-          ann.timeAgo !== updatedAnnouncements[index].timeAgo
+          ann.timeAgo !== updatedAnnouncements[index].timeAgo ||
+          ann.isExpired !== updatedAnnouncements[index].isExpired
         );
         return hasChanges ? updatedAnnouncements : prev;
       });
@@ -256,6 +310,7 @@ const AgentDashboard = () => {
             name: `${zustandUser.firstName} ${zustandUser.lastName}`.trim(),
             employeeId: zustandUser.employeeId,
             department: zustandUser.department,
+            role: zustandUser.role, // ✅ ADDED: Include user role
           });
           return;
         }
@@ -273,6 +328,7 @@ const AgentDashboard = () => {
             name: "Test User",
             employeeId: "test_employee",
             department: "Technical",
+            role: Roles.AGENT, // Default role
           });
           return;
         }
@@ -282,6 +338,7 @@ const AgentDashboard = () => {
           name: userName || "User",
           employeeId: employeeId,
           department: department,
+          role: Roles.AGENT, // Default role
         });
 
       } catch (error) {
@@ -291,6 +348,7 @@ const AgentDashboard = () => {
           name: "Fallback User",
           employeeId: "fallback_emp",
           department: "Technical",
+          role: Roles.AGENT,
         });
       }
     };
@@ -298,7 +356,7 @@ const AgentDashboard = () => {
     initializeUserData();
   }, []);
 
-  // ✅ FIXED SOCKET LISTENERS FOR REAL-TIME UPDATES - COMPLETE FIX
+  // ✅ FIXED SOCKET LISTENERS FOR REAL-TIME UPDATES WITH APPROVAL SYSTEM
   useEffect(() => {
     console.log("🔄 Setting up socket listeners for agent...");
 
@@ -322,9 +380,20 @@ const AgentDashboard = () => {
       
       if (Array.isArray(socketAnnouncements) && socketAnnouncements.length > 0) {
         const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
+        const now = DateTime.local();
         
         const processedAnnouncements = socketAnnouncements
-          .filter((ann) => ann && ann._id && ann.status === "Active") // ✅ ONLY ACTIVE ANNOUNCEMENTS
+          .filter((ann) => {
+            // ✅ CRITICAL FILTERS: Must be Active, Approved, and Not Expired
+            if (!ann || !ann._id) return false;
+            if (ann.status !== 'Active') return false;
+            if (ann.approvalStatus !== 'Approved') return false;
+            
+            // ✅ Expiry Check
+            if (ann.expiresAt && DateTime.fromISO(ann.expiresAt) <= now) return false;
+            
+            return true;
+          })
           .map((announcement) => ({
             ...announcement,
             isPinned: pinnedAnnouncements[announcement._id] || announcement.isPinned || false,
@@ -332,6 +401,14 @@ const AgentDashboard = () => {
             acknowledgements: Array.isArray(announcement.acknowledgements) 
               ? announcement.acknowledgements 
               : [],
+            // ✅ ADDED: Ensure category field exists
+            category: announcement.category || "Department",
+            // ✅ PRESERVE ATTACHMENT STRUCTURE
+            attachment: announcement.attachment ? {
+              url: announcement.attachment.url,
+              fileName: announcement.attachment.fileName || announcement.attachment.name,
+              type: announcement.attachment.type || getFileTypeFromUrl(announcement.attachment.url)
+            } : null,
           }))
           .map(processAnnouncementData)
           .map(announcement => ({
@@ -386,13 +463,27 @@ const AgentDashboard = () => {
       }));
     };
 
-    // ✅ FIXED: UNIFIED ANNOUNCEMENT HANDLER - PREVENTS DUPLICATES
+    // ✅ UPDATED: UNIFIED ANNOUNCEMENT HANDLER WITH APPROVAL AND EXPIRY CHECK
     const handleUnifiedAnnouncement = (announcementData, source) => {
       console.log(`📥 ${source}:`, announcementData._id, announcementData.title);
       
-      // ✅ CHECK IF ANNOUNCEMENT IS ACTIVE
-      if (announcementData.status !== "Active") {
-        console.log("❌ Ignoring inactive announcement from", source);
+      // ✅ CHECK IF ANNOUNCEMENT IS ACTIVE AND APPROVED
+      if (announcementData.status !== "Active" || announcementData.approvalStatus !== "Approved") {
+        console.log("❌ Ignoring inactive or unapproved announcement from", source);
+        // Remove if previously existed but now not approved
+        if (announcementData.status !== "Active") {
+          setAnnouncements(prev => prev.filter(a => a._id !== announcementData._id));
+          removePinnedAnnouncementFromStorage(announcementData._id);
+        }
+        return;
+      }
+
+      // ✅ CHECK IF ANNOUNCEMENT IS EXPIRED
+      const now = DateTime.local();
+      if (announcementData.expiresAt && DateTime.fromISO(announcementData.expiresAt) <= now) {
+        console.log("❌ Ignoring expired announcement from", source);
+        setAnnouncements(prev => prev.filter(a => a._id !== announcementData._id));
+        removePinnedAnnouncementFromStorage(announcementData._id);
         return;
       }
 
@@ -404,6 +495,14 @@ const AgentDashboard = () => {
         acknowledgements: Array.isArray(announcementData.acknowledgements) 
           ? announcementData.acknowledgements 
           : [],
+        // ✅ ADDED: Ensure category field exists
+        category: announcementData.category || "Department",
+        // ✅ PRESERVE ATTACHMENT STRUCTURE
+        attachment: announcementData.attachment ? {
+          url: announcementData.attachment.url,
+          fileName: announcementData.attachment.fileName || announcementData.attachment.name,
+          type: announcementData.attachment.type || getFileTypeFromUrl(announcementData.attachment.url)
+        } : null,
       });
 
       if (!processedAnnouncement) {
@@ -445,17 +544,23 @@ const AgentDashboard = () => {
       console.log(`✅ ${source} processed successfully - Announcement:`, announcementWithRealTime.title);
     };
 
-    // ✅ FIXED: NEW ANNOUNCEMENT HANDLER
+    // ✅ FIXED: NEW ANNOUNCEMENT HANDLER WITH APPROVAL CHECK
     const handleNewAnnouncement = (newAnnouncement) => {
       handleUnifiedAnnouncement(newAnnouncement, "NEW ANNOUNCEMENT");
     };
 
-    // ✅ FIXED: REPOST HANDLER
+    // ✅ FIXED: REPOST HANDLER WITH APPROVAL CHECK
     const handleAnnouncementReposted = (repostedAnnouncement) => {
       handleUnifiedAnnouncement(repostedAnnouncement, "REPOST");
     };
 
-    // ✅ CRITICAL: FIXED CANCELLATION HANDLER - LISTEN FOR MULTIPLE EVENT NAMES
+    // ✅ ADDED: ANNOUNCEMENT APPROVAL HANDLER
+    const handleAnnouncementApproved = (approvedAnnouncement) => {
+      console.log("✅ Real-time: Announcement approved", approvedAnnouncement._id);
+      handleUnifiedAnnouncement(approvedAnnouncement, "APPROVED ANNOUNCEMENT");
+    };
+
+    // ✅ CRITICAL: FIXED CANCELLATION HANDLER
     const handleAnnouncementCancelled = (data) => {
       console.log("🔴 Real-time: Announcement cancellation received", data);
       
@@ -480,14 +585,23 @@ const AgentDashboard = () => {
       removePinnedAnnouncementFromStorage(announcementId);
     };
 
-    // ✅ FIXED: REAL-TIME EDIT HANDLER - FOR ADMIN EDITS
+    // ✅ FIXED: REAL-TIME EDIT HANDLER
     const handleAnnouncementUpdated = (updatedAnnouncement) => {
       console.log("📝 Real-time: Announcement updated", updatedAnnouncement._id, updatedAnnouncement.title);
       
-      // ✅ CHECK IF ANNOUNCEMENT IS ACTIVE
-      if (updatedAnnouncement.status !== "Active") {
-        console.log("❌ Updated announcement is not active, removing it");
+      // ✅ CHECK IF ANNOUNCEMENT IS ACTIVE AND APPROVED
+      if (updatedAnnouncement.status !== "Active" || updatedAnnouncement.approvalStatus !== "Approved") {
+        console.log("❌ Updated announcement is not active or approved, removing it");
         // Remove if status changed to inactive
+        setAnnouncements(prev => prev.filter(ann => ann._id !== updatedAnnouncement._id));
+        removePinnedAnnouncementFromStorage(updatedAnnouncement._id);
+        return;
+      }
+
+      // ✅ CHECK IF ANNOUNCEMENT IS EXPIRED
+      const now = DateTime.local();
+      if (updatedAnnouncement.expiresAt && DateTime.fromISO(updatedAnnouncement.expiresAt) <= now) {
+        console.log("❌ Updated announcement is expired, removing it");
         setAnnouncements(prev => prev.filter(ann => ann._id !== updatedAnnouncement._id));
         removePinnedAnnouncementFromStorage(updatedAnnouncement._id);
         return;
@@ -503,6 +617,14 @@ const AgentDashboard = () => {
         acknowledgements: Array.isArray(updatedAnnouncement.acknowledgements) 
           ? updatedAnnouncement.acknowledgements 
           : [],
+        // ✅ ADDED: Ensure category field exists
+        category: updatedAnnouncement.category || "Department",
+        // ✅ PRESERVE ATTACHMENT STRUCTURE
+        attachment: updatedAnnouncement.attachment ? {
+          url: updatedAnnouncement.attachment.url,
+          fileName: updatedAnnouncement.attachment.fileName || updatedAnnouncement.attachment.name,
+          type: updatedAnnouncement.attachment.type || getFileTypeFromUrl(updatedAnnouncement.attachment.url)
+        } : null,
       });
 
       if (!processedAnnouncement) {
@@ -551,6 +673,9 @@ const AgentDashboard = () => {
     socket.on("agentAnnouncementUpdate", handleAgentUpdate);
     socket.on("newAnnouncement", handleNewAnnouncement);
     
+    // ✅ ADDED: Announcement approval event
+    socket.on("announcementApproved", handleAnnouncementApproved);
+    
     // ✅ CRITICAL: LISTEN FOR MULTIPLE CANCELLATION EVENT NAMES
     socket.on("announcementCancelled", handleAnnouncementCancelled);
     socket.on("announcementCanceled", handleAnnouncementCancelled); // Alternative spelling
@@ -584,6 +709,7 @@ const AgentDashboard = () => {
       socket.off("initialAgentData", handleInitialData);
       socket.off("agentAnnouncementUpdate", handleAgentUpdate);
       socket.off("newAnnouncement", handleNewAnnouncement);
+      socket.off("announcementApproved", handleAnnouncementApproved);
       
       // Remove all cancellation listeners
       socket.off("announcementCancelled", handleAnnouncementCancelled);
@@ -668,7 +794,7 @@ const AgentDashboard = () => {
         announcement.postedBy,
         announcement.title
       );
-      const { accounting, compliance, technical, hr } =
+      const { general, accounting, compliance, technical, hr } =
         categorizeAnnouncements(announcements);
 
       let departmentAnnouncements = [];
@@ -684,6 +810,9 @@ const AgentDashboard = () => {
           break;
         case "HR & Admin":
           departmentAnnouncements = hr;
+          break;
+        case "General":
+          departmentAnnouncements = general;
           break;
         default:
           departmentAnnouncements = hr;
@@ -747,9 +876,20 @@ const AgentDashboard = () => {
       const response = await api.get("/announcements");
 
       const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
+      const now = DateTime.local();
 
       const processedAnnouncements = response.data
-        .filter((ann) => ann && ann._id && ann.status === "Active") // ✅ ONLY ACTIVE ANNOUNCEMENTS
+        .filter((ann) => {
+          // ✅ UPDATED FILTER: Must be Active, Approved, and Not Expired
+          if (!ann || !ann._id) return false;
+          if (ann.status !== 'Active') return false;
+          if (ann.approvalStatus !== 'Approved') return false;
+          
+          // ✅ Expiry Check
+          if (ann.expiresAt && DateTime.fromISO(ann.expiresAt) <= now) return false;
+          
+          return true;
+        })
         .map((announcement) => ({
           ...announcement,
           isPinned:
@@ -760,6 +900,14 @@ const AgentDashboard = () => {
           acknowledgements: Array.isArray(announcement.acknowledgements)
             ? announcement.acknowledgements
             : [],
+          // ✅ ADDED: Ensure category field exists
+          category: announcement.category || "Department",
+          // ✅ PRESERVE ATTACHMENT STRUCTURE FOR CLOUDINARY
+          attachment: announcement.attachment ? {
+            url: announcement.attachment.url,
+            fileName: announcement.attachment.fileName || announcement.attachment.name,
+            type: announcement.attachment.type || getFileTypeFromUrl(announcement.attachment.url)
+          } : null,
         }))
         .map(processAnnouncementData)
         .map(announcement => ({
@@ -791,33 +939,92 @@ const AgentDashboard = () => {
     }
   };
 
-  // File handling
+  // ✅ UPDATED: File handling para sa Cloudinary URLs - PDF direct sa browser
   const handleFileDownload = (file) => {
     try {
-      const base64Data = file.data.split(",")[1];
-      const byteCharacters = atob(base64Data);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: file.type });
+      // ✅ BAGONG LOGIC PARA SA CLOUDINARY
+      if (file && file.url) {
+        // Para sa PDF files, buksan direkt sa bagong tab ng browser
+        if (file.type === 'application/pdf' || file.url.toLowerCase().includes('.pdf')) {
+          window.open(file.url, '_blank');
+          return;
+        }
+        
+        // Para sa ibang file types, download tulad ng dati
+        const link = document.createElement('a');
+        link.href = file.url;
+        link.download = file.fileName || file.name || 'attachment';
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else if (file && file.data) {
+        // Fallback para sa lumang Base64 format
+        const base64Data = file.data.split(',')[1];
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: file.type });
 
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = file.name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } else {
+        console.error('❌ Invalid file format:', file);
+      }
     } catch (error) {
-      console.error("❌ Error downloading file:", error);
+      console.error('❌ Error downloading file:', error);
     }
   };
 
+  // ✅ UPDATED: File viewing para sa images at iba pang previewable files
   const handleFileView = (file) => {
-    setFileViewModal({ isOpen: true, file });
+    // ✅ BAGONG LOGIC: Siguraduhin na may tamang structure ang file object
+    if (!file) {
+      console.error('❌ No file provided');
+      return;
+    }
+
+    // ✅ Kung ang file ay attachment object mula sa Cloudinary
+    if (file.url && (file.fileName || file.name)) {
+      // Check kung image file - ipapakita sa modal
+      const fileType = file.type || getFileTypeFromUrl(file.url);
+      const fileName = file.fileName || file.name;
+      
+      if (fileType.includes('image')) {
+        // Para sa images, buksan sa FileViewModal
+        setFileViewModal({ 
+          isOpen: true, 
+          file: {
+            url: file.url,
+            name: fileName,
+            type: fileType
+          }
+        });
+      } else if (fileType === 'application/pdf') {
+        // Para sa PDF, buksan direkt sa bagong tab ng browser
+        window.open(file.url, '_blank');
+      } else {
+        // Para sa ibang file types, download na lang
+        handleFileDownload(file);
+      }
+    } 
+    // ✅ Fallback para sa lumang format
+    else if (file.data) {
+      setFileViewModal({ isOpen: true, file });
+    } 
+    else {
+      console.error('❌ Unsupported file format:', file);
+      alert('Cannot preview this file format');
+    }
   };
 
   const closeFileView = () => {
@@ -836,14 +1043,21 @@ const AgentDashboard = () => {
     setAnnouncementDetailModal({ isOpen: false, announcement: null });
   };
 
-  // Categorize announcements
+  // ✅ UPDATED: Categorize announcements with General category
   const categorizeAnnouncements = (announcements) => {
+    const general = [];
     const accounting = [];
     const compliance = [];
     const hr = [];
     const technical = [];
 
     announcements.forEach((announcement) => {
+      // ✅ CHECK GENERAL CATEGORY FIRST (from the category field)
+      if (announcement.category === "General") {
+        general.push(announcement);
+        return;
+      }
+
       const department = getAnnouncementDepartment(
         announcement.postedBy,
         announcement.title
@@ -867,10 +1081,10 @@ const AgentDashboard = () => {
       }
     });
 
-    return { accounting, compliance, technical, hr };
+    return { general, accounting, compliance, technical, hr };
   };
 
-  const { accounting, compliance, technical, hr } =
+  const {accounting, compliance, technical, hr } =
     categorizeAnnouncements(announcements);
 
   // FIXED: Search across ALL announcements and then categorize
@@ -887,12 +1101,14 @@ const AgentDashboard = () => {
 
   const filteredAnnouncements = getFilteredAnnouncements();
 
-  // FIXED: Get filtered announcements by department from the already filtered list
-  const getFilteredAnnouncementsByDepartment = (department) => {
-    const { accounting: filteredAccounting, compliance: filteredCompliance, technical: filteredTechnical, hr: filteredHr } = 
+  // ✅ UPDATED: Get filtered announcements by category from the already filtered list
+  const getFilteredAnnouncementsByCategory = (category) => {
+    const { general: filteredGeneral, accounting: filteredAccounting, compliance: filteredCompliance, technical: filteredTechnical, hr: filteredHr } = 
       categorizeAnnouncements(filteredAnnouncements);
 
-    switch (department) {
+    switch (category) {
+      case "general":
+        return filteredGeneral;
       case "technical":
         return filteredTechnical;
       case "compliance":
@@ -906,12 +1122,13 @@ const AgentDashboard = () => {
     }
   };
 
-  // FIXED: Check if any department has announcements after filtering
+  // ✅ UPDATED: Check if any category has announcements after filtering
   const hasFilteredAnnouncements = 
-    getFilteredAnnouncementsByDepartment("technical").length > 0 ||
-    getFilteredAnnouncementsByDepartment("compliance").length > 0 ||
-    getFilteredAnnouncementsByDepartment("accounting").length > 0 ||
-    getFilteredAnnouncementsByDepartment("hr").length > 0;
+    getFilteredAnnouncementsByCategory("general").length > 0 ||
+    getFilteredAnnouncementsByCategory("technical").length > 0 ||
+    getFilteredAnnouncementsByCategory("compliance").length > 0 ||
+    getFilteredAnnouncementsByCategory("accounting").length > 0 ||
+    getFilteredAnnouncementsByCategory("hr").length > 0;
 
   if (!currentUser) {
     return (
@@ -1037,8 +1254,8 @@ const AgentDashboard = () => {
                           <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
                           Real-time updates
                         </span>
-                        <span className="text-xs text-gray-500">
-                          Time updates every second
+                        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                          Approved Only
                         </span>
                       </div>
                     </div>
@@ -1090,13 +1307,146 @@ const AgentDashboard = () => {
                 </div>
               ) : hasFilteredAnnouncements ? (
                 <div className="space-y-6 sm:space-y-8 lg:space-y-10 max-h-[60vh] lg:max-h-none overflow-y-auto pr-2 -mr-2 lg:mr-0 lg:overflow-visible">
-                  {/* Show all departments that have filtered announcements */}
                   
+                  {/* ✅ ADDED: GENERAL ANNOUNCEMENTS SECTION */}
+                  {getFilteredAnnouncementsByCategory("general").length > 0 && (
+                    <div className="bg-purple-50/70 border border-purple-200/60 rounded-xl p-4 sm:p-6 lg:p-8 shadow-md">
+                      <div className="flex items-center justify-between mb-4 sm:mb-6">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl flex items-center justify-center">
+                            <Shield className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-purple-600" />
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-base sm:text-lg lg:text-xl text-purple-800">
+                              General Announcements
+                            </h4>
+                            <p className="text-xs sm:text-sm text-purple-600">
+                              Company-wide updates for everyone
+                            </p>
+                          </div>
+                        </div>
+                        <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                          {getFilteredAnnouncementsByCategory("general").length} announcements
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-3 sm:space-y-4">
+                        {getFilteredAnnouncementsByCategory("general").map((announcement) => (
+                          <div
+                            key={announcement._id}
+                            className="bg-white rounded-xl p-3 sm:p-4 border border-purple-100 shadow-sm hover:shadow-md transition-all duration-300 group"
+                          >
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex-1 min-w-0">
+                                <h5 className="font-semibold text-gray-800 group-hover:text-purple-600 transition-colors truncate">
+                                  {announcement.title}
+                                </h5>
+                                <div className="flex flex-wrap items-center gap-2 mt-1">
+                                  <span className="flex items-center gap-1 text-xs text-gray-500">
+                                    <User className="w-3 h-3" />
+                                    {announcement.postedBy}
+                                  </span>
+                                  <span className="flex items-center gap-1 text-xs text-gray-500">
+                                    <Calendar className="w-3 h-3" />
+                                    {announcement.realTimeFormatted}
+                                  </span>
+                                  <span className="text-xs text-blue-600">
+                                    {announcement.timeAgo}
+                                  </span>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => handleTogglePin(announcement)}
+                                className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ml-2 ${
+                                  announcement.isPinned
+                                    ? "bg-yellow-100 text-yellow-600 hover:bg-yellow-200"
+                                    : "bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-yellow-500"
+                                }`}
+                                title={announcement.isPinned ? "Unpin announcement" : "Pin announcement"}
+                              >
+                                <Pin className={`w-3 h-3 ${announcement.isPinned ? "fill-current" : ""}`} />
+                              </button>
+                            </div>
+                            
+                            <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                              {announcement.agenda}
+                            </p>
+                            
+                            {/* ✅ ADDED: Approved by section for General announcements */}
+                            {announcement.approvedBy && (
+                              <div className="flex items-center gap-1 text-xs text-green-600 mb-2">
+                                <CheckCircle className="w-3 h-3" />
+                                <span>Approved by: {announcement.approvedBy}</span>
+                              </div>
+                            )}
+                            
+                            {/* ✅ ADDED: Expiry warning for General announcements */}
+                            {announcement.expiresAt && (
+                              <div className={`flex items-center gap-1 text-xs mb-2 ${
+                                announcement.isExpired ? 'text-red-600' : 'text-amber-600'
+                              }`}>
+                                <Clock className="w-3 h-3" />
+                                <span>
+                                  {announcement.isExpired ? 'Expired' : 'Expires'} 
+                                  {!announcement.isExpired && `: ${DateTime.fromISO(announcement.expiresAt).toRelative()}`}
+                                </span>
+                              </div>
+                            )}
+                            
+                            {/* ✅ ADDED: File Attachment Display */}
+                            {announcement.attachment && (
+                              <FileAttachment
+                                file={announcement.attachment}
+                                onDownload={handleFileDownload}
+                                onView={handleFileView}
+                              />
+                            )}
+                            
+                            <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100">
+                              <div className="flex items-center gap-3">
+                                <button
+                                  onClick={() => handleReadMore(announcement)}
+                                  className="text-xs sm:text-sm text-purple-600 hover:text-purple-800 font-medium"
+                                >
+                                  Read more →
+                                </button>
+                                <button
+                                  onClick={() => handleLike(announcement._id, currentUser._id)}
+                                  className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-500 transition-colors"
+                                >
+                                  <Heart className={`w-3 h-3 ${hasLiked(announcement._id) ? "fill-current text-red-500" : ""}`} />
+                                  <span>{announcement.totalAcknowledgements || 0}</span>
+                                </button>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-gray-500">
+                                <Eye className="w-3 h-3" />
+                                <span>{announcement.totalViews || 0} views</span>
+                              </div>
+                            </div>
+                            
+                            {/* ✅ ADDED: Priority badge for General announcements */}
+                            {announcement.priority && (
+                              <div className={`mt-2 inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                                announcement.priority === "High" 
+                                  ? "bg-red-100 text-red-700 border-red-200" 
+                                  : announcement.priority === "Medium"
+                                  ? "bg-yellow-100 text-yellow-700 border-yellow-200"
+                                  : "bg-green-100 text-green-700 border-green-200"
+                              }`}>
+                                {announcement.priority} Priority
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* TECHNICAL */}
-                  {getFilteredAnnouncementsByDepartment("technical").length > 0 && (
+                  {getFilteredAnnouncementsByCategory("technical").length > 0 && (
                     <DepartmentAnnouncementSection
                       title="Technical Announcements"
-                      announcements={getFilteredAnnouncementsByDepartment("technical")}
+                      announcements={getFilteredAnnouncementsByCategory("technical")}
                       onReadMore={handleReadMore}
                       onFileDownload={handleFileDownload}
                       onFileView={handleFileView}
@@ -1104,7 +1454,7 @@ const AgentDashboard = () => {
                       canPinMore={canPinMoreInDepartment(technical)}
                       showPinnedOnly={technicalPinned}
                       onTogglePinnedView={() => setTechnicalPinned(!technicalPinned)}
-                      pinnedCount={getFilteredAnnouncementsByDepartment("technical").filter((a) => a.isPinned).length}
+                      pinnedCount={getFilteredAnnouncementsByCategory("technical").filter((a) => a.isPinned).length}
                       maxPinnedLimit={MAX_PINNED_PER_DEPARTMENT}
                       onLike={handleLike}
                       hasLiked={hasLiked}
@@ -1115,10 +1465,10 @@ const AgentDashboard = () => {
                   )}
 
                   {/* COMPLIANCE */}
-                  {getFilteredAnnouncementsByDepartment("compliance").length > 0 && (
+                  {getFilteredAnnouncementsByCategory("compliance").length > 0 && (
                     <DepartmentAnnouncementSection
                       title="Compliance Announcements"
-                      announcements={getFilteredAnnouncementsByDepartment("compliance")}
+                      announcements={getFilteredAnnouncementsByCategory("compliance")}
                       onReadMore={handleReadMore}
                       onFileDownload={handleFileDownload}
                       onFileView={handleFileView}
@@ -1126,7 +1476,7 @@ const AgentDashboard = () => {
                       canPinMore={canPinMoreInDepartment(compliance)}
                       showPinnedOnly={compliancePinned}
                       onTogglePinnedView={() => setCompliancePinned(!compliancePinned)}
-                      pinnedCount={getFilteredAnnouncementsByDepartment("compliance").filter((a) => a.isPinned).length}
+                      pinnedCount={getFilteredAnnouncementsByCategory("compliance").filter((a) => a.isPinned).length}
                       maxPinnedLimit={MAX_PINNED_PER_DEPARTMENT}
                       onLike={handleLike}
                       hasLiked={hasLiked}
@@ -1137,10 +1487,10 @@ const AgentDashboard = () => {
                   )}
 
                   {/* ACCOUNTING */}
-                  {getFilteredAnnouncementsByDepartment("accounting").length > 0 && (
+                  {getFilteredAnnouncementsByCategory("accounting").length > 0 && (
                     <DepartmentAnnouncementSection
                       title="Accounting Announcements"
-                      announcements={getFilteredAnnouncementsByDepartment("accounting")}
+                      announcements={getFilteredAnnouncementsByCategory("accounting")}
                       onReadMore={handleReadMore}
                       onFileDownload={handleFileDownload}
                       onFileView={handleFileView}
@@ -1148,7 +1498,7 @@ const AgentDashboard = () => {
                       canPinMore={canPinMoreInDepartment(accounting)}
                       showPinnedOnly={accountingPinned}
                       onTogglePinnedView={() => setAccountingPinned(!accountingPinned)}
-                      pinnedCount={getFilteredAnnouncementsByDepartment("accounting").filter((a) => a.isPinned).length}
+                      pinnedCount={getFilteredAnnouncementsByCategory("accounting").filter((a) => a.isPinned).length}
                       maxPinnedLimit={MAX_PINNED_PER_DEPARTMENT}
                       onLike={handleLike}
                       hasLiked={hasLiked}
@@ -1159,10 +1509,10 @@ const AgentDashboard = () => {
                   )}
 
                   {/* HR & ADMIN */}
-                  {getFilteredAnnouncementsByDepartment("hr").length > 0 && (
+                  {getFilteredAnnouncementsByCategory("hr").length > 0 && (
                     <DepartmentAnnouncementSection
                       title="HR & Admin Announcements"
-                      announcements={getFilteredAnnouncementsByDepartment("hr")}
+                      announcements={getFilteredAnnouncementsByCategory("hr")}
                       onReadMore={handleReadMore}
                       onFileDownload={handleFileDownload}
                       onFileView={handleFileView}
@@ -1170,7 +1520,7 @@ const AgentDashboard = () => {
                       canPinMore={canPinMoreInDepartment(hr)}
                       showPinnedOnly={hrPinned}
                       onTogglePinnedView={() => setHrPinned(!hrPinned)}
-                      pinnedCount={getFilteredAnnouncementsByDepartment("hr").filter((a) => a.isPinned).length}
+                      pinnedCount={getFilteredAnnouncementsByCategory("hr").filter((a) => a.isPinned).length}
                       maxPinnedLimit={MAX_PINNED_PER_DEPARTMENT}
                       onLike={handleLike}
                       hasLiked={hasLiked}

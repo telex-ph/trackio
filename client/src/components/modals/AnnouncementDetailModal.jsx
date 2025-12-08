@@ -12,6 +12,7 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
 } from "lucide-react";
 
 const AnnouncementDetailModal = ({
@@ -27,10 +28,8 @@ const AnnouncementDetailModal = ({
 }) => {
   
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
-  const [isPdfViewerOpen, setIsPdfViewerOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [rotation, setRotation] = useState(0);
-  const [currentPdfPage, setCurrentPdfPage] = useState(1);
   const [localViewCount, setLocalViewCount] = useState(0);
   const [localLikeCount, setLocalLikeCount] = useState(0);
   const [localIsLiked, setLocalIsLiked] = useState(false);
@@ -101,8 +100,15 @@ const AnnouncementDetailModal = ({
 
   if (!isOpen || !announcement) return null;
 
+  // ✅ UPDATED: Handle both Cloudinary URL and old data format
+  const getImageUrl = () => {
+    if (!announcement.attachment) return null;
+    return announcement.attachment.url || announcement.attachment.data;
+  };
+
   const hasImages = announcement.attachment && 
-    announcement.attachment.type?.startsWith('image/');
+    announcement.attachment.type?.startsWith('image/') && 
+    getImageUrl();
   
   const isPdf = announcement.attachment && 
     announcement.attachment.type === 'application/pdf';
@@ -152,10 +158,13 @@ const AnnouncementDetailModal = ({
     }
   };
 
-  const openPdfViewer = () => {
-    if (isPdf) {
-      setIsPdfViewerOpen(true);
-      setCurrentPdfPage(1);
+  // ✅ UPDATED: Open PDF directly in browser
+  const openPdfInBrowser = () => {
+    if (isPdf && announcement.attachment) {
+      const pdfUrl = announcement.attachment.url || announcement.attachment.data;
+      if (pdfUrl) {
+        window.open(pdfUrl, '_blank');
+      }
     }
   };
 
@@ -163,11 +172,6 @@ const AnnouncementDetailModal = ({
     setIsImageViewerOpen(false);
     setZoomLevel(1);
     setRotation(0);
-  };
-
-  const closePdfViewer = () => {
-    setIsPdfViewerOpen(false);
-    setCurrentPdfPage(1);
   };
 
   const zoomIn = () => {
@@ -187,15 +191,19 @@ const AnnouncementDetailModal = ({
     setRotation(0);
   };
 
-  const nextPdfPage = () => {
-    setCurrentPdfPage(prev => prev + 1);
+  // ✅ UPDATED: Get attachment filename
+  const getAttachmentName = () => {
+    if (!announcement.attachment) return '';
+    return announcement.attachment.fileName || 
+           announcement.attachment.name || 
+           'Attachment';
   };
 
-  const prevPdfPage = () => {
-    setCurrentPdfPage(prev => Math.max(prev - 1, 1));
+  // ✅ UPDATED: Get attachment size in MB
+  const getAttachmentSize = () => {
+    if (!announcement.attachment || !announcement.attachment.size) return '0 MB';
+    return `${(announcement.attachment.size / 1024 / 1024).toFixed(2)} MB`;
   };
-
-  const totalPdfPages = 10;
 
   return (
     <>
@@ -253,10 +261,14 @@ const AnnouncementDetailModal = ({
                 {hasImages && (
                   <div className="relative w-full h-48 sm:h-64 md:h-80 lg:h-96 bg-gray-50">
                     <img
-                      src={announcement.attachment.data}
+                      src={getImageUrl()}
                       alt={announcement.title}
                       className="w-full h-full object-contain cursor-zoom-in hover:opacity-90 transition-opacity"
                       onClick={openImageViewer}
+                      onError={(e) => {
+                        console.error('Image failed to load:', getImageUrl());
+                        e.target.style.display = 'none';
+                      }}
                     />
 
                     <div className="absolute bottom-2 left-2 sm:bottom-4 sm:left-4 bg-black/70 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1 backdrop-blur-sm">
@@ -366,30 +378,48 @@ const AnnouncementDetailModal = ({
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-gray-800 text-base sm:text-lg truncate">
-                              {announcement.attachment.name}
+                              {getAttachmentName()}
                             </p>
                             <p className="text-gray-600 text-sm sm:text-base">
-                              {(
-                                (announcement.attachment.size || 0) /
-                                1024 /
-                                1024
-                              ).toFixed(2)}{" "}
-                              MB
+                              {getAttachmentSize()}
                             </p>
                             {isPdf && (
                               <p className="text-xs sm:text-sm text-red-600 font-medium">PDF Document</p>
+                            )}
+                            {announcement.attachment.url && (
+                              <p className="text-xs sm:text-sm text-green-600 font-medium">Cloudinary</p>
                             )}
                           </div>
                         </div>
 
                         <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 sm:gap-3">
-                          {isPdf && (
+                          {isPdf ? (
+                            // ✅ UPDATED: PDF opens directly in browser
                             <button
-                              onClick={openPdfViewer}
-                              className="flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold text-sm sm:text-base w-full xs:w-auto"
+                              onClick={openPdfInBrowser}
+                              className="flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold text-sm sm:text-base w-full xs:w-auto"
                             >
-                              <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
-                              <span>Preview</span>
+                              <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5" />
+                              <span>Open PDF</span>
+                            </button>
+                          ) : (
+                            // For non-PDF files, show download button
+                            <button
+                              onClick={() => {
+                                if (announcement.attachment.url) {
+                                  window.open(announcement.attachment.url, '_blank');
+                                } else if (announcement.attachment.data) {
+                                  // For old Base64 format
+                                  const link = document.createElement('a');
+                                  link.href = announcement.attachment.data;
+                                  link.download = getAttachmentName();
+                                  link.click();
+                                }
+                              }}
+                              className="flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm sm:text-base w-full xs:w-auto"
+                            >
+                              <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5" />
+                              <span>Open File</span>
                             </button>
                           )}
                         </div>
@@ -418,6 +448,7 @@ const AnnouncementDetailModal = ({
         </>
       )}
 
+      {/* Image Viewer Modal */}
       {isImageViewerOpen && hasImages && (
         <>
           <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[70]" onClick={closeImageViewer} />
@@ -441,11 +472,15 @@ const AnnouncementDetailModal = ({
             <div className="flex-1 flex items-center justify-center bg-black p-2 sm:p-4 min-h-0">
               <div className="relative w-full h-full flex items-center justify-center">
                 <img
-                  src={announcement.attachment.data}
+                  src={getImageUrl()}
                   alt={announcement.title}
                   className="max-w-full max-h-full object-contain transition-all duration-200"
                   style={{
                     transform: `scale(${zoomLevel}) rotate(${rotation}deg)`,
+                  }}
+                  onError={(e) => {
+                    console.error('Image failed to load in viewer:', getImageUrl());
+                    e.target.style.display = 'none';
                   }}
                 />
               </div>
@@ -491,93 +526,6 @@ const AnnouncementDetailModal = ({
                   >
                     <RotateCw className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {isPdfViewerOpen && isPdf && (
-        <>
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70]" onClick={closePdfViewer} />
-          <div className="fixed inset-2 sm:inset-4 bg-white rounded-xl sm:rounded-2xl shadow-2xl z-[80] flex flex-col overflow-hidden">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between p-3 sm:p-4 bg-white border-b border-gray-200 shrink-0 gap-3 lg:gap-0">
-              <div className="flex items-center gap-2 sm:gap-4">
-                <button
-                  onClick={closePdfViewer}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-all flex-shrink-0"
-                >
-                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
-                </button>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-base sm:text-lg font-semibold truncate">
-                    {announcement.attachment.name}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-gray-500">
-                    Page {currentPdfPage} of {totalPdfPages}
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 sm:gap-4">
-                <div className="flex items-center gap-1 sm:gap-2 bg-gray-100 rounded-lg px-2 py-1 sm:px-3 sm:py-2">
-                  <button
-                    onClick={prevPdfPage}
-                    disabled={currentPdfPage <= 1}
-                    className="p-1 hover:bg-white rounded transition-all disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
-                    title="Previous Page"
-                  >
-                    <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
-                  
-                  <span className="mx-1 sm:mx-2 text-sm font-medium min-w-[60px] sm:min-w-[80px] text-center flex-shrink-0">
-                    {currentPdfPage} / {totalPdfPages}
-                  </span>
-                  
-                  <button
-                    onClick={nextPdfPage}
-                    disabled={currentPdfPage >= totalPdfPages}
-                    className="p-1 hover:bg-white rounded transition-all disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
-                    title="Next Page"
-                  >
-                    <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex-1 bg-gray-100 min-h-0">
-              <iframe
-                src={`${announcement.attachment.data}#page=${currentPdfPage}`}
-                className="w-full h-full"
-                title="PDF Preview"
-                style={{ border: 'none' }}
-              />
-            </div>
-
-            <div className="p-3 sm:p-4 bg-white border-t border-gray-200 shrink-0">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
-                <div className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">
-                  Use the navigation buttons to browse pages
-                </div>
-                
-                <div className="flex items-center justify-center gap-2">
-                  <span className="text-xs sm:text-sm text-gray-600 hidden xs:inline">Go to page:</span>
-                  <span className="text-xs sm:text-sm text-gray-600 xs:hidden">Page:</span>
-                  <input
-                    type="number"
-                    min="1"
-                    max={totalPdfPages}
-                    value={currentPdfPage}
-                    onChange={(e) => {
-                      const page = parseInt(e.target.value);
-                      if (page >= 1 && page <= totalPdfPages) {
-                        setCurrentPdfPage(page);
-                      }
-                    }}
-                    className="w-12 sm:w-16 px-2 py-1 border border-gray-300 rounded text-center text-sm"
-                  />
-                  <span className="text-xs sm:text-sm text-gray-600">of {totalPdfPages}</span>
                 </div>
               </div>
             </div>

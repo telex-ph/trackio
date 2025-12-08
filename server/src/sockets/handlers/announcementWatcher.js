@@ -97,7 +97,7 @@ export default async function announcementWatcher(io) {
           // Other updates (title, content, etc.)
           console.log("📄 Content update detected - emitting announcementUpdated");
           io.emit("announcementUpdated", updatedAnnouncement);
-          io.emit("updatedAnnouncement", updatedAnnouncement); // Alternative event name
+          io.emit("updatedAnnouncement", updatedAnnouncement); 
         }
       }
 

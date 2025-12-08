@@ -39,7 +39,7 @@ const Toast = ({ message, type = "success", onClose }) => {
   }, [onClose]);
 
   return (
-    <div className={`fixed top-4 right-4 z-50 animate-slideIn ${type === "success" ? "bg-gradient-to-r from-green-500 to-green-600" : "bg-gradient-to-r from-red-500 to-red-600"} text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2`}>
+    <div className={`fixed top-4 right-4 z-50 animate-slideIn ${type === "success" ? "bg-gradient-to-r from-green-500 to-green-600" : "bg-gradient-to-r from-red-500 to-red-600"} text-white px-4 py-2 rounded-lg  flex items-center gap-2`}>
       {type === "success" ? <Check size={16} /> : <AlertCircle size={16} />}
       <span className="text-sm font-medium">{message}</span>
       <button onClick={onClose} className="ml-2 hover:opacity-80">
@@ -181,7 +181,7 @@ const PostDetailsModal = ({ post, isOpen, onClose, onArchive }) => {
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
-      <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto l">
         <div className="p-6">
           <div className="flex justify-between items-start mb-6">
             <div>
@@ -228,7 +228,7 @@ const PostDetailsModal = ({ post, isOpen, onClose, onArchive }) => {
               ) : (
                 <div className="rounded-xl overflow-hidden bg-gradient-to-r from-gray-100 to-gray-200 h-64 flex items-center justify-center">
                   <div className="text-center p-4">
-                    <div className={`w-16 h-16 rounded-full bg-gradient-to-r ${typeInfo.gradient} flex items-center justify-center mb-3 shadow-lg mx-auto`}>
+                    <div className={`w-16 h-16 rounded-full bg-gradient-to-r ${typeInfo.gradient} flex items-center justify-center mb-3  mx-auto`}>
                       {React.cloneElement(typeInfo.icon, { className: "w-8 h-8 text-white" })}
                     </div>
                     <h3 className="text-lg font-bold text-gray-800">{typeInfo.label}</h3>
@@ -254,7 +254,7 @@ const PostDetailsModal = ({ post, isOpen, onClose, onArchive }) => {
               <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-5">
                 <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2"><Users size={18} />Recognized Employee</h3>
                 <div className="flex items-center gap-3">
-                  <div className={`w-14 h-14 bg-gradient-to-r ${typeInfo.gradient} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg`}>
+                  <div className={`w-14 h-14 bg-gradient-to-r ${typeInfo.gradient} rounded-full flex items-center justify-center text-white font-bold text-lg `}>
                     {avatarInitials}
                   </div>
                   <div className="flex-1">
@@ -274,7 +274,7 @@ const PostDetailsModal = ({ post, isOpen, onClose, onArchive }) => {
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-200 rounded-xl p-5">
+              <div className="bg-white border border-light rounded-xl p-5">
                 <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2"><BarChart3 size={18} />Recognition Details</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
@@ -603,7 +603,7 @@ const CreatePostModal = ({ isOpen, onClose, onSave, editingPost, onUpdate }) => 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
       {showToast && <Toast message={toastMessage} type={toastType} onClose={() => setShowToast(false)} />}
-      <div className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl animate-slideUp">
+      <div className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto animate-slideUp">
         <div className="p-5">
           <div className="flex justify-between items-center mb-6">
             <div>
@@ -655,7 +655,7 @@ const CreatePostModal = ({ isOpen, onClose, onSave, editingPost, onUpdate }) => 
                 )}
 
                 {employeeSearchResults.length > 0 && (
-                  <div className="space-y-1 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-1">
+                  <div className="space-y-1 max-h-48 overflow-y-auto border border-light rounded-lg p-1">
                     {employeeSearchResults.map((employee) => (
                       <div key={employee.employeeId} onClick={() => handleEmployeeSelect(employee)} className="p-2 border rounded cursor-pointer transition-colors hover:bg-red-50 hover:border-red-200">
                         <div className="flex items-center gap-2">
@@ -684,7 +684,7 @@ const CreatePostModal = ({ isOpen, onClose, onSave, editingPost, onUpdate }) => 
                 {imagePreviews.length > 0 && (
                   <div className="grid grid-cols-3 gap-2 mb-3">
                     {imagePreviews.map((preview) => (
-                      <div key={preview.id} className="relative rounded-lg overflow-hidden border border-gray-200 group">
+                      <div key={preview.id} className="relative rounded-lg overflow-hidden border border-light group">
                         <img src={preview.url} alt="Preview" className="w-full h-20 object-cover" />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           <button type="button" onClick={() => removeImage(preview.id)} className="p-1.5 bg-red-600 text-white rounded-full hover:bg-red-700 transform hover:scale-110 transition-transform">
@@ -699,7 +699,7 @@ const CreatePostModal = ({ isOpen, onClose, onSave, editingPost, onUpdate }) => 
 
                 <div>
                   <input type="file" id="image-upload" multiple accept="image/*" onChange={handleImageSelect} className="hidden" disabled={imagePreviews.length >= 5} />
-                  <label htmlFor="image-upload" className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-4 cursor-pointer transition-colors ${imagePreviews.length >= 5 ? "border-gray-200 bg-gray-50 cursor-not-allowed" : "border-gray-300 hover:border-red-400 hover:bg-red-50"}`}>
+                  <label htmlFor="image-upload" className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-4 cursor-pointer transition-colors ${imagePreviews.length >= 5 ? "border-light bg-gray-50 cursor-not-allowed" : "border-gray-300 hover:border-red-400 hover:bg-red-50"}`}>
                     <Upload size={20} className={`mb-1 ${imagePreviews.length >= 5 ? "text-gray-400" : "text-gray-500"}`} />
                     <span className={`text-sm ${imagePreviews.length >= 5 ? "text-gray-400" : "text-gray-900"}`}>
                       {imagePreviews.length >= 5 ? "Maximum 5 images reached" : "Click to upload images"}
@@ -766,7 +766,7 @@ const CreatePostModal = ({ isOpen, onClose, onSave, editingPost, onUpdate }) => 
             <button onClick={() => handleSubmit("draft")} disabled={uploading} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm">
               {uploading ? (<div className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin"></div><span>Saving...</span></div>) : (<><Save size={16} /><span>{editingPost ? "Update Draft" : "Save as Draft"}</span></>)}
             </button>
-            <button onClick={() => handleSubmit("publish")} disabled={uploading} className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-medium py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm shadow-md hover:shadow-lg">
+            <button onClick={() => handleSubmit("publish")} disabled={uploading} className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-medium py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm ">
               {uploading ? (<div className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div><span>Processing...</span></div>) : (<><Megaphone size={16} /><span>{editingPost ? "Update Post" : postForm.scheduleForLater ? "Schedule Post" : "Publish Now"}</span></>)}
             </button>
           </div>
@@ -866,7 +866,7 @@ const RecognitionCard = ({ post, onArchive, onView, onEdit }) => {
       published: { color: "bg-green-100 text-green-800 border border-green-200", label: "Published", icon: "✅" },
       draft: { color: "bg-yellow-100 text-yellow-800 border border-yellow-200", label: "Draft", icon: "📝" },
       scheduled: { color: "bg-blue-100 text-blue-800 border border-blue-200", label: "Scheduled", icon: "⏰" },
-      archived: { color: "bg-gray-100 text-gray-800 border border-gray-200", label: "Archived", icon: "📁" },
+      archived: { color: "bg-gray-100 text-gray-800 border border-light", label: "Archived", icon: "📁" },
     };
     return statusConfig[status] || statusConfig.draft;
   };
@@ -874,7 +874,7 @@ const RecognitionCard = ({ post, onArchive, onView, onEdit }) => {
   const statusBadge = getStatusBadge(post.status);
 
   return (
-    <div className="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden h-full flex flex-col transform hover:-translate-y-1">
+    <div className="group bg-white rounded-xl border border-light transition-all duration-300 overflow-hidden h-full flex flex-col transform hover:-translate-y-1">
       {post.images && post.images.length > 0 ? (
         <div className="relative h-48 overflow-hidden">
           <img src={post.images[0].data || post.images[0].url} alt={post.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
@@ -918,7 +918,7 @@ const RecognitionCard = ({ post, onArchive, onView, onEdit }) => {
         <p className="text-sm text-gray-600 leading-relaxed line-clamp-3 mb-4 flex-1">{post.description}</p>
 
         <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-3 group-hover:bg-gray-100 transition-colors">
-          <div className={`w-10 h-10 bg-gradient-to-r ${typeInfo.color} rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
+          <div className={`w-10 h-10 bg-gradient-to-r ${typeInfo.color} rounded-full flex items-center justify-center text-white font-bold text-sm `}>
             {getAvatarInitials(employeeName)}
           </div>
           <div className="flex-1 min-w-0">
@@ -944,7 +944,7 @@ const RecognitionCard = ({ post, onArchive, onView, onEdit }) => {
             <button onClick={handleEdit} className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors group/edit" title="Edit">
               <Edit className="w-4 h-4 group-hover/edit:scale-110 transition-transform" />
             </button>
-            <button onClick={handleView} className="bg-gradient-to-r from-red-600 to-red-700 text-white px-3 py-1.5 rounded-full text-xs font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-300 flex items-center gap-1.5 shadow-md hover:shadow-lg group/view">
+            <button onClick={handleView} className="bg-gradient-to-r from-red-600 to-red-700 text-white px-3 py-1.5 rounded-full text-xs font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-300 flex items-center gap-1.5 group/view">
               <span>View Details</span>
               <ArrowUpRight className="w-4 h-4 group-hover/readmore:translate-x-0.5 group-hover/readmore:-translate-y-0.5 transition-transform" />
             </button>
@@ -1154,7 +1154,7 @@ const AdminRecognition = () => {
   if (loading && posts.length === 0) return <LoadingSpinner />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
+    <div className="min-h-screen p-4 md:p-6">
       {showToast && <Toast message={toastMessage} type={toastType} onClose={() => setShowToast(false)} />}
       <PostDetailsModal post={selectedPost} isOpen={showPostModal} onClose={() => { setShowPostModal(false); setSelectedPost(null); }} onArchive={handleArchivePost} />
       <CreatePostModal isOpen={showCreateModal} onClose={handleCloseModal} onSave={handleSaveNewPost} editingPost={editingPost} onUpdate={handleUpdatePost} />
@@ -1166,11 +1166,11 @@ const AdminRecognition = () => {
             <p className="text-gray-600">Celebrate and acknowledge outstanding employee achievements</p>
           </div>
           <div className="flex items-center gap-4">
-            <div className="bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm min-w-[120px] whitespace-nowrap">
-              <div className="text-xs text-gray-500 font-medium">Total Posts</div>
+            <div className="bg-white px-6 py-3 rounded-xl border border-light  min-w-[120px] whitespace-nowrap">
+              <div className="text-xs text-gray-500 font-medium"  >Total Posts</div>
               <div className="text-2xl font-bold text-gray-900 truncate">{pagination.total}</div>
             </div>
-            <button onClick={() => setShowCreateModal(true)} className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold px-5 py-3 rounded-xl transition-all flex items-center gap-2 text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+            <button onClick={() => setShowCreateModal(true)} className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold px-5 py-3 rounded-xl transition-all flex items-center gap-2 text-sm   transform hover:-translate-y-0.5">
               <Plus size={18} /><span>New Recognition</span>
             </button>
           </div>
@@ -1178,7 +1178,7 @@ const AdminRecognition = () => {
 
         <div className="flex flex-wrap gap-2 mb-6">
           {categories.map((category) => (
-            <button key={category.id} onClick={() => handleTabChange(category.id)} className={`px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${activeTab === category.id ? "bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md" : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-gray-400"}`}>
+            <button key={category.id} onClick={() => handleTabChange(category.id)} className={`px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${activeTab === category.id ? "bg-gradient-to-r from-red-600 to-red-700 text-white" : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-gray-400"}`}>
               <span>{category.name}</span>
               {categoryCounts[category.id] > 0 && (<span className={`px-1.5 py-0.5 rounded-full text-xs ${activeTab === category.id ? "bg-white/20" : "bg-gray-100"}`}>{categoryCounts[category.id]}</span>)}
             </button>
@@ -1220,7 +1220,7 @@ const AdminRecognition = () => {
       )}
 
       {posts.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-2xl border border-gray-200 shadow-sm">
+        <div className="text-center py-12 bg-white rounded-2xl border border-light ">
           <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
             <Trophy size={32} className="text-gray-400" />
           </div>
@@ -1232,7 +1232,7 @@ const AdminRecognition = () => {
              activeTab === "archived" ? "No archived recognitions. Archived posts will appear here." :
              "No recognitions found in the system."}
           </p>
-          <button onClick={() => setShowCreateModal(true)} className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-medium px-5 py-2.5 rounded-lg transition-all flex items-center gap-2 mx-auto text-sm shadow-md hover:shadow-lg">
+          <button onClick={() => setShowCreateModal(true)} className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-medium px-5 py-2.5 rounded-lg transition-all flex items-center gap-2 mx-auto text-sm  hover:">
             <Plus size={16} /><span>Create First Recognition</span>
           </button>
         </div>
@@ -1266,7 +1266,7 @@ const AdminRecognition = () => {
             const employeePosition = getEmployeePosition();
 
             return (
-              <div key={post._id} className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow group">
+              <div key={post._id} className="bg-white rounded-xl border border-light p-4 hover: transition-oup">
                 <div className="flex items-start gap-4">
                   {post.images && post.images.length > 0 ? (
                     <div className="w-20 h-20 flex-shrink-0 overflow-hidden rounded-lg">

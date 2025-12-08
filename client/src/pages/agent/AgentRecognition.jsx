@@ -243,7 +243,7 @@ const PostDetailsModal = ({ post, isOpen, onClose }) => {
               </div>
 
               {/* Stats Card - Simplified without engagement stats */}
-              <div className="bg-white border border-gray-200 rounded-xl p-5">
+              <div className="bg-white border border-light rounded-xl p-5">
                 <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <BarChart3 size={18} />
                   Recognition Details
@@ -575,7 +575,7 @@ const AgentRecognition = () => {
   //   : [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
+    <div className="min-h-screen bg-gradient-to-br  p-4 md:p-6">
       {/* Post Details Modal */}
       <PostDetailsModal 
         post={selectedPost}
@@ -604,7 +604,7 @@ const AgentRecognition = () => {
               <button 
                 onClick={handleRefresh}
                 disabled={refreshing}
-                className="p-2.5 bg-white border border-gray-300 hover:border-red-300 text-gray-700 hover:text-red-600 rounded-lg font-medium transition-all flex items-center gap-2 shadow-sm hover:shadow"
+                className="p-2.5 bg-white border border-gray-300 hover:border-red-300 text-gray-700 hover:text-red-600 rounded-lg font-medium transition-all flex items-center gap-2"
                 title="Refresh"
               >
                 {refreshing ? (
@@ -627,7 +627,7 @@ const AgentRecognition = () => {
                 }}
                 className={`px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
                   activeCategory === category.name
-                    ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md'
+                    ? 'bg-gradient-to-r from-red-600 to-red-700 text-white'
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-gray-400'
                 }`}
               >
@@ -656,7 +656,7 @@ const AgentRecognition = () => {
             
             {/* RECENT POSTS - CARD GRID */}
             {posts.length === 0 ? (
-              <div className="text-center py-12 bg-white rounded-2xl border border-gray-200 shadow-sm">
+              <div className="text-center py-12 bg-white rounded-2xl border border-light shadow-sm">
                 <Trophy size={48} className="mx-auto mb-4 text-gray-400" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">No recognitions found</h3>
                 <p className="text-gray-600">No published recognitions available for this category.</p>
@@ -673,7 +673,7 @@ const AgentRecognition = () => {
                     return (
                       <div 
                         key={post._id} 
-                        className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer group"
+                        className="bg-white rounded-xl border border-light overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer group"
                         onClick={() => handleViewPost(post)}
                       >
                         {/* Post Image */}
@@ -745,11 +745,11 @@ const AgentRecognition = () => {
                           </div>
 
                           {/* Card Footer - Date with Time */}
-                          <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t border-gray-200">
+                          <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t border-light">
                             <div className="text-xs text-gray-500">
                               {formatDateTime(post.createdAt)}
                             </div>
-                            <div className="bg-gradient-to-r from-red-600 to-red-700 text-white px-3 py-1.5 rounded-full text-xs font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-300 flex items-center gap-1.5 shadow-md hover:shadow-lg group/view">
+                            <div className="bg-gradient-to-r from-red-600 to-red-700 text-white px-3 py-1.5 rounded-full text-xs font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-300 flex items-center gap-1.5 hover:shadow-lg group/view">
                               <span>View Details</span>
                               <ArrowUpRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
                             </div>
@@ -824,7 +824,7 @@ const AgentRecognition = () => {
           <div className="space-y-8">
             
             {/* Top Ranking
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+            <div className="bg-white rounded-xl border border-light shadow-sm p-5">
               <div className="flex justify-between items-center mb-5">
                 <h3 className="text-xl font-bold text-gray-900 flex items-center">
                   <Trophy className="mr-2" size={22} />
@@ -906,7 +906,7 @@ const AgentRecognition = () => {
         </div>
 
         {/* Footer */}
-        <div className="mt-12 pt-8 border-t border-gray-200 text-center">
+        <div className="mt-12 pt-8  text-center">
           <div className="flex flex-wrap gap-6 justify-center mb-4">
             {categories.slice(0, 6).map((category) => (
               <button
@@ -921,11 +921,7 @@ const AgentRecognition = () => {
               </button>
             ))}
           </div>
-          <p className="text-gray-500 text-sm">
-            Celebrating excellence across the organization • Showing {posts.length} recognitions
-          </p>
         </div>
-
       </div>
     </div>
   );
