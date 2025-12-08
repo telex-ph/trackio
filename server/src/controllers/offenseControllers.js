@@ -54,7 +54,9 @@ export const addOffense = async (req, res) => {
       ...(offenseData.dateOfOffense && { dateOfOffense: dateOfOffense }),
       ...(offenseData.dateOfMistake && { dateOfMistake: dateOfMistake }),
       ...(offenseData.coachingDate && { coachingDate: coachingDate }),
-      ...(offenseData.coachId && { coachId: new ObjectId(offenseData.coachId) }),
+      coachId: offenseData.coachId
+        ? new ObjectId(offenseData.coachId)
+        : new ObjectId(user._id),
     };
 
     const newOffense = await Offense.create(newOffenseData);
