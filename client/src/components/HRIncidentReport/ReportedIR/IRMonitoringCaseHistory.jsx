@@ -2,7 +2,7 @@ import React from "react";
 import { FileText, Search, Eye, Download, X as ClearIcon } from "lucide-react";
 import { DateTime } from "luxon";
 
-const HR_CaseHistory = ({
+const IRMonitoringCaseHistory = ({
   offenses,
   filters,
   setFilters,
@@ -185,4 +185,4 @@ const HR_CaseHistory = ({
   );
 };
 
-export default HR_CaseHistory;
+export default IRMonitoringCaseHistory;
