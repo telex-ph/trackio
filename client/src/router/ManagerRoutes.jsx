@@ -23,6 +23,7 @@ import AdminAccountManagement from "../pages/admin/AdminAccountManagement";
 import SharedTicket from "../pages/shared/SharedTicket";
 import TeamLeaderOffenses from "../pages/team-leader/TeamLeaderOffenses";
 import TeamLeaderCreateOffenses from "../pages/team-leader/TeamLeaderCreateOffense";
+import SharedCourse from "../pages/shared/SharedCourse";
 
 const MANAGER_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -56,6 +57,10 @@ const MANAGER_ROUTES = [
   {
     path: "offenses",
     element: <TeamLeaderOffenses />,
+  },
+  {
+    path: "course",
+    element: <SharedCourse />,
   },
   {
     path: "createoffense",

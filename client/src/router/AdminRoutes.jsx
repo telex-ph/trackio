@@ -24,11 +24,12 @@ import AdminAccountManagement from "../pages/admin/AdminAccountManagement";
 import SharedTicket from "../pages/shared/SharedTicket";
 import TeamLeaderOffenses from "../pages/team-leader/TeamLeaderOffenses";
 import TeamLeaderCreateOffenses from "../pages/team-leader/TeamLeaderCreateOffense";
+import SharedCourse from "../pages/shared/SharedCourse";
 
 const ADMIN_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
   { path: "dashboard", element: <AdminDashboard /> },
-  { path: "recognition", element: <AdminRecognition />},
+  { path: "recognition", element: <AdminRecognition /> },
   { path: "attendance", element: <SharedAttendance /> },
   { path: "ticket", element: <SharedTicket /> },
   {
@@ -59,6 +60,10 @@ const ADMIN_ROUTES = [
     element: <AdminAccountManagement />,
   },
   { path: "account-settings", element: <SharedSettings /> },
+  {
+    path: "course",
+    element: <SharedCourse />,
+  },
   {
     path: "offenses",
     element: <TeamLeaderOffenses />,

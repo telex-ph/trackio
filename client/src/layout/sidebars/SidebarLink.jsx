@@ -15,7 +15,7 @@ const SidebarLink = ({ to, icon: Icon, label, isCollapsed, badge }) => (
     }
   >
     <div className="flex items-center gap-2">
-      <Icon className="w-4 h-4 flex-shrink-0" />
+      <Icon className="w-4 h-4 flex--0" />
       {!isCollapsed && <span className="font-medium">{label}</span>}
     </div>
 

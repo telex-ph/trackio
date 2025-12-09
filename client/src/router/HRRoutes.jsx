@@ -22,6 +22,7 @@ import SharedSettings from "../pages/shared/SharedSettings";
 import SharedTeamViewMembers from "../pages/shared/SharedTeamViewMembers";
 import SharedTicket from "../pages/shared/SharedTicket";
 import TeamLeaderOffenses from "../pages/team-leader/TeamLeaderOffenses";
+import SharedCourse from "../pages/shared/SharedCourse";
 
 const HR_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -56,6 +57,10 @@ const HR_ROUTES = [
   {
     path: "offenses",
     element: <TeamLeaderOffenses />,
+  },
+  {
+    path: "course",
+    element: <SharedCourse />,
   },
   {
     path: "reported-ir",

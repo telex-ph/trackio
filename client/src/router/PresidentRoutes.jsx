@@ -33,6 +33,7 @@ import Roles from "../constants/roles";
 import TicketLayout from "../layout/TicketLayout";
 import SharedTicketList from "../pages/shared/SharedTicketList";
 import SharedTicketAnalytics from "../pages/shared/SharedTicketAnalytics";
+import SharedCourse from "../pages/shared/SharedCourse";
 
 const PRESIDENT_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -66,6 +67,10 @@ const PRESIDENT_ROUTES = [
   {
     path: "team",
     element: <SharedTeamViewMembers />,
+  },
+  {
+    path: "course",
+    element: <SharedCourse />,
   },
   {
     path: "account-management",
