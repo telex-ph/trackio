@@ -349,6 +349,7 @@ const SharedMyOffences = () => {
         ackMessage,
         isAcknowledged: true,
         isReadByHR: true,
+        isReadByRespondant: true,
         acknowledgedDateTime: now.toISOString(),
       };
 
