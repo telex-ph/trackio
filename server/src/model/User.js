@@ -242,64 +242,64 @@ class User {
         //  Filter users by group.agentIds and group.accountIds
         ...(role === Roles.MANAGER
           ? [
-              {
-                $match: {
-                  $or: [
-                    // Include BO Head, OA, Trainer QA
-                    {
-                      role: {
-                        $in: [
-                          Roles.BACK_OFFICE_HEAD,
-                          Roles.OPERATION_ASSOCIATE,
-                          Roles.TRAINER_QUALITY_ASSURANCE,
-                        ],
-                      },
+            {
+              $match: {
+                $or: [
+                  // Include BO Head, OA, Trainer QA
+                  {
+                    role: {
+                      $in: [
+                        Roles.BACK_OFFICE_HEAD,
+                        Roles.OPERATION_ASSOCIATE,
+                        Roles.TRAINER_QUALITY_ASSURANCE,
+                      ],
                     },
-                    {
-                      "group.accountIds": new ObjectId(
-                        "64f600000000000000000003"
-                      ),
-                    },
-                  ],
-                },
+                  },
+                  {
+                    "group.accountIds": new ObjectId(
+                      "64f600000000000000000003"
+                    ),
+                  },
+                ],
               },
-            ]
+            },
+          ]
           : []),
 
         ...(role === Roles.BACK_OFFICE_HEAD
           ? [
-              {
-                $match: {
-                  role: Roles.TRAINER_QUALITY_ASSURANCE,
-                },
+            {
+              $match: {
+                role: Roles.TRAINER_QUALITY_ASSURANCE,
               },
-            ]
+            },
+          ]
           : []),
 
         ...(role === Roles.OPERATION_ASSOCIATE
           ? [
-              {
-                $lookup: {
-                  from: "groups",
-                  localField: "_id",
-                  foreignField: "teamLeaderId",
-                  as: "asTeamLeaderOfGroup",
-                },
+            {
+              $lookup: {
+                from: "groups",
+                localField: "_id",
+                foreignField: "teamLeaderId",
+                as: "asTeamLeaderOfGroup",
               },
-              {
-                $unwind: {
-                  path: "$asTeamLeaderOfGroup",
-                  preserveNullAndEmptyArrays: false,
-                },
+            },
+            {
+              $unwind: {
+                path: "$asTeamLeaderOfGroup",
+                preserveNullAndEmptyArrays: false,
               },
-              {
-                $match: {
-                  "asTeamLeaderOfGroup.accountIds": new ObjectId(
-                    "64f600000000000000000003"
-                  ),
-                },
+            },
+            {
+              $match: {
+                "asTeamLeaderOfGroup.accountIds": new ObjectId(
+                  "64f600000000000000000003"
+                ),
               },
-            ]
+            },
+          ]
           : []),
 
         // Lookup all accounts associated with that group
@@ -358,6 +358,64 @@ class User {
 
     return users;
   }
+
+  static async getUserAccountsById(userId) {
+    if (!userId) throw new Error("User ID is required");
+
+    const db = await connectDB();
+    const users = db.collection("users");
+
+    const userData = await users.aggregate([
+      {
+        $match: { _id: new ObjectId(userId), isDeleted: { $ne: true } }
+      },
+
+      // Find the user's group whether they are agent or team leader
+      {
+        $lookup: {
+          from: "groups",
+          let: { userId: "$_id", groupId: "$groupId" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $or: [
+                    { $eq: ["$_id", "$$groupId"] },      // agent
+                    { $eq: ["$teamLeaderId", "$$userId"] } // team leader
+                  ]
+                }
+              }
+            }
+          ],
+          as: "group"
+        }
+      },
+
+      { $unwind: { path: "$group", preserveNullAndEmptyArrays: true } },
+
+      // Get accounts from the group
+      {
+        $lookup: {
+          from: "accounts",
+          localField: "group.accountIds",
+          foreignField: "_id",
+          as: "accounts"
+        }
+      },
+
+      // Clean output
+      {
+        $project: {
+          password: 0,
+          "group.agentIds": 0,
+          "group.accountIds": 0
+        }
+      }
+    ]).toArray();
+
+    return userData[0] || null;
+  }
+
 
   /**
    * Log in a user by checking email and password.
