@@ -552,7 +552,7 @@ const SharedMyOffences = () => {
   const filteredCoachingOffenses = safeOffenses.filter((off) => {
     const isInvolved =
       off.respondantId === loggedUser._id &&
-      !["Invalid", "Acknowledged"].includes(off.status);
+      !["Invalid", "Acknowledged", "Archived"].includes(off.status);
 
     if (!isInvolved) return false;
     if (off.type !== "COACHING") return false;
@@ -626,7 +626,7 @@ const SharedMyOffences = () => {
       const isResolved =
         loggedUser &&
         off.respondantId === loggedUser._id &&
-        ["Invalid", "Acknowledged"].includes(off.status) &&
+        ["Invalid", "Acknowledged", "Archived"].includes(off.status) &&
         off.type !== "IR";
       if (!isResolved) return false;
 
