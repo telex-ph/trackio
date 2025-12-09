@@ -1,5 +1,6 @@
 import React from "react";
 import { Calendar, X, FileText, Eye, Download } from "lucide-react";
+import { exportAllFiles } from "./exportPDF";
 
 const CoachingDetails = ({
   isViewMode,
@@ -31,7 +32,7 @@ const CoachingDetails = ({
           </div>
           {isViewMode && (
             <div className="flex items-center gap-2">
-              {/* {["Invalid", "Acknowledged", "Archived"].includes(
+              {["Invalid", "Acknowledged", "Archived"].includes(
                 formData.status
               ) && (
                 <button
@@ -41,7 +42,7 @@ const CoachingDetails = ({
                   <Download className="w-4 h-4" />
                   <span className="hidden sm:inline">Export</span>
                 </button>
-              )} */}
+              )}
               <button
                 onClick={onClose}
                 className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
@@ -209,140 +210,208 @@ const CoachingDetails = ({
                 </button>
               )}
             </div>
-            {/* // ----------------------------- 
+            {/* ----------------------------- 
               // Export File UI //
             ----------------------------- */}
             <div
               id="coaching-pdf-export"
               style={{
-                position: "absolute",
-                left: "-9999px",
-                top: "0",
-                backgroundColor: "#fff",
+                position: "fixed",
+                left: 0,
+                top: "-10000px",
+                width: "600px",
+                boxSizing: "border-box",
+                background: "#ffffff",
                 color: "#000",
-                width: "800px",
-                padding: "20px",
+                fontFamily: "Arial, sans-serif",
+                fontSize: "12px",
+                lineHeight: 1.25,
+                padding: "10px",
+                borderRadius: "2px",
               }}
             >
-              {/* 1. Header Logo */}
-              <div className="flex justify-between items-start mb-4">
-                <div className="text-left">
-                  <p className="text-sm font-extrabold text-black uppercase mb-1">
+              {/* Header */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  marginBottom: "6px",
+                }}
+              >
+                <div style={{ lineHeight: 1.1 }}>
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      fontSize: "13px",
+                      marginBottom: "2px",
+                    }}
+                  >
                     TELEX BUSINESS SUPPORT SERVICES INC.
-                  </p>
-                  <p className="text-sm text-gray-900 leading-tight">
+                  </div>
+                  <div style={{ margin: 0 }}>
                     Telex Building, Brgy. Cawayan Bugtong,
                     <br />
                     Guimba, Nueva Ecija 3115
                     <br />
                     044-950-4196
-                  </p>
+                  </div>
                 </div>
-                <div className="shrink-0">
+
+                <div style={{ flexShrink: 0 }}>
                   <img
                     src="../../../public/telex-logo.png"
                     alt="TELEX Logo"
-                    className="h-20 w-auto"
+                    style={{ height: "48px", width: "auto", display: "block" }}
                   />
                 </div>
               </div>
 
-              {/* 2. Key Details */}
-              <div className="border-t border-black divide-y divide-black">
-                <div className="flex justify-between p-2 text-sm bg-gray-50 border-b border-black">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-red-500">📅</span>
-                    <span className="font-bold">Date:</span>{" "}
-                    {formData.coachingDate
+              <div
+                style={{
+                  borderTop: "1px solid #d0d0d0",
+                  borderBottom: "1px solid #d0d0d0",
+                  padding: "6px 0",
+                }}
+              >
+                {[
+                  {
+                    icon: "📅",
+                    label: "Date",
+                    value: formData.coachingDate
                       ? new Date(formData.coachingDate).toLocaleDateString(
                           "en-US",
-                          {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          }
+                          { year: "numeric", month: "long", day: "numeric" }
                         )
-                      : "N/A"}
+                      : "N/A",
+                  },
+                  {
+                    icon: "👤",
+                    label: "Agent Name",
+                    value: formData.agentName || "Unknown agent",
+                  },
+                  {
+                    icon: "👥",
+                    label: "Coach/Supervisor",
+                    value: formData.coachName || "Unknown coach",
+                  },
+                  {
+                    icon: "🧑‍💻",
+                    label: "Team Leader",
+                    value: formData.teamLeaderName || "Unknown team leader",
+                  },
+                  {
+                    icon: "❌",
+                    label: "Coaching Mistake",
+                    value: formData.coachingMistake || "No mistake",
+                  },
+                ].map((row, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      alignItems: "flex-start",
+                      padding: i === 0 ? "4px 0 6px 0" : "2px 0",
+                    }}
+                  >
+                    <span
+                      style={{
+                        lineHeight: 1,
+                        fontSize: "13px",
+                        display: "inline-block",
+                        width: "18px",
+                        textAlign: "left",
+                        marginTop: "2px",
+                      }}
+                    >
+                      {row.icon}
+                    </span>
+                    <div style={{ flex: 1 }}>
+                      <strong
+                        style={{
+                          marginRight: "6px",
+                          display: "inline-block",
+                          minWidth: "120px",
+                        }}
+                      >
+                        {row.label}:
+                      </strong>
+                      <span>{row.value}</span>
+                    </div>
                   </div>
-                </div>
-
-                <div className="flex justify-between p-2 text-sm border-b border-black">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-red-500">👤</span>
-                    <span className="font-bold">Agent Name:</span>{" "}
-                    {formData.agentName || "Unknown agent"}
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-red-500">👥</span>
-                    <span className="font-bold">Coach/Supervisor:</span>{" "}
-                    {formData.coachName || "Unknown coach"}
-                  </div>
-                </div>
-
-                <div className="p-2 text-sm border-b border-black">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-red-500">🧑‍💻</span>
-                    <span className="font-bold">Team Leader:</span>{" "}
-                    {formData.teamLeaderName || "Unknown team leader"}
-                  </div>
-                </div>
-
-                <div className="p-2 text-sm bg-gray-100 border-b border-black">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-red-600 text-lg">❌</span>
-                    <span className="font-bold">Coaching Mistake:</span>{" "}
-                    {formData.coachingMistake || "No mistake"}
-                  </div>
-                </div>
+                ))}
               </div>
 
-              {/* 3. Feedback & Discussion */}
-              <div className="border-t border-black divide-y divide-gray-300">
-                <div className="font-bold p-2 bg-gray-200 border-b border-black">
+              <div
+                style={{
+                  marginTop: "8px",
+                  paddingTop: "6px",
+                }}
+              >
+                <div style={{ fontWeight: 700, marginBottom: "6px" }}>
                   Feedback & Discussion
                 </div>
 
-                <div className="p-2">
-                  <div className="flex items-start">
-                    <span className="text-green-500 mr-2 mt-1">✅</span>
-                    <p className="text-sm">
-                      <span className="font-bold text-gray-800">
-                        What the Agent Did:
-                      </span>{" "}
-                      Agent have used the 0271.1 refund confirmation
-                    </p>
+                {[
+                  // {
+                  //   color: "#e6ffed",
+                  //   marker: "#34a853",
+                  //   title: "What the Agent Did",
+                  //   text: "Agent have used the 0271.1 refund confirmation",
+                  // },
+                  // {
+                  //   color: "#fff9e6",
+                  //   marker: "#fbbc04",
+                  //   title: "What the agent should have done",
+                  //   text: "Agent should have use 0271 version for refund.",
+                  // },
+                  {
+                    color: "#f2f2f2",
+                    marker: "#4285f4",
+                    title: "Agent's Response/Insight",
+                    text: formData.respondantExplanation || "No Explanation",
+                  },
+                ].map((item, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      padding: "6px 0",
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "6px",
+                        height: "24px",
+                        background: item.marker,
+                        borderRadius: "2px",
+                        marginTop: "2px",
+                      }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, marginBottom: "2px" }}>
+                        {item.title}
+                      </div>
+                      <div style={{ whiteSpace: "pre-wrap" }}>{item.text}</div>
+                    </div>
                   </div>
-                </div>
-
-                <div className="p-2">
-                  <div className="flex items-start">
-                    <span className="text-yellow-600 mr-2 mt-1">⚠️</span>
-                    <p className="text-sm">
-                      <span className="font-bold text-gray-800">
-                        What the agent should have done:
-                      </span>{" "}
-                      Agent should have use 0271 version for refund.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-2 border-b border-black">
-                  <div className="flex items-start">
-                    <span className="text-blue-500 mr-2 mt-1">💬</span>
-                    <p className="text-sm">
-                      <span className="font-bold text-gray-800">
-                        Agent's Response/Insight:
-                      </span>{" "}
-                      {formData.respondantExplanation || "No Explanation"}
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
 
-              {/* 4. Action Plan & Next Steps */}
-              <div className="bg-gray-100 p-2 text-sm">
-                <span className="font-bold">Action Plan & Next Steps:</span>{" "}
-                {formData.actionPlan || "No Action Plan"}
+              {/* Action plan */}
+              <div
+                style={{
+                  marginTop: "8px",
+                  padding: "6px 0",
+                  borderTop: "1px solid #e6e6e6",
+                }}
+              >
+                <strong>Action Plan & Next Steps:</strong>{" "}
+                <span>{formData.actionPlan || "No Action Plan"}</span>
               </div>
             </div>
           </div>
