@@ -126,6 +126,12 @@ const ComplianceSidebar = ({
           isCollapsed={isCollapsed}
           badge={!isCollapsed ? totalUnread : 0}
         />
+        <SidebarLink
+          to={`/compliance/offenses-monitoring`}
+          icon={GalleryVerticalEnd}
+          label="Offense Monitoring"
+          isCollapsed={isCollapsed}
+        />
       </CustomCollapse>
       <SidebarLink
         to="/compliance/account-management"

@@ -3,7 +3,7 @@ import MonitoringLayout from "../layout/MonitoringLayout";
 
 // Admin Routes
 import AdminDashboard from "../pages/admin/AdminDashboard";
-import AdminRecognition from "../pages/admin/AdminRecognition"
+import AdminRecognition from "../pages/admin/AdminRecognition";
 import AdminAnnouncement from "../pages/admin/AdminAnnouncement";
 import AdminAgentRequest from "../pages/admin/AdminAgentRequest";
 import AdminOffences from "../pages/admin/AdminOffences";
@@ -29,6 +29,7 @@ import TicketLayout from "../layout/TicketLayout";
 import TeamLeaderOffenses from "../pages/team-leader/TeamLeaderOffenses";
 import TeamLeaderCreateOffenses from "../pages/team-leader/TeamLeaderCreateOffense";
 import HRReportedOffenses from "../pages/hr/HRReportedOffenses";
+import OffenseMonitoring from "../pages/compliance/OffenseMonitoring";
 
 const COMPLIANCE_HEAD_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -75,6 +76,10 @@ const COMPLIANCE_HEAD_ROUTES = [
   {
     path: "createoffense",
     element: <TeamLeaderCreateOffenses />,
+  },
+  {
+    path: "offenses-monitoring",
+    element: <OffenseMonitoring />,
   },
   {
     path: "ticket",
