@@ -135,8 +135,6 @@ export const updateOffense = async (req, res) => {
   }
 };
 
-
-// Delete
 export const deleteOffense = async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id))
@@ -160,7 +158,6 @@ export const deleteOffense = async (req, res) => {
   }
 };
 
-// Filters
 export const getOffensesByAgent = async (req, res) => {
   try {
     const offenses = await Offense.getByAgent(req.params.agentName);
@@ -197,7 +194,6 @@ export const getOffensesByStatus = async (req, res) => {
   }
 };
 
-// Get by Reporter ID (Para sa AgentCreateOffenses)
 export const getOffensesByReporter = async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id))

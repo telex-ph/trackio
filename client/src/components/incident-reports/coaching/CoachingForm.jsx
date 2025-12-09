@@ -19,12 +19,21 @@ const CoachingForm = ({
   setSelectedFile,
   isDragOver,
   setIsDragOver,
+  selectedType,
+  setSelectedType,
   isEditMode,
   resetForm,
   handleCoachingSubmit,
+  handleVidaCoachingSubmit,
   showNotification,
   isUploading,
+  loggedUser,
+  accountsMap,
 }) => {
+  const userAccounts = accountsMap[loggedUser._id]?.accounts || [];
+  const accountName =
+    userAccounts.length > 0 ? userAccounts[0].name : "No account";
+
   const [searchField, setSearchField] = useState(""); // which field is currently being searched
   const [agentQuery, setAgentQuery] = useState("");
   const [coachQuery, setCoachQuery] = useState("");
@@ -206,6 +215,29 @@ const CoachingForm = ({
             {isEditMode ? "Edit Coaching Log" : "Create Coaching Log"}
           </h3>
         </div>
+
+        <div className="flex items-center gap-3">
+          {accountName === "vidaXL" && (
+            <select
+              className="px-4 py-2 rounded-lg  bg-white border border-gray-300  text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500  hover:border-indigo-400 transition"
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+            >
+              <option value="Internal">Internal</option>
+              <option value="HR">HR</option>
+            </select>
+          )}
+
+          {isEditMode && (
+            <button
+              onClick={resetForm}
+              className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              <X className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+          )}
+        </div>
+
         {isEditMode && (
           <button
             onClick={resetForm}
@@ -371,22 +403,41 @@ const CoachingForm = ({
           )}
         </div>
 
-        <button
-          onClick={handleCoachingSubmit}
-          disabled={isUploading}
-          className="w-full bg-red-600 text-white p-3 rounded-2xl hover:bg-red-700 font-semibold text-base shadow-xl"
-        >
-          {isUploading ? (
-            <>
-              <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
-              {isEditMode ? "Updating..." : "Submitting..."}
-            </>
-          ) : isEditMode ? (
-            "Update Coaching Log"
-          ) : (
-            "Submit Coaching Log"
-          )}
-        </button>
+        {accountName === "vidaXL" ? (
+          <button
+            onClick={handleVidaCoachingSubmit}
+            disabled={isUploading}
+            className="w-full bg-red-600 text-white p-3 rounded-2xl hover:bg-red-700 font-semibold text-base shadow-xl"
+          >
+            {isUploading ? (
+              <>
+                <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+                {isEditMode ? "Updating..." : "Submitting..."}
+              </>
+            ) : isEditMode ? (
+              "Update Coaching Log"
+            ) : (
+              "Submit Coaching Log"
+            )}
+          </button>
+        ) : (
+          <button
+            onClick={handleCoachingSubmit}
+            disabled={isUploading}
+            className="w-full bg-red-600 text-white p-3 rounded-2xl hover:bg-red-700 font-semibold text-base shadow-xl"
+          >
+            {isUploading ? (
+              <>
+                <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+                {isEditMode ? "Updating..." : "Submitting..."}
+              </>
+            ) : isEditMode ? (
+              "Update Coaching Log"
+            ) : (
+              "Submit Coaching Log"
+            )}
+          </button>
+        )}
       </div>
     </div>
   );
