@@ -1,3 +1,5 @@
+import CourseCard from "../../components/cards/CourseCard";
+
 const SharedCourse = () => {
   return (
     <div>
@@ -11,6 +13,8 @@ const SharedCourse = () => {
           </div>
         </div>
       </section>
+
+      <section className="grid grid-cols-2 md:grid-cols-3 2xl:grid-cols-5 gap-4 grid-rows-[23rem,auto]"></section>
     </div>
   );
 };
