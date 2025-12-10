@@ -34,39 +34,40 @@ export const login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new Error("Invalid credentials");
 
-    if (!sessionToken) {
-      // Generate random interger/otp and hash it before storing
-      const otp = crypto.randomInt(100000, 999999).toString();
+    // TODO: uncomment if okay na Resent plan
+    // if (!sessionToken) {
+    //   // Generate random interger/otp and hash it before storing
+    //   const otp = crypto.randomInt(100000, 999999).toString();
 
-      // Send the otp on the email;
-      await sendOtp(email, otp);
+    //   // Send the otp on the email;
+    //   await sendOtp(email, otp);
 
-      const SALT_ROUNDS = 10;
-      const hashedOtp = await bcrypt.hash(otp, SALT_ROUNDS);
-      await Otp.create(user._id, hashedOtp);
+    //   const SALT_ROUNDS = 10;
+    //   const hashedOtp = await bcrypt.hash(otp, SALT_ROUNDS);
+    //   await Otp.create(user._id, hashedOtp);
 
-      // Importing the private key (PKCS8 format) for RS256 signing
-      const privateKey = await jose.importPKCS8(privatePEM, "RS256");
+    //   // Importing the private key (PKCS8 format) for RS256 signing
+    //   const privateKey = await jose.importPKCS8(privatePEM, "RS256");
 
-      // Generate pending token
-      const pendingToken = await new jose.SignJWT({
-        _id: String(user._id),
-      })
-        .setProtectedHeader({ alg: "RS256" })
-        .setExpirationTime("15m")
-        .sign(privateKey);
+    //   // Generate pending token
+    //   const pendingToken = await new jose.SignJWT({
+    //     _id: String(user._id),
+    //   })
+    //     .setProtectedHeader({ alg: "RS256" })
+    //     .setExpirationTime("15m")
+    //     .sign(privateKey);
 
-      return res.status(401).json({
-        code: "SESSION_EXPIRED",
-        pendingToken,
-        message: "Session expired. Please verify using OTP.",
-      });
-    } else {
-      // Verify session token
-      const publicPEM = process.env.PUBLIC_KEY;
-      const publicKey = await jose.importSPKI(publicPEM, "RS256");
-      await jose.jwtVerify(sessionToken, publicKey);
-    }
+    //   return res.status(401).json({
+    //     code: "SESSION_EXPIRED",
+    //     pendingToken,
+    //     message: "Session expired. Please verify using OTP.",
+    //   });
+    // } else {
+    //   // Verify session token
+    //   const publicPEM = process.env.PUBLIC_KEY;
+    //   const publicKey = await jose.importSPKI(publicPEM, "RS256");
+    //   await jose.jwtVerify(sessionToken, publicKey);
+    // }
 
     const response = await User.login(email, user.password);
     res.status(200).json(response);

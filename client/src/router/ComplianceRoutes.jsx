@@ -24,11 +24,13 @@ import AdminAccountManagement from "../pages/admin/AdminAccountManagement";
 import SharedTicket from "../pages/shared/SharedTicket";
 import TeamLeaderOffenses from "../pages/team-leader/TeamLeaderOffenses";
 import TeamLeaderCreateOffenses from "../pages/team-leader/TeamLeaderCreateOffense";
+import OffenseMonitoring from "../pages/compliance/OffenseMonitoring";
+import SharedCourse from "../pages/shared/SharedCourse";
 
 const COMPLIANCE_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
   { path: "dashboard", element: <AdminDashboard /> },
-  { path: "recognition", element: <AdminRecognition /> }, 
+  { path: "recognition", element: <AdminRecognition /> },
   { path: "attendance", element: <SharedAttendance /> },
   { path: "ticket", element: <SharedTicket /> },
   {
@@ -66,6 +68,14 @@ const COMPLIANCE_ROUTES = [
   {
     path: "createoffense",
     element: <TeamLeaderCreateOffenses />,
+  },
+  {
+    path: "course",
+    element: <SharedCourse />,
+  },
+  {
+    path: "offenses-monitoring",
+    element: <OffenseMonitoring />,
   },
 ];
 

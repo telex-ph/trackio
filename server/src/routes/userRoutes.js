@@ -5,6 +5,7 @@ import {
   getUser,
   getUsers,
   getUsersByRoleScope,
+  getUsersByAccount,
   updateDetails,
   updateUser,
 } from "../controllers/userControllers.js";
@@ -40,5 +41,7 @@ router.patch("/update-details/:id", updateDetails);
 router.get("/get-user/:id", getUser);
 
 router.get("/get-by-role/:id/:role", getUsersByRoleScope);
+
+router.get("/get-by-account/:id", getUsersByAccount);
 
 export default router;

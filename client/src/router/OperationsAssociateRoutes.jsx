@@ -22,6 +22,7 @@ import Roles from "../constants/roles";
 import SharedSettings from "../pages/shared/SharedSettings";
 import SharedTeamViewMembers from "../pages/shared/SharedTeamViewMembers";
 import SharedTicket from "../pages/shared/SharedTicket";
+import SharedCourse from "../pages/shared/SharedCourse";
 
 const OPERATIONS_ASSOCIATE_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -49,6 +50,10 @@ const OPERATIONS_ASSOCIATE_ROUTES = [
   {
     path: "schedule/:id",
     element: <SharedViewSchedule role={Roles.TEAM_LEADER} readOnly={false} />,
+  },
+  {
+    path: "course",
+    element: <SharedCourse />,
   },
   { path: "performance", element: <TeamLeaderPerformance /> },
   // { path: "bio-break", element: <TeamLeaderBioBreak /> },

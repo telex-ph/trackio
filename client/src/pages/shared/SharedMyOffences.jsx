@@ -142,6 +142,7 @@ const SharedMyOffences = () => {
   });
 
   const [originalExplanation, setOriginalExplanation] = useState("");
+  const [originalActionPlan, setOriginalActionPlan] = useState("");
 
   const showNotification = (message, type) => {
     setNotification({ message, type, isVisible: true });
@@ -299,8 +300,9 @@ const SharedMyOffences = () => {
 
   const handleCoachingSubmit = async () => {
     if (
-      !formData.respondantExplanation ||
-      formData.respondantExplanation.trim() === ""
+      (!formData.respondantExplanation ||
+        formData.respondantExplanation.trim() === "") &&
+      (!formData.actionPlan || formData.actionPlan.trim() === "")
     ) {
       showNotification("Please provide an explanation.", "error");
       return;
@@ -312,8 +314,9 @@ const SharedMyOffences = () => {
       setIsUploading(true);
       const payload = {
         respondantExplanation: formData.respondantExplanation,
-        status: "Respondant Explained",
-        isReadByCoach: false,
+        actionPlan: formData.actionPlan,
+        status: "Acknowledged",
+        isReadByCoach: true,
         isReadByRespondant: true,
         explanationDateTime: now.toISOString(),
       };
@@ -346,6 +349,7 @@ const SharedMyOffences = () => {
         ackMessage,
         isAcknowledged: true,
         isReadByHR: true,
+        isReadByRespondant: true,
         acknowledgedDateTime: now.toISOString(),
       };
 
@@ -426,7 +430,7 @@ const SharedMyOffences = () => {
       if (offense.isReadByRespondant === false) {
         const payload = { ...offense, isReadByRespondant: true };
         await api.put(`/offenses/${off._id}`, payload);
-        
+
         showNotification("Marked as read successfully!", " success");
         fetchOffenses(); // Refresh the list
       }
@@ -467,6 +471,7 @@ const SharedMyOffences = () => {
       coachingDate: off.coachingDate,
       coachingMistake: off.coachingMistake || "",
       respondantExplanation: off.respondantExplanation,
+      actionPlan: off.actionPlan,
       status: off.status,
       isAcknowledged: off.isAcknowledged,
       ackMessage: off.ackMessage,
@@ -476,6 +481,7 @@ const SharedMyOffences = () => {
     });
 
     setOriginalExplanation(off.respondantExplanation || "");
+    setOriginalActionPlan(off.actionPlan || "");
 
     try {
       setIsUploading(true);
@@ -547,7 +553,7 @@ const SharedMyOffences = () => {
   const filteredCoachingOffenses = safeOffenses.filter((off) => {
     const isInvolved =
       off.respondantId === loggedUser._id &&
-      !["Invalid", "Acknowledged"].includes(off.status);
+      !["Invalid", "Acknowledged", "Archived"].includes(off.status);
 
     if (!isInvolved) return false;
     if (off.type !== "COACHING") return false;
@@ -621,7 +627,7 @@ const SharedMyOffences = () => {
       const isResolved =
         loggedUser &&
         off.respondantId === loggedUser._id &&
-        ["Invalid", "Acknowledged"].includes(off.status) &&
+        ["Invalid", "Acknowledged", "Archived"].includes(off.status) &&
         off.type !== "IR";
       if (!isResolved) return false;
 
@@ -726,6 +732,7 @@ const SharedMyOffences = () => {
             formData={formData}
             formatDisplayDate={formatDisplayDate}
             originalExplanation={originalExplanation}
+            originalActionPlan={originalActionPlan}
             handleInputChange={handleInputChange}
             handleSubmit={handleCoachingSubmit}
             showAcknowledgeModal={showAcknowledgeModal}

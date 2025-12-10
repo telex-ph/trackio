@@ -20,6 +20,7 @@ import SharedTeamViewMembers from "../pages/shared/SharedTeamViewMembers";
 import SharedTicket from "../pages/shared/SharedTicket";
 import TeamLeaderOffenses from "../pages/team-leader/TeamLeaderOffenses";
 import TeamLeaderCreateOffenses from "../pages/team-leader/TeamLeaderCreateOffense";
+import SharedCourse from "../pages/shared/SharedCourse";
 
 const OM_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -43,13 +44,17 @@ const OM_ROUTES = [
       { path: "history", element: <SharedTrackingHistory /> },
     ],
   },
-    {
+  {
     path: "offenses",
     element: <TeamLeaderOffenses />,
   },
   {
     path: "createoffense",
     element: <TeamLeaderCreateOffenses />,
+  },
+  {
+    path: "course",
+    element: <SharedCourse />,
   },
   {
     path: "monitoring",

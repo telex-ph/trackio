@@ -114,6 +114,21 @@ export const getUsersByRoleScope = async (req, res) => {
   }
 };
 
+export const getUsersByAccount = async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    const users = await User.getUserAccountsById(id);
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("Error fetching users base on account scope: ", error);
+    res.status(500).json({
+      message: "Failed to fetch list of users by account scope",
+      error: error.message,
+    });
+  }
+};
+
 export const deleteUser = async (req, res) => {
   const id = req.params.id;
 

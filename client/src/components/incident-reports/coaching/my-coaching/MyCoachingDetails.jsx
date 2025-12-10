@@ -9,6 +9,7 @@ const MyCoachingDetails = ({
   formatDisplayDate,
   handleInputChange,
   originalExplanation,
+  originalActionPlan,
   handleSubmit,
   ackMessage,
   setAckMessage,
@@ -185,32 +186,60 @@ const MyCoachingDetails = ({
               "For Acknowledgement",
               "Acknowledged",
             ].includes(formData.status) && (
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Explanation
-                </label>
-                <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 text-gray-800 text-sm sm:text-base overflow-y-auto">
-                  {formData.respondantExplanation || "No explanation"}
-                </p>
+              <div>
+                <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                    Explanation
+                  </label>
+                  <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 text-gray-800 text-sm sm:text-base overflow-y-auto">
+                    {formData.respondantExplanation || "No Explanation"}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                    Action Plan
+                  </label>
+                  <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 text-gray-800 text-sm sm:text-base overflow-y-auto">
+                    {formData.actionPlan || "No Action Plan"}
+                  </p>
+                </div>
               </div>
             )}
 
             {formData.status === "Coaching Log" && (
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Explanation
-                </label>
-                <textarea
-                  onChange={(e) =>
-                    handleInputChange("respondantExplanation", e.target.value)
-                  }
-                  placeholder="Your explanation..."
-                  className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl 
+              <div>
+                <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                    Explanation
+                  </label>
+                  <textarea
+                    onChange={(e) =>
+                      handleInputChange("respondantExplanation", e.target.value)
+                    }
+                    placeholder="Your explanation..."
+                    className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl 
                 h-24 sm:h-32 focus:border-red-500 focus:bg-white transition-all duration-300 
                 text-gray-800 placeholder-gray-400 resize-none text-sm sm:text-base"
-                  disabled={!!originalExplanation}
-                  value={formData.respondantExplanation || ""}
-                />
+                    disabled={!!originalExplanation}
+                    value={formData.respondantExplanation || ""}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                    Action Plan
+                  </label>
+                  <textarea
+                    onChange={(e) =>
+                      handleInputChange("actionPlan", e.target.value)
+                    }
+                    placeholder="Your action plan..."
+                    className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl 
+                h-24 sm:h-32 focus:border-red-500 focus:bg-white transition-all duration-300 
+                text-gray-800 placeholder-gray-400 resize-none text-sm sm:text-base"
+                    disabled={!!originalActionPlan}
+                    value={formData.actionPlan || ""}
+                  />
+                </div>
               </div>
             )}
 
