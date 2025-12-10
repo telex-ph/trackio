@@ -26,6 +26,8 @@
     "flowbite": "^3.1.2",
     "flowbite-react": "^0.12.8",
     "framer-motion": "^12.23.24",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.4",
     "lucide-react": "^0.542.0",
     "luxon": "^3.7.1",
     "mammoth": "^1.11.0",

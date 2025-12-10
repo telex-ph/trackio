@@ -1176,74 +1176,85 @@ const AdminAnnouncement = () => {
     }
   };
 
-  // ✅ FIXED: CONFIRM APPROVE
-  const confirmApprove = async (id, announcementData) => {
+const confirmApprove = async (id, announcementData) => {
     try {
-      setIsApproving(true);
-      
-      const currentTime = new Date().toISOString();
-      const expiresAt = calculateExpiresAt(currentTime, announcementData.duration || '1w');
-      
-      console.log("✅ Approving announcement:", id);
-      console.log("📅 Expires at:", expiresAt);
-      
-      const response = await api.post(`/announcements/${id}/approve`, {
-        approverName: getUserFullName(),
-        approverRole: user?.role,
-        approvedAt: currentTime,
-        dateTime: currentTime, // ✅ Reset time when approved
-        expiresAt: expiresAt    // ✅ Set new expiry based on current time
-      });
-      
-      if (response.status === 200) {
-        showNotification(`Announcement approved by ${getUserFullName()}! Time starts now.`, "success");
+        setIsApproving(true);
         
-        const approvedAnnouncement = {
-          ...response.data,
-          _id: id,
-          approvalStatus: 'Approved',
-          status: 'Active',
-          actualStatus: 'Active',
-          approvedBy: getUserFullName(),
-          dateTime: currentTime,
-          expiresAt: expiresAt,
-          originalDateTime: currentTime,
-          frozenTimeAgo: null,
-          views: [],
-          acknowledgements: []
-        };
+        // Use existing announcement dateTime if available, otherwise use current time
+        const announcementDateTime = announcementData.dateTime || new Date().toISOString();
+        const currentTime = new Date().toISOString();
         
-        setAnnouncements(prev => prev.map(a => 
-          a._id === id ? approvedAnnouncement : a
-        ));
-        
-        setActiveTab('active');
-        setShouldStayOnPending(false);
-        
-        if (socket) {
-          socket.emit("announcementApproved", approvedAnnouncement);
-          socket.emit("announcementUpdated", approvedAnnouncement);
-          socket.emit("newAnnouncement", approvedAnnouncement);
+        // Calculate expiresAt based on announcement duration
+        let expiresAt = null;
+        if (announcementData.duration && announcementData.duration !== 'permanent') {
+            expiresAt = calculateExpiresAt(announcementDateTime, announcementData.duration);
+        } else if (announcementData.expiresAt) {
+            // If announcement already has expiresAt, use it
+            expiresAt = announcementData.expiresAt;
         }
-      } else {
-        throw new Error(`Approval failed with status: ${response.status}`);
-      }
+        
+        console.log("✅ Approving announcement:", id, {
+            announcementDateTime,
+            duration: announcementData.duration,
+            calculatedExpiresAt: expiresAt
+        });
+        
+        const response = await api.post(`/announcements/${id}/approve`, {
+            approverName: getUserFullName(),
+            approverRole: user?.role,
+            approvedAt: currentTime,
+            dateTime: announcementDateTime, // Use announcement's original dateTime
+            expiresAt: expiresAt 
+        });
+        
+        if (response.data && response.data.success) {
+            const message = response.data.message || `Announcement approved by ${getUserFullName()}! Time starts now.`;
+            showNotification(message, "success");
+            
+            // ✅ Use the updated announcement data from server response
+            const approvedAnnouncement = response.data.data || response.data;
+            
+            // Update the announcements list
+            setAnnouncements(prev => prev.map(a => 
+                a._id === id || a.id === id ? { ...a, ...approvedAnnouncement } : a
+            ));
+            
+            // Refresh announcements to ensure statuses are current
+            await fetchAnnouncements();
+            
+            // Switch to active tab after approval
+            setActiveTab('active');
+            setShouldStayOnPending(false);
+            
+        } else {
+            throw new Error(response.data?.message || `Approval failed with status: ${response.status}`);
+        }
     } catch (error) {
-      console.error("❌ Approval failed:", error);
-      showNotification("Failed to approve announcement. Please try again.", "error");
+        console.error("❌ Approval failed:", error);
+        
+        // Show user-friendly error message
+        let errorMessage = "Failed to approve announcement.";
+        
+        if (error.response?.data?.message) {
+            errorMessage = error.response.data.message;
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        showNotification(errorMessage, "error");
+        await fetchAnnouncements();
     } finally {
-      setIsApproving(false);
-      setPendingApprovalAction({
-        isOpen: false,
-        announcementId: null,
-        action: null,
-        announcementData: null
-      });
+        setIsApproving(false);
+        // Close the approval modal
+        setPendingApprovalAction({
+            isOpen: false,
+            announcementId: null,
+            action: null,
+            announcementData: null
+        });
     }
-  };
+};
 
-  // ✅ FIXED: CONFIRM CANCEL APPROVAL
- // ✅ FIXED: CONFIRM CANCEL APPROVAL - WITH currentTime FIX
 const confirmCancelApproval = async (id, announcementData) => {
   try {
     setIsCancellingApproval(true);
@@ -1878,10 +1889,7 @@ const handleConfirmRepost = async () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Category</label>
-                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <p className="text-gray-800">{viewDetailsAnnouncement.category || 'Department'}</p>
-                      </div>
+                   
                     </div>
                   </div>
                 </div>

@@ -1,9 +1,11 @@
 import Announcement from "../model/Announcement.js";
 import { DateTime } from "luxon";
 
+
+// 💡 RECOMMENDATION: Magdagdag ng pagination (limit/skip) sa getAll() logic
 export const getAnnouncements = async (req, res) => {
   try {
-    const announcements = await Announcement.getAll();
+    const announcements = await Announcement.getAll(); 
     return res.status(200).json(announcements);
   } catch (error) {
     console.error("Error fetching announcements:", error);
@@ -20,6 +22,11 @@ export const addAnnouncement = async (req, res) => {
     // 1. Duration Logic: Calculate expiresAt
     if (data.duration && data.duration !== 'permanent') {
       const start = DateTime.fromISO(data.dateTime);
+      
+      if (!start.isValid) {
+        return res.status(400).json({ message: "Invalid starting date format (dateTime)." });
+      }
+
       let end;
       
       switch(data.duration) {
@@ -27,22 +34,21 @@ export const addAnnouncement = async (req, res) => {
         case '3d': end = start.plus({ days: 3 }); break;
         case '1w': end = start.plus({ weeks: 1 }); break;
         case '1m': end = start.plus({ months: 1 }); break;
+        default: end = null;
       }
       
-      if (end) data.expiresAt = end.toISO();
+      if (end) data.expiresAt = end.toISO(); 
     }
     
     // 2. Approval Logic
     const { isHead, postedBy } = data;
 
     if (isHead) {
-      // Authorized Head is posting, auto-approve
       data.approvalStatus = "Approved";
       data.status = "Active";
       data.approvedBy = postedBy; 
-      data.approvedAt = new Date().toISOString();
+      data.approvedAt = new Date().toISOString(); 
     } else {
-      // Admin/Subordinate is posting, requires Head approval.
       data.approvalStatus = "Pending";
       data.status = "Inactive";
     }
@@ -58,132 +64,127 @@ export const addAnnouncement = async (req, res) => {
   }
 };
 
-// ✅ FIXED: Approve Endpoint
 export const approveAnnouncement = async (req, res) => {
   const { id } = req.params;
   const { approverName, approverRole, approvedAt, dateTime, expiresAt } = req.body;
 
+  console.log("✅ Request received to approve announcement:", id);
+
   try {
-    console.log(`✅ Approving announcement: ${id}`);
-    console.log(`Approver: ${approverName}, Role: ${approverRole}`);
-    
-    const announcement = await Announcement.findById(id);
+    const announcement = await Announcement.getById(id); 
     
     if (!announcement) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Announcement not found' 
-      });
+      return res.status(404).json({ success: false, message: 'Announcement not found' });
     }
+
+    const currentDateTime = new Date();
     
-    // Update announcement
-    announcement.approvalStatus = "Approved";
-    announcement.status = "Active";
-    announcement.approvedBy = approverName;
-    announcement.approverRole = approverRole;
-    announcement.approvedAt = approvedAt || new Date().toISOString();
-    announcement.dateTime = dateTime || new Date().toISOString();
+    // Parse dates
+    const approvedAtDate = new Date(approvedAt || currentDateTime);
+    const dateTimeDate = new Date(dateTime || announcement.dateTime || currentDateTime);
     
-    if (expiresAt) {
-      announcement.expiresAt = expiresAt;
-    } else {
-      // Recalculate expiresAt if not provided
-      const start = DateTime.fromISO(announcement.dateTime);
-      if (announcement.duration && announcement.duration !== 'permanent') {
-        let end;
+    // Handle expiresAt logic
+    let expiresAtDate = null;
+    if (expiresAt && typeof expiresAt === 'string' && expiresAt.trim() !== "") { 
+        const dateObj = new Date(expiresAt);
+        expiresAtDate = isNaN(dateObj.getTime()) ? null : dateObj;
+    } else if (announcement.expiresAt) {
+        expiresAtDate = announcement.expiresAt;
+    } else if (announcement.duration && announcement.duration !== 'permanent') {
+        // Calculate expiresAt based on duration if not provided
+        const start = new Date(dateTimeDate);
         switch(announcement.duration) {
-          case '24h': end = start.plus({ hours: 24 }); break;
-          case '3d': end = start.plus({ days: 3 }); break;
-          case '1w': end = start.plus({ weeks: 1 }); break;
-          case '1m': end = start.plus({ months: 1 }); break;
+          case '24h': expiresAtDate = new Date(start.setHours(start.getHours() + 24)); break;
+          case '3d': expiresAtDate = new Date(start.setDate(start.getDate() + 3)); break;
+          case '1w': expiresAtDate = new Date(start.setDate(start.getDate() + 7)); break;
+          case '1m': expiresAtDate = new Date(start.setMonth(start.getMonth() + 1)); break;
         }
-        if (end) announcement.expiresAt = end.toISO();
-      }
     }
+
+    // 🚨 CRITICAL: Calculate real-time status based on dates
+    let calculatedStatus = "Active";
     
-    // Reset stats
-    announcement.views = [];
-    announcement.acknowledgements = [];
-    announcement.updatedAt = new Date().toISOString();
-    
-    const updatedAnnouncement = await announcement.save();
-    
-    console.log(`✅ Announcement approved successfully: ${id}`);
-    
-    // Emit socket events
-    if (req.io) {
-      req.io.emit('announcementApproved', updatedAnnouncement);
-      req.io.emit('announcementUpdated', updatedAnnouncement);
-      req.io.emit('newAnnouncement', updatedAnnouncement);
+    // Check if announcement has expired
+    if (expiresAtDate && new Date(expiresAtDate) < currentDateTime) {
+      calculatedStatus = "Expired";
     }
-    
+    // Check if announcement is scheduled for future
+    else if (dateTimeDate && new Date(dateTimeDate) > currentDateTime) {
+      calculatedStatus = "Scheduled";
+    }
+
+    const updatePayload = {
+      approvalStatus: "Approved",
+      status: calculatedStatus, // Use calculated status instead of hardcoded "Active"
+      approvedBy: approverName,
+      approverRole: approverRole,
+      approvedAt: approvedAtDate,
+      dateTime: dateTimeDate,
+      expiresAt: expiresAtDate,
+      updatedAt: currentDateTime,
+      // Keep existing views and acknowledgements if they exist
+      views: announcement.views || [],
+      acknowledgements: announcement.acknowledgements || [],
+    };
+
+    console.log("📋 Update payload:", updatePayload);
+
+    const updatedAnnouncement = await Announcement.update(id, updatePayload);
+    console.log("✅ Updated announcement result:", updatedAnnouncement);
+
     res.status(200).json({
       success: true,
-      message: 'Announcement approved successfully',
+      message: "Announcement approved successfully!",
       data: updatedAnnouncement
     });
-    
+
   } catch (error) {
-    console.error("Failed to approve announcement:", error);
-    res.status(500).json({
+    console.error("❌ Error approving announcement:", error);
+    
+    return res.status(500).json({
       success: false,
       message: "Failed to approve announcement",
       error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
 
-// ✅ ADDED: Cancel Approval Endpoint
 export const cancelApproval = async (req, res) => {
   const { id } = req.params;
   const { cancelledBy, reason } = req.body;
 
   try {
-    console.log(`❌ Cancelling approval for announcement: ${id}`);
-    console.log(`Cancelled by: ${cancelledBy}`);
-    
-    const announcement = await Announcement.findById(id);
+    const announcement = await Announcement.getById(id);
     
     if (!announcement) {
-      console.log(`⚠️ Announcement ${id} not found`);
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Announcement not found' 
-      });
+      return res.status(404).json({ success: false, message: 'Announcement not found' });
     }
     
-    // Check if already cancelled
     if (announcement.approvalStatus === 'Cancelled') {
-      console.log(`⚠️ Announcement ${id} already cancelled`);
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Announcement already cancelled' 
-      });
+      return res.status(400).json({ success: false, message: 'Announcement already cancelled' });
     }
     
-    // Update the announcement
-    const currentTime = new Date().toISOString();
+    const currentTime = new Date(); 
     
-    announcement.approvalStatus = 'Cancelled';
-    announcement.status = 'Inactive';
-    announcement.cancelledBy = cancelledBy || 'Unknown';
-    announcement.cancelledAt = currentTime;
-    announcement.cancellationReason = reason || 'Approval cancelled by approver';
-    announcement.views = [];
-    announcement.acknowledgements = [];
-    announcement.updatedAt = currentTime;
+    const updatePayload = {
+      approvalStatus: 'Cancelled',
+      status: 'Inactive',
+      cancelledBy: cancelledBy || 'Unknown',
+      cancelledAt: currentTime, // Date object
+      cancellationReason: reason || 'Approval cancelled by approver',
+      views: [],
+      acknowledgements: [],
+      updatedAt: currentTime,
+    };
     
-    const updatedAnnouncement = await announcement.save();
+    const updatedAnnouncement = await Announcement.update(id, updatePayload);
     
-    console.log(`✅ Approval cancelled successfully for: ${id}`);
-    console.log(`Updated status: ${updatedAnnouncement.approvalStatus}, ${updatedAnnouncement.status}`);
-    
-    // Emit socket events
-    if (req.io) {
-      req.io.emit('approvalCancelled', updatedAnnouncement);
-      req.io.emit('announcementUpdated', updatedAnnouncement);
-      console.log(`📢 Socket events emitted for cancelled announcement: ${id}`);
+    if (!updatedAnnouncement) {
+      throw new Error("Failed to update announcement status. Document may have been deleted.");
     }
+    
+    // 🛑 INFINITE LOOP FIX: WALANG req.io.emit() dito.
     
     res.status(200).json({
       success: true,
@@ -192,7 +193,7 @@ export const cancelApproval = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('❌ Error cancelling approval:', error);
+    console.error('❌ Error cancelling approval:', error.stack || error);
     res.status(500).json({ 
       success: false, 
       message: 'Error cancelling approval',
@@ -206,6 +207,11 @@ export const updateAnnouncement = async (req, res) => {
   const updatedData = req.body;
 
   try {
+    // Security/Data Integrity: Linisin ang updatedData
+    delete updatedData._id;
+    delete updatedData.createdAt; 
+    updatedData.updatedAt = new Date(); 
+
     // Duration Logic for updates
     if (updatedData.duration && updatedData.duration !== 'permanent' && updatedData.dateTime) {
       const start = DateTime.fromISO(updatedData.dateTime);
@@ -220,8 +226,22 @@ export const updateAnnouncement = async (req, res) => {
       
       if (end) updatedData.expiresAt = end.toISO();
     }
+    
+    // 🛑 FIX: I-convert ang expiresAt at dateTime sa Date object bago i-update (Malinis na)
+    if (updatedData.expiresAt) {
+      const dateObj = new Date(updatedData.expiresAt);
+      updatedData.expiresAt = isNaN(dateObj.getTime()) ? null : dateObj;
+    } else if (updatedData.expiresAt === "") { // Handle empty string from form
+      updatedData.expiresAt = null;
+    }
+    
+    if (updatedData.dateTime) {
+      const dateObj = new Date(updatedData.dateTime);
+      updatedData.dateTime = isNaN(dateObj.getTime()) ? new Date() : dateObj;
+    }
 
     const updatedAnnouncement = await Announcement.update(id, updatedData);
+    
     res.status(200).json(updatedAnnouncement);
   } catch (error) {
     console.error("Failed to update announcement:", error);
