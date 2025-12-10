@@ -5,14 +5,16 @@ import { DateTime } from "luxon";
 class Course {
   static #collection = "courses";
 
-  static async add(title, description) {
+  static async add(title, description, category) {
     const db = await connectDB();
     const collection = await db.collection(this.#collection);
 
     const newRecord = {
       title,
       description,
+      category,
       createdAt: DateTime.utc().toJSDate(),
+      updatedAt: DateTime.utc().toJSDate(),
     };
 
     const result = await collection.insertOne(newRecord);
@@ -38,6 +40,25 @@ class Course {
     const db = await connectDB();
     const collection = await db.collection(this.#collection);
 
+    return await collection.findOne({ _id: new ObjectId(id) });
+  }
+
+  static async update(id, newCourse) {
+    const db = await connectDB();
+    const collection = await db.collection(this.#collection);
+
+    newCourse.updatedAt = DateTime.utc().toJSDate();
+
+    const result = await collection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: newCourse }
+    );
+
+    if (result.matchedCount === 0) {
+      return null;
+    }
+
+    // Return the updated document
     return await collection.findOne({ _id: new ObjectId(id) });
   }
 }

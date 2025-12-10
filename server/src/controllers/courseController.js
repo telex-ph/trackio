@@ -40,7 +40,23 @@ export const getCourse = async (req, res) => {
     const result = await Course.get(id);
     res.status(200).json(result);
   } catch (error) {
-    console.error("Fetcing course error:", error.message);
+    console.error("Fetching course error:", error.message);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const updateCourse = async (req, res) => {
+  const { id } = req.params;
+  const newCourse = req.body;
+
+  if (!newCourse)
+    return res.status(400).json({ message: "New course is required" });
+
+  try {
+    const result = await Course.update(id, newCourse);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Updating course error:", error.message);
     res.status(400).json({ error: error.message });
   }
 };
