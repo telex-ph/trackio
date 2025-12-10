@@ -36,7 +36,7 @@ export const addAbsentees = async (req, res) => {
 
 export const updateAbsentee = async (req, res) => {
   try {
-    const result = await Absence.updateById(id, );
+    const result = await Absence.updateById(ids);
     res.status(200).json(result);
   } catch (error) {
     console.error("Error adding user's attendance:", error);
