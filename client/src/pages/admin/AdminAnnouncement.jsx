@@ -16,7 +16,12 @@ import {
   Search,
   RotateCcw,
   CheckCircle,
-  Shield
+  Shield,
+  AlertCircle,
+  ThumbsUp,
+  ThumbsDown,
+  Info,
+  Users
 } from "lucide-react";
 import { DateTime } from "luxon";
 import { useStore } from "../../store/useStore";
@@ -49,6 +54,8 @@ const AdminAnnouncement = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isApproving, setIsApproving] = useState(false); // For approval loading state
+  const [isCancellingApproval, setIsCancellingApproval] = useState(false); // For cancellation loading state
 
   const [notification, setNotification] = useState({
     message: "",
@@ -61,6 +68,7 @@ const AdminAnnouncement = () => {
   const [isViewsModalOpen, setIsViewsModalOpen] = useState(false);
   const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
   const [isRepostModalOpen, setIsRepostModalOpen] = useState(false);
+  const [isViewDetailsModalOpen, setIsViewDetailsModalOpen] = useState(false); // ✅ ADDED: View details modal
   const [selectedAnnouncementViews, setSelectedAnnouncementViews] = useState([]);
   const [selectedAnnouncementLikes, setSelectedAnnouncementLikes] = useState([]);
   const [selectedAnnouncementTitle, setSelectedAnnouncementTitle] = useState('');
@@ -70,6 +78,22 @@ const AdminAnnouncement = () => {
     isOpen: false,
     file: null,
   });
+
+  // ✅ FIXED: ADD CRITICAL STATES FOR EDIT FLOW
+  const [isCurrentlyEditing, setIsCurrentlyEditing] = useState(false);
+  const [shouldStayOnPending, setShouldStayOnPending] = useState(false);
+  const [lastEditedId, setLastEditedId] = useState(null);
+  
+  // ✅ ADDED: State for pending approval action
+  const [pendingApprovalAction, setPendingApprovalAction] = useState({
+    isOpen: false,
+    announcementId: null,
+    action: null, // 'approve' or 'cancel'
+    announcementData: null
+  });
+
+  // ✅ ADDED: State for view details
+  const [viewDetailsAnnouncement, setViewDetailsAnnouncement] = useState(null);
 
   const user = useStore((state) => state.user);
 
@@ -95,10 +119,11 @@ const AdminAnnouncement = () => {
     return user?.role === Roles.ADMIN_HR_HEAD || user?.role === Roles.COMPLIANCE_HEAD;
   }, [user?.role]);
 
-  // ✅ Check if current user can auto-post (no approval needed)
+  // ✅ FIXED: Check if current user can auto-post (no approval needed)
   const canAutoPost = useMemo(() => {
-    return canCurrentUserApprove; // Same users who can approve can also auto-post
-  }, [canCurrentUserApprove]);
+    // Only these specific roles can auto-approve
+    return user?.role === Roles.ADMIN_HR_HEAD || user?.role === Roles.COMPLIANCE_HEAD;
+  }, [user?.role]);
 
   // ✅ REAL-TIME CURRENT DATE/TIME
   const [currentDateTime, setCurrentDateTime] = useState(() => DateTime.local());
@@ -175,6 +200,8 @@ const AdminAnnouncement = () => {
             actualStatus = 'Pending';
           } else if (announcement.status === 'Active' && isExpired) {
             actualStatus = 'Expired';
+          } else if (announcement.approvalStatus === 'Cancelled') {
+            actualStatus = 'Inactive';
           }
 
           return {
@@ -182,7 +209,7 @@ const AdminAnnouncement = () => {
             originalDateTime: announcement.dateTime,
             isExpired: isExpired,
             actualStatus: actualStatus,
-            frozenTimeAgo: announcement.status === "Inactive" ? 
+            frozenTimeAgo: announcement.status === "Inactive" || announcement.approvalStatus === 'Cancelled' ? 
               formatTimeAgo(announcement.cancelledAt || announcement.dateTime) : null
           };
         });
@@ -237,7 +264,7 @@ const AdminAnnouncement = () => {
     }
   }, []);
 
-  // ✅ FIXED: IMPROVED SOCKET LISTENERS WITH CORRECT STATUS HANDLING
+  // ✅ FIXED: IMPROVED SOCKET LISTENERS WITH EDIT FLOW PROTECTION
   useEffect(() => {
     if (!socket) {
       console.log("❌ Socket not available, using API only");
@@ -264,6 +291,8 @@ const AdminAnnouncement = () => {
             actualStatus = 'Pending';
           } else if (announcement.status === 'Active' && isExpired) {
             actualStatus = 'Expired';
+          } else if (announcement.approvalStatus === 'Cancelled') {
+            actualStatus = 'Inactive';
           }
 
           return {
@@ -271,7 +300,7 @@ const AdminAnnouncement = () => {
             originalDateTime: announcement.dateTime,
             isExpired: isExpired,
             actualStatus: actualStatus,
-            frozenTimeAgo: announcement.status === "Inactive" ? 
+            frozenTimeAgo: announcement.status === "Inactive" || announcement.approvalStatus === 'Cancelled' ? 
               formatTimeAgo(announcement.cancelledAt || announcement.dateTime) : null
           };
         });
@@ -320,7 +349,7 @@ const AdminAnnouncement = () => {
       }));
     };
 
-    // Listen for new announcements
+    // ✅ FIXED: IMPROVED NEW ANNOUNCEMENT HANDLER
     const handleNewAnnouncement = (newAnnouncement) => {
       console.log("🆕 New announcement received via socket:", newAnnouncement);
       
@@ -333,6 +362,8 @@ const AdminAnnouncement = () => {
         actualStatus = 'Pending';
       } else if (newAnnouncement.status === 'Active' && isExpired) {
         actualStatus = 'Expired';
+      } else if (newAnnouncement.approvalStatus === 'Cancelled') {
+        actualStatus = 'Inactive';
       }
       
       const processedAnnouncement = {
@@ -371,13 +402,20 @@ const AdminAnnouncement = () => {
         });
       });
       
-      // Show appropriate notification based on status
-      if (newAnnouncement.approvalStatus === 'Pending') {
-        showNotification("Announcement submitted for approval!", "success");
-        setActiveTab('pending');
-      } else {
-        showNotification("New announcement posted!", "success");
-        setActiveTab('active');
+      // ✅ FIXED: CRITICAL - DON'T AUTO-SWITCH TABS FOR EDITED ANNOUNCEMENTS
+      if (newAnnouncement._id === lastEditedId) {
+        console.log("📌 This is our edited announcement, keeping tab as is");
+        return;
+      }
+      
+      if (!shouldStayOnPending) {
+        if (newAnnouncement.approvalStatus === 'Pending') {
+          showNotification("Announcement submitted for approval!", "success");
+          setActiveTab('pending');
+        } else {
+          showNotification("New announcement posted!", "success");
+          setActiveTab('active');
+        }
       }
     };
 
@@ -394,6 +432,8 @@ const AdminAnnouncement = () => {
         actualStatus = 'Pending';
       } else if (updatedAnnouncement.status === 'Active' && isExpired) {
         actualStatus = 'Expired';
+      } else if (updatedAnnouncement.approvalStatus === 'Cancelled') {
+        actualStatus = 'Inactive';
       }
       
       const processedAnnouncement = {
@@ -401,7 +441,7 @@ const AdminAnnouncement = () => {
         originalDateTime: updatedAnnouncement.originalDateTime || updatedAnnouncement.dateTime,
         isExpired: isExpired,
         actualStatus: actualStatus,
-        frozenTimeAgo: updatedAnnouncement.status === "Inactive" ? 
+        frozenTimeAgo: updatedAnnouncement.status === "Inactive" || updatedAnnouncement.approvalStatus === 'Cancelled' ? 
           formatTimeAgo(updatedAnnouncement.cancelledAt || updatedAnnouncement.dateTime) : null
       };
       
@@ -495,6 +535,33 @@ const AdminAnnouncement = () => {
       );
     };
 
+    // ✅ ADDED: Listen for approval cancellation events
+    const handleApprovalCancelled = (cancelledAnnouncement) => {
+      console.log("❌ Approval cancellation confirmed via socket:", cancelledAnnouncement._id);
+      
+      const now = DateTime.local();
+      const expiresAt = cancelledAnnouncement.expiresAt ? DateTime.fromISO(cancelledAnnouncement.expiresAt) : null;
+      const isExpired = expiresAt && expiresAt <= now;
+      
+      setAnnouncements(prev => 
+        prev.map(ann => 
+          ann._id === cancelledAnnouncement._id 
+            ? {
+                ...ann,
+                approvalStatus: 'Cancelled',
+                actualStatus: 'Inactive',
+                cancelledBy: cancelledAnnouncement.cancelledBy,
+                cancelledAt: cancelledAnnouncement.cancelledAt,
+                frozenTimeAgo: formatTimeAgo(cancelledAnnouncement.cancelledAt),
+                isExpired: isExpired,
+                views: [],
+                acknowledgements: []
+              }
+            : ann
+        )
+      );
+    };
+
     // Register event listeners
     socket.on("initialAdminData", handleInitialData);
     socket.on("adminAnnouncementUpdate", handleAdminUpdate);
@@ -503,6 +570,7 @@ const AdminAnnouncement = () => {
     socket.on("announcementCancelled", handleAnnouncementCancelled);
     socket.on("announcementReposted", handleAnnouncementReposted);
     socket.on("announcementApproved", handleAnnouncementApproved);
+    socket.on("approvalCancelled", handleApprovalCancelled);
 
     // Request initial data via socket
     socket.emit("getAdminData");
@@ -525,8 +593,9 @@ const AdminAnnouncement = () => {
       socket.off("announcementCancelled", handleAnnouncementCancelled);
       socket.off("announcementReposted", handleAnnouncementReposted);
       socket.off("announcementApproved", handleAnnouncementApproved);
+      socket.off("approvalCancelled", handleApprovalCancelled);
     };
-  }, [fetchAnnouncements]);
+  }, [fetchAnnouncements, lastEditedId, shouldStayOnPending]);
 
   // Update form with user's name
   useEffect(() => {
@@ -657,6 +726,12 @@ const AdminAnnouncement = () => {
     }
   };
 
+  // ✅ ADDED: HANDLE VIEW DETAILS MODAL
+  const handleViewDetailsModal = (announcement) => {
+    setViewDetailsAnnouncement(announcement);
+    setIsViewDetailsModalOpen(true);
+  };
+
   const handleInputChange = (field, value) => {
     if (field === "postedBy") return;
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -686,6 +761,7 @@ const AdminAnnouncement = () => {
     setIsDragOver(false);
   };
 
+  // ✅ FIXED: RESET FORM WITH STATE CLEANUP
   const resetForm = () => {
     const currentDT = getCurrentDateTime();
     const userName = getUserFullName();
@@ -704,7 +780,10 @@ const AdminAnnouncement = () => {
 
     setSelectedFile(null);
     setIsEditMode(false);
+    setIsCurrentlyEditing(false);
     setEditingId(null);
+    setLastEditedId(null);
+    setShouldStayOnPending(false);
   };
 
   const handlePreview = () => {
@@ -746,72 +825,147 @@ const AdminAnnouncement = () => {
     }
   };
 
-  // ✅ FIXED: HANDLE SUBMIT WITH CORRECT STATUS AND EXPIRY LOGIC
+  // ✅ FIXED: HANDLE SUBMIT WITH PROPER EDIT FLOW AND DEBOUNCING
   const handleSubmit = async () => {
+    // Prevent multiple submissions
+    if (isSubmitting) {
+      console.log("⏳ Submission already in progress, please wait...");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
+      setIsCurrentlyEditing(true);
       
       const combinedDateTime = DateTime.fromISO(`${formData.dateInput}T${formData.timeInput}`);
 
       if (!combinedDateTime.isValid) {
         showNotification("Invalid date or time format", "error");
         setIsSubmitting(false);
+        setIsCurrentlyEditing(false);
         return;
       }
 
       let announcementAttachment = null;
 
-      // ✅ CLOUDINARY UPLOAD
+      // ✅ IMPROVED CLOUDINARY UPLOAD WITH BETTER ERROR HANDLING
       if (selectedFile) {
-        showNotification("Uploading file to Cloudinary...", "info");
-        
-        const formDataObj = new FormData();
-        formDataObj.append("file", selectedFile);
-        
         try {
-          const uploadResponse = await api.post(
-            "/upload/announcement", 
-            formDataObj, {
+          showNotification("Uploading file...", "info");
+          
+          // Check file size
+          if (selectedFile.size > 10 * 1024 * 1024) {
+            showNotification("File size must be less than 10MB", "error");
+            setIsSubmitting(false);
+            setIsCurrentlyEditing(false);
+            return;
+          }
+
+          // Create FormData object
+          const uploadFormData = new FormData();
+          uploadFormData.append("file", selectedFile);
+          
+          console.log("📤 Attempting file upload...", {
+            fileName: selectedFile.name,
+            fileSize: selectedFile.size,
+            fileType: selectedFile.type
+          });
+
+          // Try to upload to Cloudinary
+          const uploadResponse = await api.post("/upload/announcement", uploadFormData, {
             headers: {
               "Content-Type": "multipart/form-data",
             },
           });
 
-          announcementAttachment = uploadResponse.data;
-          console.log("✅ File uploaded to Cloudinary:", announcementAttachment);
-          showNotification("File uploaded successfully to Cloudinary.", "success");
+          if (uploadResponse.data && uploadResponse.data.url) {
+            announcementAttachment = uploadResponse.data;
+            console.log("✅ File uploaded successfully:", announcementAttachment);
+            showNotification("File uploaded successfully!", "success");
+          } else {
+            console.warn("⚠️ Upload response missing URL:", uploadResponse.data);
+            showNotification("File uploaded but response incomplete", "warning");
+          }
         } catch (uploadError) {
-          console.error("❌ Cloudinary upload failed:", uploadError);
-          showNotification("Failed to upload file. Please try again.", "error");
-          setIsSubmitting(false);
-          return;
+          console.error("❌ Cloudinary upload failed:", {
+            message: uploadError.message,
+            response: uploadError.response?.data,
+            status: uploadError.response?.status,
+            config: uploadError.config
+          });
+          
+          // Show specific error message
+          let errorMsg = "Failed to upload file.";
+          if (uploadError.response?.status === 400) {
+            errorMsg = "Invalid file format or size. Please check your file.";
+          } else if (uploadError.response?.status === 413) {
+            errorMsg = "File too large. Maximum size is 10MB.";
+          } else if (uploadError.response?.status === 404) {
+            errorMsg = "Upload endpoint not found. Contact administrator.";
+          }
+          
+          showNotification(errorMsg, "error");
+          
+          announcementAttachment = null;
+          showNotification("Continuing without file attachment.", "warning");
         }
       }
 
       // ✅ CALCULATE EXPIRES_AT
       const expiresAt = calculateExpiresAt(combinedDateTime.toISO(), formData.duration);
       
-      // ✅ I-prepare ang final payload
-      const isAutoApproved = canAutoPost;
+      // ✅ Prepare final payload
+      let payload;
       
-      const payload = {
-        title: formData.title,
-        postedBy: formData.postedBy,
-        agenda: formData.agenda,
-        priority: formData.priority,
-        category: formData.category,
-        duration: formData.duration,
-        expiresAt: expiresAt,
-        dateTime: combinedDateTime.toISO(),
-        // ✅ SET CORRECT STATUS BASED ON USER ROLE
-        status: isAutoApproved ? "Active" : "Pending",
-        approvalStatus: isAutoApproved ? "Approved" : "Pending",
-        userRole: user?.role,
-        department: user?.department || 'Unknown',
-        views: [],
-        acknowledgements: [],
-        attachment: announcementAttachment
-      };
+      if (isEditMode) {
+        // ✅ FIXED: When editing, check if user is approver
+        const isApproverEditing = canAutoPost;
+        
+        payload = {
+          title: formData.title,
+          postedBy: formData.postedBy,
+          agenda: formData.agenda,
+          priority: formData.priority,
+          category: formData.category,
+          duration: formData.duration,
+          expiresAt: expiresAt,
+          dateTime: combinedDateTime.toISO(),
+          // ✅ FIXED: If non-approver edits, it goes back to pending
+          status: isApproverEditing ? "Active" : "Pending",
+          approvalStatus: isApproverEditing ? "Approved" : "Pending",
+          userRole: user?.role,
+          department: user?.department || 'Unknown',
+          views: [],
+          acknowledgements: [],
+          attachment: announcementAttachment,
+          // ✅ ADD FLAGS FOR EDIT TRACKING
+          wasEdited: true,
+          editedAt: new Date().toISOString(),
+          editedBy: getUserFullName()
+        };
+      } else {
+        // ✅ FIXED: For new announcements
+        const isAutoApproved = canAutoPost;
+        
+        payload = {
+          title: formData.title,
+          postedBy: formData.postedBy,
+          agenda: formData.agenda,
+          priority: formData.priority,
+          category: formData.category,
+          duration: formData.duration,
+          expiresAt: expiresAt,
+          dateTime: combinedDateTime.toISO(),
+          // ✅ SET CORRECT STATUS BASED ON USER ROLE
+          status: isAutoApproved ? "Active" : "Pending",
+          approvalStatus: isAutoApproved ? "Approved" : "Pending",
+          userRole: user?.role,
+          department: user?.department || 'Unknown',
+          views: [],
+          acknowledgements: [],
+          attachment: announcementAttachment // This will be null if upload failed
+        };
+      }
 
       console.log("📤 Submitting payload:", payload);
 
@@ -821,28 +975,69 @@ const AdminAnnouncement = () => {
         response = await api.put(`/announcements/${editingId}`, payload);
 
         if (response.status === 200) {
-          const isAutoApprovedEdit = canAutoPost;
-          const successMessage = isAutoApprovedEdit 
-            ? "Announcement updated and auto-approved!" 
-            : "Announcement updated! Waiting for approval.";
+          // ✅ FIXED: Check if user is approver for edit
+          const isApproverEditing = canAutoPost;
           
-          showNotification(successMessage, "success");
-          
-          const updatedAnnouncement = {
-            ...response.data,
-            _id: editingId,
-            status: isAutoApprovedEdit ? "Active" : "Pending",
-            approvalStatus: isAutoApprovedEdit ? "Approved" : "Pending",
-            actualStatus: isAutoApprovedEdit ? "Active" : "Pending",
-            views: response.data.views || [],
-            acknowledgements: response.data.acknowledgements || [],
-            originalDateTime: response.data.originalDateTime || response.data.dateTime,
-            frozenTimeAgo: null
-          };
-          
-          if (socket) {
-            socket.emit("announcementUpdated", updatedAnnouncement);
-            socket.emit("newAnnouncement", updatedAnnouncement);
+          if (!isApproverEditing) {
+            // NON-APPROVER EDITING - GO TO PENDING TAB
+            showNotification("Announcement updated! Waiting for approval from Department Head.", "success");
+            
+            // ✅ CRITICAL: FORCE SWITCH TO PENDING TAB
+            setActiveTab('pending');
+            setShouldStayOnPending(true);
+            setLastEditedId(editingId);
+            
+            // Update local state immediately
+            const updatedAnnouncement = {
+              ...response.data,
+              _id: editingId,
+              status: "Pending",
+              approvalStatus: 'Pending',
+              actualStatus: 'Pending',
+              views: response.data.views || [],
+              acknowledgements: response.data.acknowledgements || [],
+              originalDateTime: response.data.originalDateTime || response.data.dateTime,
+              frozenTimeAgo: null,
+              wasEdited: true
+            };
+            
+            setAnnouncements(prev => 
+              prev.map(ann => 
+                ann._id === editingId ? updatedAnnouncement : ann
+              )
+            );
+            
+            // Emit socket event
+            if (socket) {
+              socket.emit("announcementUpdated", updatedAnnouncement);
+            }
+            
+          } else {
+            // APPROVER EDITING - STAY ON ACTIVE TAB
+            showNotification("Announcement updated and auto-approved!", "success");
+            
+            const updatedAnnouncement = {
+              ...response.data,
+              _id: editingId,
+              status: "Active",
+              approvalStatus: 'Approved',
+              actualStatus: 'Active',
+              views: response.data.views || [],
+              acknowledgements: response.data.acknowledgements || [],
+              originalDateTime: response.data.originalDateTime || response.data.dateTime,
+              frozenTimeAgo: null
+            };
+            
+            setAnnouncements(prev => 
+              prev.map(ann => 
+                ann._id === editingId ? updatedAnnouncement : ann
+              )
+            );
+            
+            if (socket) {
+              socket.emit("announcementUpdated", updatedAnnouncement);
+              socket.emit("newAnnouncement", updatedAnnouncement);
+            }
           }
         } else {
           throw new Error(`Update failed with status: ${response.status}`);
@@ -855,6 +1050,7 @@ const AdminAnnouncement = () => {
           if (response.data.approvalStatus === 'Pending') {
             showNotification("Announcement submitted for approval to Department Head.", "success");
             setActiveTab('pending');
+            setShouldStayOnPending(true);
           } else {
             showNotification("Announcement posted and automatically approved.", "success");
             setActiveTab('active');
@@ -874,6 +1070,7 @@ const AdminAnnouncement = () => {
         }
       }
       
+      // Reset form and close modal
       resetForm();
       setIsPreviewModalOpen(false);
 
@@ -886,27 +1083,109 @@ const AdminAnnouncement = () => {
     } catch (error) {
       console.error("❌ Error submitting announcement:", error);
       showNotification(`Failed to ${isEditMode ? "update" : "create"} announcement. Please try again.`, "error");
+      setIsCurrentlyEditing(false);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // ✅ FIXED: APPROVE HANDLER WITH EXPIRES_AT UPDATE
-  const handleApprove = async (id) => {
+  // ✅ FIXED: APPROVE HANDLER WITH EXPIRES_AT UPDATE AND DEBOUNCING
+  const handleApprove = async (announcement) => {
+    // Prevent multiple approval clicks
+    if (isApproving) {
+      console.log("⏳ Approval already in progress, please wait...");
+      return;
+    }
+
     if (!canCurrentUserApprove) {
       showNotification("Error: Only ADMIN_HR_HEAD or COMPLIANCE_HEAD can approve announcements.", "error");
       return;
     }
 
     try {
-      const announcementToApprove = announcements.find(a => a._id === id);
+      setIsApproving(true);
+      
+      const announcementToApprove = announcements.find(a => a._id === announcement._id);
       if (!announcementToApprove) {
         showNotification("Announcement not found", "error");
+        setIsApproving(false);
         return;
       }
 
+      // Show approval modal
+      setPendingApprovalAction({
+        isOpen: true,
+        announcementId: announcement._id,
+        action: 'approve',
+        announcementData: announcementToApprove
+      });
+
+    } catch (error) {
+      console.error("Approval setup failed", error);
+      showNotification("Failed to prepare approval.", "error");
+      setIsApproving(false);
+    }
+  };
+
+  // ✅ FIXED: HANDLE APPROVAL CANCELLATION (FOR APPROVERS)
+  const handleCancelApproval = async (announcement) => {
+    // Prevent multiple cancellation clicks
+    if (isCancellingApproval) {
+      console.log("⏳ Cancellation already in progress, please wait...");
+      return;
+    }
+
+    if (!canCurrentUserApprove) {
+      showNotification("Error: Only ADMIN_HR_HEAD or COMPLIANCE_HEAD can cancel approvals.", "error");
+      return;
+    }
+
+    try {
+      setIsCancellingApproval(true);
+      
+      const announcementToCancel = announcements.find(a => a._id === announcement._id);
+      if (!announcementToCancel) {
+        showNotification("Announcement not found", "error");
+        setIsCancellingApproval(false);
+        return;
+      }
+
+      // Show cancellation modal
+      setPendingApprovalAction({
+        isOpen: true,
+        announcementId: announcement._id,
+        action: 'cancel',
+        announcementData: announcementToCancel
+      });
+
+    } catch (error) {
+      console.error("Cancellation setup failed", error);
+      showNotification("Failed to prepare cancellation.", "error");
+      setIsCancellingApproval(false);
+    }
+  };
+
+  // ✅ FIXED: CONFIRM APPROVAL ACTION
+  const handleConfirmApprovalAction = async () => {
+    const { announcementId, action, announcementData } = pendingApprovalAction;
+    
+    if (action === 'approve') {
+      await confirmApprove(announcementId, announcementData);
+    } else if (action === 'cancel') {
+      await confirmCancelApproval(announcementId, announcementData);
+    }
+  };
+
+  // ✅ FIXED: CONFIRM APPROVE
+  const confirmApprove = async (id, announcementData) => {
+    try {
+      setIsApproving(true);
+      
       const currentTime = new Date().toISOString();
-      const expiresAt = calculateExpiresAt(currentTime, announcementToApprove.duration || '1w');
+      const expiresAt = calculateExpiresAt(currentTime, announcementData.duration || '1w');
+      
+      console.log("✅ Approving announcement:", id);
+      console.log("📅 Expires at:", expiresAt);
       
       const response = await api.post(`/announcements/${id}/approve`, {
         approverName: getUserFullName(),
@@ -939,22 +1218,169 @@ const AdminAnnouncement = () => {
         ));
         
         setActiveTab('active');
+        setShouldStayOnPending(false);
         
         if (socket) {
           socket.emit("announcementApproved", approvedAnnouncement);
           socket.emit("announcementUpdated", approvedAnnouncement);
           socket.emit("newAnnouncement", approvedAnnouncement);
         }
+      } else {
+        throw new Error(`Approval failed with status: ${response.status}`);
       }
     } catch (error) {
-      console.error("Approval failed", error);
-      showNotification("Failed to approve announcement.", "error");
+      console.error("❌ Approval failed:", error);
+      showNotification("Failed to approve announcement. Please try again.", "error");
+    } finally {
+      setIsApproving(false);
+      setPendingApprovalAction({
+        isOpen: false,
+        announcementId: null,
+        action: null,
+        announcementData: null
+      });
     }
   };
 
+  // ✅ FIXED: CONFIRM CANCEL APPROVAL
+ // ✅ FIXED: CONFIRM CANCEL APPROVAL - WITH currentTime FIX
+const confirmCancelApproval = async (id, announcementData) => {
+  try {
+    setIsCancellingApproval(true);
+    
+    const currentTime = new Date().toISOString(); // ✅ ETO ANG PROBLEMA - dapat nasa taas
+    
+    console.log("❌ Cancelling approval for announcement:", id);
+    
+    try {
+      // Try PATCH first
+      const response = await api.patch(`/announcements/${id}/cancel-approval`, {
+        cancelledBy: getUserFullName(),
+        cancelledAt: currentTime,
+        reason: "Approval cancelled by approver"
+      });
+      
+      console.log("📥 Response:", response.data);
+      
+      if (response.data?.success) {
+        showNotification(`Approval cancelled by ${getUserFullName()}!`, "success");
+        
+        const cancelledAnnouncement = {
+          ...(response.data.data || response.data),
+          _id: id,
+          approvalStatus: 'Cancelled',
+          status: 'Inactive',
+          actualStatus: 'Inactive',
+          cancelledBy: getUserFullName(),
+          cancelledAt: currentTime,
+          frozenTimeAgo: formatTimeAgo(currentTime),
+          views: [],
+          acknowledgements: []
+        };
+        
+        setAnnouncements(prev => prev.map(a => 
+          a._id === id ? cancelledAnnouncement : a
+        ));
+        
+        setActiveTab('inactive');
+        
+        if (socket) {
+          socket.emit("approvalCancelled", cancelledAnnouncement);
+          socket.emit("announcementUpdated", cancelledAnnouncement);
+        }
+      } else {
+        throw new Error(response.data?.message || "Cancellation failed");
+      }
+      
+    } catch (patchError) {
+      console.log("🔄 PATCH failed:", patchError.message);
+      
+      // Fallback: Update locally
+      console.log("🔄 Updating locally...");
+      
+      // ✅ CRITICAL: Make sure we have currentTime here too
+      const fallbackTime = new Date().toISOString();
+      
+      setAnnouncements(prev => prev.map(a => 
+        a._id === id 
+          ? {
+              ...a,
+              approvalStatus: 'Cancelled',
+              status: 'Inactive',
+              actualStatus: 'Inactive',
+              cancelledBy: getUserFullName(),
+              cancelledAt: fallbackTime,
+              frozenTimeAgo: formatTimeAgo(fallbackTime),
+              views: [],
+              acknowledgements: []
+            }
+          : a
+      ));
+      
+      showNotification("Approval cancelled (local update)", "warning");
+      setActiveTab('inactive');
+      
+      if (socket) {
+        const localCancelled = {
+          ...announcementData,
+          _id: id,
+          approvalStatus: 'Cancelled',
+          status: 'Inactive',
+          cancelledBy: getUserFullName(),
+          cancelledAt: fallbackTime
+        };
+        socket.emit("approvalCancelled", localCancelled);
+      }
+    }
+    
+  } catch (error) {
+    console.error("❌ Cancellation failed:", error);
+    
+    // Last resort local update
+    const errorTime = new Date().toISOString();
+    
+    try {
+      setAnnouncements(prev => prev.map(a => 
+        a._id === id 
+          ? {
+              ...a,
+              approvalStatus: 'Cancelled',
+              status: 'Inactive',
+              actualStatus: 'Inactive',
+              cancelledBy: getUserFullName(),
+              cancelledAt: errorTime,
+              frozenTimeAgo: formatTimeAgo(errorTime)
+            }
+          : a
+      ));
+      showNotification("Updated locally due to error", "warning");
+    } catch (localError) {
+      console.error("Even local update failed:", localError);
+      showNotification("Failed completely. Refresh page.", "error");
+    }
+    
+  } finally {
+    setIsCancellingApproval(false);
+    setPendingApprovalAction({
+      isOpen: false,
+      announcementId: null,
+      action: null,
+      announcementData: null
+    });
+  }
+};
+
+  // ✅ FIXED: IMPROVED EDIT FUNCTION
   const handleEdit = (announcement) => {
+    console.log("✏️ Starting edit for announcement:", announcement._id);
+    
     setIsEditMode(true);
+    setIsCurrentlyEditing(true);
     setEditingId(announcement._id);
+    
+    // Reset the pending flag when starting edit
+    setShouldStayOnPending(false);
+    setLastEditedId(null);
 
     const dt = DateTime.fromISO(announcement.dateTime);
     const userName = getUserFullName();
@@ -976,6 +1402,11 @@ const AdminAnnouncement = () => {
     } else {
       setSelectedFile(null);
     }
+
+    // Scroll to form for better UX
+    setTimeout(() => {
+      document.querySelector('.bg-white\\/80')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
 
   const handleCancelClick = (id) => {
@@ -1089,120 +1520,113 @@ const AdminAnnouncement = () => {
     setIsRepostModalOpen(true);
   };
 
-  // ✅ FIXED: REPOSTING WITH NEW EXPIRES_AT
-  const handleConfirmRepost = async () => {
+const handleConfirmRepost = async () => {
+  try {
+    const announcementToRepost = announcements.find(a => a._id === itemToRepost);
+    if (!announcementToRepost) {
+      showNotification("Announcement not found", "error");
+      return;
+    }
+
+    console.log("🔄 Reposting announcement from history:", itemToRepost);
+
+    const currentTime = new Date().toISOString();
+    const expiresAt = calculateExpiresAt(currentTime, announcementToRepost.duration || '1w');
+
+    // ✅ CRITICAL: When reposting from history, it should go to PENDING
+    const payload = {
+      status: "Pending",          // ✅ Goes to pending
+      actualStatus: "Pending",    // ✅ Needs approval
+      approvalStatus: "Pending",  // ✅ Waiting for head
+      dateTime: currentTime,
+      expiresAt: expiresAt,
+      updatedAt: currentTime,
+      cancelledAt: null,
+      cancelledBy: null,
+      views: [],
+      acknowledgements: [],
+      wasEdited: true,            // ✅ Mark as edited/reposted
+      editedAt: currentTime,
+      editedBy: getUserFullName()
+    };
+
+    let response;
     try {
-      const announcementToRepost = announcements.find(a => a._id === itemToRepost);
-      if (!announcementToRepost) {
-        showNotification("Announcement not found", "error");
-        return;
-      }
-
-      console.log("🔄 Reposting announcement:", itemToRepost);
-
-      const currentTime = new Date().toISOString();
-      const expiresAt = calculateExpiresAt(currentTime, announcementToRepost.duration || '1w');
-
-      const payload = {
-        status: "Active",
-        actualStatus: "Active",
-        dateTime: currentTime,
-        expiresAt: expiresAt,
-        updatedAt: currentTime,
-        cancelledAt: null,
-        cancelledBy: null,
-        views: [],
-        acknowledgements: []
+      response = await api.patch(`/announcements/${itemToRepost}`, payload);
+      console.log("✅ Repost successful (pending):", response.data);
+      
+      const repostedAnnouncement = {
+        ...announcementToRepost,
+        ...payload,
+        originalDateTime: currentTime,
+        frozenTimeAgo: null,
+        isExpired: false,
+        // Keep other important fields
+        title: announcementToRepost.title,
+        agenda: announcementToRepost.agenda,
+        postedBy: announcementToRepost.postedBy,
+        priority: announcementToRepost.priority,
+        category: announcementToRepost.category,
+        duration: announcementToRepost.duration,
+        attachment: announcementToRepost.attachment
       };
-
-      let response;
-      try {
-        response = await api.patch(`/announcements/${itemToRepost}`, payload);
-        console.log("✅ PATCH response:", response.data);
+      
+      setAnnouncements(prev => 
+        prev.map(ann => 
+          ann._id === itemToRepost ? repostedAnnouncement : ann
+        )
+      );
+      
+      // Show appropriate message
+      if (canAutoPost) {
+        showNotification("Announcement reposted and auto-approved!", "success");
         
-        setAnnouncements(prev => 
-          prev.map(ann => 
-            ann._id === itemToRepost 
-              ? { 
-                  ...ann, 
-                  ...payload,
-                  originalDateTime: currentTime,
-                  frozenTimeAgo: null,
-                  views: [],
-                  acknowledgements: []
-                }
-              : ann
-          )
-        );
-        
-        if (socket) {
-          const repostedAnnouncement = {
-            ...announcementToRepost,
-            ...payload,
-            _id: itemToRepost,
-            originalDateTime: currentTime,
-            frozenTimeAgo: null
-          };
-          socket.emit("announcementReposted", repostedAnnouncement);
-        }
-        
-      } catch (patchError) {
-        console.log("🔄 PATCH failed, trying PUT:", patchError);
-        const putPayload = {
-          ...announcementToRepost,
+        // If current user is approver, auto-approve
+        const autoApprovedAnnouncement = {
+          ...repostedAnnouncement,
           status: "Active",
           actualStatus: "Active",
-          dateTime: currentTime,
-          expiresAt: expiresAt,
-          updatedAt: currentTime,
-          cancelledAt: null,
-          cancelledBy: null,
-          views: [],
-          acknowledgements: []
+          approvalStatus: "Approved",
+          approvedBy: getUserFullName(),
+          approvedAt: currentTime
         };
-        delete putPayload._id;
-        delete putPayload.__v;
-        response = await api.put(`/announcements/${itemToRepost}`, putPayload);
-        console.log("✅ PUT response:", response.data);
         
         setAnnouncements(prev => 
           prev.map(ann => 
-            ann._id === itemToRepost 
-              ? { 
-                  ...ann, 
-                  ...putPayload,
-                  originalDateTime: currentTime,
-                  frozenTimeAgo: null,
-                  views: [],
-                  acknowledgements: []
-                }
-              : ann
+            ann._id === itemToRepost ? autoApprovedAnnouncement : ann
           )
         );
         
+        setActiveTab('active');
+        
         if (socket) {
-          const repostedAnnouncement = {
-            ...announcementToRepost,
-            ...putPayload,
-            _id: itemToRepost,
-            originalDateTime: currentTime,
-            frozenTimeAgo: null
-          };
-          socket.emit("announcementReposted", repostedAnnouncement);
+          socket.emit("announcementReposted", autoApprovedAnnouncement);
+          socket.emit("announcementApproved", autoApprovedAnnouncement);
+        }
+        
+      } else {
+        showNotification("Announcement reposted! Waiting for head approval.", "success");
+        setActiveTab('pending'); // ✅ Move to Pending tab
+        
+        if (socket) {
+          socket.emit("announcementUpdated", repostedAnnouncement);
+          socket.emit("newAnnouncement", repostedAnnouncement);
         }
       }
-
-      showNotification("Announcement reposted successfully!", "success");
-      setActiveTab('active');
-
+      
     } catch (error) {
       console.error("❌ Error reposting announcement:", error);
       showNotification("Failed to repost announcement.", "error");
-    } finally {
-      setIsRepostModalOpen(false);
-      setItemToRepost(null);
     }
-  };
+
+  } catch (error) {
+    console.error("❌ Error in repost process:", error);
+    showNotification("Failed to repost announcement.", "error");
+  } finally {
+    setIsRepostModalOpen(false);
+    setItemToRepost(null);
+  }
+};
 
   const handleFileDownload = (file) => {
     try {
@@ -1278,6 +1702,38 @@ const AdminAnnouncement = () => {
     }
   };
 
+  // ✅ FORMAT DATE AND TIME
+  const formatDateTime = (isoDateStr) => {
+    if (!isoDateStr) return "N/A";
+    const dt = DateTime.fromISO(isoDateStr);
+    if (!dt.isValid) return "Invalid Date";
+    
+    return dt.toLocaleString(DateTime.DATETIME_MED);
+  };
+
+  // ✅ FIXED: ADD DEBUG LOGGING
+  useEffect(() => {
+    console.log("📊 Current Tab:", activeTab);
+    console.log("✏️ Is edit mode:", isEditMode);
+    console.log("🔄 Is currently editing:", isCurrentlyEditing);
+    console.log("⏸️ Should stay on pending:", shouldStayOnPending);
+    console.log("🛡️ Can auto-post:", canAutoPost);
+    console.log("👑 Can approve:", canCurrentUserApprove);
+    console.log("📝 Last edited ID:", lastEditedId);
+  }, [activeTab, isEditMode, isCurrentlyEditing, shouldStayOnPending, canAutoPost, canCurrentUserApprove, lastEditedId]);
+
+  // ✅ FIXED: RESET SHOULD_STAY_ON_PENDING AFTER DELAY
+  useEffect(() => {
+    if (shouldStayOnPending) {
+      const timer = setTimeout(() => {
+        setShouldStayOnPending(false);
+        setLastEditedId(null);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [shouldStayOnPending]);
+
   return (
     <div className="pb-4">
       {notification.isVisible && (
@@ -1287,6 +1743,39 @@ const AdminAnnouncement = () => {
           onClose={() => setNotification({ ...notification, isVisible: false })}
         />
       )}
+
+      {/* APPROVAL ACTION MODAL */}
+      <ConfirmationModal
+        isOpen={pendingApprovalAction.isOpen}
+        onClose={() => setPendingApprovalAction({
+          isOpen: false,
+          announcementId: null,
+          action: null,
+          announcementData: null
+        })}
+        onConfirm={handleConfirmApprovalAction}
+        message={
+          pendingApprovalAction.action === 'approve'
+            ? `Are you sure you want to approve this announcement? It will become active immediately and time will start counting.`
+            : `Are you sure you want to cancel this approval? The announcement will be moved to history.`
+        }
+        confirmText={
+          pendingApprovalAction.action === 'approve'
+            ? isApproving ? "Approving..." : "Approve Announcement"
+            : isCancellingApproval ? "Cancelling..." : "Cancel Approval"
+        }
+        confirmButtonClass={
+          pendingApprovalAction.action === 'approve'
+            ? "bg-green-600 hover:bg-green-700"
+            : "bg-red-600 hover:bg-red-700"
+        }
+        icon={
+          pendingApprovalAction.action === 'approve'
+            ? <ThumbsUp className="w-6 h-6 text-green-600" />
+            : <ThumbsDown className="w-6 h-6 text-red-600" />
+        }
+        isSubmitting={pendingApprovalAction.action === 'approve' ? isApproving : isCancellingApproval}
+      />
 
       <ConfirmationModal
         isOpen={isConfirmationModalOpen}
@@ -1332,6 +1821,267 @@ const AdminAnnouncement = () => {
         likes={selectedAnnouncementLikes}
         announcementTitle={selectedAnnouncementTitle}
       />
+
+      {/* ✅ ADDED: VIEW DETAILS MODAL */}
+      {isViewDetailsModalOpen && viewDetailsAnnouncement && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Info className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800">Announcement Details</h3>
+                    <p className="text-sm text-gray-600">Complete information about this announcement</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsViewDetailsModalOpen(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+              <div className="space-y-6">
+                {/* Basic Information */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <Bell className="w-5 h-5" />
+                    Basic Information
+                  </h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Title</label>
+                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="text-gray-800 font-medium">{viewDetailsAnnouncement.title}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Status</label>
+                      <div className={`px-3 py-2 rounded-lg font-medium text-center ${getStatusColor(viewDetailsAnnouncement.actualStatus)}`}>
+                        {viewDetailsAnnouncement.actualStatus === 'Pending' ? 'Pending Approval' : viewDetailsAnnouncement.actualStatus}
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Priority</label>
+                      <div className={`px-3 py-2 rounded-lg font-medium text-center border ${getPriorityColor(viewDetailsAnnouncement.priority)}`}>
+                        {viewDetailsAnnouncement.priority}
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Category</label>
+                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="text-gray-800">{viewDetailsAnnouncement.category || 'Department'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Timing Information */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <Clock className="w-5 h-5" />
+                    Timing Information
+                  </h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Posted Date & Time</label>
+                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="text-gray-800">{formatDateTime(viewDetailsAnnouncement.dateTime)}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Duration</label>
+                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="text-gray-800">{viewDetailsAnnouncement.duration || '1 Week'}</p>
+                      </div>
+                    </div>
+                    
+                    {viewDetailsAnnouncement.expiresAt && (
+                      <div className="space-y-2 md:col-span-2">
+                        <label className="text-sm font-medium text-gray-700">Expires At</label>
+                        <div className={`p-3 rounded-lg border ${
+                          viewDetailsAnnouncement.isExpired 
+                            ? 'bg-pink-50 border-pink-200 text-pink-800' 
+                            : 'bg-gray-50 border-gray-200 text-gray-800'
+                        }`}>
+                          <p className="font-medium">
+                            {formatDateTime(viewDetailsAnnouncement.expiresAt)}
+                            {viewDetailsAnnouncement.isExpired && (
+                              <span className="ml-2 text-pink-600 font-bold">(Expired)</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* User Information */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    User Information
+                  </h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Posted By</label>
+                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 flex items-center gap-2">
+                        <User className="w-4 h-4 text-gray-500" />
+                        <p className="text-gray-800 font-medium">{viewDetailsAnnouncement.postedBy}</p>
+                      </div>
+                    </div>
+                    
+                    {viewDetailsAnnouncement.approvedBy && (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">Approved By</label>
+                        <div className="p-3 bg-green-50 rounded-lg border border-green-200 flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                          <p className="text-green-800 font-medium">{viewDetailsAnnouncement.approvedBy}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {viewDetailsAnnouncement.cancelledBy && (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">Cancelled By</label>
+                        <div className="p-3 bg-red-50 rounded-lg border border-red-200 flex items-center gap-2">
+                          <X className="w-4 h-4 text-red-500" />
+                          <p className="text-red-800 font-medium">{viewDetailsAnnouncement.cancelledBy}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Agenda */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-gray-800">Agenda</h4>
+                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-gray-700 whitespace-pre-wrap">{viewDetailsAnnouncement.agenda}</p>
+                  </div>
+                </div>
+
+                {/* Statistics */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-gray-800">Statistics</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Views</label>
+                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Eye className="w-5 h-5 text-blue-500" />
+                            <span className="text-2xl font-bold text-blue-700">
+                              {Array.isArray(viewDetailsAnnouncement.views) ? viewDetailsAnnouncement.views.length : 0}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              setIsViewDetailsModalOpen(false);
+                              handleViewDetails(viewDetailsAnnouncement);
+                            }}
+                            className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                          >
+                            View Details
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Likes</label>
+                      <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Heart className="w-5 h-5 text-red-500" fill="currentColor" />
+                            <span className="text-2xl font-bold text-red-700">
+                              {Array.isArray(viewDetailsAnnouncement.acknowledgements) ? viewDetailsAnnouncement.acknowledgements.length : 0}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              setIsViewDetailsModalOpen(false);
+                              handleLikeDetails(viewDetailsAnnouncement);
+                            }}
+                            className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                          >
+                            View Details
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Attachment */}
+                {viewDetailsAnnouncement.attachment && (
+                  <div className="space-y-4">
+                    <h4 className="text-lg font-semibold text-gray-800">Attachment</h4>
+                    <FileAttachment
+                      file={viewDetailsAnnouncement.attachment}
+                      onDownload={handleFileDownload}
+                      onView={handleFileView}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-gray-200 bg-gray-50">
+              <div className="flex justify-between items-center">
+                <div className="text-sm text-gray-600">
+                  <p>ID: <span className="font-mono text-gray-800">{viewDetailsAnnouncement._id}</span></p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setIsViewDetailsModalOpen(false)}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    Close
+                  </button>
+                  {viewDetailsAnnouncement.actualStatus === 'Active' && (
+                    <button
+                      onClick={() => {
+                        setIsViewDetailsModalOpen(false);
+                        handleEdit(viewDetailsAnnouncement);
+                      }}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+                    >
+                      <Edit className="w-4 h-4" />
+                      Edit Announcement
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ FIXED: ADD VISUAL INDICATOR FOR PENDING EDITS */}
+      {activeTab === 'pending' && shouldStayOnPending && (
+        <div className="mb-2 px-2 animate-pulse">
+          <div className="flex items-center gap-2 text-xs text-orange-600 bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-200">
+            <Edit className="w-3 h-3" />
+            <span className="font-medium">
+              Your edited announcement has been moved here for re-approval
+            </span>
+          </div>
+        </div>
+      )}
 
       <section className="flex flex-col mb-4 px-2">
         <div className="flex justify-between items-center mb-2">
@@ -1572,8 +2322,12 @@ const AdminAnnouncement = () => {
             </div>
             <button
               onClick={handlePreview}
-              disabled={isSubmitting}
-              className={`w-full bg-gradient-to-r from-red-600 to-red-700 text-white p-3 rounded-xl hover:from-red-700 hover:to-red-800 transition-all duration-300 font-semibold text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={isSubmitting || isApproving || isCancellingApproval}
+              className={`w-full bg-gradient-to-r from-red-600 to-red-700 text-white p-3 rounded-xl hover:from-red-700 hover:to-red-800 transition-all duration-300 font-semibold text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${
+                (isSubmitting || isApproving || isCancellingApproval) 
+                  ? 'opacity-50 cursor-not-allowed' 
+                  : ''
+              }`}
             >
               {isSubmitting ? (
                 <span className="flex items-center justify-center gap-2">
@@ -1581,7 +2335,7 @@ const AdminAnnouncement = () => {
                   Processing...
                 </span>
               ) : isEditMode ? (
-                "Update Announcement"
+                `Update Announcement ${!canAutoPost ? "(Requires Re-approval)" : ""}`
               ) : canAutoPost ? (
                 "Preview & Auto-Post"
               ) : (
@@ -1590,12 +2344,17 @@ const AdminAnnouncement = () => {
             </button>
             {!isEditMode && !canAutoPost && (
               <p className="text-xs text-center text-orange-600 mt-1">
-                ⚠️ Your post requires approval from Admin&HR Head or Compliance  before going live.
+                ⚠️ Your post requires approval from Admin&HR Head or Compliance Head before going live.
               </p>
             )}
             {!isEditMode && canAutoPost && (
               <p className="text-xs text-center text-green-600 mt-1">
                 ✅ As a Department Head, your posts are automatically approved.
+              </p>
+            )}
+            {isEditMode && !canAutoPost && (
+              <p className="text-xs text-center text-orange-600 mt-1">
+                ⚠️ Your edited announcement will require re-approval from Department Head.
               </p>
             )}
           </div>
@@ -1644,7 +2403,10 @@ const AdminAnnouncement = () => {
               {/* TABS */}
               <div className="flex bg-gray-100 rounded-lg p-0.5 w-full sm:w-auto">
                 <button
-                  onClick={() => setActiveTab('pending')}
+                  onClick={() => {
+                    setActiveTab('pending');
+                    setShouldStayOnPending(false);
+                  }}
                   className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex-1 sm:flex-none ${
                     activeTab === 'pending' 
                       ? 'bg-white text-orange-600 shadow-sm' 
@@ -1654,7 +2416,10 @@ const AdminAnnouncement = () => {
                   Approvals ({pendingCount})
                 </button>
                 <button
-                  onClick={() => setActiveTab('active')}
+                  onClick={() => {
+                    setActiveTab('active');
+                    setShouldStayOnPending(false);
+                  }}
                   className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex-1 sm:flex-none ${
                     activeTab === 'active' 
                       ? 'bg-white text-blue-600 shadow-sm' 
@@ -1664,7 +2429,10 @@ const AdminAnnouncement = () => {
                   Active ({activeCount})
                 </button>
                 <button
-                  onClick={() => setActiveTab('inactive')}
+                  onClick={() => {
+                    setActiveTab('inactive');
+                    setShouldStayOnPending(false);
+                  }}
                   className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex-1 sm:flex-none ${
                     activeTab === 'inactive' 
                       ? 'bg-white text-red-600 shadow-sm' 
@@ -1694,13 +2462,13 @@ const AdminAnnouncement = () => {
                     a.actualStatus === 'Inactive' || a.actualStatus === 'Pending'
                       ? 'bg-gray-100 border border-gray-300 opacity-90' 
                       : 'bg-gradient-to-br from-white to-gray-50 border border-gray-100'
-                  }`}
+                  } ${a._id === lastEditedId ? 'ring-2 ring-orange-400' : ''}`}
                 >
                   {/* CATEGORY & EXPIRY BADGE */}
                   <div className="flex items-center gap-2 mb-2">
                     {a.category === 'General' && (
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200 flex items-center gap-1">
-                        <Shield className="w-3 h-3" /> GENERAL
+                        <Shield className="w-3 h-3" /> 
                       </span>
                     )}
                     {a.expiresAt && (
@@ -1713,6 +2481,11 @@ const AdminAnnouncement = () => {
                           ? 'EXPIRED' 
                           : `Expires: ${DateTime.fromISO(a.expiresAt).toRelative()}`
                         }
+                      </span>
+                    )}
+                    {a.wasEdited && a.actualStatus === 'Pending' && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700 border border-orange-200 flex items-center gap-1">
+                        <Edit className="w-3 h-3" /> EDITED
                       </span>
                     )}
                   </div>
@@ -1768,6 +2541,24 @@ const AdminAnnouncement = () => {
                         <CheckCircle className="w-3 h-3 text-green-500" />
                         Approved by:{" "}
                         <span className="font-medium text-green-700">{a.approvedBy}</span>
+                      </p>
+                    )}
+                    
+                    {/* CANCELLED BY SECTION */}
+                    {a.approvalStatus === 'Cancelled' && a.cancelledBy && (
+                      <p className="text-xs text-gray-600 flex items-center gap-1">
+                        <ThumbsDown className="w-3 h-3 text-red-500" />
+                        Cancelled by:{" "}
+                        <span className="font-medium text-red-700">{a.cancelledBy}</span>
+                      </p>
+                    )}
+                    
+                    {/* EDITED BY SECTION */}
+                    {a.wasEdited && a.editedBy && (
+                      <p className="text-xs text-gray-600 flex items-center gap-1">
+                        <Edit className="w-3 h-3 text-orange-500" />
+                        Edited by:{" "}
+                        <span className="font-medium text-orange-700">{a.editedBy}</span>
                       </p>
                     )}
                     
@@ -1838,14 +2629,36 @@ const AdminAnnouncement = () => {
 
                   {/* ACTION BUTTONS */}
                   <div className="flex gap-2">
+                    {/* ✅ ADDED: VIEW DETAILS BUTTON FOR ALL ANNOUNCEMENTS */}
+                    <button
+                      onClick={() => handleViewDetailsModal(a)}
+                      className="flex-1 bg-white border border-blue-500 text-blue-600 p-1.5 rounded-lg hover:bg-blue-50 transition-all font-medium text-xs shadow-sm hover:shadow flex items-center justify-center gap-1"
+                      title="View complete details"
+                    >
+                      <Info className="w-3 h-3" />
+                      Details
+                    </button>
+
                     {/* PENDING TAB BUTTONS (Approval Flow) */}
                     {activeTab === 'pending' && a.actualStatus === 'Pending' && canCurrentUserApprove && (
-                      <button
-                        onClick={() => handleApprove(a._id)}
-                        className="flex-1 bg-green-500 text-white p-1.5 rounded-lg hover:bg-green-600 transition-all font-medium text-xs shadow-sm flex items-center justify-center gap-1"
-                      >
-                        <CheckCircle className="w-3 h-3" /> Approve & Start Time
-                      </button>
+                      <>
+                        <button
+                          onClick={() => handleCancelApproval(a)}
+                          disabled={isCancellingApproval}
+                          className="flex-1 bg-white border border-red-500 text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-all font-medium text-xs shadow-sm hover:shadow flex items-center justify-center gap-1"
+                        >
+                          <ThumbsDown className="w-3 h-3" />
+                          {isCancellingApproval ? "..." : "Cancel"}
+                        </button>
+                        <button
+                          onClick={() => handleApprove(a)}
+                          disabled={isApproving}
+                          className="flex-1 bg-green-500 text-white p-1.5 rounded-lg hover:bg-green-600 transition-all font-medium text-xs shadow-sm flex items-center justify-center gap-1"
+                        >
+                          <ThumbsUp className="w-3 h-3" />
+                          {isApproving ? "..." : "Approve"}
+                        </button>
+                      </>
                     )}
                     
                     {activeTab === 'pending' && a.actualStatus === 'Pending' && !canCurrentUserApprove && (
@@ -1859,15 +2672,17 @@ const AdminAnnouncement = () => {
                       <>
                         <button
                           onClick={() => handleCancelClick(a._id)}
+                          disabled={isSubmitting}
                           className="flex-1 bg-white border border-red-500 text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-all font-medium text-xs shadow-sm hover:shadow"
                         >
                           Cancel
                         </button>
                         <button
                           onClick={() => handleEdit(a)}
+                          disabled={isSubmitting}
                           className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-1.5 rounded-lg hover:from-red-600 hover:to-red-700 transition-all font-medium text-xs shadow-sm hover:shadow"
                         >
-                          Edit
+                          Edit {!canAutoPost && "(Requires Re-approval)"}
                         </button>
                       </>
                     )}
@@ -1876,10 +2691,11 @@ const AdminAnnouncement = () => {
                     {activeTab === 'inactive' && (a.actualStatus === 'Inactive' || a.actualStatus === 'Expired') && (
                       <button
                         onClick={() => handleRepostClick(a._id)}
+                        disabled={isSubmitting}
                         className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white p-1.5 rounded-lg hover:from-green-600 hover:to-green-700 transition-all font-medium text-xs shadow-sm hover:shadow flex items-center justify-center gap-1"
                       >
                         <RotateCcw className="w-3 h-3" />
-                        Repost with Fresh Time
+                        Repost
                       </button>
                     )}
                   </div>

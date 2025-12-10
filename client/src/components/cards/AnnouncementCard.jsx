@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { DateTime } from "luxon";
 
-const FileAttachment = ({ file, onDownload, onView }) => {
+const FileAttachment = ({ file, onView }) => {
   const getFileIcon = (fileName) => {
     const extension = fileName.split(".").pop().toLowerCase();
     switch (extension) {
@@ -86,13 +86,7 @@ const FileAttachment = ({ file, onDownload, onView }) => {
             <Eye className="w-3 h-3" />
           </button>
         )}
-        <button
-          onClick={() => onDownload(file)}
-          className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
-          title="Download file"
-        >
-          <Download className="w-3 h-3" />
-        </button>
+
       </div>
     </div>
   );
@@ -101,8 +95,7 @@ const FileAttachment = ({ file, onDownload, onView }) => {
 const AnnouncementCard = ({ 
     announcement, 
     onReadMore, 
-    onFileDownload, // ✅ UNCOMMENTED
-    onFileView, // ✅ UNCOMMENTED
+    onFileView, 
     onTogglePin,
     canPinMore,
     onLike,
@@ -297,7 +290,6 @@ const AnnouncementCard = ({
             <div className="mb-3">
               <FileAttachment
                 file={announcement.attachment}
-                onDownload={onFileDownload}
                 onView={onFileView}
               />
             </div>
