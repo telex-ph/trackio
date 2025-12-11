@@ -63,7 +63,7 @@ const Notification = ({ message, type, onClose }) => {
   );
 };
 
-const AgentApplyLeave = () => {
+const SharedCreateApplyLeave = () => {
   const [formData, setFormData] = useState({
     leaveType: "",
     startDate: "",
@@ -427,4 +427,4 @@ const AgentApplyLeave = () => {
   );
 };
 
-export default AgentApplyLeave;
+export default SharedCreateApplyLeave;
