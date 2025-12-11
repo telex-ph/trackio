@@ -38,9 +38,12 @@ export const biometricOut = async (attendanceId) => {
   const nowUtc = DateTime.utc().toJSDate();
 
   try {
-    await Attendance.updateFieldById(attendanceId, "status", STATUS.OOF);
-    await Attendance.updateFieldById(attendanceId, "updatedAt", nowUtc);
-    await Attendance.updateFieldById(attendanceId, "timeOut", nowUtc);
+    // await Attendance.updateFieldById(attendanceId, "status", STATUS.OOF);
+    // await Attendance.updateFieldById(attendanceId, "updatedAt", nowUtc);
+    // await Attendance.updateFieldById(attendanceId, "timeOut", nowUtc);
+
+    await Attendance.timeOut(attendanceId, STATUS.OOF, nowUtc, nowUtc);
+
     return true;
   } catch (error) {
     console.error("Error updating user's attendance:", error);
