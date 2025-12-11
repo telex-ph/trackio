@@ -21,7 +21,15 @@ import {
   ThumbsUp,
   ThumbsDown,
   Info,
-  Users
+  Users,
+  TrendingUp,
+  BarChart3,
+  Activity,
+  Target,
+  ChevronDown,
+  ChevronUp,
+  Download,
+  RefreshCw
 } from "lucide-react";
 import { DateTime } from "luxon";
 import { useStore } from "../../store/useStore";
@@ -37,7 +45,6 @@ import ViewsModal from "../../components/modals/ViewsModal";
 import LikesModal from "../../components/modals/LikesModal";
 import FileViewModal from "../../components/modals/FileViewModal";
 
-// ✅ UPDATED: Import the Roles object correctly
 import Roles from "../../constants/roles";
 
 const AdminAnnouncement = () => {
@@ -68,7 +75,7 @@ const AdminAnnouncement = () => {
   const [isViewsModalOpen, setIsViewsModalOpen] = useState(false);
   const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
   const [isRepostModalOpen, setIsRepostModalOpen] = useState(false);
-  const [isViewDetailsModalOpen, setIsViewDetailsModalOpen] = useState(false); // ✅ ADDED: View details modal
+  const [isViewDetailsModalOpen, setIsViewDetailsModalOpen] = useState(false);
   const [selectedAnnouncementViews, setSelectedAnnouncementViews] = useState([]);
   const [selectedAnnouncementLikes, setSelectedAnnouncementLikes] = useState([]);
   const [selectedAnnouncementTitle, setSelectedAnnouncementTitle] = useState('');
@@ -79,25 +86,38 @@ const AdminAnnouncement = () => {
     file: null,
   });
 
-  // ✅ FIXED: ADD CRITICAL STATES FOR EDIT FLOW
+  // States for edit flow
   const [isCurrentlyEditing, setIsCurrentlyEditing] = useState(false);
   const [shouldStayOnPending, setShouldStayOnPending] = useState(false);
   const [lastEditedId, setLastEditedId] = useState(null);
   
-  // ✅ ADDED: State for pending approval action
+  // State for pending approval action
   const [pendingApprovalAction, setPendingApprovalAction] = useState({
     isOpen: false,
     announcementId: null,
-    action: null, // 'approve' or 'cancel'
+    action: null,
     announcementData: null
   });
 
-  // ✅ ADDED: State for view details
+  // State for view details
   const [viewDetailsAnnouncement, setViewDetailsAnnouncement] = useState(null);
+
+  // Analytics states
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [analyticsFilter, setAnalyticsFilter] = useState({
+    timeRange: 'all',
+    category: 'all',
+    priority: 'all',
+    sortBy: 'views',
+    sortOrder: 'desc'
+  });
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [isLoadingAnalytics] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   const user = useStore((state) => state.user);
 
-  // ✅ CORRECTED: Get user's full name
+  // Get user's full name
   const getUserFullName = useCallback(() => {
     if (user && user.firstName && user.lastName) {
       return `${user.firstName} ${user.lastName}`.trim();
@@ -114,18 +134,17 @@ const AdminAnnouncement = () => {
     return "Admin User";
   }, [user]);
 
-  // ✅ CORRECTED: Check if current user can approve announcements
+  // Check if current user can approve announcements
   const canCurrentUserApprove = useMemo(() => {
     return user?.role === Roles.ADMIN_HR_HEAD || user?.role === Roles.COMPLIANCE_HEAD;
   }, [user?.role]);
 
-  // ✅ FIXED: Check if current user can auto-post (no approval needed)
+  // Check if current user can auto-post (no approval needed)
   const canAutoPost = useMemo(() => {
-    // Only these specific roles can auto-approve
     return user?.role === Roles.ADMIN_HR_HEAD || user?.role === Roles.COMPLIANCE_HEAD;
   }, [user?.role]);
 
-  // ✅ REAL-TIME CURRENT DATE/TIME
+  // Real-time current date/time
   const [currentDateTime, setCurrentDateTime] = useState(() => DateTime.local());
 
   // Update current time every second for real-time display
@@ -137,7 +156,7 @@ const AdminAnnouncement = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // ✅ REAL-TIME TIME DISPLAY FUNCTION
+  // Real-time time display function
   const getCurrentDateTime = useCallback(() => {
     const now = DateTime.local();
     return {
@@ -148,7 +167,7 @@ const AdminAnnouncement = () => {
     };
   }, []);
 
-  // ✅ FIXED: Initialize form data with current date/time
+  // Initialize form data with current date/time
   const [formData, setFormData] = useState(() => {
     const currentDateTime = getCurrentDateTime();
     const userName = getUserFullName();
@@ -159,14 +178,14 @@ const AdminAnnouncement = () => {
       postedBy: userName, 
       agenda: "",
       priority: "Medium",
-      category: "Department", // Default
-      duration: "1w", // Default
+      category: "Department",
+      duration: "1w",
       dateInput: currentDateTime.dateInput,
       timeInput: currentDateTime.timeInput,
     };
   });
 
-  // ✅ FIXED: Auto-update form time for NEW announcements only
+  // Auto-update form time for NEW announcements only
   useEffect(() => {
     if (!isEditMode) {
       setFormData(prev => ({
@@ -177,7 +196,7 @@ const AdminAnnouncement = () => {
     }
   }, [currentDateTime, isEditMode, getCurrentDateTime]);
 
-  // ✅ FIXED: FETCH ANNOUNCEMENTS - CORRECT FILTERING LOGIC
+  // Fetch announcements
   const fetchAnnouncements = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -190,11 +209,9 @@ const AdminAnnouncement = () => {
         
         const now = DateTime.local();
         const processedAnnouncements = response.data.map(announcement => {
-          // ✅ FIXED: Check expiry correctly
           const expiresAt = announcement.expiresAt ? DateTime.fromISO(announcement.expiresAt) : null;
           const isExpired = expiresAt && expiresAt <= now;
           
-          // ✅ FIXED: Determine actual status
           let actualStatus = announcement.status;
           if (announcement.approvalStatus === 'Pending') {
             actualStatus = 'Pending';
@@ -214,7 +231,6 @@ const AdminAnnouncement = () => {
           };
         });
 
-        // ✅ FIXED: Sort by actual status
         const sortedAll = processedAnnouncements.sort((a, b) => {
           const statusOrder = { 
             'Pending': 4, 
@@ -264,7 +280,7 @@ const AdminAnnouncement = () => {
     }
   }, []);
 
-  // ✅ FIXED: IMPROVED SOCKET LISTENERS WITH EDIT FLOW PROTECTION
+  // Socket listeners
   useEffect(() => {
     if (!socket) {
       console.log("❌ Socket not available, using API only");
@@ -276,7 +292,6 @@ const AdminAnnouncement = () => {
 
     let dataLoaded = false;
 
-    // Listen for initial data from socket
     const handleInitialData = (socketAnnouncements) => {
       console.log("📥 Received initial admin data via socket:", socketAnnouncements?.length);
       
@@ -333,7 +348,6 @@ const AdminAnnouncement = () => {
       }
     };
 
-    // Listen for admin stats updates
     const handleAdminUpdate = (detailedStats) => {
       console.log("📈 Real-time admin stats update:", detailedStats);
       
@@ -349,7 +363,6 @@ const AdminAnnouncement = () => {
       }));
     };
 
-    // ✅ FIXED: IMPROVED NEW ANNOUNCEMENT HANDLER
     const handleNewAnnouncement = (newAnnouncement) => {
       console.log("🆕 New announcement received via socket:", newAnnouncement);
       
@@ -402,7 +415,6 @@ const AdminAnnouncement = () => {
         });
       });
       
-      // ✅ FIXED: CRITICAL - DON'T AUTO-SWITCH TABS FOR EDITED ANNOUNCEMENTS
       if (newAnnouncement._id === lastEditedId) {
         console.log("📌 This is our edited announcement, keeping tab as is");
         return;
@@ -419,7 +431,6 @@ const AdminAnnouncement = () => {
       }
     };
 
-    // Listen for announcement updates
     const handleAnnouncementUpdated = (updatedAnnouncement) => {
       console.log("📝 Announcement updated via socket");
       
@@ -450,7 +461,6 @@ const AdminAnnouncement = () => {
       ));
     };
 
-    // Listen for cancellations
     const handleAnnouncementCancelled = (data) => {
       console.log("🔴 Cancellation confirmed via socket:", data.announcementId);
       
@@ -473,7 +483,6 @@ const AdminAnnouncement = () => {
       );
     };
 
-    // Listen for reposts
     const handleAnnouncementReposted = (repostedAnnouncement) => {
       console.log("🟢 Repost confirmed via socket:", repostedAnnouncement._id);
       
@@ -506,7 +515,6 @@ const AdminAnnouncement = () => {
       );
     };
 
-    // ✅ ADDED: Listen for approval events
     const handleAnnouncementApproved = (approvedAnnouncement) => {
       console.log("✅ Approval confirmed via socket:", approvedAnnouncement._id);
       
@@ -535,7 +543,6 @@ const AdminAnnouncement = () => {
       );
     };
 
-    // ✅ ADDED: Listen for approval cancellation events
     const handleApprovalCancelled = (cancelledAnnouncement) => {
       console.log("❌ Approval cancellation confirmed via socket:", cancelledAnnouncement._id);
       
@@ -606,7 +613,224 @@ const AdminAnnouncement = () => {
     }));
   }, [getUserFullName]);
 
-  // ✅ FIXED: CORRECT FILTER LOGIC WITH PROPER STATUS HANDLING
+  // ✅ FIXED: ANALYTICS CALCULATION FUNCTION - TYPO CORRECTED
+  const calculateAnalytics = useCallback(() => {
+    if (!announcements || announcements.length === 0) return null;
+
+    const now = DateTime.local();
+    let filteredAnnouncements = [...announcements];
+
+    // Apply time range filter
+    if (analyticsFilter.timeRange !== 'all') {
+      const cutoffDate = now.minus(
+        analyticsFilter.timeRange === '24h' ? { hours: 24 } :
+        analyticsFilter.timeRange === '7d' ? { days: 7 } :
+        { days: 30 }
+      );
+
+      filteredAnnouncements = filteredAnnouncements.filter(a => {
+        const announcementDate = DateTime.fromISO(a.dateTime || a.createdAt);
+        return announcementDate >= cutoffDate;
+      });
+    }
+
+    // Apply category filter
+    if (analyticsFilter.category !== 'all') {
+      filteredAnnouncements = filteredAnnouncements.filter(a => 
+        a.category === analyticsFilter.category
+      );
+    }
+
+    // Apply priority filter
+    if (analyticsFilter.priority !== 'all') {
+      filteredAnnouncements = filteredAnnouncements.filter(a => 
+        a.priority === analyticsFilter.priority
+      );
+    }
+
+    // ✅ FIXED: Changed from 'filtertedAnnouncements' to 'filteredAnnouncements'
+    if (filteredAnnouncements.length === 0) return null;
+
+    // Calculate statistics
+    const stats = {
+      totalAnnouncements: filteredAnnouncements.length,
+      totalViews: filteredAnnouncements.reduce((sum, a) => 
+        sum + (Array.isArray(a.views) ? a.views.length : 0), 0
+      ),
+      totalLikes: filteredAnnouncements.reduce((sum, a) => 
+        sum + (Array.isArray(a.acknowledgements) ? a.acknowledgements.length : 0), 0
+      ),
+      averageViews: 0,
+      averageLikes: 0,
+      averageEngagement: 0,
+      highestPerforming: null,
+      lowestPerforming: null,
+      categoryBreakdown: {},
+      priorityBreakdown: {},
+      timelineData: [],
+      announcementsWithStats: []
+    };
+
+    // Calculate averages
+    stats.averageViews = stats.totalViews / stats.totalAnnouncements;
+    stats.averageLikes = stats.totalLikes / stats.totalAnnouncements;
+    stats.averageEngagement = (stats.totalLikes + stats.totalViews) / 
+      (stats.totalAnnouncements * 2) * 100;
+
+    // Prepare individual announcement stats
+    filteredAnnouncements.forEach(a => {
+      const views = Array.isArray(a.views) ? a.views.length : 0;
+      const likes = Array.isArray(a.acknowledgements) ? a.acknowledgements.length : 0;
+      const engagement = views > 0 ? (likes / views) * 100 : 0;
+
+      // Update category breakdown
+      stats.categoryBreakdown[a.category] = (stats.categoryBreakdown[a.category] || 0) + 1;
+      
+      // Update priority breakdown
+      stats.priorityBreakdown[a.priority] = (stats.priorityBreakdown[a.priority] || 0) + 1;
+
+      // Add to timeline data (group by date)
+      const date = DateTime.fromISO(a.dateTime).toFormat('yyyy-MM-dd');
+      const existingDate = stats.timelineData.find(d => d.date === date);
+      if (existingDate) {
+        existingDate.views += views;
+        existingDate.likes += likes;
+      } else {
+        stats.timelineData.push({
+          date,
+          views,
+          likes,
+          announcements: 1
+        });
+      }
+
+      // Store individual stats
+      stats.announcementsWithStats.push({
+        ...a,
+        views,
+        likes,
+        engagement,
+        calculatedEngagement: engagement
+      });
+
+      // Find highest and lowest performing
+      const totalInteraction = views + likes;
+      if (!stats.highestPerforming || totalInteraction > stats.highestPerforming.totalInteraction) {
+        stats.highestPerforming = {
+          announcement: a,
+          views,
+          likes,
+          totalInteraction
+        };
+      }
+      if (!stats.lowestPerforming || totalInteraction < stats.lowestPerforming.totalInteraction) {
+        stats.lowestPerforming = {
+          announcement: a,
+          views,
+          likes,
+          totalInteraction
+        };
+      }
+    });
+
+    // Sort timeline data
+    stats.timelineData.sort((a, b) => a.date.localeCompare(b.date));
+
+    // Sort announcements based on selected sort criteria
+    stats.announcementsWithStats.sort((a, b) => {
+      const order = analyticsFilter.sortOrder === 'desc' ? -1 : 1;
+      
+      switch(analyticsFilter.sortBy) {
+        case 'views':
+          return (b.views - a.views) * order;
+        case 'likes':
+          return (b.likes - a.likes) * order;
+        case 'engagement':
+          return (b.calculatedEngagement - a.calculatedEngagement) * order;
+        case 'date':
+          return (DateTime.fromISO(b.dateTime).toMillis() - 
+                  DateTime.fromISO(a.dateTime).toMillis()) * order;
+        default:
+          return 0;
+      }
+    });
+
+    return stats;
+  }, [announcements, analyticsFilter]);
+
+  // Load analytics when announcements change
+  useEffect(() => {
+    if (showAnalytics && announcements.length > 0) {
+      try {
+        const calculated = calculateAnalytics();
+        setAnalyticsData(calculated);
+      } catch (error) {
+        console.error("Error calculating analytics:", error);
+        setAnalyticsData(null);
+        showNotification("Failed to load analytics data", "error");
+      }
+    }
+  }, [showAnalytics, announcements, analyticsFilter, calculateAnalytics]);
+
+  // Export analytics to CSV
+  const exportAnalyticsToCSV = () => {
+    if (!analyticsData) return;
+
+    const headers = [
+      'Title',
+      'Category',
+      'Priority',
+      'Status',
+      'Posted Date',
+      'Views',
+      'Likes',
+      'Engagement Rate',
+      'Posted By'
+    ];
+
+    const rows = analyticsData.announcementsWithStats.map(a => [
+      a.title,
+      a.category,
+      a.priority,
+      a.actualStatus,
+      DateTime.fromISO(a.dateTime).toFormat('yyyy-MM-dd HH:mm'),
+      a.views,
+      a.likes,
+      `${a.calculatedEngagement.toFixed(2)}%`,
+      a.postedBy
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `announcement-analytics-${DateTime.local().toFormat('yyyy-MM-dd')}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showNotification("Analytics exported successfully!", "success");
+    setShowExportModal(false);
+  };
+
+  // Reset analytics filters
+  const resetAnalyticsFilters = () => {
+    setAnalyticsFilter({
+      timeRange: 'all',
+      category: 'all',
+      priority: 'all',
+      sortBy: 'views',
+      sortOrder: 'desc'
+    });
+  };
+
+  // Filter announcements for display
   const filteredAnnouncements = useMemo(() => {
     const filtered = announcements.filter(announcement => {
       const searchMatch = searchTerm === '' || 
@@ -621,7 +845,6 @@ const AdminAnnouncement = () => {
       } else if (activeTab === 'active') {
         return announcement.actualStatus === 'Active';
       } else {
-        // History tab: Show both Expired and Inactive
         return announcement.actualStatus === 'Expired' || 
                announcement.actualStatus === 'Inactive';
       }
@@ -643,7 +866,7 @@ const AdminAnnouncement = () => {
     });
   }, [announcements, searchTerm, activeTab]);
 
-  // ✅ FIXED: CORRECT COUNTS USING actualStatus
+  // Calculate counts
   const activeCount = useMemo(() => 
     announcements.filter(a => a.actualStatus === "Active").length, 
     [announcements]);
@@ -726,7 +949,6 @@ const AdminAnnouncement = () => {
     }
   };
 
-  // ✅ ADDED: HANDLE VIEW DETAILS MODAL
   const handleViewDetailsModal = (announcement) => {
     setViewDetailsAnnouncement(announcement);
     setIsViewDetailsModalOpen(true);
@@ -761,7 +983,7 @@ const AdminAnnouncement = () => {
     setIsDragOver(false);
   };
 
-  // ✅ FIXED: RESET FORM WITH STATE CLEANUP
+  // Reset form
   const resetForm = () => {
     const currentDT = getCurrentDateTime();
     const userName = getUserFullName();
@@ -805,7 +1027,7 @@ const AdminAnnouncement = () => {
     setIsPreviewModalOpen(true);
   };
 
-  // ✅ FIXED: CALCULATE EXPIRES_AT BASED ON DURATION
+  // Calculate expires_at based on duration
   const calculateExpiresAt = (dateTime, duration) => {
     const dt = DateTime.fromISO(dateTime);
     
@@ -819,15 +1041,14 @@ const AdminAnnouncement = () => {
       case '1m':
         return dt.plus({ months: 1 }).toISO();
       case 'permanent':
-        return null; // No expiry for permanent
+        return null;
       default:
         return dt.plus({ weeks: 1 }).toISO();
     }
   };
 
-  // ✅ FIXED: HANDLE SUBMIT WITH PROPER EDIT FLOW AND DEBOUNCING
+  // Handle submit
   const handleSubmit = async () => {
-    // Prevent multiple submissions
     if (isSubmitting) {
       console.log("⏳ Submission already in progress, please wait...");
       return;
@@ -848,12 +1069,10 @@ const AdminAnnouncement = () => {
 
       let announcementAttachment = null;
 
-      // ✅ IMPROVED CLOUDINARY UPLOAD WITH BETTER ERROR HANDLING
       if (selectedFile) {
         try {
           showNotification("Uploading file...", "info");
           
-          // Check file size
           if (selectedFile.size > 10 * 1024 * 1024) {
             showNotification("File size must be less than 10MB", "error");
             setIsSubmitting(false);
@@ -861,7 +1080,6 @@ const AdminAnnouncement = () => {
             return;
           }
 
-          // Create FormData object
           const uploadFormData = new FormData();
           uploadFormData.append("file", selectedFile);
           
@@ -871,7 +1089,6 @@ const AdminAnnouncement = () => {
             fileType: selectedFile.type
           });
 
-          // Try to upload to Cloudinary
           const uploadResponse = await api.post("/upload/announcement", uploadFormData, {
             headers: {
               "Content-Type": "multipart/form-data",
@@ -887,14 +1104,8 @@ const AdminAnnouncement = () => {
             showNotification("File uploaded but response incomplete", "warning");
           }
         } catch (uploadError) {
-          console.error("❌ Cloudinary upload failed:", {
-            message: uploadError.message,
-            response: uploadError.response?.data,
-            status: uploadError.response?.status,
-            config: uploadError.config
-          });
+          console.error("❌ Cloudinary upload failed:", uploadError);
           
-          // Show specific error message
           let errorMsg = "Failed to upload file.";
           if (uploadError.response?.status === 400) {
             errorMsg = "Invalid file format or size. Please check your file.";
@@ -911,14 +1122,11 @@ const AdminAnnouncement = () => {
         }
       }
 
-      // ✅ CALCULATE EXPIRES_AT
       const expiresAt = calculateExpiresAt(combinedDateTime.toISO(), formData.duration);
-      
-      // ✅ Prepare final payload
+
       let payload;
       
       if (isEditMode) {
-        // ✅ FIXED: When editing, check if user is approver
         const isApproverEditing = canAutoPost;
         
         payload = {
@@ -930,7 +1138,6 @@ const AdminAnnouncement = () => {
           duration: formData.duration,
           expiresAt: expiresAt,
           dateTime: combinedDateTime.toISO(),
-          // ✅ FIXED: If non-approver edits, it goes back to pending
           status: isApproverEditing ? "Active" : "Pending",
           approvalStatus: isApproverEditing ? "Approved" : "Pending",
           userRole: user?.role,
@@ -938,13 +1145,11 @@ const AdminAnnouncement = () => {
           views: [],
           acknowledgements: [],
           attachment: announcementAttachment,
-          // ✅ ADD FLAGS FOR EDIT TRACKING
           wasEdited: true,
           editedAt: new Date().toISOString(),
           editedBy: getUserFullName()
         };
       } else {
-        // ✅ FIXED: For new announcements
         const isAutoApproved = canAutoPost;
         
         payload = {
@@ -956,14 +1161,13 @@ const AdminAnnouncement = () => {
           duration: formData.duration,
           expiresAt: expiresAt,
           dateTime: combinedDateTime.toISO(),
-          // ✅ SET CORRECT STATUS BASED ON USER ROLE
           status: isAutoApproved ? "Active" : "Pending",
           approvalStatus: isAutoApproved ? "Approved" : "Pending",
           userRole: user?.role,
           department: user?.department || 'Unknown',
           views: [],
           acknowledgements: [],
-          attachment: announcementAttachment // This will be null if upload failed
+          attachment: announcementAttachment
         };
       }
 
@@ -975,19 +1179,15 @@ const AdminAnnouncement = () => {
         response = await api.put(`/announcements/${editingId}`, payload);
 
         if (response.status === 200) {
-          // ✅ FIXED: Check if user is approver for edit
           const isApproverEditing = canAutoPost;
           
           if (!isApproverEditing) {
-            // NON-APPROVER EDITING - GO TO PENDING TAB
             showNotification("Announcement updated! Waiting for approval from Department Head.", "success");
             
-            // ✅ CRITICAL: FORCE SWITCH TO PENDING TAB
             setActiveTab('pending');
             setShouldStayOnPending(true);
             setLastEditedId(editingId);
             
-            // Update local state immediately
             const updatedAnnouncement = {
               ...response.data,
               _id: editingId,
@@ -1007,13 +1207,11 @@ const AdminAnnouncement = () => {
               )
             );
             
-            // Emit socket event
             if (socket) {
               socket.emit("announcementUpdated", updatedAnnouncement);
             }
             
           } else {
-            // APPROVER EDITING - STAY ON ACTIVE TAB
             showNotification("Announcement updated and auto-approved!", "success");
             
             const updatedAnnouncement = {
@@ -1070,11 +1268,9 @@ const AdminAnnouncement = () => {
         }
       }
       
-      // Reset form and close modal
       resetForm();
       setIsPreviewModalOpen(false);
 
-      // Force refresh data
       if (socket) {
         socket.emit("getAdminData");
         socket.emit("getAgentData");
@@ -1089,9 +1285,7 @@ const AdminAnnouncement = () => {
     }
   };
 
-  // ✅ FIXED: APPROVE HANDLER WITH EXPIRES_AT UPDATE AND DEBOUNCING
   const handleApprove = async (announcement) => {
-    // Prevent multiple approval clicks
     if (isApproving) {
       console.log("⏳ Approval already in progress, please wait...");
       return;
@@ -1112,7 +1306,6 @@ const AdminAnnouncement = () => {
         return;
       }
 
-      // Show approval modal
       setPendingApprovalAction({
         isOpen: true,
         announcementId: announcement._id,
@@ -1127,9 +1320,7 @@ const AdminAnnouncement = () => {
     }
   };
 
-  // ✅ FIXED: HANDLE APPROVAL CANCELLATION (FOR APPROVERS)
   const handleCancelApproval = async (announcement) => {
-    // Prevent multiple cancellation clicks
     if (isCancellingApproval) {
       console.log("⏳ Cancellation already in progress, please wait...");
       return;
@@ -1150,7 +1341,6 @@ const AdminAnnouncement = () => {
         return;
       }
 
-      // Show cancellation modal
       setPendingApprovalAction({
         isOpen: true,
         announcementId: announcement._id,
@@ -1165,7 +1355,6 @@ const AdminAnnouncement = () => {
     }
   };
 
-  // ✅ FIXED: CONFIRM APPROVAL ACTION
   const handleConfirmApprovalAction = async () => {
     const { announcementId, action, announcementData } = pendingApprovalAction;
     
@@ -1176,20 +1365,17 @@ const AdminAnnouncement = () => {
     }
   };
 
-const confirmApprove = async (id, announcementData) => {
+  const confirmApprove = async (id, announcementData) => {
     try {
         setIsApproving(true);
         
-        // Use existing announcement dateTime if available, otherwise use current time
         const announcementDateTime = announcementData.dateTime || new Date().toISOString();
         const currentTime = new Date().toISOString();
         
-        // Calculate expiresAt based on announcement duration
         let expiresAt = null;
         if (announcementData.duration && announcementData.duration !== 'permanent') {
             expiresAt = calculateExpiresAt(announcementDateTime, announcementData.duration);
         } else if (announcementData.expiresAt) {
-            // If announcement already has expiresAt, use it
             expiresAt = announcementData.expiresAt;
         }
         
@@ -1203,7 +1389,7 @@ const confirmApprove = async (id, announcementData) => {
             approverName: getUserFullName(),
             approverRole: user?.role,
             approvedAt: currentTime,
-            dateTime: announcementDateTime, // Use announcement's original dateTime
+            dateTime: announcementDateTime,
             expiresAt: expiresAt 
         });
         
@@ -1211,18 +1397,14 @@ const confirmApprove = async (id, announcementData) => {
             const message = response.data.message || `Announcement approved by ${getUserFullName()}! Time starts now.`;
             showNotification(message, "success");
             
-            // ✅ Use the updated announcement data from server response
             const approvedAnnouncement = response.data.data || response.data;
             
-            // Update the announcements list
             setAnnouncements(prev => prev.map(a => 
                 a._id === id || a.id === id ? { ...a, ...approvedAnnouncement } : a
             ));
             
-            // Refresh announcements to ensure statuses are current
             await fetchAnnouncements();
             
-            // Switch to active tab after approval
             setActiveTab('active');
             setShouldStayOnPending(false);
             
@@ -1232,7 +1414,6 @@ const confirmApprove = async (id, announcementData) => {
     } catch (error) {
         console.error("❌ Approval failed:", error);
         
-        // Show user-friendly error message
         let errorMessage = "Failed to approve announcement.";
         
         if (error.response?.data?.message) {
@@ -1245,7 +1426,6 @@ const confirmApprove = async (id, announcementData) => {
         await fetchAnnouncements();
     } finally {
         setIsApproving(false);
-        // Close the approval modal
         setPendingApprovalAction({
             isOpen: false,
             announcementId: null,
@@ -1253,18 +1433,17 @@ const confirmApprove = async (id, announcementData) => {
             announcementData: null
         });
     }
-};
+  };
 
-const confirmCancelApproval = async (id, announcementData) => {
+  const confirmCancelApproval = async (id, announcementData) => {
   try {
     setIsCancellingApproval(true);
     
-    const currentTime = new Date().toISOString(); // ✅ ETO ANG PROBLEMA - dapat nasa taas
+    const currentTime = new Date().toISOString();
     
     console.log("❌ Cancelling approval for announcement:", id);
     
     try {
-      // Try PATCH first
       const response = await api.patch(`/announcements/${id}/cancel-approval`, {
         cancelledBy: getUserFullName(),
         cancelledAt: currentTime,
@@ -1306,10 +1485,6 @@ const confirmCancelApproval = async (id, announcementData) => {
     } catch (patchError) {
       console.log("🔄 PATCH failed:", patchError.message);
       
-      // Fallback: Update locally
-      console.log("🔄 Updating locally...");
-      
-      // ✅ CRITICAL: Make sure we have currentTime here too
       const fallbackTime = new Date().toISOString();
       
       setAnnouncements(prev => prev.map(a => 
@@ -1347,7 +1522,6 @@ const confirmCancelApproval = async (id, announcementData) => {
   } catch (error) {
     console.error("❌ Cancellation failed:", error);
     
-    // Last resort local update
     const errorTime = new Date().toISOString();
     
     try {
@@ -1379,9 +1553,8 @@ const confirmCancelApproval = async (id, announcementData) => {
       announcementData: null
     });
   }
-};
+  };
 
-  // ✅ FIXED: IMPROVED EDIT FUNCTION
   const handleEdit = (announcement) => {
     console.log("✏️ Starting edit for announcement:", announcement._id);
     
@@ -1389,7 +1562,6 @@ const confirmCancelApproval = async (id, announcementData) => {
     setIsCurrentlyEditing(true);
     setEditingId(announcement._id);
     
-    // Reset the pending flag when starting edit
     setShouldStayOnPending(false);
     setLastEditedId(null);
 
@@ -1414,7 +1586,6 @@ const confirmCancelApproval = async (id, announcementData) => {
       setSelectedFile(null);
     }
 
-    // Scroll to form for better UX
     setTimeout(() => {
       document.querySelector('.bg-white\\/80')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
@@ -1425,7 +1596,6 @@ const confirmCancelApproval = async (id, announcementData) => {
     setIsConfirmationModalOpen(true);
   };
 
-  // ✅ FIXED: CANCELLATION WITH CORRECT STATUS
   const handleConfirmCancel = async () => {
     try {
       const announcementToCancel = announcements.find(a => a._id === itemToCancel);
@@ -1531,7 +1701,7 @@ const confirmCancelApproval = async (id, announcementData) => {
     setIsRepostModalOpen(true);
   };
 
-const handleConfirmRepost = async () => {
+  const handleConfirmRepost = async () => {
   try {
     const announcementToRepost = announcements.find(a => a._id === itemToRepost);
     if (!announcementToRepost) {
@@ -1544,11 +1714,10 @@ const handleConfirmRepost = async () => {
     const currentTime = new Date().toISOString();
     const expiresAt = calculateExpiresAt(currentTime, announcementToRepost.duration || '1w');
 
-    // ✅ CRITICAL: When reposting from history, it should go to PENDING
     const payload = {
-      status: "Pending",          // ✅ Goes to pending
-      actualStatus: "Pending",    // ✅ Needs approval
-      approvalStatus: "Pending",  // ✅ Waiting for head
+      status: "Pending",
+      actualStatus: "Pending",
+      approvalStatus: "Pending",
       dateTime: currentTime,
       expiresAt: expiresAt,
       updatedAt: currentTime,
@@ -1556,7 +1725,7 @@ const handleConfirmRepost = async () => {
       cancelledBy: null,
       views: [],
       acknowledgements: [],
-      wasEdited: true,            // ✅ Mark as edited/reposted
+      wasEdited: true,
       editedAt: currentTime,
       editedBy: getUserFullName()
     };
@@ -1572,7 +1741,6 @@ const handleConfirmRepost = async () => {
         originalDateTime: currentTime,
         frozenTimeAgo: null,
         isExpired: false,
-        // Keep other important fields
         title: announcementToRepost.title,
         agenda: announcementToRepost.agenda,
         postedBy: announcementToRepost.postedBy,
@@ -1588,11 +1756,9 @@ const handleConfirmRepost = async () => {
         )
       );
       
-      // Show appropriate message
       if (canAutoPost) {
         showNotification("Announcement reposted and auto-approved!", "success");
         
-        // If current user is approver, auto-approve
         const autoApprovedAnnouncement = {
           ...repostedAnnouncement,
           status: "Active",
@@ -1617,7 +1783,7 @@ const handleConfirmRepost = async () => {
         
       } else {
         showNotification("Announcement reposted! Waiting for head approval.", "success");
-        setActiveTab('pending'); // ✅ Move to Pending tab
+        setActiveTab('pending');
         
         if (socket) {
           socket.emit("announcementUpdated", repostedAnnouncement);
@@ -1637,7 +1803,7 @@ const handleConfirmRepost = async () => {
     setIsRepostModalOpen(false);
     setItemToRepost(null);
   }
-};
+  };
 
   const handleFileDownload = (file) => {
     try {
@@ -1677,7 +1843,6 @@ const handleConfirmRepost = async () => {
     }
   };
 
-  // ✅ FIXED: STATUS COLOR USING actualStatus
   const getStatusColor = (actualStatus) => {
     switch(actualStatus) {
       case 'Pending': return "bg-orange-100 text-orange-600";
@@ -1688,7 +1853,6 @@ const handleConfirmRepost = async () => {
     }
   };
 
-  // ✅ TIME AGO FUNCTION
   const formatTimeAgo = (isoDateStr) => {
     if (!isoDateStr) return "";
     const announcementTime = DateTime.fromISO(isoDateStr);
@@ -1697,7 +1861,6 @@ const handleConfirmRepost = async () => {
     return announcementTime.toRelative();
   };
 
-  // ✅ SMART TIME DISPLAY USING actualStatus
   const getSmartTimeAgo = (announcement) => {
     switch(announcement.actualStatus) {
       case 'Pending':
@@ -1713,7 +1876,6 @@ const handleConfirmRepost = async () => {
     }
   };
 
-  // ✅ FORMAT DATE AND TIME
   const formatDateTime = (isoDateStr) => {
     if (!isoDateStr) return "N/A";
     const dt = DateTime.fromISO(isoDateStr);
@@ -1722,7 +1884,6 @@ const handleConfirmRepost = async () => {
     return dt.toLocaleString(DateTime.DATETIME_MED);
   };
 
-  // ✅ FIXED: ADD DEBUG LOGGING
   useEffect(() => {
     console.log("📊 Current Tab:", activeTab);
     console.log("✏️ Is edit mode:", isEditMode);
@@ -1733,7 +1894,6 @@ const handleConfirmRepost = async () => {
     console.log("📝 Last edited ID:", lastEditedId);
   }, [activeTab, isEditMode, isCurrentlyEditing, shouldStayOnPending, canAutoPost, canCurrentUserApprove, lastEditedId]);
 
-  // ✅ FIXED: RESET SHOULD_STAY_ON_PENDING AFTER DELAY
   useEffect(() => {
     if (shouldStayOnPending) {
       const timer = setTimeout(() => {
@@ -1804,6 +1964,16 @@ const handleConfirmRepost = async () => {
         confirmText="Repost Announcement"
       />
 
+      <ConfirmationModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onConfirm={exportAnalyticsToCSV}
+        message="Export announcement analytics to CSV file?"
+        confirmText="Export CSV"
+        confirmButtonClass="bg-green-600 hover:bg-green-700"
+        icon={<Download className="w-6 h-6 text-green-600" />}
+      />
+
       <AnnouncementPreviewModal
         isOpen={isPreviewModalOpen}
         onClose={() => setIsPreviewModalOpen(false)}
@@ -1833,7 +2003,7 @@ const handleConfirmRepost = async () => {
         announcementTitle={selectedAnnouncementTitle}
       />
 
-      {/* ✅ ADDED: VIEW DETAILS MODAL */}
+      {/* VIEW DETAILS MODAL */}
       {isViewDetailsModalOpen && viewDetailsAnnouncement && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
@@ -1841,7 +2011,7 @@ const handleConfirmRepost = async () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-blue-100 rounded-lg">
-                    <Info className="w-6 h-6 text-blue-600" />
+                    <Info className="w-6 h-6 text-red-600" />
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-gray-800">Announcement Details</h3>
@@ -1981,59 +2151,7 @@ const handleConfirmRepost = async () => {
                     <p className="text-gray-700 whitespace-pre-wrap">{viewDetailsAnnouncement.agenda}</p>
                   </div>
                 </div>
-
-                {/* Statistics */}
-                <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-gray-800">Statistics</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Views</label>
-                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Eye className="w-5 h-5 text-blue-500" />
-                            <span className="text-2xl font-bold text-blue-700">
-                              {Array.isArray(viewDetailsAnnouncement.views) ? viewDetailsAnnouncement.views.length : 0}
-                            </span>
-                          </div>
-                          <button
-                            onClick={() => {
-                              setIsViewDetailsModalOpen(false);
-                              handleViewDetails(viewDetailsAnnouncement);
-                            }}
-                            className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
-                          >
-                            View Details
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Likes</label>
-                      <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Heart className="w-5 h-5 text-red-500" fill="currentColor" />
-                            <span className="text-2xl font-bold text-red-700">
-                              {Array.isArray(viewDetailsAnnouncement.acknowledgements) ? viewDetailsAnnouncement.acknowledgements.length : 0}
-                            </span>
-                          </div>
-                          <button
-                            onClick={() => {
-                              setIsViewDetailsModalOpen(false);
-                              handleLikeDetails(viewDetailsAnnouncement);
-                            }}
-                            className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
-                          >
-                            View Details
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
+          
                 {/* Attachment */}
                 {viewDetailsAnnouncement.attachment && (
                   <div className="space-y-4">
@@ -2051,7 +2169,6 @@ const handleConfirmRepost = async () => {
             <div className="p-6 border-t border-gray-200 bg-gray-50">
               <div className="flex justify-between items-center">
                 <div className="text-sm text-gray-600">
-                  <p>ID: <span className="font-mono text-gray-800">{viewDetailsAnnouncement._id}</span></p>
                 </div>
                 <div className="flex gap-3">
                   <button
@@ -2079,7 +2196,7 @@ const handleConfirmRepost = async () => {
         </div>
       )}
 
-      {/* ✅ FIXED: ADD VISUAL INDICATOR FOR PENDING EDITS */}
+      {/* VISUAL INDICATOR FOR PENDING EDITS */}
       {activeTab === 'pending' && shouldStayOnPending && (
         <div className="mb-2 px-2 animate-pulse">
           <div className="flex items-center gap-2 text-xs text-orange-600 bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-200">
@@ -2100,12 +2217,412 @@ const handleConfirmRepost = async () => {
               Real-time
             </span>
           </div>
-          <div className="text-xs text-gray-500">
-            Role: <span className="font-semibold text-blue-600">{user?.role || "Unknown"}</span>
+          <div className="flex items-center gap-3">
+            <div className="text-xs text-gray-500">
+              Role: <span className="font-semibold text-blue-600">{user?.role || "Unknown"}</span>
+            </div>
+            <button
+              onClick={() => setShowAnalytics(!showAnalytics)}
+              className="px-3 py-1.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg transition-all flex items-center gap-2 text-sm shadow-md"
+            >
+              <BarChart3 className="w-4 h-4" />
+              {showAnalytics ? "Hide Analytics" : "Show Analytics"}
+            </button>
           </div>
         </div>
         <p className="text-gray-600 text-sm">Manage and view all company announcements with real-time updates.</p>
       </section>
+
+      {/* ANALYTICS SECTION */}
+      {showAnalytics && (
+        <div className="mb-6 px-2 animate-fade-in">
+          <div className="bg-gradient-to-br from-white to-purple-50/30 backdrop-blur-lg rounded-2xl shadow-xl p-4 sm:p-6 border border-purple-100">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+              <div className="flex items-center gap-3 mb-4 sm:mb-0">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <BarChart3 className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-800">Announcements Analytics</h3>
+                  <p className="text-sm text-gray-600">Performance metrics and insights</p>
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                <div className="flex gap-2">
+                  <select
+                    value={analyticsFilter.timeRange}
+                    onChange={(e) => setAnalyticsFilter(prev => ({...prev, timeRange: e.target.value}))}
+                    className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  >
+                    <option value="all">All Time</option>
+                    <option value="24h">Last 24 Hours</option>
+                    <option value="7d">Last 7 Days</option>
+                    <option value="30d">Last 30 Days</option>
+                  </select>
+                  
+                  
+                  <select
+                    value={analyticsFilter.priority}
+                    onChange={(e) => setAnalyticsFilter(prev => ({...prev, priority: e.target.value}))}
+                    className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  >
+                    <option value="all">All Priorities</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </div>
+                
+                <div className="flex gap-2">
+                  <button
+                    onClick={resetAnalyticsFilters}
+                    className="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Reset
+                  </button>
+                  <button
+                    onClick={() => setShowExportModal(true)}
+                    className="px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2 text-sm"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {isLoadingAnalytics ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : analyticsData ? (
+              <>
+                {/* SUMMARY CARDS */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                  <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-600">Total Announcements</p>
+                        <p className="text-2xl font-bold text-gray-800">{analyticsData.totalAnnouncements}</p>
+                      </div>
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <FileText className="w-5 h-5 text-blue-600" />
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs text-gray-500">
+                      Filtered: {analyticsFilter.timeRange !== 'all' ? analyticsFilter.timeRange : 'All time'}
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-600">Average Views</p>
+                        <p className="text-2xl font-bold text-gray-800">
+                          {analyticsData.averageViews.toFixed(1)}
+                        </p>
+                      </div>
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        <Eye className="w-5 h-5 text-green-600" />
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs text-gray-500">
+                      Total: {analyticsData.totalViews} views
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-600">Average Likes</p>
+                        <p className="text-2xl font-bold text-gray-800">
+                          {analyticsData.averageLikes.toFixed(1)}
+                        </p>
+                      </div>
+                      <div className="p-2 bg-red-100 rounded-lg">
+                        <Heart className="w-5 h-5 text-red-600" fill="currentColor" />
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs text-gray-500">
+                      Total: {analyticsData.totalLikes} likes
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-600">Engagement Rate</p>
+                        <p className="text-2xl font-bold text-gray-800">
+                          {analyticsData.averageEngagement.toFixed(1)}%
+                        </p>
+                      </div>
+                      <div className="p-2 bg-purple-100 rounded-lg">
+                        <Activity className="w-5 h-5 text-purple-600" />
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs text-gray-500">
+                      Views to Likes ratio
+                    </div>
+                  </div>
+                </div>
+
+                {/* PERFORMANCE BREAKDOWN */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                  {/* TOP PERFORMING */}
+                  <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                    <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-green-600" />
+                      Highest Performing Announcement
+                    </h4>
+                    {analyticsData.highestPerforming && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-gray-800 truncate">
+                            {analyticsData.highestPerforming.announcement.title}
+                          </p>
+                          <span className={`px-2 py-1 rounded-full text-xs ${getPriorityColor(analyticsData.highestPerforming.announcement.priority)}`}>
+                            {analyticsData.highestPerforming.announcement.priority}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-4">
+                            <span className="flex items-center gap-1 text-gray-600">
+                              <Eye className="w-4 h-4" />
+                              {analyticsData.highestPerforming.views}
+                            </span>
+                            <span className="flex items-center gap-1 text-gray-600">
+                              <Heart className="w-4 h-4 text-red-500" fill="currentColor" />
+                              {analyticsData.highestPerforming.likes}
+                            </span>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {formatTimeAgo(analyticsData.highestPerforming.announcement.dateTime)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* LOWEST PERFORMING */}
+                  <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                    <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                      <Target className="w-4 h-4 text-orange-600" />
+                      Needs Improvement
+                    </h4>
+                    {analyticsData.lowestPerforming && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-gray-800 truncate">
+                            {analyticsData.lowestPerforming.announcement.title}
+                          </p>
+                          <span className={`px-2 py-1 rounded-full text-xs ${getPriorityColor(analyticsData.lowestPerforming.announcement.priority)}`}>
+                            {analyticsData.lowestPerforming.announcement.priority}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-4">
+                            <span className="flex items-center gap-1 text-gray-600">
+                              <Eye className="w-4 h-4" />
+                              {analyticsData.lowestPerforming.views}
+                            </span>
+                            <span className="flex items-center gap-1 text-gray-600">
+                              <Heart className="w-4 h-4 text-red-500" fill="currentColor" />
+                              {analyticsData.lowestPerforming.likes}
+                            </span>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {formatTimeAgo(analyticsData.lowestPerforming.announcement.dateTime)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* SORTABLE TABLE */}
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                  <div className="p-4 border-b border-gray-200">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      <h4 className="font-bold text-gray-800">Announcement Performance</h4>
+                      <div className="flex gap-2">
+                        <select
+                          value={analyticsFilter.sortBy}
+                          onChange={(e) => setAnalyticsFilter(prev => ({...prev, sortBy: e.target.value}))}
+                          className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                        >
+                          <option value="views">Sort by Views</option>
+                          <option value="likes">Sort by Likes</option>
+                          <option value="engagement">Sort by Engagement</option>
+                          <option value="date">Sort by Date</option>
+                        </select>
+                        <button
+                          onClick={() => setAnalyticsFilter(prev => ({
+                            ...prev,
+                            sortOrder: prev.sortOrder === 'desc' ? 'asc' : 'desc'
+                          }))}
+                          className="px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          {analyticsFilter.sortOrder === 'desc' ? (
+                            <ChevronDown className="w-4 h-4" />
+                          ) : (
+                            <ChevronUp className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Views</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Likes</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Engagement</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {analyticsData.announcementsWithStats.slice(0, 10).map((announcement, index) => (
+                          <tr key={announcement._id} className="hover:bg-gray-50">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-900 truncate max-w-xs">
+                                  {announcement.title}
+                                </span>
+                                {index === 0 && analyticsFilter.sortBy === 'views' && (
+                                  <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                                    Top
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-500 truncate">{announcement.postedBy}</p>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
+                                {announcement.category}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <Eye className="w-4 h-4 text-blue-500" />
+                                <span className="font-medium">{announcement.views}</span>
+                                {announcement.views > analyticsData.averageViews && (
+                                  <span className="text-xs text-green-600">↑</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <Heart className="w-4 h-4 text-red-500" fill="currentColor" />
+                                <span className="font-medium">{announcement.likes}</span>
+                                {announcement.likes > analyticsData.averageLikes && (
+                                  <span className="text-xs text-green-600">↑</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className="bg-gradient-to-r from-green-400 to-green-500 h-2 rounded-full" 
+                                  style={{ width: `${Math.min(announcement.calculatedEngagement, 100)}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-xs text-gray-600 mt-1">
+                                {announcement.calculatedEngagement.toFixed(1)}%
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(announcement.actualStatus)}`}>
+                                {announcement.actualStatus}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  {analyticsData.announcementsWithStats.length > 10 && (
+                    <div className="p-4 border-t border-gray-200 text-center">
+                      <p className="text-sm text-gray-600">
+                        Showing 10 of {analyticsData.announcementsWithStats.length} announcements
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* CATEGORY BREAKDOWN */}
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                    <h4 className="font-bold text-gray-800 mb-3">Category Distribution</h4>
+                    <div className="space-y-3">
+                      {Object.entries(analyticsData.categoryBreakdown).map(([category, count]) => {
+                        const percentage = (count / analyticsData.totalAnnouncements) * 100;
+                        return (
+                          <div key={category} className="space-y-1">
+                            <div className="flex justify-between text-sm">
+                              <span className="font-medium">{category}</span>
+                              <span className="text-gray-600">{count} ({percentage.toFixed(1)}%)</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-gradient-to-r from-blue-400 to-blue-500 h-2 rounded-full" 
+                                style={{ width: `${percentage}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                    <h4 className="font-bold text-gray-800 mb-3">Priority Distribution</h4>
+                    <div className="space-y-3">
+                      {Object.entries(analyticsData.priorityBreakdown).map(([priority, count]) => {
+                        const percentage = (count / analyticsData.totalAnnouncements) * 100;
+                        const colorClass = priority === 'High' ? 'from-red-400 to-red-500' :
+                                         priority === 'Medium' ? 'from-yellow-400 to-yellow-500' :
+                                         'from-green-400 to-green-500';
+                        
+                        return (
+                          <div key={priority} className="space-y-1">
+                            <div className="flex justify-between text-sm">
+                              <span className={`font-medium ${priority === 'High' ? 'text-red-600' : 
+                                               priority === 'Medium' ? 'text-yellow-600' : 
+                                               'text-green-600'}`}>
+                                {priority}
+                              </span>
+                              <span className="text-gray-600">{count} ({percentage.toFixed(1)}%)</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className={`h-2 rounded-full bg-gradient-to-r ${colorClass}`}
+                                style={{ width: `${percentage}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+                <BarChart3 className="w-12 h-12 text-gray-400 mb-3" />
+                <p>No analytics data available for the selected filters.</p>
+                <p className="text-sm text-gray-400 mt-1">Try adjusting your filter criteria.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 xl:grid-cols-2 px-2 gap-4 mb-8">
         
@@ -2157,15 +2674,15 @@ const handleConfirmRepost = async () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                  Category
+                  Category (SOON)
                 </label>
                 <select
                   value={formData.category}
                   onChange={(e) => handleInputChange("category", e.target.value)}
                   className="w-full p-3 bg-gray-50/50 border-2 border-gray-100 rounded-xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm"
                 >
-                  <option value="Department">Department Specific</option>
-                  <option value="General">General (All Company)</option>
+                  <option value="Department"></option>
+                  <option value="General"></option>
                 </select>
               </div>
               <div className="space-y-1">
@@ -2637,7 +3154,7 @@ const handleConfirmRepost = async () => {
 
                   {/* ACTION BUTTONS */}
                   <div className="flex gap-2">
-                    {/* ✅ ADDED: VIEW DETAILS BUTTON FOR ALL ANNOUNCEMENTS */}
+                    {/* VIEW DETAILS BUTTON */}
                     <button
                       onClick={() => handleViewDetailsModal(a)}
                       className="flex-1 bg-white border border-blue-500 text-blue-600 p-1.5 rounded-lg hover:bg-blue-50 transition-all font-medium text-xs shadow-sm hover:shadow flex items-center justify-center gap-1"
@@ -2647,7 +3164,7 @@ const handleConfirmRepost = async () => {
                       Details
                     </button>
 
-                    {/* PENDING TAB BUTTONS (Approval Flow) */}
+                    {/* PENDING TAB BUTTONS */}
                     {activeTab === 'pending' && a.actualStatus === 'Pending' && canCurrentUserApprove && (
                       <>
                         <button
@@ -2675,7 +3192,7 @@ const handleConfirmRepost = async () => {
                       </span>
                     )}
 
-                    {/* ACTIVE TAB BUTTONS (Cancel & Edit) */}
+                    {/* ACTIVE TAB BUTTONS */}
                     {activeTab === 'active' && a.actualStatus === 'Active' && (
                       <>
                         <button
@@ -2695,7 +3212,7 @@ const handleConfirmRepost = async () => {
                       </>
                     )}
 
-                    {/* INACTIVE TAB BUTTONS (Repost) */}
+                    {/* INACTIVE TAB BUTTONS */}
                     {activeTab === 'inactive' && (a.actualStatus === 'Inactive' || a.actualStatus === 'Expired') && (
                       <button
                         onClick={() => handleRepostClick(a._id)}

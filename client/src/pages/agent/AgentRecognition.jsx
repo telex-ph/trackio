@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Eye, 
   Trophy, 
-  Star, 
   Award, 
   Users, 
   X, 
@@ -20,37 +18,591 @@ import {
   History,
   Calendar,
   Medal,
-  Shield,
   Crown,
   Zap,
   Lightbulb,
   Heart,
-  Gem,
+  Megaphone,
+  Clock,
+  Check,
+  AlertCircle,
+  Shield,
+  Filter,
+  Star,
   Target,
-  TrendingUp
+  TrendingUp,
 } from 'lucide-react';
 import api from '../../utils/axios';
 import socket from '../../utils/socket';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
-// Enhanced Badges and Certificates Component with better design
-const EmployeeBadges = ({ employee, recognitions }) => {
-  const [showBadges, setShowBadges] = useState(false);
+// Custom Toast Component
+const Toast = ({ message, type = "success", onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className={`fixed top-4 right-4 z-50 animate-slideIn ${type === "success" ? "bg-gradient-to-r from-green-500 to-green-600" : "bg-gradient-to-r from-red-500 to-red-600"} text-white px-4 py-2 rounded-lg flex items-center gap-2`}>
+      {type === "success" ? <Check size={16} /> : <AlertCircle size={16} />}
+      <span className="text-sm font-medium">{message}</span>
+      <button onClick={onClose} className="ml-2 hover:opacity-80">
+        <X size={14} />
+      </button>
+    </div>
+  );
+};
+
+// Loading Component
+const LoadingSpinner = () => (
+  <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+    <div className="text-center">
+      <div className="relative">
+        <Trophy className="w-16 h-16 text-red-500 mx-auto mb-4 animate-bounce" />
+      </div>
+      <p className="text-gray-600 text-sm mt-2">Loading recognitions...</p>
+    </div>
+  </div>
+);
+
+// Small Loading Indicator
+const SmallLoader = () => (
+  <div className="flex items-center justify-center">
+    <div className="w-4 h-4 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin"></div>
+  </div>
+);
+
+// Private My Achievements Modal Component - ONLY FOR LOGGED-IN USER
+const MyAchievementsModal = ({ isOpen, onClose, currentUserId, allPosts }) => {
+  const [userAchievements, setUserAchievements] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedAchievement, setSelectedAchievement] = useState(null);
+  const [showCertificate, setShowCertificate] = useState(false);
+  const [filterType, setFilterType] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
+  const [userData, setUserData] = useState(null);
+  
+  useEffect(() => {
+    if (isOpen && currentUserId) {
+      fetchUserData();
+      fetchUserAchievements();
+    }
+  }, [isOpen, currentUserId, filterType, sortBy]);
+  
+  const fetchUserData = async () => {
+    try {
+      const response = await api.get('/auth/me');
+      if (response.data.success) {
+        setUserData(response.data.user);
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
+  
+  const fetchUserAchievements = () => {
+    setLoading(true);
+    
+    // Filter posts for current user only
+    let achievements = allPosts.filter(post => 
+      post.employee?.employeeId === currentUserId
+    );
+    
+    // Apply filter if not 'all'
+    if (filterType !== 'all') {
+      achievements = achievements.filter(ach => ach.recognitionType === filterType);
+    }
+    
+    // Apply sorting
+    achievements.sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      
+      switch(sortBy) {
+        case 'newest':
+          return dateB - dateA;
+        case 'oldest':
+          return dateA - dateB;
+        case 'award_type':
+          return a.recognitionType.localeCompare(b.recognitionType);
+        default:
+          return dateB - dateA;
+      }
+    });
+    
+    setUserAchievements(achievements);
+    setLoading(false);
+  };
+  
+  const getAchievementTypeInfo = (type) => {
+    const types = {
+      employee_of_month: { 
+        icon: <Crown className="w-5 h-5" />, 
+        color: 'text-yellow-600', 
+        bgColor: 'bg-yellow-50',
+        borderColor: 'border-yellow-200',
+        label: 'Employee of Month',
+        gradient: 'from-yellow-500 to-amber-500'
+      },
+      excellence_award: { 
+        icon: <Medal className="w-5 h-5" />, 
+        color: 'text-purple-600', 
+        bgColor: 'bg-purple-50',
+        borderColor: 'border-purple-200',
+        label: 'Excellence Award',
+        gradient: 'from-purple-500 to-indigo-500'
+      },
+      innovation: { 
+        icon: <Lightbulb className="w-5 h-5" />, 
+        color: 'text-blue-600', 
+        bgColor: 'bg-blue-50',
+        borderColor: 'border-blue-200',
+        label: 'Innovation Award',
+        gradient: 'from-blue-500 to-cyan-500'
+      },
+      team_player: { 
+        icon: <Heart className="w-5 h-5" />, 
+        color: 'text-green-600', 
+        bgColor: 'bg-green-50',
+        borderColor: 'border-green-200',
+        label: 'Team Player Award',
+        gradient: 'from-green-500 to-emerald-500'
+      }
+    };
+    
+    return types[type] || { 
+      icon: <Award className="w-5 h-5" />, 
+      color: 'text-gray-600', 
+      bgColor: 'bg-gray-50',
+      borderColor: 'border-gray-200',
+      label: 'Recognition',
+      gradient: 'from-gray-500 to-slate-500'
+    };
+  };
+  
+  const getStats = () => {
+    const total = userAchievements.length;
+    const types = {};
+    
+    userAchievements.forEach(ach => {
+      if (!types[ach.recognitionType]) {
+        types[ach.recognitionType] = 0;
+      }
+      types[ach.recognitionType]++;
+    });
+    
+    return { total, types };
+  };
+  
+  const stats = getStats();
+  
+  const handleDownloadCertificate = (achievement) => {
+    setSelectedAchievement(achievement);
+    setShowCertificate(true);
+  };
+  
+  const filterTypes = [
+    { id: 'all', label: 'All Awards', icon: <Trophy size={16} />, color: 'from-red-500 to-red-600' },
+    { id: 'employee_of_month', label: 'Employee of Month', icon: <Crown size={16} />, color: 'from-yellow-500 to-amber-500' },
+    { id: 'excellence_award', label: 'Excellence Award', icon: <Medal size={16} />, color: 'from-purple-500 to-indigo-500' },
+    { id: 'innovation', label: 'Innovation Award', icon: <Lightbulb size={16} />, color: 'from-blue-500 to-cyan-500' },
+    { id: 'team_player', label: 'Team Player', icon: <Heart size={16} />, color: 'from-green-500 to-emerald-500' }
+  ];
+  
+  const sortOptions = [
+    { id: 'newest', label: 'Newest First', icon: <ArrowUpRight size={14} /> },
+    { id: 'oldest', label: 'Oldest First', icon: <ArrowUpRight size={14} className="rotate-180" /> },
+    { id: 'award_type', label: 'By Award Type', icon: <Filter size={14} /> }
+  ];
+  
+  if (!isOpen) return null;
+  
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-[60] animate-fadeIn">
+        <div className="bg-white rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto shadow-2xl">
+          {/* Modal Header */}
+          <div className="sticky top-0 bg-white z-10 border-b border-gray-200 p-6">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                  <div className="w-10 h-10 bg-gradient-to-r from-red-600 to-red-500 rounded-full flex items-center justify-center">
+                    <Badge className="w-5 h-5 text-white" />
+                  </div>
+                  <span>My Achievements</span>
+                </h2>
+                <p className="text-gray-600 mt-1">Your personal recognition gallery - Private to you only</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={24} className="text-gray-500" />
+              </button>
+            </div>
+            
+            {/* User Profile Card */}
+            {userData && (
+              <div className="mb-6 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-gradient-to-r from-red-600 to-red-500 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-md">
+                    {userData.name ? userData.name.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-gray-900 text-xl">{userData.name}</h3>
+                    <p className="text-gray-600">{userData.position || 'Employee'}</p>
+                    <div className="flex items-center gap-4 mt-2">
+                      <div className="flex items-center gap-1">
+                        <Trophy size={14} className="text-red-600" />
+                        <span className="text-sm font-medium text-gray-700">{stats.total} Achievements</span>
+                      </div>
+                      <div className="w-1 h-1 rounded-full bg-gray-300"></div>
+                      <div className="flex items-center gap-1">
+                        <Shield size={14} className="text-blue-600" />
+                        <span className="text-sm text-gray-600">Private View</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-gray-500">Employee ID</div>
+                    <div className="font-mono font-bold text-gray-900">{userData.employeeId}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Stats Summary */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+              <div className="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-xl p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-red-600 to-red-500 rounded-full flex items-center justify-center">
+                    <Trophy className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-600">Total Awards</div>
+                    <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
+                  </div>
+                </div>
+              </div>
+              
+              {filterTypes.slice(1).map((filter) => {
+                const count = stats.types[filter.id] || 0;
+                return (
+                  <div 
+                    key={filter.id} 
+                    className={`border rounded-xl p-4 ${
+                      count > 0 
+                        ? `bg-gradient-to-r ${filter.color.replace('from-', 'from-').replace('to-', 'to-')} bg-opacity-10` 
+                        : 'bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${filter.color} flex items-center justify-center`}>
+                        <div className="text-white">
+                          {React.cloneElement(filter.icon, { className: "w-5 h-5" })}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-600">{filter.label}</div>
+                        <div className="text-2xl font-bold text-gray-900">{count}</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Filters and Sorting */}
+            <div className="flex flex-col md:flex-row gap-4 mb-4">
+              <div className="flex-1">
+                <div className="text-sm font-medium text-gray-700 mb-2">Filter by Award Type</div>
+                <div className="flex flex-wrap gap-2">
+                  {filterTypes.map((filter) => (
+                    <button
+                      key={filter.id}
+                      onClick={() => setFilterType(filter.id)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
+                        filterType === filter.id
+                          ? `bg-gradient-to-r ${filter.color} text-white shadow-md`
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {filter.icon}
+                      <span className="text-sm font-medium">{filter.label}</span>
+                      {filter.id !== 'all' && stats.types[filter.id] && (
+                        <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                          filterType === filter.id ? 'bg-white/30' : 'bg-gray-300'
+                        }`}>
+                          {stats.types[filter.id]}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="w-full md:w-48">
+                <div className="text-sm font-medium text-gray-700 mb-2">Sort By</div>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                >
+                  {sortOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          {/* Achievements Grid */}
+          <div className="p-6">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-r from-red-50 to-red-100 flex items-center justify-center mb-4">
+                  <Loader size={24} className="animate-spin text-red-600" />
+                </div>
+                <p className="text-gray-600">Loading your achievements...</p>
+              </div>
+            ) : userAchievements.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 flex items-center justify-center">
+                  <Trophy className="w-10 h-10 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Achievements Yet</h3>
+                <p className="text-gray-600 mb-6">
+                  {filterType === 'all' 
+                    ? "You haven't received any recognitions yet. Keep up the great work!" 
+                    : `No ${filterTypes.find(f => f.id === filterType)?.label} recognitions found.`}
+                </p>
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-xl">
+                  <Shield className="w-4 h-4 text-blue-600" />
+                  <span className="text-sm text-blue-700">Only you can see this view</span>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {userAchievements.map((achievement, index) => {
+                  const typeInfo = getAchievementTypeInfo(achievement.recognitionType);
+                  const achievementDate = new Date(achievement.createdAt);
+                  const isNew = (new Date() - achievementDate) < (7 * 24 * 60 * 60 * 1000); // Less than 7 days old
+                  
+                  return (
+                    <div
+                      key={achievement._id}
+                      className="group border border-gray-200 rounded-2xl p-5 hover:border-red-300 hover:shadow-xl transition-all duration-300 bg-white"
+                    >
+                      <div className="flex gap-4">
+                        {/* Badge */}
+                        <div className="flex-shrink-0 relative">
+                          <div className={`w-20 h-20 rounded-xl bg-gradient-to-r ${typeInfo.gradient} flex items-center justify-center shadow-lg`}>
+                            <div className="text-white">
+                              {React.cloneElement(typeInfo.icon, { className: "w-10 h-10" })}
+                            </div>
+                          </div>
+                          {isNew && (
+                            <div className="absolute -top-2 -right-2">
+                              <div className="px-2 py-0.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-bold rounded-full">
+                                NEW
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Details */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className={`px-3 py-1 rounded-full text-sm font-bold ${typeInfo.bgColor} ${typeInfo.color} border ${typeInfo.borderColor}`}>
+                                  {typeInfo.label}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  #{index + 1}
+                                </span>
+                              </div>
+                              <h4 className="font-bold text-gray-900 text-lg group-hover:text-red-600 transition-colors">
+                                {achievement.title}
+                              </h4>
+                            </div>
+                          </div>
+                          
+                          <p className="text-sm text-gray-600 line-clamp-2 mb-4">
+                            {achievement.description}
+                          </p>
+                          
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-1">
+                                <Calendar size={12} className="text-gray-400" />
+                                <span className="text-xs text-gray-600">
+                                  {achievementDate.toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                  })}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock size={12} className="text-gray-400" />
+                                <span className="text-xs text-gray-600">
+                                  {achievementDate.toLocaleTimeString('en-US', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                              ID: {achievement._id?.substring(0, 6).toUpperCase()}
+                            </div>
+                          </div>
+                          
+                          {/* Action Buttons */}
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleDownloadCertificate(achievement)}
+                              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl text-sm font-bold hover:from-red-700 hover:to-red-800 transition-all hover:shadow-md group/dl"
+                            >
+                              <Download size={16} className="group-hover/dl:animate-bounce" />
+                              Download Certificate
+                            </button>
+                            <button
+                              className="px-4 py-2.5 border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-gray-400 transition-all flex items-center gap-2"
+                              title="This achievement is private to you"
+                            >
+                              <Shield size={14} />
+                              <span className="hidden sm:inline">Private</span>
+                            </button>
+                          </div>
+                          
+                          {/* Validation Badge */}
+                          <div className="mt-3 flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-xs text-green-600">
+                              <div className="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center">
+                                <Check size={10} />
+                              </div>
+                              <span>Validated by management</span>
+                            </div>
+                            <div className="text-xs text-gray-400">
+                              Certificate No. {achievement._id?.substring(18, 24).toUpperCase()}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          
+          {/* Footer */}
+          <div className="sticky bottom-0 bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-200 p-5 rounded-b-2xl">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">Private Achievements</div>
+                    <div className="text-xs text-gray-600">Only visible to you</div>
+                  </div>
+                </div>
+                <div className="w-px h-6 bg-gray-300"></div>
+                <div className="text-sm text-gray-700">
+                  <span className="font-bold">{stats.total}</span> achievement{stats.total !== 1 ? 's' : ''} • 
+                  <span className="font-bold ml-1">{Object.keys(stats.types).length}</span> category{Object.keys(stats.types).length !== 1 ? 'ies' : ''}
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-sm text-gray-600">
+                  Last updated: {new Date().toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </div>
+                <button
+                  onClick={() => fetchUserAchievements()}
+                  className="px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm font-medium hover:bg-gray-50 hover:border-gray-400 transition-all flex items-center gap-2"
+                >
+                  <RefreshCw size={14} />
+                  Refresh
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Certificate Modal (Reuse existing Certificate component) */}
+      {showCertificate && selectedAchievement && (
+        <Certificate 
+          post={selectedAchievement} 
+          onClose={() => {
+            setShowCertificate(false);
+            setSelectedAchievement(null);
+          }} 
+        />
+      )}
+    </>
+  );
+};
+
+// Employee Badges Component - UPDATED WITH MODAL TRIGGER
+const EmployeeBadges = ({ currentUserId, allPosts }) => {
+  const [showBadges] = useState(false);
+  const [currentUserData, setCurrentUserData] = useState(null);
+  const [showAchievementsModal, setShowAchievementsModal] = useState(false);
+  
+  useEffect(() => {
+    // Fetch current user data
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await api.get('/auth/me');
+        if (response.data.success) {
+          setCurrentUserData(response.data.user);
+        }
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+      }
+    };
+    
+    fetchCurrentUser();
+  }, []);
+  
+  // Get recognitions for current user
+  const getUserRecognitions = () => {
+    if (!currentUserData || !allPosts || allPosts.length === 0) return [];
+    
+    return allPosts.filter(post => 
+      post.employee?.employeeId === currentUserData.employeeId
+    );
+  };
+  
+  const userRecognitions = getUserRecognitions();
   
   // Count badge types
   const getBadgeCounts = () => {
-    if (!recognitions || recognitions.length === 0) return {};
+    if (!userRecognitions || userRecognitions.length === 0) return {};
     
     const counts = {
       employee_of_month: 0,
       excellence_award: 0,
       innovation: 0,
       team_player: 0,
-      total: recognitions.length
+      total: userRecognitions.length
     };
     
-    recognitions.forEach(rec => {
+    userRecognitions.forEach(rec => {
       if (counts[rec.recognitionType] !== undefined) {
         counts[rec.recognitionType]++;
       }
@@ -61,192 +613,56 @@ const EmployeeBadges = ({ employee, recognitions }) => {
 
   const badgeCounts = getBadgeCounts();
 
-  const getBadgeInfo = (type, count) => {
-    const badges = {
-      employee_of_month: {
-        icon: <Crown className="w-4 h-4" />,
-        label: 'Employee of Month',
-        color: 'from-yellow-500 to-yellow-600',
-        bgColor: 'bg-gradient-to-r from-yellow-50 to-yellow-100',
-        borderColor: 'border-yellow-200',
-        iconColor: 'text-yellow-600',
-        gradient: 'bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-500',
-        description: `${count} ${count === 1 ? 'month' : 'months'}`
-      },
-      excellence_award: {
-        icon: <Medal className="w-4 h-4" />,
-        label: 'Excellence Award',
-        color: 'from-purple-500 to-purple-600',
-        bgColor: 'bg-gradient-to-r from-purple-50 to-purple-100',
-        borderColor: 'border-purple-200',
-        iconColor: 'text-purple-600',
-        gradient: 'bg-gradient-to-br from-purple-400 via-purple-500 to-indigo-500',
-        description: `${count} ${count === 1 ? 'award' : 'awards'}`
-      },
-      innovation: {
-        icon: <Lightbulb className="w-4 h-4" />,
-        label: 'Innovation Award',
-        color: 'from-blue-500 to-blue-600',
-        bgColor: 'bg-gradient-to-r from-blue-50 to-blue-100',
-        borderColor: 'border-blue-200',
-        iconColor: 'text-blue-600',
-        gradient: 'bg-gradient-to-br from-blue-400 via-blue-500 to-cyan-500',
-        description: `${count} ${count === 1 ? 'innovation' : 'innovations'}`
-      },
-      team_player: {
-        icon: <Heart className="w-4 h-4" />,
-        label: 'Team Player',
-        color: 'from-green-500 to-green-600',
-        bgColor: 'bg-gradient-to-r from-green-50 to-green-100',
-        borderColor: 'border-green-200',
-        iconColor: 'text-green-600',
-        gradient: 'bg-gradient-to-br from-green-400 via-green-500 to-emerald-500',
-        description: `${count} ${count === 1 ? 'recognition' : 'recognitions'}`
-      }
-    };
-    
-    return badges[type] || {
-      icon: <Badge className="w-4 h-4" />,
-      label: 'Achievement',
-      color: 'from-gray-500 to-gray-600',
-      bgColor: 'bg-gradient-to-r from-gray-50 to-gray-100',
-      borderColor: 'border-gray-200',
-      iconColor: 'text-gray-600',
-      gradient: 'bg-gradient-to-br from-gray-400 via-gray-500 to-slate-500',
-      description: `${count} recognitions`
-    };
-  };
 
-  if (!employee) return null;
+  if (!currentUserData) return null;
 
   return (
-    <div className="relative">
-      <button
-        onClick={() => setShowBadges(!showBadges)}
-        className="relative flex items-center gap-2 p-2.5 bg-white border border-light rounded-xl hover:border-red-300 hover:shadow-md transition-all duration-300 group"
-        title="View Badges & Achievements"
-      >
-        <div className="relative">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-red-50 to-red-100 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Badge className="w-4 h-4 text-red-600 group-hover:text-red-700" />
-          </div>
-          {badgeCounts.total > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-red-600 to-red-500 text-white text-xs rounded-full flex items-center justify-center shadow-sm">
-              {badgeCounts.total}
-            </span>
-          )}
-        </div>
-        <div className="text-left">
-          <div className="text-xs text-gray-500 font-medium">Achievements</div>
-          <div className="text-sm font-semibold text-gray-900">View Badges</div>
-        </div>
-        <Sparkles className="w-4 h-4 text-red-400 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
-      </button>
-
-      {showBadges && (
-        <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-2xl border border-light shadow-2xl z-50 animate-slideUp">
-          {/* Badge Popup Header */}
-          <div className="p-5 border-b border-light">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-red-50 to-red-100 flex items-center justify-center">
-                  <Badge className="w-5 h-5 text-red-600" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-gray-900 text-lg">Achievements & Badges</h4>
-                  <p className="text-sm text-gray-600">Employee recognition summary</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowBadges(false)}
-                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X size={18} className="text-gray-500" />
-              </button>
+    <>
+      <div className="relative">
+        <button
+          onClick={() => setShowAchievementsModal(true)}
+          className="relative flex items-center gap-2 p-2.5 bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-xl hover:border-red-300 hover:shadow-md transition-all duration-300 group"
+          title="View My Badges & Achievements"
+        >
+          <div className="relative">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-red-600 to-red-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Badge className="w-4 h-4 text-white group-hover:text-red-100" />
             </div>
-            
-            {/* Employee Info */}
-            <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl">
-              <div className="w-12 h-12 bg-gradient-to-r from-red-600 to-red-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm">
-                {employee.name ? employee.name.charAt(0).toUpperCase() : 'E'}
-              </div>
-              <div>
-                <h5 className="font-bold text-gray-900">{employee.name}</h5>
-                <p className="text-xs text-gray-600">{employee.position}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Badges Content */}
-          <div className="p-5">
-            {/* Stats Summary */}
-            <div className="mb-5 p-4 bg-gradient-to-r from-red-50 to-red-100 rounded-xl border border-red-200">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Trophy className="w-4 h-4 text-red-600" />
-                  <span className="text-sm font-medium text-gray-900">Total Recognitions</span>
-                </div>
-                <span className="text-2xl font-bold text-gray-900">{badgeCounts.total}</span>
-              </div>
-              <div className="text-xs text-gray-600">Across all categories</div>
-            </div>
-
-            {/* Badges Grid */}
-            <div className="mb-5">
-              <h5 className="text-sm font-semibold text-gray-900 mb-3">Badge Collection</h5>
-              <div className="grid grid-cols-2 gap-3">
-                {Object.entries(badgeCounts)
-                  .filter(([key, count]) => key !== 'total' && count > 0)
-                  .map(([type, count]) => {
-                    const badge = getBadgeInfo(type, count);
-                    return (
-                      <div
-                        key={type}
-                        className={`relative p-3 rounded-xl border ${badge.borderColor} ${badge.bgColor} hover:shadow-md transition-all duration-300 group/badge`}
-                      >
-                        {/* Badge Icon */}
-                        <div className="flex items-start justify-between mb-2">
-                          <div className={`w-10 h-10 rounded-lg ${badge.gradient} flex items-center justify-center shadow-sm`}>
-                            <div className="text-white">
-                              {React.cloneElement(badge.icon, { className: "w-5 h-5" })}
-                            </div>
-                          </div>
-                          <span className={`text-lg font-bold ${badge.iconColor}`}>{count}</span>
-                        </div>
-                        
-                        {/* Badge Details */}
-                        <div>
-                          <h6 className="font-semibold text-gray-900 text-sm mb-1">{badge.label}</h6>
-                          <p className="text-xs text-gray-600">{badge.description}</p>
-                        </div>
-                        
-                        {/* Shine Effect */}
-                        <div className="absolute inset-0 rounded-xl opacity-0 group-hover/badge:opacity-20 transition-opacity bg-gradient-to-br from-white via-transparent to-transparent pointer-events-none"></div>
-                      </div>
-                    );
-                  })}
-              </div>
-            </div>
-
-            {/* Empty State */}
-            {badgeCounts.total === 0 && (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 flex items-center justify-center">
-                  <Badge className="w-8 h-8 text-gray-400" />
-                </div>
-                <h5 className="font-semibold text-gray-900 mb-2">No badges yet</h5>
-                <p className="text-sm text-gray-600 mb-4">This employee hasn't received any recognitions yet.</p>
-                <div className="text-xs text-gray-500 px-4">Recognitions will appear here once awarded</div>
-              </div>
+            {badgeCounts.total > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-red-700 to-red-600 text-white text-xs rounded-full flex items-center justify-center shadow-sm">
+                {badgeCounts.total}
+              </span>
             )}
           </div>
-        </div>
+          <div className="text-left">
+            <div className="text-xs text-red-700 font-medium">My Achievements</div>
+            <div className="text-sm font-semibold text-gray-900">View & Download</div>
+          </div>
+          <Sparkles className="w-4 h-4 text-red-500 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </button>
+
+        {/* Old Badges Popup (Optional - can be removed) */}
+        {showBadges && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            {/* ... existing badges popup code ... */}
+          </div>
+        )}
+      </div>
+
+      {/* My Achievements Modal */}
+      {showAchievementsModal && (
+        <MyAchievementsModal
+          isOpen={showAchievementsModal}
+          onClose={() => setShowAchievementsModal(false)}
+          currentUserId={currentUserId}
+          allPosts={allPosts}
+        />
       )}
-    </div>
+    </>
   );
 };
 
-// Improved Certificate Component with better design
+// Improved Certificate Component
 const Certificate = ({ post, onClose }) => {
   const [downloading, setDownloading] = useState(false);
   
@@ -717,8 +1133,8 @@ const RecognitionHistory = ({ employee, isOpen, onClose }) => {
   );
 };
 
-// Enhanced Post Details Modal with new features
-const PostDetailsModal = ({ post, isOpen, onClose }) => {
+// Enhanced Post Details Modal - REMOVED DOWNLOAD CERTIFICATE BUTTON FOR OTHERS
+const PostDetailsModal = ({ post, isOpen, onClose, currentUserId }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showCertificate, setShowCertificate] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -790,7 +1206,6 @@ const PostDetailsModal = ({ post, isOpen, onClose }) => {
     }
   };
 
-  // Image carousel navigation
   const nextImage = () => {
     if (post.images && post.images.length > 0) {
       setCurrentImageIndex((prevIndex) => 
@@ -811,9 +1226,10 @@ const PostDetailsModal = ({ post, isOpen, onClose }) => {
 
   const typeInfo = getRecognitionTypeInfo(post.recognitionType);
   const hasImages = post.images && post.images.length > 0;
-
-  // Check if there are other recognitions for this employee
   const hasHistory = employeeRecognitions.length > 1;
+  
+  // Check if current user is the award recipient
+  const isCurrentUserRecipient = currentUserId === post.employee?.employeeId;
 
   return (
     <>
@@ -917,7 +1333,7 @@ const PostDetailsModal = ({ post, isOpen, onClose }) => {
                   </div>
                 )}
 
-                {/* Hashtags (Italic) */}
+                {/* Hashtags */}
                 {post.tags && post.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2 pt-2">
                     {post.tags.map((tag, index) => (
@@ -936,7 +1352,7 @@ const PostDetailsModal = ({ post, isOpen, onClose }) => {
                 </div>
               </div>
 
-              {/* Enhanced Sidebar with new features */}
+              {/* Enhanced Sidebar */}
               <div className="space-y-6">
                 {/* Employee Card with Badges and History */}
                 <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-5 border border-gray-200">
@@ -969,22 +1385,30 @@ const PostDetailsModal = ({ post, isOpen, onClose }) => {
                         <Badge className="w-4 h-4 text-red-600" />
                         <span className="text-sm font-medium text-gray-700">Achievements</span>
                       </div>
-                      <span className="text-sm font-bold text-gray-900 bg-red-50 text-red-700 px-2 py-1 rounded">
-                        {employeeRecognitions.length} {employeeRecognitions.length === 1 ? 'recognition' : 'recognitions'}
-                      </span>
                     </div>
-                    <div className="text-xs text-gray-500">Total recognitions received</div>
                   </div>
 
                   {/* Action Buttons for Employee */}
                   <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => setShowCertificate(true)}
-                      className="flex items-center justify-center gap-2 p-2.5 bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-xl transition-all duration-300 text-sm font-medium group/cert"
-                    >
-                      <FileText size={14} className="group-hover/cert:scale-110 transition-transform" />
-                      Certificate
-                    </button>
+                    {/* Certificate button - Only show download if current user is recipient */}
+                    {isCurrentUserRecipient ? (
+                      <button
+                        onClick={() => setShowCertificate(true)}
+                        className="flex items-center justify-center gap-2 p-2.5 bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-xl transition-all duration-300 text-sm font-medium group/cert"
+                      >
+                        <FileText size={14} className="group-hover/cert:scale-110 transition-transform" />
+                        Certificate
+                      </button>
+                    ) : (
+                      <button
+                        disabled
+                        className="flex items-center justify-center gap-2 p-2.5 bg-gray-100 text-gray-400 rounded-xl cursor-not-allowed text-sm font-medium"
+                        title="Certificate download available only for recipient"
+                      >
+                        <FileText size={14} />
+                        Certificate
+                      </button>
+                    )}
                     <button
                       onClick={() => setShowHistory(true)}
                       disabled={!hasHistory}
@@ -1027,18 +1451,35 @@ const PostDetailsModal = ({ post, isOpen, onClose }) => {
                         {post._id?.substring(0, 8).toUpperCase()}
                       </span>
                     </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Certificate Access</span>
+                      <span className={`text-sm font-medium ${isCurrentUserRecipient ? 'text-green-600' : 'text-gray-600'}`}>
+                        {isCurrentUserRecipient ? 'Available' : 'Recipient Only'}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Quick Actions */}
+                {/* Quick Actions - UPDATED: Only show download certificate if user is recipient */}
                 <div className="space-y-3">
-                  <button
-                    onClick={() => setShowCertificate(true)}
-                    className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-medium hover:from-red-700 hover:to-red-800 transition-all duration-300 shadow-md hover:shadow-lg group/cert-dl"
-                  >
-                    <Download size={18} className="group-hover/cert-dl:animate-bounce" />
-                    Download Certificate
-                  </button>
+                  {isCurrentUserRecipient ? (
+                    <button
+                      onClick={() => setShowCertificate(true)}
+                      className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-medium hover:from-red-700 hover:to-red-800 transition-all duration-300 shadow-md hover:shadow-lg group/cert-dl"
+                    >
+                      <Download size={18} className="group-hover/cert-dl:animate-bounce" />
+                      Download Certificate
+                    </button>
+                  ) : (
+                    <button
+                      disabled
+                      className="w-full flex items-center justify-center gap-2 py-3 bg-gray-200 text-gray-500 rounded-xl font-medium cursor-not-allowed"
+                      title="Certificate download available only for recipient"
+                    >
+                      <Shield size={18} />
+                      Recipient Only
+                    </button>
+                  )}
                   <button
                     onClick={() => setShowHistory(true)}
                     disabled={!hasHistory}
@@ -1058,8 +1499,8 @@ const PostDetailsModal = ({ post, isOpen, onClose }) => {
         </div>
       </div>
 
-      {/* Certificate Modal */}
-      {showCertificate && (
+      {/* Certificate Modal - Only shown for recipient */}
+      {showCertificate && isCurrentUserRecipient && (
         <Certificate 
           post={post} 
           onClose={() => setShowCertificate(false)} 
@@ -1078,10 +1519,8 @@ const PostDetailsModal = ({ post, isOpen, onClose }) => {
   );
 };
 
-// Enhanced Recognition Card with Improved Badges
+// Enhanced Recognition Card
 const RecognitionCard = ({ post, onView }) => {
-  const [showBadges, setShowBadges] = useState(false);
-  
   const getRecognitionTypeInfo = (type) => {
     switch(type) {
       case 'employee_of_month': 
@@ -1179,19 +1618,6 @@ const RecognitionCard = ({ post, onView }) => {
               {typeInfo.label}
             </div>
           </div>
-          {/* Badge Indicator */}
-          <div className="absolute top-3 right-3">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowBadges(!showBadges);
-              }}
-              className="p-1.5 bg-white/90 backdrop-blur-sm rounded-lg hover:bg-white transition-colors hover:shadow-md"
-              title="View Achievements"
-            >
-              <Badge className="w-4 h-4 text-red-600" />
-            </button>
-          </div>
         </div>
       ) : (
         <div className={`h-48 ${typeInfo.bgColor} relative`}>
@@ -1205,12 +1631,12 @@ const RecognitionCard = ({ post, onView }) => {
       )}
       
       <div className="p-5">
-        {/* Title (Bold) */}
+        {/* Title */}
         <h3 className="font-bold text-gray-900 text-lg mb-2 line-clamp-2 group-hover:text-red-600 transition-colors">
           {post.title}
         </h3>
         
-        {/* Hashtags (Italic, below title) */}
+        {/* Hashtags */}
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-3">
             {post.tags.slice(0, 3).map((tag, index) => (
@@ -1246,7 +1672,7 @@ const RecognitionCard = ({ post, onView }) => {
           </div>
         </div>
 
-        {/* Card Footer - Date with Time */}
+        {/* Card Footer */}
         <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t border-light">
           <div className="text-xs text-gray-500">
             {formatDateTime(post.createdAt)}
@@ -1261,7 +1687,7 @@ const RecognitionCard = ({ post, onView }) => {
   );
 };
 
-// Main AgentRecognition Component
+// Main AgentRecognition Component - VIEW ONLY
 const AgentRecognition = () => {
   const [activeCategory, setActiveCategory] = useState('Recent posts');
   const [posts, setPosts] = useState([]);
@@ -1271,7 +1697,33 @@ const AgentRecognition = () => {
   const [showPostModal, setShowPostModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState("success");
+  const [currentUserId, setCurrentUserId] = useState(null);
   const postsPerPage = 8;
+
+  // Fetch current user on component mount
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await api.get('/auth/me');
+        if (response.data.success) {
+          setCurrentUserId(response.data.user.employeeId);
+        }
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+      }
+    };
+    
+    fetchCurrentUser();
+  }, []);
+
+  const showCustomToast = (message, type = "success") => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+  };
 
   // Categories for navigation
   const categories = [
@@ -1310,6 +1762,7 @@ const AgentRecognition = () => {
         }
         return [newPost, ...prev];
       });
+      showCustomToast("New recognition added", "success");
     });
 
     // Listen for updated recognition posts
@@ -1324,6 +1777,7 @@ const AgentRecognition = () => {
     socket.on("recognitionArchived", (data) => {
       console.log("🗄️ Recognition archived from socket:", data.recognitionId);
       setPosts(prev => prev.filter(post => post._id !== data.recognitionId));
+      showCustomToast("Recognition archived", "success");
     });
 
     // Listen for restored recognitions
@@ -1342,6 +1796,7 @@ const AgentRecognition = () => {
     // Listen for errors
     socket.on("error", (error) => {
       console.error("Socket error:", error);
+      showCustomToast("Socket connection error", "error");
     });
 
     // Cleanup on unmount
@@ -1438,24 +1893,22 @@ const AgentRecognition = () => {
     }
   };
 
+  // Get current month for highlights
+  const getCurrentMonth = () => {
+    const date = new Date();
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  };
+
   // Loading state
   if (loading && posts.length === 0) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative">
-            <Trophy className="w-16 h-16 text-red-500 mx-auto mb-4 animate-pulse" />
-            <div className="absolute -top-2 -right-2 w-8 h-8">
-            </div>
-          </div>
-          <p className="text-gray-600 mt-2">Loading recognitions...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br  p-4 md:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
+      {/* Toast Component */}
+      {showToast && <Toast message={toastMessage} type={toastType} onClose={() => setShowToast(false)} />}
+      
       {/* Post Details Modal */}
       <PostDetailsModal 
         post={selectedPost}
@@ -1464,6 +1917,7 @@ const AgentRecognition = () => {
           setShowPostModal(false);
           setSelectedPost(null);
         }}
+        currentUserId={currentUserId}
       />
       
       <div className="max-w-7xl mx-auto">
@@ -1481,12 +1935,13 @@ const AgentRecognition = () => {
             </div>
             
             <div className="flex items-center gap-3">
-              {/* Badges Button */}
+              {/* Badges Button - Now opens My Achievements Modal */}
               <EmployeeBadges 
-                employee={posts[0]?.employee} 
-                recognitions={posts.filter(p => p.employee?.employeeId === posts[0]?.employee?.employeeId)}
+                currentUserId={currentUserId}
+                allPosts={posts}
               />
-              
+      
+              {/* Refresh Button */}
               <button 
                 onClick={handleRefresh}
                 disabled={refreshing}
@@ -1513,8 +1968,8 @@ const AgentRecognition = () => {
                 }}
                 className={`px-4 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center gap-2 ${
                   activeCategory === category.name
-                    ? 'bg-gradient-to-r from-red-600 to-red-700 text-white'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                    ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-gray-400 hover:shadow-sm'
                 }`}
               >
                 <span>{category.name}</span>
@@ -1526,7 +1981,7 @@ const AgentRecognition = () => {
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Recent Posts Grid */}
-          <div className="lg:col-spn-2">
+          <div className="lg:col-span-2">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900 flex items-center">
                 <Sparkles className="mr-2" size={24} />
@@ -1620,11 +2075,11 @@ const AgentRecognition = () => {
 
           {/* Right Column */}
           <div className="space-y-8">
-            {/* Weekly Stats Card */}
+            {/* Monthly Highlights Card */}
             <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-2xl p-5 text-white shadow-lg">
               <h3 className="text-xl font-bold mb-4 flex items-center">
                 <BarChart3 className="mr-2" size={22} />
-                This Week's Highlights
+                {getCurrentMonth()} Highlights
               </h3>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
@@ -1755,7 +2210,6 @@ const AgentRecognition = () => {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="mt-12 pt-8 border-t border-light text-center">
           <div className="flex flex-wrap gap-6 justify-center mb-4">
             {categories.slice(0, 6).map((category) => (

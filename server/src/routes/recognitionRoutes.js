@@ -15,3 +15,4 @@ router.delete('/:id', recognitionController.deleteRecognition);
 
 
 export default router;
+

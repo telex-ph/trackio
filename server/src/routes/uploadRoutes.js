@@ -16,6 +16,7 @@ const folderMap = {
   mom: "trackio/offense/MOM",
   nda: "trackio/offense/NDA",
   announcement: "trackio/announcement",
+  recognition: "trackio/recognition",
 };
 
 // Reusable upload handler

@@ -20,7 +20,6 @@ export const recognitionController = {
       
       if (status && status !== 'all') {
         if (status === 'published') {
-          // Include scheduled posts that should now be published
           filter.$or = [
             { status: 'published' },
             { 
@@ -102,7 +101,7 @@ export const recognitionController = {
             email: employee.email,
             avatar: employee.avatar
           } : {
-            name: 'Unknown Employee',
+            name: recognition.employeeName || 'Unknown Employee',
             employeeId: recognition.employeeId,
             department: recognition.department || 'Unknown'
           }
@@ -156,12 +155,6 @@ export const recognitionController = {
         });
       }
       
-      // Increment view count
-      await recognitionsCollection.updateOne(
-        { _id: new ObjectId(id) },
-        { $inc: { 'engagement.views': 1 } }
-      );
-      
       // Get employee details
       const employee = await usersCollection.findOne(
         { employeeId: recognition.employeeId },
@@ -190,7 +183,7 @@ export const recognitionController = {
           email: employee.email,
           avatar: employee.avatar
         } : {
-          name: 'Unknown Employee',
+          name: recognition.employeeName || 'Unknown Employee',
           employeeId: recognition.employeeId,
           department: recognition.department || 'Unknown'
         }
@@ -213,6 +206,7 @@ export const recognitionController = {
 
   async createRecognition(req, res) {
     try {
+      const io = req.app.get('socketio');
       const { 
         title, 
         description, 
@@ -222,7 +216,9 @@ export const recognitionController = {
         status = 'draft',
         department = '',
         scheduleDate,
-        images = []
+        images = [],
+        employeeName,
+        employeePosition
       } = req.body;
       
       // Validation
@@ -235,24 +231,38 @@ export const recognitionController = {
       
       const db = await connectDB();
       const recognitionsCollection = db.collection('recognitions');
+      const usersCollection = db.collection('users');
       
-      // Process images
+      // Get employee details
+      const employee = await usersCollection.findOne(
+        { employeeId: employeeId.toString() },
+        { 
+          projection: { 
+            _id: 1,
+            employeeId: 1,
+            firstName: 1,
+            lastName: 1,
+            department: 1,
+            role: 1,
+            email: 1,
+            avatar: 1
+          } 
+        }
+      );
+      
+      // Handle images - should be Cloudinary objects
       let processedImages = [];
       if (Array.isArray(images) && images.length > 0) {
-        processedImages = images.map((img, index) => {
-          if (typeof img === 'object' && img.data) {
-            return img;
-          }
-          
-          return {
-            id: new ObjectId().toString(),
-            data: img,
-            type: img.match(/^data:image\/(\w+);base64,/)?.[1] || 'jpeg',
-            size: Math.floor((img.length * 3) / 4),
-            uploadedAt: new Date(),
-            name: `image_${Date.now()}_${index}`
-          };
-        }).slice(0, 5);
+        processedImages = images
+          .filter(img => img && (img.url || img.secure_url) && img.public_id)
+          .map(img => ({
+            url: img.url || img.secure_url,
+            secure_url: img.secure_url || img.url,
+            public_id: img.public_id,
+            name: img.name || `image_${Date.now()}`,
+            uploadedAt: img.uploadedAt || new Date()
+          }))
+          .slice(0, 5); // Limit to 5 images
       }
       
       // Handle schedule date
@@ -278,17 +288,10 @@ export const recognitionController = {
         tags: Array.isArray(tags) ? tags : (tags ? tags.split(',').map(t => t.trim()).filter(t => t) : []),
         images: processedImages,
         status: finalStatus,
-        department: department || '',
+        department: department || (employee ? employee.department : ''),
         scheduleDate: finalScheduleDate,
-        engagement: {
-          likes: 0,
-          comments: 0,
-          views: 0,
-          shares: 0,
-          likedBy: []
-        },
         metadata: {
-          department: department || '',
+          department: department || (employee ? employee.department : ''),
           isFeatured: false,
           isHighlighted: false,
           hasImages: processedImages.length > 0
@@ -297,13 +300,47 @@ export const recognitionController = {
         updatedAt: new Date()
       };
       
+      // Add employee name if provided or from database
+      if (employee) {
+        recognitionData.employeeName = `${employee.firstName} ${employee.lastName}`;
+        recognitionData.employeePosition = employee.role;
+      } else if (employeeName) {
+        recognitionData.employeeName = employeeName;
+        recognitionData.employeePosition = employeePosition || '';
+      }
+      
       // Insert into database
       const result = await recognitionsCollection.insertOne(recognitionData);
       
       const createdRecognition = {
         _id: result.insertedId,
-        ...recognitionData
+        ...recognitionData,
+        employee: employee ? {
+          _id: employee._id,
+          employeeId: employee.employeeId,
+          name: `${employee.firstName} ${employee.lastName}`,
+          department: employee.department,
+          position: employee.role,
+          email: employee.email,
+          avatar: employee.avatar
+        } : {
+          name: employeeName || 'Unknown Employee',
+          employeeId: employeeId,
+          department: department || 'Unknown'
+        }
       };
+      
+      // Emit socket event
+      if (io) {
+        if (finalStatus === 'published') {
+          io.to('admin-room').emit('adminNewRecognition', createdRecognition);
+          io.emit('newRecognition', createdRecognition);
+        } else if (finalStatus === 'scheduled') {
+          io.to('admin-room').emit('adminRecognitionScheduled', createdRecognition);
+        } else {
+          io.to('admin-room').emit('adminRecognitionDraftCreated', createdRecognition);
+        }
+      }
       
       res.status(201).json({
         success: true,
@@ -327,6 +364,7 @@ export const recognitionController = {
 
   async updateRecognition(req, res) {
     try {
+      const io = req.app.get('socketio');
       const { id } = req.params;
       const updateData = req.body;
       
@@ -339,6 +377,7 @@ export const recognitionController = {
       
       const db = await connectDB();
       const recognitionsCollection = db.collection('recognitions');
+      const usersCollection = db.collection('users');
       
       // Check if recognition exists
       const existingRecognition = await recognitionsCollection.findOne({ 
@@ -350,6 +389,26 @@ export const recognitionController = {
           success: false, 
           message: 'Recognition not found' 
         });
+      }
+      
+      // Get employee details if employeeId is being updated
+      let employee = null;
+      if (updateData.employeeId) {
+        employee = await usersCollection.findOne(
+          { employeeId: updateData.employeeId.toString() },
+          { 
+            projection: { 
+              _id: 1,
+              employeeId: 1,
+              firstName: 1,
+              lastName: 1,
+              department: 1,
+              role: 1,
+              email: 1,
+              avatar: 1
+            } 
+          }
+        );
       }
       
       // Prepare update object
@@ -375,6 +434,14 @@ export const recognitionController = {
       // Handle employee ID
       if (updateData.employeeId !== undefined) {
         update.employeeId = updateData.employeeId.toString();
+        if (employee) {
+          update.employeeName = `${employee.firstName} ${employee.lastName}`;
+          update.employeePosition = employee.role;
+          update.department = employee.department;
+        } else if (updateData.employeeName) {
+          update.employeeName = updateData.employeeName;
+          update.employeePosition = updateData.employeePosition || '';
+        }
       }
       
       // Handle department
@@ -389,52 +456,44 @@ export const recognitionController = {
           : updateData.tags.split(',').map(t => t.trim()).filter(t => t);
       }
       
-      // Handle images - FIXED: Combine existing and new images properly
+      // Handle images
       if (updateData.images !== undefined) {
-        let images = [];
+        let processedImages = [];
         
-        // Keep existing images that are still in the array
-        const existingImageIds = updateData.images
-          .filter(img => typeof img === 'object' && img.id)
-          .map(img => img.id);
+        if (Array.isArray(updateData.images) && updateData.images.length > 0) {
+          processedImages = updateData.images
+            .filter(img => img && (img.url || img.secure_url) && img.public_id)
+            .map(img => ({
+              url: img.url || img.secure_url,
+              secure_url: img.secure_url || img.url,
+              public_id: img.public_id,
+              name: img.name || `image_${Date.now()}`,
+              uploadedAt: img.uploadedAt || new Date()
+            }))
+            .slice(0, 5); // Limit to 5 images
+        }
         
-        images = existingRecognition.images.filter(img => 
-          existingImageIds.includes(img.id)
-        );
-        
-        // Add new base64 images
-        updateData.images.forEach(img => {
-          if (typeof img === 'string' && img.startsWith('data:image')) {
-            images.push({
-              id: new ObjectId().toString(),
-              data: img,
-              type: img.match(/^data:image\/(\w+);base64,/)?.[1] || 'jpeg',
-              size: Math.floor((img.length * 3) / 4),
-              uploadedAt: new Date(),
-              name: `image_${Date.now()}`
-            });
-          }
-        });
-        
-        // Limit to 5 images
-        update.images = images.slice(0, 5);
+        update.images = processedImages;
         update.metadata = {
           ...existingRecognition.metadata,
-          hasImages: images.length > 0
+          hasImages: processedImages.length > 0
         };
       }
       
       // Handle status and schedule date
+      let newStatus = existingRecognition.status;
       if (updateData.status !== undefined || updateData.scheduleDate !== undefined) {
-        const newStatus = updateData.status || existingRecognition.status;
+        newStatus = updateData.status || existingRecognition.status;
         const newScheduleDate = updateData.scheduleDate ? new Date(updateData.scheduleDate) : existingRecognition.scheduleDate;
         
         if (newScheduleDate && newScheduleDate <= new Date()) {
           update.status = 'published';
           update.scheduleDate = null;
+          newStatus = 'published';
         } else if (newScheduleDate) {
           update.status = 'scheduled';
           update.scheduleDate = newScheduleDate;
+          newStatus = 'scheduled';
         } else {
           update.status = newStatus;
         }
@@ -458,10 +517,57 @@ export const recognitionController = {
         _id: new ObjectId(id) 
       });
       
+      // Get employee details for the response
+      const currentEmployee = await usersCollection.findOne(
+        { employeeId: updatedRecognition.employeeId },
+        { 
+          projection: { 
+            _id: 1,
+            employeeId: 1,
+            firstName: 1,
+            lastName: 1,
+            department: 1,
+            role: 1,
+            email: 1,
+            avatar: 1
+          } 
+        }
+      );
+      
+      const recognitionWithDetails = {
+        ...updatedRecognition,
+        employee: currentEmployee ? {
+          _id: currentEmployee._id,
+          employeeId: currentEmployee.employeeId,
+          name: `${currentEmployee.firstName} ${currentEmployee.lastName}`,
+          department: currentEmployee.department,
+          position: currentEmployee.role,
+          email: currentEmployee.email,
+          avatar: currentEmployee.avatar
+        } : {
+          name: updatedRecognition.employeeName || 'Unknown Employee',
+          employeeId: updatedRecognition.employeeId,
+          department: updatedRecognition.department || 'Unknown'
+        }
+      };
+      
+      // Emit socket event
+      if (io) {
+        if (newStatus === 'published' && existingRecognition.status !== 'published') {
+          io.to('admin-room').emit('adminRecognitionPublished', recognitionWithDetails);
+          io.emit('recognitionPublished', recognitionWithDetails);
+        } else {
+          io.to('admin-room').emit('adminRecognitionUpdated', recognitionWithDetails);
+          if (newStatus === 'published') {
+            io.emit('recognitionUpdated', recognitionWithDetails);
+          }
+        }
+      }
+      
       res.json({
         success: true,
         message: 'Recognition updated successfully',
-        data: updatedRecognition
+        data: recognitionWithDetails
       });
       
     } catch (error) {
@@ -476,6 +582,7 @@ export const recognitionController = {
 
   async toggleArchive(req, res) {
     try {
+      const io = req.app.get('socketio');
       const { id } = req.params;
       const { action } = req.body;
       
@@ -495,6 +602,7 @@ export const recognitionController = {
       
       const db = await connectDB();
       const recognitionsCollection = db.collection('recognitions');
+      const usersCollection = db.collection('users');
       
       const recognition = await recognitionsCollection.findOne({ 
         _id: new ObjectId(id) 
@@ -508,6 +616,7 @@ export const recognitionController = {
       }
       
       const newStatus = action === 'archive' ? 'archived' : 'published';
+      const previousStatus = recognition.status;
       
       await recognitionsCollection.updateOne(
         { _id: new ObjectId(id) },
@@ -519,12 +628,77 @@ export const recognitionController = {
         }
       );
       
+      // Get updated recognition with employee details
+      const updatedRecognition = await recognitionsCollection.findOne({ 
+        _id: new ObjectId(id) 
+      });
+      
+      const employee = await usersCollection.findOne(
+        { employeeId: updatedRecognition.employeeId },
+        { 
+          projection: { 
+            _id: 1,
+            employeeId: 1,
+            firstName: 1,
+            lastName: 1,
+            department: 1,
+            role: 1,
+            email: 1,
+            avatar: 1
+          } 
+        }
+      );
+      
+      const recognitionWithDetails = {
+        ...updatedRecognition,
+        employee: employee ? {
+          _id: employee._id,
+          employeeId: employee.employeeId,
+          name: `${employee.firstName} ${employee.lastName}`,
+          department: employee.department,
+          position: employee.role,
+          email: employee.email,
+          avatar: employee.avatar
+        } : {
+          name: updatedRecognition.employeeName || 'Unknown Employee',
+          employeeId: updatedRecognition.employeeId,
+          department: updatedRecognition.department || 'Unknown'
+        }
+      };
+      
+      // Emit socket event
+      if (io) {
+        if (action === 'archive') {
+          io.to('admin-room').emit('adminRecognitionArchived', { 
+            recognitionId: id,
+            title: recognition.title,
+            data: recognitionWithDetails
+          });
+          if (previousStatus === 'published') {
+            io.emit('recognitionArchived', { 
+              recognitionId: id,
+              title: recognition.title 
+            });
+          }
+        } else {
+          io.to('admin-room').emit('adminRecognitionRestored', {
+            recognitionId: id,
+            title: recognition.title,
+            data: recognitionWithDetails
+          });
+          io.emit('recognitionRestored', {
+            recognitionId: id,
+            title: recognition.title
+          });
+        }
+      }
+      
       res.json({
         success: true,
         message: action === 'archive' 
           ? 'Recognition archived successfully' 
           : 'Recognition restored successfully',
-        data: { status: newStatus }
+        data: recognitionWithDetails
       });
       
     } catch (error) {
@@ -539,48 +713,8 @@ export const recognitionController = {
 
   async deleteRecognition(req, res) {
     try {
+      const io = req.app.get('socketio');
       const { id } = req.params;
-      
-      if (!ObjectId.isValid(id)) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Invalid recognition ID' 
-        });
-      }
-      
-      const db = await connectDB();
-      const recognitionsCollection = db.collection('recognitions');
-      
-      const result = await recognitionsCollection.deleteOne({ 
-        _id: new ObjectId(id) 
-      });
-      
-      if (result.deletedCount === 0) {
-        return res.status(404).json({ 
-          success: false, 
-          message: 'Recognition not found' 
-        });
-      }
-      
-      res.json({
-        success: true,
-        message: 'Recognition deleted successfully'
-      });
-      
-    } catch (error) {
-      console.error('Error deleting recognition:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Error deleting recognition',
-        error: error.message 
-      });
-    }
-  },
-
-  async toggleLike(req, res) {
-    try {
-      const { id } = req.params;
-      const userId = req.user?.id || req.user?._id || 'anonymous';
       
       if (!ObjectId.isValid(id)) {
         return res.status(400).json({ 
@@ -603,48 +737,41 @@ export const recognitionController = {
         });
       }
       
-      const hasLiked = recognition.engagement?.likedBy?.includes(userId);
+      const result = await recognitionsCollection.deleteOne({ 
+        _id: new ObjectId(id) 
+      });
       
-      let updateOperation = {};
-      let message = '';
-      
-      if (hasLiked) {
-        updateOperation = {
-          $inc: { 'engagement.likes': -1 },
-          $pull: { 'engagement.likedBy': userId }
-        };
-        message = 'Unliked successfully';
-      } else {
-        updateOperation = {
-          $inc: { 'engagement.likes': 1 }, 
-          $addToSet: { 'engagement.likedBy': userId } 
-        };
-        message = 'Liked successfully';
+      if (result.deletedCount === 0) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Recognition not found' 
+        });
       }
       
-      await recognitionsCollection.updateOne(
-        { _id: new ObjectId(id) },
-        updateOperation
-      );
-      
-      const updatedRecognition = await recognitionsCollection.findOne(
-        { _id: new ObjectId(id) }
-      );
+      // Emit socket event
+      if (io) {
+        io.to('admin-room').emit('adminRecognitionDeleted', { 
+          recognitionId: id,
+          title: recognition.title
+        });
+        if (recognition.status === 'published') {
+          io.emit('recognitionDeleted', { 
+            recognitionId: id,
+            title: recognition.title
+          });
+        }
+      }
       
       res.json({
         success: true,
-        message: message,
-        data: {
-          likes: updatedRecognition.engagement?.likes || 0,
-          isLiked: !hasLiked
-        }
+        message: 'Recognition deleted successfully'
       });
       
     } catch (error) {
-      console.error('Error toggling like:', error);
+      console.error('Error deleting recognition:', error);
       res.status(500).json({ 
         success: false, 
-        message: 'Error processing like/unlike',
+        message: 'Error deleting recognition',
         error: error.message 
       });
     }

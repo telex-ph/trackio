@@ -8,7 +8,10 @@ export class Recognition {
     this.employeeId = data.employeeId;
     this.postedById = data.postedById ? new ObjectId(data.postedById) : null;
     this.tags = data.tags || [];
-    this.images = data.images || []; 
+    
+    // Store Cloudinary image objects
+    this.images = data.images || []; // Should be array of {url, secure_url, public_id, name}
+    
     this.status = data.status || 'draft';
     this.metadata = {
       department: data.department || '',
