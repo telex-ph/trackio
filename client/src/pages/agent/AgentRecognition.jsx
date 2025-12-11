@@ -1620,18 +1620,14 @@ const AgentRecognition = () => {
 
   // Fetch current user on component mount
   useEffect(() => {
-    const fetchCurrentUser = () => {
+    const fetchCurrentUser = async () => {
       try {
-        const userData = localStorage.getItem('user');
-        if (userData) {
-          const user = JSON.parse(userData);
-          console.log('User from localStorage (AgentRecognition):', user);
-          setCurrentUserId(user.employeeId);
-        } else {
-          console.log('No user data in localStorage');
+        const response = await api.get('/auth/me');
+        if (response.data.success) {
+          setCurrentUserId(response.data.user.employeeId);
         }
       } catch (error) {
-        console.error('Error fetching current user from localStorage:', error);
+        console.error('Error fetching current user:', error);
       }
     };
     
@@ -1667,7 +1663,6 @@ const AgentRecognition = () => {
     // Listen for initial data
     socket.on("initialAgentRecognitionData", (data) => {
       console.log("📥 Received initial agent recognition data:", data.length);
-      console.log("Sample post:", data[0]);
       setPosts(data);
       setLoading(false);
     });
