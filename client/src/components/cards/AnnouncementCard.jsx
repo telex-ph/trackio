@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { DateTime } from "luxon";
 
-const FileAttachment = ({ file, onDownload, onView }) => {
+const FileAttachment = ({ file, onView }) => {
   const getFileIcon = (fileName) => {
     const extension = fileName.split(".").pop().toLowerCase();
     switch (extension) {
@@ -50,13 +50,26 @@ const FileAttachment = ({ file, onDownload, onView }) => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  // ✅ FIXED: Extract filename from different possible properties
+  const getFileName = () => {
+    if (file.fileName) return file.fileName;
+    if (file.name) return file.name;
+    if (file.url) {
+      const urlParts = file.url.split('/');
+      return urlParts[urlParts.length - 1].split('?')[0];
+    }
+    return 'Attachment';
+  };
+
+  const fileName = getFileName();
+
   return (
     <div className="flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded-lg mt-2">
       <div className="flex items-center gap-2 flex-1 min-w-0">
-        {getFileIcon(file.name)}
+        {getFileIcon(fileName)}
         <div className="flex-1 min-w-0">
           <span className="text-xs font-medium text-gray-700 truncate block">
-            {file.name}
+            {fileName}
           </span>
           <span className="text-xs text-gray-500">
             {formatFileSize(file.size || 0)}
@@ -64,7 +77,7 @@ const FileAttachment = ({ file, onDownload, onView }) => {
         </div>
       </div>
       <div className="flex gap-1 ml-2">
-        {canPreview(file.name) && (
+        {canPreview(fileName) && (
           <button
             onClick={() => onView(file)}
             className="p-1 text-green-600 hover:text-green-800 hover:bg-green-100 rounded transition-colors"
@@ -73,13 +86,7 @@ const FileAttachment = ({ file, onDownload, onView }) => {
             <Eye className="w-3 h-3" />
           </button>
         )}
-        <button
-          onClick={() => onDownload(file)}
-          className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
-          title="Download file"
-        >
-          <Download className="w-3 h-3" />
-        </button>
+
       </div>
     </div>
   );
@@ -88,8 +95,7 @@ const FileAttachment = ({ file, onDownload, onView }) => {
 const AnnouncementCard = ({ 
     announcement, 
     onReadMore, 
-    // onFileDownload, 
-    // onFileView,
+    onFileView, 
     onTogglePin,
     canPinMore,
     onLike,
@@ -208,9 +214,10 @@ const AnnouncementCard = ({
         )}
 
         <div className="relative h-40 overflow-hidden">
-          {announcement.attachment && announcement.attachment.type.startsWith('image/') ? (
+          {/* ✅ FIXED: Use .url property for Cloudinary images */}
+          {announcement.attachment && announcement.attachment.type && announcement.attachment.type.startsWith('image/') ? (
             <img
-              src={announcement.attachment.data}
+              src={announcement.attachment.url || announcement.attachment.data} // ✅ Uses .url for Cloudinary
               alt={announcement.title}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               onError={(e) => {
@@ -278,16 +285,15 @@ const AnnouncementCard = ({
             <span className="font-medium">By: {announcement.postedBy}</span>
           </div>
 
-          {/* File Attachment
-          {announcement.attachment && !announcement.attachment.type.startsWith('image/') && (
+          {/* ✅ FIXED: File Attachment - UNCOMMENTED and updated */}
+          {announcement.attachment && announcement.attachment.url && !(announcement.attachment.type && announcement.attachment.type.startsWith('image/')) && (
             <div className="mb-3">
               <FileAttachment
                 file={announcement.attachment}
-                onDownload={onFileDownload}
                 onView={onFileView}
               />
             </div>
-          )} */}
+          )}
           
           {/* Footer with Stats and Actions */}
           <div className="flex items-center justify-between mt-auto">
