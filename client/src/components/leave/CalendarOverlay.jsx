@@ -267,7 +267,7 @@ const CalendarOverlay = ({
               onMouseLeave={() => setHoverDate(null)}
               className={`
     relative flex items-center justify-center text-sm transition
-    aspect-square
+    aspect-square outline-none focus:outline-none focus:ring-0 cursor-pointer
     ${currentMonth ? "text-gray-700" : "text-gray-300 text-xs"}
     ${isToday ? "border-2 border-red-500 font-semibold" : ""}
     ${
