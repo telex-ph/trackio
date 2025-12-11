@@ -5,14 +5,12 @@ import { DateTime } from "luxon";
 class Course {
   static #collection = "courses";
 
-  static async add(title, description, category) {
+  static async add(newCourse) {
     const db = await connectDB();
     const collection = await db.collection(this.#collection);
 
     const newRecord = {
-      title,
-      description,
-      category,
+      ...newCourse,
       createdAt: DateTime.utc().toJSDate(),
       updatedAt: DateTime.utc().toJSDate(),
     };

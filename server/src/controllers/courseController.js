@@ -1,15 +1,13 @@
 import Course from "../model/Course.js";
 
 export const addCourse = async (req, res) => {
-  const { title, desciption } = req.body;
+  const newCourse = req.body;
 
-  if (!title || !desciption)
-    return res
-      .status(400)
-      .json({ message: "Title and description is required" });
+  if (!newCourse)
+    return res.status(400).json({ message: "New course is required" });
 
   try {
-    const result = await Course.add(title, desciption);
+    const result = await Course.add(newCourse);
     res.status(200).json(result);
   } catch (error) {
     console.error("Add course error:", error.message);
