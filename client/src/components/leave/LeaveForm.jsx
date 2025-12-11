@@ -26,7 +26,15 @@ const LeaveForm = ({
   isUploading,
 }) => {
   const onFormChange = ({ target }) => {
-    setFormData({ ...formData, [target.name]: target.value });
+    const updatedForm = { ...formData, [target.name]: target.value };
+
+    // Clear dates if leaveType changes
+    if (target.name === "leaveType") {
+      updatedForm.startDate = "";
+      updatedForm.endDate = "";
+    }
+
+    setFormData(updatedForm);
   };
 
   const existingLeave = formData.leave || [];

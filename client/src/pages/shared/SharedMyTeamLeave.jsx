@@ -11,14 +11,15 @@ import {
   X as ClearIcon,
   Users,
 } from "lucide-react";
-import { DateTime } from "luxon"; // Import DateTime
 import api from "../../utils/axios";
+import { DateTime } from "luxon";
 import { useStore } from "../../store/useStore";
-import LeaveHistoryTable from "../../components/leave/LeaveHistoryTable";
-import CalendarOverlay from "../../components/leave/CalendarOverlay";
-import LeaveForm from "../../components/leave/LeaveForm";
 import { fetchUserById } from "../../store/stores/getUserById";
-import LeaveDetails from "../../components/leave/LeaveDetails";
+
+import PendingLeaveRequest from "../../components/leave/requests/TL/PendingLeaveRequest";
+import PendingLeaveDetails from "../../components/leave/requests/TL/PendingLeaveDetails";
+import CalendarOverlay from "../../components/leave/requests/TL/CalendarOverlay";
+import LeaveHistoryTable from "../../components/leave/requests/TL/LeaveHistoryTable";
 import socket from "../../utils/socket";
 
 const Notification = ({ message, type, onClose }) => {
@@ -64,19 +65,23 @@ const Notification = ({ message, type, onClose }) => {
   );
 };
 
-const SharedCreateApplyLeave = () => {
+const SharedMyTeamLeave = () => {
   const [formData, setFormData] = useState({
     leaveType: "",
     startDate: "",
     endDate: "",
     remarks: "",
   });
-  const [selectedFile, setSelectedFile] = useState(null);
+  //   const [selectedFile, setSelectedFile] = useState(null);
+  const [editingId, setEditingId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [leaves, setLeaves] = useState([]);
   const [_currentUser, setCurrentUser] = useState(null);
   const loggedUser = useStore((state) => state.user);
   const [isViewMode, setIsViewMode] = useState(false);
+
+  // Filters
+  const [searchQuery, setSearchQuery] = useState("");
 
   // States for History Filters
   const [historySearchQuery, setHistorySearchQuery] = useState("");
@@ -147,8 +152,8 @@ const SharedCreateApplyLeave = () => {
 
   useEffect(() => {
     const idsToFetch = leaves.flatMap((leave) => [
-      leave.isRequestedToId,
       leave.createdById,
+      leave.isRequestedToId,
       leave.coachId,
     ]);
     fetchUsersByIds(idsToFetch);
@@ -209,105 +214,11 @@ const SharedCreateApplyLeave = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const resetFormAndPanel = useCallback(() => {
-    setFormData({
-      agentName: "",
-      employeeId: "",
-      agentRole: "",
-      offenseCategory: "",
-      offenseType: "",
-      offenseLevel: "",
-      dateOfOffense: "",
-      status: "",
-      actionTaken: "",
-      remarks: "",
-      evidence: [],
-      isRead: false,
-    });
-    setSelectedFile(null);
-  }, []);
-
-  const handleLeaveSubmit = async () => {
-    if (
-      !formData.leaveType ||
-      !formData.startDate ||
-      !formData.endDate ||
-      !formData.remarks
-    ) {
-      showNotification("Please provide an explanation.", "error");
-      return;
-    }
-
-    try {
-      setIsUploading(true);
-
-      const userLeaveType =
-        formData.leaveType === "Other"
-          ? formData.otherLeaveType
-          : formData.leaveType;
-
-      const isTLExist = loggedUser.teamLeaderId;
-
-      const payload = {
-        leaveType: userLeaveType,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        remarks: formData.remarks,
-        leaveFile: formData.leave || [],
-        status: "For approval",
-        isReadByApprover: false,
-        isReadByRequestor: true,
-      };
-
-      if (isTLExist) {
-        payload.isApprovedBySupervisor = false;
-        payload.isRequestedToId = isTLExist;
-      } else {
-        payload.isApprovedBySupervisor = true;
-        payload.isApprovedByHR = false;
-      }
-
-      if (selectedFile) {
-        console.log("Leave FIle: ", selectedFile);
-
-        const formData = new FormData();
-        formData.append("file", selectedFile);
-
-        const uploadRes = await api.post("/upload/leave", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-
-        console.log(uploadRes.data);
-
-        payload.leaveFile = [
-          {
-            fileName: uploadRes.data.fileName,
-            size: uploadRes.data.size,
-            type: uploadRes.data.type,
-            url: uploadRes.data.url,
-            public_id: uploadRes.data.public_id,
-          },
-        ];
-      }
-
-      await api.post("/leave", payload);
-      showNotification("Leave created!", "success");
-
-      resetFormAndPanel();
-    } catch (error) {
-      console.error("Error submitting explanation:", error);
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   const handleLeaveView = async (leaveOrId) => {
     let leaveData;
 
     if (typeof leaveOrId === "string") {
-      leaveData = leaves.find((l) => l._id === leaveOrId);
+      leaveData = leaves.find((leave) => leave._id === leaveOrId);
 
       if (!leaveData) {
         console.error("Leave not found for ID:", leaveOrId);
@@ -318,17 +229,29 @@ const SharedCreateApplyLeave = () => {
     }
 
     setIsViewMode(true);
+    setEditingId(leaveOrId._id);
+
+    let requesterName = userMap[leaveData.createdById];
+    if (leaveData.createdById && !requesterName) {
+      requesterName = await fetchUserById(leaveData.createdById);
+      setUserMap((prev) => ({
+        ...prev,
+        [leaveData.createdById]: requesterName,
+      }));
+    }
 
     setFormData({
+      requesterName: requesterName
+        ? `${requesterName.firstName} ${requesterName.lastName}`
+        : "Unknown",
       leaveType: leaveData.leaveType,
       startDate: leaveData.startDate,
       endDate: leaveData.endDate,
       remarks: leaveData.remarks || "",
       leaveFile: leaveData.leaveFile || [],
+      status: leaveData.status,
       rejectReasonTL: leaveData.rejectReasonTL,
       rejectedByTLDate: leaveData.rejectedByTLDate,
-      rejectReasonHR: leaveData.rejectReasonHR,
-      rejectedByHRDate: leaveData.rejectedByHRDate,
     });
 
     try {
@@ -336,6 +259,65 @@ const SharedCreateApplyLeave = () => {
     } catch (error) {
       console.error("Error updating leave:", error);
       showNotification("Failed to update leave. Please try again.", "error");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleApprove = async () => {
+    if (!isViewMode) return;
+    const now = new Date();
+
+    try {
+      setIsUploading(true);
+
+      const payload = {
+        status: "Approved by TL",
+        approvedBySupervisorDate: now.toISOString(),
+        isApprovedBySupervisor: true,
+        isApprovedByHR: false,
+      };
+
+      await api.put(`/leave/${editingId}`, payload);
+
+      showNotification("Leave approved!", "success");
+
+      resetForm();
+      fetchLeaves();
+    } catch (error) {
+      console.error("Error updating leave:", error);
+      showNotification("Failed to update.", "error");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const [_showInvalidModal, setShowInvalidModal] = useState(false);
+  const [_invalidReason, setRejectReason] = useState("");
+
+  const handleReject = async (rejectReason) => {
+    if (!isViewMode) return;
+    const now = new Date();
+
+    try {
+      setIsUploading(true);
+      const payload = {
+        status: "Rejected by TL",
+        rejectReasonTL: rejectReason,
+        rejectedByTLDate: now.toISOString(),
+        isReadByApprover: true,
+        isApprovedBySupervisor: false,
+      };
+
+      await api.put(`/leave/${editingId}`, payload);
+      showNotification("Leave rejected.", "success");
+      resetForm();
+      fetchLeaves();
+      setShowInvalidModal(false);
+      setRejectReason("");
+    } catch (error) {
+      console.error("Error rejecting leave:", error);
+      showNotification("Failed to reject.", "error");
     } finally {
       setIsUploading(false);
     }
@@ -356,57 +338,30 @@ const SharedCreateApplyLeave = () => {
     [leaves]
   );
 
-  const pendingLeaveHistoryList = useMemo(() => {
-    return safeLeaves.filter((leave) => {
-      const isListed =
-        loggedUser &&
-        leave.createdById === loggedUser._id &&
-        ["For approval", "Approved by TL", "Approved by HR"].includes(
-          leave.status
-        );
-      if (!isListed) return false;
+  const filteredPendingLeaves = safeLeaves.filter((leave) => {
+    const isSupervisor = leave.isRequestedToId === loggedUser._id;
 
-      const textMatch = [
-        formatDisplayDate(leave.startDate),
-        formatDisplayDate(leave.endDate),
-        leave.status,
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(historySearchQuery.toLowerCase());
+    if (!isSupervisor) return false;
+    if (!["For approval"].includes(leave.status)) return false;
 
-      if (!textMatch) return false;
-
-      const leaveDate = DateTime.fromISO(leave.createdAt).startOf("day");
-      const start = historyStartDate
-        ? DateTime.fromISO(historyStartDate).startOf("day")
-        : null;
-      const end = historyEndDate
-        ? DateTime.fromISO(historyEndDate).startOf("day")
-        : null;
-
-      return (!start || leaveDate >= start) && (!end || leaveDate <= end);
-    });
-  }, [
-    safeLeaves,
-    historySearchQuery,
-    historyStartDate,
-    historyEndDate,
-    loggedUser,
-  ]);
+    return [
+      leave.leaveType,
+      leave.startDate,
+      leave.endDate,
+      leave.remarks || "",
+      leave.status,
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+  });
 
   const leaveHistoryList = useMemo(() => {
     return safeLeaves.filter((leave) => {
       const isListed =
         loggedUser &&
-        leave.createdById === loggedUser._id &&
-        [
-          "For approval",
-          "Rejected by TL",
-          "Approved by TL",
-          "Rejected by HR",
-          "Approved by HR",
-        ].includes(leave.status);
+        leave.createdById !== loggedUser._id &&
+        ["Rejected by TL", "Approved by TL"].includes(leave.status);
       if (!isListed) return false;
 
       const textMatch = [
@@ -455,7 +410,7 @@ const SharedCreateApplyLeave = () => {
             Apply Leave & Medical Certificate Upload
           </h2>
           <p className="text-gray-600 mt-1">
-            View and manage your leave applications
+            View and manage your team's leave applications
           </p>
         </div>
       </div>
@@ -463,16 +418,18 @@ const SharedCreateApplyLeave = () => {
       {/* Main Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
         {!isViewMode ? (
-          <LeaveForm
-            formData={formData}
-            setFormData={setFormData}
-            selectedFile={selectedFile}
-            setSelectedFile={setSelectedFile}
-            handleLeaveSubmit={handleLeaveSubmit}
-            isUploading={isUploading}
+          <PendingLeaveRequest
+            leaves={filteredPendingLeaves}
+            searchQuery={searchQuery}
+            onSearchChange={(e) => setSearchQuery(e.target.value)}
+            onView={handleLeaveView}
+            isLoading={isLoading}
+            formatDisplayDate={formatDisplayDate}
+            loggedUser={loggedUser}
+            userMap={userMap}
           />
         ) : (
-          <LeaveDetails
+          <PendingLeaveDetails
             isViewMode={isViewMode}
             resetForm={resetForm}
             formData={formData}
@@ -481,24 +438,17 @@ const SharedCreateApplyLeave = () => {
             loggedUser={loggedUser}
             userMap={userMap}
             isUploading={isUploading}
+            handleApprove={handleApprove}
+            handleReject={handleReject}
           />
         )}
 
         {/* --- CALENDAR OVERLAY --- */}
         <CalendarOverlay
-          key={formData.leaveType || "default"}
           isViewMode={isViewMode}
           startDate={formData.startDate}
           endDate={formData.endDate}
           onChange={(range) => setFormData({ ...formData, ...range })}
-          blockedRanges={pendingLeaveHistoryList.map((leave) => ({
-            id: leave._id,
-            start: leave.startDate,
-            end: leave.endDate,
-            status: leave.status,
-          }))}
-          leaveType={formData.leaveType}
-          onView={(leave) => handleLeaveView(leave)}
         />
       </div>
 
@@ -526,4 +476,4 @@ const SharedCreateApplyLeave = () => {
   );
 };
 
-export default SharedCreateApplyLeave;
+export default SharedMyTeamLeave;

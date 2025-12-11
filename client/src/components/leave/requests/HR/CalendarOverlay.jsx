@@ -7,10 +7,6 @@ const CalendarOverlay = ({
   endDate,
   onChange,
   isViewMode,
-  blockedRanges,
-  leaves = [],
-  leaveType,
-  onView,
 }) => {
   const ADVANCE_LEAVE_TYPES = [
     "Parental Leave",
@@ -44,26 +40,6 @@ const CalendarOverlay = ({
     const d = new Date(date);
     d.setHours(0, 0, 0, 0);
     return d;
-  };
-
-  const getStatusForDate = (date) => {
-    if (!blockedRanges || blockedRanges.length === 0) return null;
-
-    const todayMidnight = normalizeDate(new Date());
-    const d = normalizeDate(date);
-
-    return (
-      blockedRanges
-        .filter((range) => {
-          const end = normalizeDate(range.end);
-          return end >= todayMidnight; // Only future or ongoing ranges
-        })
-        .find((range) => {
-          const start = normalizeDate(range.start);
-          const end = normalizeDate(range.end);
-          return d >= start && d <= end;
-        })?.status || null
-    );
   };
 
   today.setHours(0, 0, 0, 0);
@@ -139,63 +115,6 @@ const CalendarOverlay = ({
     }
 
     return days;
-  };
-
-  const handleDateClick = (date) => {
-    if (isBeforeToday(date)) return; // ← Prevent click on disabled dates
-
-    const d = normalizeDate(date);
-
-    // First, check if the clicked date is part of an existing leave or blocked range
-    const itemForDate =
-      leaves.find((leave) => {
-        const start = normalizeDate(leave.startDate);
-        const end = normalizeDate(leave.endDate);
-        return d >= start && d <= end;
-      }) ||
-      blockedRanges.find((range) => {
-        const start = normalizeDate(range.start);
-        const end = normalizeDate(range.end);
-        return d >= start && d <= end;
-      });
-
-    if (itemForDate) {
-      // If we are viewing or clicking an existing leave, open the view
-      onView(itemForDate._id ? itemForDate : itemForDate.id);
-    } else if (!isViewMode) {
-      // If no leave exists and we are NOT in view mode, select the date for new leave
-      if (!selectedStart || (selectedStart && selectedEnd)) {
-        // Start a new range
-        setSelectedStart(d);
-        setSelectedEnd(null);
-        onChange({ startDate: formatDate(d), endDate: "" });
-      } else if (selectedStart && !selectedEnd) {
-        // Complete the range
-        const start = selectedStart < d ? selectedStart : d;
-        const end = selectedStart > d ? selectedStart : d;
-        setSelectedStart(start);
-        setSelectedEnd(end);
-        onChange({ startDate: formatDate(start), endDate: formatDate(end) });
-      }
-    }
-  };
-
-  const isBeforeToday = (date) => {
-    const d = normalizeDate(date);
-
-    // Always block past dates
-    if (d < today) return true;
-
-    // If restricted leave is selected → block dates earlier than 30 days from now
-    if (ADVANCE_LEAVE_TYPES.includes(leaveType)) {
-      const minAllowed = new Date();
-      minAllowed.setDate(minAllowed.getDate() + 30);
-      minAllowed.setHours(0, 0, 0, 0);
-
-      return d < minAllowed;
-    }
-
-    return false; // Open dates for normal leave types
   };
 
   const isInRange = (date) => {
@@ -285,14 +204,10 @@ const CalendarOverlay = ({
           const isEnd =
             selectedEnd && date.toDateString() === selectedEnd.toDateString();
           const inRange = isInRange(date);
-          const beforeToday = isBeforeToday(date);
-
-          const status = getStatusForDate(date);
 
           return (
             <button
               key={idx}
-              onClick={() => handleDateClick(date)}
               onMouseEnter={() => setHoverDate(date)}
               onMouseLeave={() => setHoverDate(null)}
               className={`
@@ -300,27 +215,6 @@ const CalendarOverlay = ({
     aspect-square outline-none focus:outline-none focus:ring-0 cursor-pointer
     ${currentMonth ? "text-gray-700" : "text-gray-300 text-xs"}
     ${isToday ? "border-2 border-red-500 font-semibold" : ""}
-    ${
-      beforeToday &&
-      !leaves.some((l) => {
-        const start = normalizeDate(l.startDate);
-        const end = normalizeDate(l.endDate);
-        const d = normalizeDate(date);
-        return d >= start && d <= end;
-      })
-        ? "opacity-40 cursor-not-allowed"
-        : "hover:bg-red-100"
-    }
-    ${
-      ["For approval", "Approved by TL"].includes(status)
-        ? "bg-yellow-200 text-yellow-900 opacity-80"
-        : ""
-    }
-    ${
-      status === "Approved by HR"
-        ? "bg-green-200 text-green-900 opacity-80"
-        : ""
-    }
   `}
             >
               {/* Range Highlight */}
