@@ -440,6 +440,86 @@ class Attendance {
       .toArray();
     return attendances;
   }
+
+  static async timeOut(docId, status, updatedAt, timeOut) {
+    if (!docId) throw new Error("Attendance ID is required");
+
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+
+    try {
+      // Add new break object to breaks array
+      const result = await collection.updateOne(
+        { _id: new ObjectId(docId) },
+        {
+          $set: {
+            status: status,
+            updatedAt: updatedAt,
+            timeOut: timeOut,
+          },
+        }
+      );
+
+      return result.modifiedCount === 1;
+    } catch (err) {
+      console.error("Error ending shift:", err);
+      return false;
+    }
+  }
+
+  static async breakIn(docId, newBreaks, totalBreak, status, updatedAt) {
+    if (!docId) throw new Error("Attendance ID is required");
+
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+
+    try {
+      // Add new break object to breaks array
+      const result = await collection.updateOne(
+        { _id: new ObjectId(docId) },
+        {
+          $set: {
+            breaks: newBreaks,
+            totalBreak: totalBreak,
+            status: status,
+            updatedAt: updatedAt,
+          },
+        }
+      );
+
+      return result.modifiedCount === 1;
+    } catch (err) {
+      console.error("Error starting break:", err);
+      return false;
+    }
+  }
+
+  static async breakOut(docId, newBreaks, totalBreak, status, updatedAt) {
+    if (!docId) throw new Error("Attendance ID is required");
+
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+
+    try {
+      // Add new break object to breaks array
+      const result = await collection.updateOne(
+        { _id: new ObjectId(docId) },
+        {
+          $set: {
+            breaks: newBreaks,
+            totalBreak: totalBreak,
+            status: status,
+            updatedAt: updatedAt,
+          },
+        }
+      );
+
+      return result.modifiedCount === 1;
+    } catch (err) {
+      console.error("Error ending break:", err);
+      return false;
+    }
+  }
 }
 
 export default Attendance;

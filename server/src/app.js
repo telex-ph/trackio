@@ -20,6 +20,7 @@ import scheduleRoutes from "./routes/scheduleRoutes.js";
 import groupRoutes from "./routes/groupRoutes.js";
 import serverRoutes from "./routes/serverRoutes.js";
 import biometricRoute from "./routes/biometricRoute.js";
+import leaveRoutes from "./routes/leaveRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import webhook from "./utils/webhook.js";
 
@@ -66,6 +67,7 @@ app.use("/api/schedule", scheduleRoutes);
 app.use("/api/group", groupRoutes);
 app.use("/api/server", serverRoutes);
 app.use("/api/biometric", biometricRoute);
+app.use("/api/leave", leaveRoutes);
 
 // Health check
 app.get("/", async (req, res) => {

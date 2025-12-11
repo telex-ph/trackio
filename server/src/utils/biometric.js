@@ -38,9 +38,12 @@ export const biometricOut = async (attendanceId) => {
   const nowUtc = DateTime.utc().toJSDate();
 
   try {
-    await Attendance.updateFieldById(attendanceId, "status", STATUS.OOF);
-    await Attendance.updateFieldById(attendanceId, "updatedAt", nowUtc);
-    await Attendance.updateFieldById(attendanceId, "timeOut", nowUtc);
+    // await Attendance.updateFieldById(attendanceId, "status", STATUS.OOF);
+    // await Attendance.updateFieldById(attendanceId, "updatedAt", nowUtc);
+    // await Attendance.updateFieldById(attendanceId, "timeOut", nowUtc);
+
+    await Attendance.timeOut(attendanceId, STATUS.OOF, nowUtc, nowUtc);
+
     return true;
   } catch (error) {
     console.error("Error updating user's attendance:", error);
@@ -55,10 +58,17 @@ export const biometricBreakIn = async (docId, breaks, totalBreak) => {
   const newBreaks = [...breaks, newBreak];
 
   try {
-    await Attendance.updateFieldById(docId, "breaks", newBreaks);
-    await Attendance.updateFieldById(docId, "totalBreak", totalBreak);
-    await Attendance.updateFieldById(docId, "status", STATUS.ON_BREAK);
-    await Attendance.updateFieldById(docId, "updatedAt", nowUtc);
+    // await Attendance.updateFieldById(docId, "breaks", newBreaks);
+    // await Attendance.updateFieldById(docId, "totalBreak", totalBreak);
+    // await Attendance.updateFieldById(docId, "status", STATUS.ON_BREAK);
+    // await Attendance.updateFieldById(docId, "updatedAt", nowUtc);
+    await Attendance.breakIn(
+      docId,
+      newBreaks,
+      totalBreak,
+      STATUS.ON_BREAK,
+      nowUtc
+    );
     return true;
   } catch (error) {
     console.error(`Error starting break:`, error);
@@ -81,10 +91,18 @@ export const biometricBreakOut = async (docId, breaks) => {
   );
 
   try {
-    await Attendance.updateFieldById(docId, "breaks", breaks);
-    await Attendance.updateFieldById(docId, "totalBreak", updatedTotalBreak);
-    await Attendance.updateFieldById(docId, "status", STATUS.WORKING);
-    await Attendance.updateFieldById(docId, "updatedAt", endUtc.toJSDate());
+    // await Attendance.updateFieldById(docId, "breaks", breaks);
+    // await Attendance.updateFieldById(docId, "totalBreak", updatedTotalBreak);
+    // await Attendance.updateFieldById(docId, "status", STATUS.WORKING);
+    // await Attendance.updateFieldById(docId, "updatedAt", endUtc.toJSDate());
+
+    await Attendance.breakOut(
+      docId,
+      breaks,
+      updatedTotalBreak,
+      STATUS.WORKING,
+      endUtc.toJSDate()
+    );
     return true;
   } catch (error) {
     console.error(`Error ending break:`, error);
