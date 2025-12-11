@@ -7,6 +7,7 @@ import {
   List,
   GalleryVerticalEnd,
   Ticket,
+  CalendarPlus,
 } from "lucide-react";
 import SidebarLink from "../sidebars/SidebarLink";
 import CustomCollapse from "../sidebars/CustomCollapse";
@@ -76,6 +77,12 @@ const AgentSidebar = ({
         label="Ticket"
         isCollapsed={isCollapsed}
       />
+      {/* <SidebarLink
+        to="/agent/apply-leave"
+        icon={CalendarPlus}
+        label="Apply Leave"
+        isCollapsed={isCollapsed}
+      /> */}
     </div>
   );
 };

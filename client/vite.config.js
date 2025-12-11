@@ -9,7 +9,7 @@ const isDev = process.env.NODE_ENV !== "production";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [tailwindcss(), react(), flowbiteReact()],
+  plugins: [react(), tailwindcss(), flowbiteReact()],
 
   // server: isDev
   //   ? {
