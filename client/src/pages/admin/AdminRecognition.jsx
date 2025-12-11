@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import api from "../../utils/axios";
 import socket from "../../utils/socket";
+import UnderContruction from "../../assets/illustrations/UnderContruction";
 import {
   Plus,
   Edit,
@@ -27,7 +28,6 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-// Custom Toast Component
 const Toast = ({ message, type = "success", onClose }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -47,7 +47,8 @@ const Toast = ({ message, type = "success", onClose }) => {
   );
 };
 
-// Loading Component
+
+
 const LoadingSpinner = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
     <div className="text-center">
@@ -59,14 +60,12 @@ const LoadingSpinner = () => (
   </div>
 );
 
-// Small Loading Indicator
 const SmallLoader = () => (
   <div className="flex items-center justify-center">
     <div className="w-4 h-4 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin"></div>
   </div>
 );
 
-// Upload function
 const uploadToServer = async (file) => {
   console.log("📤 Uploading:", file.name);
   
@@ -95,7 +94,6 @@ const uploadToServer = async (file) => {
   }
 };
 
-// Post Details Modal Component
 const PostDetailsModal = ({ post, isOpen, onClose, onArchive }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -206,6 +204,8 @@ const PostDetailsModal = ({ post, isOpen, onClose, onArchive }) => {
   const avatarInitials = getAvatarInitials(employeeName);
   const hasImages = post.images && post.images.length > 0;
 
+  
+  
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
       <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -688,6 +688,8 @@ const CreatePostModal = ({ isOpen, onClose, onSave, editingPost, onUpdate }) => 
   };
 
   if (!isOpen) return null;
+
+  
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
@@ -1220,6 +1222,7 @@ const RecognitionCard = ({ post, onArchive, onView, onEdit, activeTab }) => {
   );
 };
 
+
 const AdminRecognition = () => {
   const [activeTab, setActiveTab] = useState("published");
   const [posts, setPosts] = useState([]);
@@ -1544,6 +1547,14 @@ const AdminRecognition = () => {
 
   if (loading && posts.length === 0) return <LoadingSpinner />;
 
+
+    return (
+    <section className="h-full">
+      <UnderContruction />
+    </section>
+  );
+
+  
   return (
     <div className="min-h-screen p-4 md:p-6">
       {showToast && <Toast message={toastMessage} type={toastType} onClose={() => setShowToast(false)} />}
@@ -1886,5 +1897,6 @@ const getRecognitionTypeInfo = (type) => {
       };
   }
 };
+
 
 export default AdminRecognition;
