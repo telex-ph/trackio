@@ -10,6 +10,7 @@ const LeaveHistoryTable = ({
   formatDisplayDate,
   today,
   onView,
+  userMap
 }) => {
   return (
     <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
@@ -79,6 +80,7 @@ const LeaveHistoryTable = ({
             <thead>
               <tr className="border-b border-gray-200 text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wider">
                 <th className="p-4 whitespace-nowrap">Date Created</th>
+                <th className="p-4 whitespace-nowrap">Requester</th>
                 <th className="p-4 whitespace-nowrap">Leave Type</th>
                 <th className="p-4 whitespace-nowrap">Status</th>
                 <th className="p-4 whitespace-nowrap">Action</th>
@@ -94,6 +96,13 @@ const LeaveHistoryTable = ({
                   >
                     <td className="p-4 text-sm text-gray-600">
                       {formatDisplayDate(leave.createdAt)}
+                    </td>
+                    <td className="p-4 text-sm text-gray-600">
+                      {userMap[leave.createdById]
+                        ? `${userMap[leave.createdById].firstName} ${
+                            userMap[leave.createdById].lastName
+                          }`
+                        : "N/A"}
                     </td>
                     <td className="p-4 text-sm text-gray-600">
                       {leave.leaveType}

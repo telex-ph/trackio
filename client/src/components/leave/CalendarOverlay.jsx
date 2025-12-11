@@ -9,8 +9,15 @@ const CalendarOverlay = ({
   isViewMode,
   blockedRanges,
   leaves = [],
+  leaveType,
   onView,
 }) => {
+  const ADVANCE_LEAVE_TYPES = [
+    "Parental Leave",
+    "Vacation Leave",
+    "Leave Without Pay",
+  ];
+
   useEffect(() => {
     if (!isViewMode) return;
 
@@ -135,6 +142,8 @@ const CalendarOverlay = ({
   };
 
   const handleDateClick = (date) => {
+    if (isBeforeToday(date)) return; // ← Prevent click on disabled dates
+
     const d = normalizeDate(date);
 
     // First, check if the clicked date is part of an existing leave or blocked range
@@ -172,8 +181,21 @@ const CalendarOverlay = ({
   };
 
   const isBeforeToday = (date) => {
-    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    return d < today;
+    const d = normalizeDate(date);
+
+    // Always block past dates
+    if (d < today) return true;
+
+    // If restricted leave is selected → block dates earlier than 30 days from now
+    if (ADVANCE_LEAVE_TYPES.includes(leaveType)) {
+      const minAllowed = new Date();
+      minAllowed.setDate(minAllowed.getDate() + 30);
+      minAllowed.setHours(0, 0, 0, 0);
+
+      return d < minAllowed;
+    }
+
+    return false; // Open dates for normal leave types
   };
 
   const isInRange = (date) => {
@@ -191,7 +213,7 @@ const CalendarOverlay = ({
   const days = generateCalendar(currentMonth);
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg w-full flex flex-col">
+    <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
       {/* Header */}
       <h3 className="text-xl font-semibold text-gray-800 mb-2 text-center">
         Select Leave Dates
@@ -212,10 +234,18 @@ const CalendarOverlay = ({
             )
           }
           className={`px-3 py-1 rounded transition 
-    ${isViewMode ? "opacity-40 cursor-not-allowed" : "hover:bg-gray-100"}`}
+      ${isViewMode ? "opacity-40 cursor-not-allowed" : "hover:bg-gray-100"}`}
         >
           ◀
         </button>
+
+        {/* Current Month & Year */}
+        <span className="text-gray-800 font-semibold">
+          {currentMonth.toLocaleString("default", {
+            month: "long",
+            year: "numeric",
+          })}
+        </span>
 
         <button
           disabled={isViewMode}
@@ -230,7 +260,7 @@ const CalendarOverlay = ({
             )
           }
           className={`px-3 py-1 rounded transition 
-    ${isViewMode ? "opacity-40 cursor-not-allowed" : "hover:bg-gray-100"}`}
+      ${isViewMode ? "opacity-40 cursor-not-allowed" : "hover:bg-gray-100"}`}
         >
           ▶
         </button>
@@ -282,11 +312,15 @@ const CalendarOverlay = ({
         : "hover:bg-red-100"
     }
     ${
-      status === "For approval"
+      ["For approval", "Approved by TL"].includes(status)
         ? "bg-yellow-200 text-yellow-900 opacity-80"
         : ""
     }
-    ${status === "Approved" ? "bg-green-200 text-green-900 opacity-80" : ""}
+    ${
+      status === "Approved by HR"
+        ? "bg-green-200 text-green-900 opacity-80"
+        : ""
+    }
   `}
             >
               {/* Range Highlight */}
