@@ -92,9 +92,6 @@ export const getEvents = async (req, res) => {
                 return shiftEnd > nowTime || shiftStart <= nowTime;
               }) || attendances[0];
 
-            // TODO: remove soon;
-            await User.update(userId, "isValidEmployeeId", true);
-
             if (attendance) {
               const attendanceId = attendance._id.toString();
               const breaks = attendance.breaks || [];
