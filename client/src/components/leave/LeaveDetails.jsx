@@ -139,7 +139,7 @@ const LeaveDetails = ({
           {formData.rejectReasonTL && (
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Reject Reason ({formatDisplayDate(formData.rejectedByTLDate)})
+                Reject Reason ({formatDisplayDate(formData.rejectedBySupervisorDate)})
               </label>
               <p className="w-full p-3 sm:p-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl h-24 sm:h-32 text-gray-800 text-sm sm:text-base overflow-y-auto">
                 {formData.rejectReasonTL || "No remarks"}

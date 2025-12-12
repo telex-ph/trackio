@@ -234,7 +234,7 @@ const SharedCreateApplyLeave = () => {
       !formData.endDate ||
       !formData.remarks
     ) {
-      showNotification("Please provide an explanation.", "error");
+      showNotification("Please fill out the required forms.", "error");
       return;
     }
 
@@ -326,7 +326,7 @@ const SharedCreateApplyLeave = () => {
       remarks: leaveData.remarks || "",
       leaveFile: leaveData.leaveFile || [],
       rejectReasonTL: leaveData.rejectReasonTL,
-      rejectedByTLDate: leaveData.rejectedByTLDate,
+      rejectedBySupervisorDate: leaveData.rejectedBySupervisorDate,
       rejectReasonHR: leaveData.rejectReasonHR,
       rejectedByHRDate: leaveData.rejectedByHRDate,
     });
@@ -396,40 +396,42 @@ const SharedCreateApplyLeave = () => {
   ]);
 
   const leaveHistoryList = useMemo(() => {
-    return safeLeaves.filter((leave) => {
-      const isListed =
-        loggedUser &&
-        leave.createdById === loggedUser._id &&
-        [
-          "For approval",
-          "Rejected by TL",
-          "Approved by TL",
-          "Rejected by HR",
-          "Approved by HR",
-        ].includes(leave.status);
-      if (!isListed) return false;
+    return safeLeaves
+      .filter((leave) => {
+        const isListed =
+          loggedUser &&
+          leave.createdById === loggedUser._id &&
+          [
+            "For approval",
+            "Rejected by TL",
+            "Approved by TL",
+            "Rejected by HR",
+            "Approved by HR",
+          ].includes(leave.status);
+        if (!isListed) return false;
 
-      const textMatch = [
-        formatDisplayDate(leave.startDate),
-        formatDisplayDate(leave.endDate),
-        leave.status,
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(historySearchQuery.toLowerCase());
+        const textMatch = [
+          formatDisplayDate(leave.startDate),
+          formatDisplayDate(leave.endDate),
+          leave.status,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(historySearchQuery.toLowerCase());
 
-      if (!textMatch) return false;
+        if (!textMatch) return false;
 
-      const leaveDate = DateTime.fromISO(leave.createdAt).startOf("day");
-      const start = historyStartDate
-        ? DateTime.fromISO(historyStartDate).startOf("day")
-        : null;
-      const end = historyEndDate
-        ? DateTime.fromISO(historyEndDate).startOf("day")
-        : null;
+        const leaveDate = DateTime.fromISO(leave.createdAt).startOf("day");
+        const start = historyStartDate
+          ? DateTime.fromISO(historyStartDate).startOf("day")
+          : null;
+        const end = historyEndDate
+          ? DateTime.fromISO(historyEndDate).startOf("day")
+          : null;
 
-      return (!start || leaveDate >= start) && (!end || leaveDate <= end);
-    });
+        return (!start || leaveDate >= start) && (!end || leaveDate <= end);
+      })
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   }, [
     safeLeaves,
     historySearchQuery,
