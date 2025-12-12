@@ -23,11 +23,13 @@ import Roles from "../constants/roles";
 import SharedSettings from "../pages/shared/SharedSettings";
 import SharedTeamViewMembers from "../pages/shared/SharedTeamViewMembers";
 import SharedTicket from "../pages/shared/SharedTicket";
+import SharedCreateApplyLeave from "../pages/shared/SharedCreateApplyLeave";
+import SharedMyTeamLeave from "../pages/shared/SharedMyTeamLeave";
 
 const TEAM_LEADER_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
   { path: "dashboard", element: <TeamLeaderDashboard /> },
-  { path: "recognition", element: <TeamLeaderRecognition />},
+  { path: "recognition", element: <TeamLeaderRecognition /> },
   {
     path: "attendance",
     element: <SharedAttendance readOnly={true} />,
@@ -69,6 +71,14 @@ const TEAM_LEADER_ROUTES = [
   {
     path: "createoffense",
     element: <TeamLeaderCreateOffense />,
+  },
+  { 
+    path: "apply-leave", 
+    element: <SharedCreateApplyLeave /> 
+  },
+  { 
+    path: "my-team-requests", 
+    element: <SharedMyTeamLeave /> 
   },
 ];
 

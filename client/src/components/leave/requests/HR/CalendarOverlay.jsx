@@ -9,9 +9,9 @@ const CalendarOverlay = ({
   isViewMode,
 }) => {
   const ADVANCE_LEAVE_TYPES = [
-    "Parental Leave",
-    "Vacation Leave",
-    "Leave Without Pay",
+    "parental leave",
+    "vacation leave",
+    "leave without pay",
   ];
 
   useEffect(() => {

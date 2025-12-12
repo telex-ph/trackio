@@ -29,6 +29,8 @@ import AdminAccountManagement from "../pages/admin/AdminAccountManagement";
 import SharedTicket from "../pages/shared/SharedTicket";
 import TeamLeaderCreateOffenses from "../pages/team-leader/TeamLeaderCreateOffense";
 import TeamLeaderOffenses from "../pages/team-leader/TeamLeaderOffenses";
+import SharedCreateApplyLeave from "../pages/shared/SharedCreateApplyLeave";
+import HRLeaveApprovals from "../pages/hr/HRLeaveApprovals";
 
 const ADMIN_HR_HEAD_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -79,6 +81,14 @@ const ADMIN_HR_HEAD_ROUTES = [
   {
     path: "reported-ir",
     element: <HRReportedOffenses />,
+  },
+  {
+    path: "apply-leave",
+    element: <SharedCreateApplyLeave />,
+  },
+  {
+    path: "for-approvals",
+    element: <HRLeaveApprovals />,
   },
 ];
 
