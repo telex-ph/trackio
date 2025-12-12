@@ -10,6 +10,7 @@ import {
   GalleryVerticalEnd,
   Users2Icon,
   Ticket,
+  Book,
 } from "lucide-react";
 import SidebarLink from "../sidebars/SidebarLink";
 import CustomCollapse from "../sidebars/CustomCollapse";
@@ -80,6 +81,12 @@ const AdminSidebar = ({
         isCollapsed={isCollapsed}
       />
 
+      <SidebarLink
+        to="/admin/course"
+        icon={Book}
+        label="Course"
+        isCollapsed={isCollapsed}
+      />
       <SidebarLink
         to="/admin/announcement"
         icon={Megaphone}
