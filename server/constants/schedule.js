@@ -10,12 +10,13 @@ const SCHEDULE = Object.freeze({
   REPORTING: "reporting",
 
   // Leave types
+  SICK_LEAVE: "sick leave",
   VACATION_LEAVE: "vacation leave",
-  UNPAID_VACATION_LEAVE: "unpaid vacation leave",
-  EMERGENCY_LEAVE: "emergency leave",
   MATERNITY_LEAVE: "maternity leave",
   PATERNITY_LEAVE: "paternity leave",
   SOLO_PARENT_LEAVE: "solo parent leave",
+  LIVE_WITHOUT_PAY: "live without pay",
+  EMERGENCY_LEAVE: "emergency leave",
 });
 
 export default SCHEDULE;
