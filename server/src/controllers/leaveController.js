@@ -90,8 +90,10 @@ export const updateLeave = async (req, res) => {
       "updatedAt",
       "startDate",
       "endDate",
-      "rejectedByTLDate",
-      "rejectedByHRDate"
+      "approvedBySupervisorDate",
+      "rejectedBySupervisorDate",
+      "rejectedByHRDate",
+      "approvedByHRDate"
     ].forEach((field) => {
       if (payload[field]) {
         payload[field] = DateTime.fromISO(payload[field], { zone: "utc" }).toJSDate();
