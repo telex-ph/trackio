@@ -80,22 +80,16 @@ const PendingLeaveRequest = ({
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
                           {
-                            "Pending Review":
-                              "bg-amber-100 text-amber-700 border border-amber-200",
-                            NTE: "bg-blue-100 text-blue-700 border border-blue-200",
-                            Invalid:
-                              "bg-red-100 text-red-700 border border-red-200",
-                            "Respondant Explained":
-                              "bg-purple-100 text-purple-700 border border-purple-200",
-                            "Scheduled for hearing": leave.witnesses?.some(
-                              (w) => w._id === loggedUser._id
-                            )
-                              ? "bg-green-100 text-green-700 border border-green-200"
-                              : "bg-red-100 text-red-700 border border-red-200",
-                            "After Hearing":
-                              "bg-teal-100 text-teal-700 border border-teal-200",
-                            Acknowledged:
+                            "For approval":
+                              "bg-yellow-100 text-yellow-800 border border-yellow-200",
+                            "Approved by TL":
                               "bg-green-100 text-green-700 border border-green-200",
+                            "Approved by HR":
+                              "bg-emerald-100 text-emerald-700 border border-emerald-200",
+                            "Rejected by TL":
+                              "bg-red-100 text-red-700 border border-red-200",
+                            "Rejected by HR":
+                              "bg-rose-100 text-rose-700 border border-rose-200",
                           }[leave.status] ||
                           "bg-gray-100 text-gray-700 border border-gray-200"
                         }`}
