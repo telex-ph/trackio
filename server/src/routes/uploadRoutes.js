@@ -15,6 +15,7 @@ const folderMap = {
   nte: "trackio/offense/NTE",
   mom: "trackio/offense/MOM",
   nda: "trackio/offense/NDA",
+  leave: "trackio/leave",
   announcement: "trackio/announcement",
   recognition: "trackio/recognition",
 };
