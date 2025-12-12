@@ -22,6 +22,8 @@ import SharedSettings from "../pages/shared/SharedSettings";
 import SharedTeamViewMembers from "../pages/shared/SharedTeamViewMembers";
 import SharedTicket from "../pages/shared/SharedTicket";
 import TeamLeaderOffenses from "../pages/team-leader/TeamLeaderOffenses";
+import SharedCreateApplyLeave from "../pages/shared/SharedCreateApplyLeave";
+import HRLeaveApprovals from "../pages/hr/HRLeaveApprovals";
 import SharedCourse from "../pages/shared/SharedCourse";
 
 const HR_ROUTES = [
@@ -65,6 +67,14 @@ const HR_ROUTES = [
   {
     path: "reported-ir",
     element: <HRReportedOffenses />,
+  },
+  {
+    path: "apply-leave",
+    element: <SharedCreateApplyLeave />,
+  },
+  {
+    path: "for-approvals",
+    element: <HRLeaveApprovals />,
   },
   { path: "account-settings", element: <SharedSettings /> },
 ];
