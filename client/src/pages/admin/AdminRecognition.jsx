@@ -688,9 +688,7 @@ const CreatePostModal = ({ isOpen, onClose, onSave, editingPost, onUpdate }) => 
   };
 
   if (!isOpen) return null;
-
-  
-
+ 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
       {showToast && <Toast message={toastMessage} type={toastType} onClose={() => setShowToast(false)} />}
