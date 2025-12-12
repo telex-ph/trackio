@@ -251,7 +251,7 @@ const SharedMyTeamLeave = () => {
       leaveFile: leaveData.leaveFile || [],
       status: leaveData.status,
       rejectReasonTL: leaveData.rejectReasonTL,
-      rejectedByTLDate: leaveData.rejectedByTLDate,
+      rejectedBySupervisorDate: leaveData.rejectedBySupervisorDate,
     });
 
     try {
@@ -304,7 +304,7 @@ const SharedMyTeamLeave = () => {
       const payload = {
         status: "Rejected by TL",
         rejectReasonTL: rejectReason,
-        rejectedByTLDate: now.toISOString(),
+        rejectedBySupervisorDate: now.toISOString(),
         isReadByApprover: true,
         isApprovedBySupervisor: false,
       };
@@ -357,34 +357,36 @@ const SharedMyTeamLeave = () => {
   });
 
   const leaveHistoryList = useMemo(() => {
-    return safeLeaves.filter((leave) => {
-      const isListed =
-        loggedUser &&
-        leave.createdById !== loggedUser._id &&
-        ["Rejected by TL", "Approved by TL"].includes(leave.status);
-      if (!isListed) return false;
+    return safeLeaves
+      .filter((leave) => {
+        const isListed =
+          loggedUser &&
+          leave.createdById !== loggedUser._id &&
+          ["Rejected by TL", "Approved by TL"].includes(leave.status);
+        if (!isListed) return false;
 
-      const textMatch = [
-        formatDisplayDate(leave.startDate),
-        formatDisplayDate(leave.endDate),
-        leave.status,
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(historySearchQuery.toLowerCase());
+        const textMatch = [
+          formatDisplayDate(leave.startDate),
+          formatDisplayDate(leave.endDate),
+          leave.status,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(historySearchQuery.toLowerCase());
 
-      if (!textMatch) return false;
+        if (!textMatch) return false;
 
-      const leaveDate = DateTime.fromISO(leave.createdAt).startOf("day");
-      const start = historyStartDate
-        ? DateTime.fromISO(historyStartDate).startOf("day")
-        : null;
-      const end = historyEndDate
-        ? DateTime.fromISO(historyEndDate).startOf("day")
-        : null;
+        const leaveDate = DateTime.fromISO(leave.createdAt).startOf("day");
+        const start = historyStartDate
+          ? DateTime.fromISO(historyStartDate).startOf("day")
+          : null;
+        const end = historyEndDate
+          ? DateTime.fromISO(historyEndDate).startOf("day")
+          : null;
 
-      return (!start || leaveDate >= start) && (!end || leaveDate <= end);
-    });
+        return (!start || leaveDate >= start) && (!end || leaveDate <= end);
+      })
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   }, [
     safeLeaves,
     historySearchQuery,
