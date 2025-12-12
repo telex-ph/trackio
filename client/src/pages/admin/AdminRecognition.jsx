@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import api from "../../utils/axios";
 import socket from "../../utils/socket";
-// import UnderContruction from "../../assets/illustrations/UnderContruction";
+import UnderContruction from "../../assets/illustrations/UnderContruction";
 import {
   Plus,
   Edit,
@@ -1548,11 +1548,11 @@ const AdminRecognition = () => {
   if (loading && posts.length === 0) return <LoadingSpinner />;
 
 
-  //   return (
-  //   <section className="h-full">
-  //     <UnderContruction />
-  //   </section>
-  // );
+    return (
+    <section className="h-full">
+      <UnderContruction />
+    </section>
+  );
 
   
   return (
