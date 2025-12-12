@@ -78,19 +78,19 @@ const AgentSidebar = ({
         label="Ticket"
         isCollapsed={isCollapsed}
       />
-      {/* <SidebarLink
+      <SidebarLink
         to="/agent/apply-leave"
         icon={CalendarPlus}
         label="Apply Leave"
         isCollapsed={isCollapsed}
+      />
+      {/* <SidebarLink
+        to="/agent/courses"
+        icon={Video}
+        label="Video Courses"
+        isCollapsed={isCollapsed}
       /> */}
-       {/* <SidebarLink
-      to="/agent/courses"
-      icon={Video}
-      label="Video Courses"
-      isCollapsed={isCollapsed}
-    /> */}
-  </div>
+    </div>
   );
 };
 
