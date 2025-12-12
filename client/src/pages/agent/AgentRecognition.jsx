@@ -27,12 +27,16 @@ import {
   AlertCircle,
   Shield,
   Filter,
+  Star,
+  TrendingUp,
+  UserCheck,
 } from "lucide-react";
 import api from "../../utils/axios";
 import socket from "../../utils/socket";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-// import UnderContruction from "../../assets/illustrations/UnderContruction";
+import UnderContruction from "../../assets/illustrations/UnderContruction.jsx";
+
 
 // Helper function to get user from localStorage
 const getCurrentUserFromStorage = () => {
@@ -56,15 +60,26 @@ const isCurrentUserRecipient = (post) => {
 
     // Compare employee IDs
     const currentUserEmployeeId = currentUser.employeeId;
-    const postEmployeeId = post.employee.employeeId;
-
+    const postEmployeeId = post.employee.employeeId || post.employee._id;
+    
+    // Also check name for additional verification
+    const currentUserName = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.toLowerCase().trim();
+    const postEmployeeName = (post.employee.name || '').toLowerCase().trim();
+    
     console.log("Checking recipient:", {
       currentUserEmployeeId,
       postEmployeeId,
-      isRecipient: currentUserEmployeeId === postEmployeeId,
+      currentUserName,
+      postEmployeeName,
+      isRecipient: currentUserEmployeeId === postEmployeeId || 
+                  currentUserName.includes(postEmployeeName) ||
+                  postEmployeeName.includes(currentUserName)
     });
 
-    return currentUserEmployeeId === postEmployeeId;
+    // Check multiple conditions for safety
+    return currentUserEmployeeId === postEmployeeId || 
+           currentUserName.includes(postEmployeeName) ||
+           postEmployeeName.includes(currentUserName);
   } catch (error) {
     console.error("Error checking recipient:", error);
     return false;
@@ -97,6 +112,8 @@ const Toast = ({ message, type = "success", onClose }) => {
   );
 };
 
+
+
 // Loading Component
 const LoadingSpinner = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
@@ -115,6 +132,240 @@ const SmallLoader = () => (
     <div className="w-4 h-4 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin"></div>
   </div>
 );
+
+// Palitan ang TopPerformers component ng COMPLETELY NEW VERSION:
+const TopPerformers = ({ posts }) => {
+  const [topPerformers, setTopPerformers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (posts && posts.length > 0) {
+      calculateTopPerformers();
+    } else {
+      setTopPerformers([]);
+      setLoading(false);
+    }
+  }, [posts]);
+
+  const calculateTopPerformers = () => {
+    setLoading(true);
+
+    try {
+      // Create a map to count recognitions per employee
+      const employeeMap = {};
+      
+      posts.forEach((post) => {
+        // Check if employee data exists
+        if (post && post.employee && post.employee.employeeId) {
+          const employeeId = post.employee.employeeId;
+          const employeeName = post.employee.name || 'Unknown Employee';
+          const employeePosition = post.employee.position || 'Employee';
+          
+          if (!employeeMap[employeeId]) {
+            employeeMap[employeeId] = {
+              employee: {
+                ...post.employee,
+                name: employeeName,
+                position: employeePosition
+              },
+              count: 0,
+              totalScore: 0,
+              awards: []
+            };
+          }
+          
+          // Add award score based on type
+          let awardScore = 1;
+          const type = post.recognitionType;
+          switch(type) {
+            case 'employee_of_month':
+              awardScore = 5;
+              break;
+            case 'excellence_award':
+              awardScore = 4;
+              break;
+            case 'innovation':
+              awardScore = 3;
+              break;
+            case 'team_player':
+              awardScore = 2;
+              break;
+            default:
+              awardScore = 1;
+          }
+          
+          employeeMap[employeeId].count++;
+          employeeMap[employeeId].totalScore += awardScore;
+          employeeMap[employeeId].awards.push({
+            type: type,
+            title: post.title,
+            date: post.createdAt
+          });
+        }
+      });
+      
+      // Convert to array and sort by total score (higher score first)
+      const performersArray = Object.values(employeeMap);
+      performersArray.sort((a, b) => b.totalScore - a.totalScore);
+      
+      // Take top 5
+      const top5 = performersArray.slice(0, 5);
+      
+      setTopPerformers(top5);
+    } catch (error) {
+      console.error("Error calculating top performers:", error);
+      setTopPerformers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getAwardTypeIcon = (type) => {
+    switch(type) {
+      case 'employee_of_month':
+        return <Crown className="w-3 h-3 text-yellow-600" />;
+      case 'excellence_award':
+        return <Medal className="w-3 h-3 text-purple-600" />;
+      case 'innovation':
+        return <Lightbulb className="w-3 h-3 text-blue-600" />;
+      case 'team_player':
+        return <Heart className="w-3 h-3 text-green-600" />;
+      default:
+        return <Award className="w-3 h-3 text-gray-600" />;
+    }
+  };
+
+  const getRankColor = (rank) => {
+    switch(rank) {
+      case 1: return "from-yellow-500 to-amber-500";
+      case 2: return "from-gray-400 to-gray-500";
+      case 3: return "from-amber-700 to-amber-800";
+      case 4: return "from-blue-500 to-blue-600";
+      case 5: return "from-green-500 to-green-600";
+      default: return "from-gray-500 to-gray-600";
+    }
+  };
+
+  const getRankBadge = (rank) => {
+    switch(rank) {
+      case 1: return "🥇";
+      case 2: return "🥈";
+      case 3: return "🥉";
+      case 4: return "4th";
+      case 5: return "5th";
+      default: return `${rank}th`;
+    }
+  };
+
+  const getAwardTypeDisplay = (type) => {
+    if (!type) return 'Award';
+    
+    return type.split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl border border-light shadow-sm p-5">
+        <div className="flex items-center justify-center h-32">
+          <SmallLoader />
+        </div>
+      </div>
+    );
+  }
+
+  if (topPerformers.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl border border-light shadow-sm p-5">
+        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <Trophy size={30} />
+          Top Performers
+        </h3>
+        <div className="text-center py-8">
+          <Trophy className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+          <p className="text-gray-500">No top performers data available</p>
+        </div>
+      </div>
+    );
+  }
+
+  
+
+  return (
+    <div className="bg-white rounded-2xl border border-light shadow-sm p-5">
+      <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <Trophy size={20} />
+        Top Performers
+      </h3>
+      
+      <div className="space-y-3">
+        {topPerformers.map((performer, index) => {
+          const rank = index + 1;
+          // Get unique award types safely
+          const awardTypes = performer.awards 
+            ? [...new Set(performer.awards.map(a => a.type).filter(Boolean))]
+            : [];
+          
+          const employeeName = performer.employee?.name || 'Unknown Employee';
+          const employeePosition = performer.employee?.position || 'Employee';
+          
+          return (
+            <div 
+              key={performer.employee?.employeeId || index} 
+              className="group p-3 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-300 cursor-pointer hover:shadow-sm"
+            >
+              <div className="flex items-center gap-3">
+                {/* Rank Badge */}
+                <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${getRankColor(rank)} flex items-center justify-center text-white font-bold text-sm shadow-md`}>
+                  {getRankBadge(rank)}
+                </div>
+                
+                {/* Employee Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center mb-1">
+                    <h4 className="font-semibold text-gray-900 truncate">
+                      {employeeName}
+                    </h4>
+                    <div className="flex items-center gap-1">
+                      <Trophy className="w-3 h-3 text-yellow-600" />
+                      <span className="text-xs font-bold text-gray-700">
+                        {performer.count} award{performer.count !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <p className="text-xs text-gray-600 truncate mb-2">
+                    {employeePosition}
+                  </p>
+                  
+                  {/* Award Types */}
+                  {awardTypes.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {awardTypes.slice(0, 3).map((type, idx) => (
+                        <div key={idx} className="flex items-center gap-1 bg-white px-2 py-1 rounded-full border border-gray-200">
+                          {getAwardTypeIcon(type)}
+                          <span className="text-xs text-gray-700">
+                            {getAwardTypeDisplay(type)}
+                          </span>
+                        </div>
+                      ))}
+                      {awardTypes.length > 3 && (
+                        <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                          +{awardTypes.length - 3} more
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 // Private My Achievements Modal Component - ONLY FOR LOGGED-IN USER
 const MyAchievementsModal = ({ isOpen, onClose, currentUserId, allPosts }) => {
@@ -242,10 +493,8 @@ const MyAchievementsModal = ({ isOpen, onClose, currentUserId, allPosts }) => {
   const stats = getStats();
 
   const handleDownloadCertificate = (achievement) => {
-    if (isCurrentUserRecipient(achievement)) {
-      setSelectedAchievement(achievement);
-      setShowCertificate(true);
-    }
+    setSelectedAchievement(achievement);
+    setShowCertificate(true);
   };
 
   const filterTypes = [
@@ -295,7 +544,7 @@ const MyAchievementsModal = ({ isOpen, onClose, currentUserId, allPosts }) => {
 
   return (
     <>
-      <div className="bg-red-600 fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-[60] animate-fadeIn ">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-[60] animate-fadeIn">
         <div className="bg-white rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto shadow-2xl">
           {/* Modal Header */}
           <div className="sticky top-0 bg-white z-10 border-b border-gray-200 p-6">
@@ -384,9 +633,7 @@ const MyAchievementsModal = ({ isOpen, onClose, currentUserId, allPosts }) => {
                     key={filter.id}
                     className={`border rounded-xl p-4 ${
                       count > 0
-                        ? `bg-gradient-to-r ${filter.color
-                            .replace("from-", "from-")
-                            .replace("to-", "to-")} bg-opacity-10`
+                        ? `bg-gradient-to-r ${filter.color} bg-opacity-10`
                         : "bg-gray-50"
                     }`}
                   >
@@ -1413,7 +1660,7 @@ const RecognitionHistory = ({ employee, isOpen, onClose }) => {
   );
 };
 
-// Enhanced Post Details Modal - REMOVED DOWNLOAD CERTIFICATE BUTTON FOR OTHERS
+// Enhanced Post Details Modal
 const PostDetailsModal = ({ post, isOpen, onClose }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showCertificate, setShowCertificate] = useState(false);
@@ -1706,6 +1953,9 @@ const PostDetailsModal = ({ post, isOpen, onClose }) => {
                           Achievements
                         </span>
                       </div>
+                      <span className="text-sm font-bold text-gray-900">
+                        {employeeRecognitions.length} total
+                      </span>
                     </div>
                   </div>
 
@@ -1793,7 +2043,7 @@ const PostDetailsModal = ({ post, isOpen, onClose }) => {
                   </div>
                 </div>
 
-                {/* Quick Actions - UPDATED: Only show download certificate if user is recipient */}
+                {/* Quick Actions */}
                 <div className="space-y-3">
                   {isRecipient ? (
                     <button
@@ -2069,7 +2319,7 @@ const AgentRecognition = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState("success");
-  const [currentUserId, setCurrentUserId] = useState(null);
+  const [setCurrentUserId] = useState(null);
   const postsPerPage = 8;
 
   // Fetch current user on component mount
@@ -2281,11 +2531,11 @@ const AgentRecognition = () => {
     return <LoadingSpinner />;
   }
 
-  // return (
-  //   <section className="h-full">
-  //     <UnderContruction />
-  //   </section>
-  // );
+     return (
+    <section className="h-full">
+      <UnderContruction />
+    </section>
+  );
 
   return (
     <div className="min-h-screen from-gray-50 to-gray-100 p-4 md:p-6">
@@ -2323,8 +2573,7 @@ const AgentRecognition = () => {
             </div>
 
             <div className="flex items-center gap-3">
-            
-              <EmployeeBadges currentUserId={currentUserId} allPosts={posts} />
+              <EmployeeBadges allPosts={posts} />
             </div>
           </div>
 
@@ -2449,7 +2698,11 @@ const AgentRecognition = () => {
             )}
           </div>
           
+          {/* Right Column */}
           <div className="space-y-6">
+            {/* Top Performers Component - New Addition */}
+            <TopPerformers posts={posts} />
+            
             <div className="bg-white rounded-2xl border border-light shadow-sm p-5">
               <h3 className="text-xl font-bold mb-4 flex items-center">
                 <BarChart3 className="mr-2" size={22} />

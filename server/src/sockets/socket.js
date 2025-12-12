@@ -5,7 +5,7 @@ import {
 } from "./handlers/statusWatcher.js";
 import offenseWatcher from "./handlers/offenseWatcher.js";
 import announcementWatcher from "./handlers/announcementWatcher.js";
-import recognitionWatcher from "./handlers/RecognitionWatcher.js";
+import recognitionWatcher from "./handlers/recognitionWatcher.js";
 
 
 let io;
