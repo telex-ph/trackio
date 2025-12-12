@@ -14,8 +14,6 @@ import {
   Bell,
   Pin,
 } from "lucide-react";
-
-
 import AnnouncementDetailModal from "../../components/modals/AnnouncementDetailModal";
 import DepartmentAnnouncementSection from "../../components/cards/DepartmentAnnouncementSection";
 import { useAnnouncementInteractions } from "../../hooks/useAnnouncementInteractions";
@@ -24,7 +22,6 @@ import { DateTime } from "luxon";
 import api from "../../utils/axios";
 import socket from "../../utils/socket";
 import FileViewModal from "../../components/modals/FileViewModal";
-
 
 const getUniqueViewers = (announcement) => {
   if (!announcement.views || !Array.isArray(announcement.views)) {
@@ -87,6 +84,11 @@ const processAnnouncementData = (announcement) => {
   const uniqueViewers = getUniqueViewers(announcement);
   const uniqueAcknowledgements = getUniqueAcknowledgements(announcement);
 
+  // ✅ ADDED: Check if announcement is expired (SAME AS AGENT DASHBOARD)
+  const now = DateTime.local();
+  const expiresAt = announcement.expiresAt ? DateTime.fromISO(announcement.expiresAt) : null;
+  const isExpired = expiresAt && expiresAt <= now;
+
   return {
     ...announcement,
     processedViews: uniqueViewers,
@@ -95,7 +97,10 @@ const processAnnouncementData = (announcement) => {
     totalAcknowledgements: uniqueAcknowledgements.length,
     formattedDateTime: new Date(announcement.dateTime).toLocaleDateString(),
     realTimeFormatted: DateTime.fromISO(announcement.dateTime).toLocaleString(DateTime.DATETIME_MED),
-    timeAgo: "", 
+    timeAgo: "",
+    // ✅ ADDED: Expiry status (SAME AS AGENT)
+    isExpired: isExpired,
+    expiresAtFormatted: expiresAt ? expiresAt.toLocaleString(DateTime.DATETIME_MED) : null,
   };
 };
 
@@ -120,42 +125,40 @@ const getRealTimeAgo = (isoDateStr) => {
 const AdminDashboard = () => {
   const [isEmployeeClicked, setIsEmployeeClicked] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
-
-  // ✅ ADDED: Announcement States - SAME AS AGENT DASHBOARD
   const [announcements, setAnnouncements] = useState([]);
   const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(true);
   const [announcementDetailModal, setAnnouncementDetailModal] = useState({
     isOpen: false,
     announcement: null,
   });
-  
-
   const [fileViewModal, setFileViewModal] = useState({
     isOpen: false,
     file: null,
   });
-  
   const [searchTerm, setSearchTerm] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
   const [showPinLimitToast, setShowPinLimitToast] = useState(false);
-
-
   const [accountingPinned, setAccountingPinned] = useState(false);
   const [compliancePinned, setCompliancePinned] = useState(false);
   const [hrPinned, setHrPinned] = useState(false);
   const [technicalPinned, setTechnicalPinned] = useState(false);
-
+  const [currentRealTime, setCurrentRealTime] = useState(DateTime.local());
 
   const MAX_PINNED_PER_DEPARTMENT = 3;
   const PINNED_ANNOUNCEMENTS_KEY = "pinned_announcements_admin";
 
+  const { 
+    hasLiked, 
+    trackView, 
+    handleLike, 
+    getViewCount, 
+    getLikeCount 
+  } = useAnnouncementInteractions(announcements, setAnnouncements, currentUser?._id);
 
-  const [currentRealTime, setCurrentRealTime] = useState(DateTime.local());
-
+  // Initialize admin user
   useEffect(() => {
     const initializeAdminUser = () => {
       try {
-      
         const storedUser = localStorage.getItem("admin_user");
         
         if (storedUser) {
@@ -191,16 +194,7 @@ const AdminDashboard = () => {
     initializeAdminUser();
   }, []);
 
-
-  const { 
-    hasLiked, 
-    trackView, 
-    handleLike, 
-    getViewCount, 
-    getLikeCount 
-  } = useAnnouncementInteractions(announcements, setAnnouncements, currentUser?._id);
-
-
+  // Time intervals
   useEffect(() => {
     const t = setInterval(() => setCurrentTime(new Date()), 60000);
     const realTimeInterval = setInterval(() => {
@@ -213,24 +207,41 @@ const AdminDashboard = () => {
     };
   }, []);
 
- 
+  // ✅ UPDATED: Real-time expiry checking
   useEffect(() => {
     if (announcements.length > 0) {
-      const updatedAnnouncements = announcements.map(announcement => ({
-        ...announcement,
-        timeAgo: getRealTimeAgo(announcement.dateTime),
-        realTimeFormatted: DateTime.fromISO(announcement.dateTime).toLocaleString(DateTime.DATETIME_MED)
-      }));
+      const updatedAnnouncements = announcements.map(announcement => {
+        // ✅ Check expiry status in real-time (SAME AS AGENT)
+        const isExpired = announcement.expiresAt ? 
+          DateTime.fromISO(announcement.expiresAt) <= currentRealTime : false;
+        
+        return {
+          ...announcement,
+          timeAgo: getRealTimeAgo(announcement.dateTime),
+          realTimeFormatted: DateTime.fromISO(announcement.dateTime).toLocaleString(DateTime.DATETIME_MED),
+          isExpired: isExpired,
+        };
+      });
+      
+      // ✅ Filter out expired announcements (SAME AS AGENT)
+      const filteredAnnouncements = updatedAnnouncements.filter(announcement => 
+        !announcement.isExpired && 
+        announcement.status === "Active" && 
+        announcement.approvalStatus === "Approved"
+      );
       
       setAnnouncements(prev => {
         const hasChanges = prev.some((ann, index) => 
-          ann.timeAgo !== updatedAnnouncements[index].timeAgo
+          ann.timeAgo !== filteredAnnouncements[index]?.timeAgo ||
+          ann.isExpired !== filteredAnnouncements[index]?.isExpired ||
+          prev.length !== filteredAnnouncements.length
         );
-        return hasChanges ? updatedAnnouncements : prev;
+        return hasChanges ? filteredAnnouncements : prev;
       });
     }
   }, [currentRealTime]);
 
+  // Pinning functionality
   const getPinnedAnnouncementsFromStorage = () => {
     try {
       const pinned = localStorage.getItem(PINNED_ANNOUNCEMENTS_KEY);
@@ -288,7 +299,6 @@ const AdminDashboard = () => {
     setShowPinLimitToast(true);
     setTimeout(() => setShowPinLimitToast(false), 3000);
   };
-
 
   const handleTogglePin = async (announcement) => {
     try {
@@ -370,7 +380,6 @@ const AdminDashboard = () => {
     }
   };
 
-
   const handleFileDownload = (file) => {
     try {
       const base64Data = file.data.split(",")[1];
@@ -403,16 +412,27 @@ const AdminDashboard = () => {
     setFileViewModal({ isOpen: false, file: null });
   };
 
-  // ✅ FIXED: Fetch announcements from API
+  // ✅ UPDATED: Fetch announcements with expiry check
   const fetchAnnouncements = async () => {
     try {
       setIsLoadingAnnouncements(true);
       const response = await api.get("/announcements");
 
       const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
+      const now = DateTime.local(); // ✅ ADDED: Current time for expiry check
 
       const processedAnnouncements = response.data
-        .filter((ann) => ann && ann._id && ann.status === "Active")
+        .filter((ann) => {
+          // ✅ UPDATED: Must be Active, Approved, and Not Expired (SAME AS AGENT)
+          if (!ann || !ann._id) return false;
+          if (ann.status !== 'Active') return false;
+          if (ann.approvalStatus !== 'Approved') return false;
+          
+          // ✅ Expiry Check (SAME AS AGENT)
+          if (ann.expiresAt && DateTime.fromISO(ann.expiresAt) <= now) return false;
+          
+          return true;
+        })
         .map((announcement) => ({
           ...announcement,
           isPinned:
@@ -489,7 +509,6 @@ const AdminDashboard = () => {
   const { accounting, compliance, technical, hr } =
     categorizeAnnouncements(announcements);
 
-
   const getFilteredAnnouncements = () => {
     if (!searchTerm) return announcements;
 
@@ -527,7 +546,6 @@ const AdminDashboard = () => {
     getFilteredAnnouncementsByDepartment("accounting").length > 0 ||
     getFilteredAnnouncementsByDepartment("hr").length > 0;
 
-
   const handleReadMore = async (announcement) => {
     if (currentUser?._id) {
       await trackView(announcement._id, currentUser._id);
@@ -543,6 +561,7 @@ const AdminDashboard = () => {
     setIsEmployeeClicked(false);
   };
 
+  // ✅ UPDATED: Socket listeners with expiry check
   useEffect(() => {
     console.log("🔄 Setting up socket listeners for admin...");
 
@@ -564,9 +583,20 @@ const AdminDashboard = () => {
       
       if (Array.isArray(socketAnnouncements) && socketAnnouncements.length > 0) {
         const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
+        const now = DateTime.local(); // ✅ ADDED: Current time for expiry check
         
         const processedAnnouncements = socketAnnouncements
-          .filter((ann) => ann && ann._id && ann.status === "Active")
+          .filter((ann) => {
+            // ✅ UPDATED: Must be Active, Approved, and Not Expired (SAME AS AGENT)
+            if (!ann || !ann._id) return false;
+            if (ann.status !== 'Active') return false;
+            if (ann.approvalStatus !== 'Approved') return false;
+            
+            // ✅ Expiry Check (SAME AS AGENT)
+            if (ann.expiresAt && DateTime.fromISO(ann.expiresAt) <= now) return false;
+            
+            return true;
+          })
           .map((announcement) => ({
             ...announcement,
             isPinned: pinnedAnnouncements[announcement._id] || announcement.isPinned || false,
@@ -603,7 +633,6 @@ const AdminDashboard = () => {
       }
     };
 
-   
     const handleAgentUpdate = (updateData) => {
       console.log("📊 Real-time admin update:", updateData);
       
@@ -621,12 +650,22 @@ const AdminDashboard = () => {
       }));
     };
 
-  
+    // ✅ UPDATED: UNIFIED ANNOUNCEMENT HANDLER WITH EXPIRY CHECK
     const handleUnifiedAnnouncement = (announcementData, source) => {
       console.log(`📥 ${source}:`, announcementData._id, announcementData.title);
       
-      if (announcementData.status !== "Active") {
-        console.log("❌ Ignoring inactive announcement from", source);
+      // ✅ CHECK IF ANNOUNCEMENT IS ACTIVE AND APPROVED (SAME AS AGENT)
+      if (announcementData.status !== "Active" || announcementData.approvalStatus !== "Approved") {
+        console.log("❌ Ignoring inactive or unapproved announcement from", source);
+        return;
+      }
+
+      // ✅ CHECK IF ANNOUNCEMENT IS EXPIRED (SAME AS AGENT)
+      const now = DateTime.local();
+      if (announcementData.expiresAt && DateTime.fromISO(announcementData.expiresAt) <= now) {
+        console.log("❌ Ignoring expired announcement from", source);
+        setAnnouncements(prev => prev.filter(a => a._id !== announcementData._id));
+        removePinnedAnnouncementFromStorage(announcementData._id);
         return;
       }
 
@@ -680,7 +719,6 @@ const AdminDashboard = () => {
       handleUnifiedAnnouncement(repostedAnnouncement, "REPOST");
     };
 
- 
     const handleAnnouncementCancelled = (data) => {
       console.log("🔴 Real-time: Announcement cancellation received", data);
       
@@ -702,10 +740,21 @@ const AdminDashboard = () => {
       removePinnedAnnouncementFromStorage(announcementId);
     };
 
+    // ✅ UPDATED: ANNOUNCEMENT UPDATED HANDLER WITH EXPIRY CHECK
     const handleAnnouncementUpdated = (updatedAnnouncement) => {
       console.log("📝 Real-time: Announcement updated", updatedAnnouncement._id, updatedAnnouncement.title);
       
-      if (updatedAnnouncement.status !== "Active") {
+      // ✅ CHECK IF ANNOUNCEMENT IS ACTIVE AND APPROVED (SAME AS AGENT)
+      if (updatedAnnouncement.status !== "Active" || updatedAnnouncement.approvalStatus !== "Approved") {
+        setAnnouncements(prev => prev.filter(ann => ann._id !== updatedAnnouncement._id));
+        removePinnedAnnouncementFromStorage(updatedAnnouncement._id);
+        return;
+      }
+
+      // ✅ CHECK IF ANNOUNCEMENT IS EXPIRED (SAME AS AGENT)
+      const now = DateTime.local();
+      if (updatedAnnouncement.expiresAt && DateTime.fromISO(updatedAnnouncement.expiresAt) <= now) {
+        console.log("❌ Updated announcement is expired, removing it");
         setAnnouncements(prev => prev.filter(ann => ann._id !== updatedAnnouncement._id));
         removePinnedAnnouncementFromStorage(updatedAnnouncement._id);
         return;
@@ -753,11 +802,9 @@ const AdminDashboard = () => {
       });
     };
 
-    
+    // Register socket listeners
     socket.on("initialAgentData", handleInitialData);
     socket.on("agentAnnouncementUpdate", handleAgentUpdate);
-    
-    // These events are the same for both admin and agent
     socket.on("newAnnouncement", handleNewAnnouncement);
     socket.on("announcementCancelled", handleAnnouncementCancelled);
     socket.on("announcementCanceled", handleAnnouncementCancelled);
@@ -767,11 +814,9 @@ const AdminDashboard = () => {
     socket.on("announcementUpdated", handleAnnouncementUpdated);
     socket.on("updatedAnnouncement", handleAnnouncementUpdated);
 
-
     console.log("📤 Requesting initial admin data via socket...");
-    socket.emit("getAgentData"); 
+    socket.emit("getAgentData");
 
-    
     const fallbackTimeout = setTimeout(() => {
       if (!dataLoaded) {
         console.log("⏰ Socket timeout for admin, falling back to API...");
@@ -779,11 +824,9 @@ const AdminDashboard = () => {
       }
     }, 3000);
 
-   
     return () => {
       console.log("🧹 Cleaning up socket listeners for admin");
       clearTimeout(fallbackTimeout);
-      
       
       socket.off("initialAgentData", handleInitialData);
       socket.off("agentAnnouncementUpdate", handleAgentUpdate);
@@ -798,7 +841,6 @@ const AdminDashboard = () => {
     };
   }, [currentUser?._id]);
 
-  
   const stats = [
     {
       key: "totalEmployees",
@@ -879,7 +921,6 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen p-4 sm:p-6 bg-gray-50">
-    
       {showPinLimitToast && (
         <div className="fixed top-4 left-2 right-2 sm:left-4 sm:right-auto z-[10000] bg-yellow-500 text-white p-3 sm:p-4 rounded-xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-top duration-300 max-w-sm mx-auto sm:mx-0">
           <svg className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -965,9 +1006,8 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-  
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-        {/* Weekly Attendance Trend - COMING SOON */}
+        {/* Weekly Attendance Trend */}
         <div className="bg-white rounded-xl p-6 shadow border border-gray-200">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-800">Weekly Attendance Trend</h3>
@@ -1081,7 +1121,6 @@ const AdminDashboard = () => {
             </div>
           ) : hasFilteredAnnouncements ? (
             <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-            
               {/* Technical Announcements */}
               {getFilteredAnnouncementsByDepartment("technical").length > 0 && (
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">

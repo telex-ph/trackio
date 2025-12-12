@@ -27,16 +27,12 @@ import {
   AlertCircle,
   Shield,
   Filter,
-  Star,
-  TrendingUp,
-  UserCheck,
 } from "lucide-react";
 import api from "../../utils/axios";
 import socket from "../../utils/socket";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import UnderContruction from "../../assets/illustrations/UnderContruction.jsx";
-
 
 // Helper function to get user from localStorage
 const getCurrentUserFromStorage = () => {
@@ -52,34 +48,50 @@ const getCurrentUserFromStorage = () => {
   return null;
 };
 
-// Helper function to check if current user is the award recipient
+// Helper function to check if current user is the award recipient - IMPROVED VERSION
 const isCurrentUserRecipient = (post) => {
   try {
     const currentUser = getCurrentUserFromStorage();
-    if (!currentUser || !post || !post.employee) return false;
+    if (!currentUser || !post || !post.employee) {
+      console.log("Missing data:", { currentUser, post, employee: post?.employee });
+      return false;
+    }
 
-    // Compare employee IDs
-    const currentUserEmployeeId = currentUser.employeeId;
-    const postEmployeeId = post.employee.employeeId || post.employee._id;
+    // Get current user employee ID
+    const currentUserEmployeeId = currentUser.employeeId || currentUser._id;
     
-    // Also check name for additional verification
-    const currentUserName = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.toLowerCase().trim();
-    const postEmployeeName = (post.employee.name || '').toLowerCase().trim();
-    
-    console.log("Checking recipient:", {
+    // Get post employee ID - try multiple possible fields
+    const postEmployeeId = post.employee.employeeId || 
+                          post.employee._id || 
+                          post.employee.userId;
+
+    // Debug logging
+    console.log("Checking recipient match:", {
       currentUserEmployeeId,
       postEmployeeId,
-      currentUserName,
-      postEmployeeName,
-      isRecipient: currentUserEmployeeId === postEmployeeId || 
-                  currentUserName.includes(postEmployeeName) ||
-                  postEmployeeName.includes(currentUserName)
+      currentUserName: `${currentUser.firstName || ''} ${currentUser.lastName || ''}`,
+      postEmployeeName: post.employee.name,
+      matchFound: currentUserEmployeeId === postEmployeeId
     });
 
-    // Check multiple conditions for safety
-    return currentUserEmployeeId === postEmployeeId || 
-           currentUserName.includes(postEmployeeName) ||
-           postEmployeeName.includes(currentUserName);
+    // Check by employee ID (primary method)
+    if (currentUserEmployeeId && postEmployeeId) {
+      const isMatch = currentUserEmployeeId.toString() === postEmployeeId.toString();
+      if (isMatch) return true;
+    }
+
+    // Fallback: Check by name (case-insensitive, partial match)
+    if (currentUser.firstName && post.employee.name) {
+      const currentUserName = `${currentUser.firstName} ${currentUser.lastName || ''}`.toLowerCase().trim();
+      const postEmployeeName = post.employee.name.toLowerCase().trim();
+      
+      if (currentUserName === postEmployeeName) return true;
+      
+      // Check if current user's first name appears in employee name
+      if (postEmployeeName.includes(currentUser.firstName.toLowerCase())) return true;
+    }
+
+    return false;
   } catch (error) {
     console.error("Error checking recipient:", error);
     return false;
@@ -133,7 +145,7 @@ const SmallLoader = () => (
   </div>
 );
 
-// Palitan ang TopPerformers component ng COMPLETELY NEW VERSION:
+// TopPerformers component
 const TopPerformers = ({ posts }) => {
   const [topPerformers, setTopPerformers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -290,8 +302,6 @@ const TopPerformers = ({ posts }) => {
     );
   }
 
-  
-
   return (
     <div className="bg-white rounded-2xl border border-light shadow-sm p-5">
       <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -382,7 +392,7 @@ const MyAchievementsModal = ({ isOpen, onClose, currentUserId, allPosts }) => {
       fetchUserData();
       fetchUserAchievements();
     }
-  }, [isOpen, currentUserId, filterType, sortBy]);
+  }, [isOpen, currentUserId, filterType, sortBy, allPosts]);
 
   const fetchUserData = () => {
     const user = getCurrentUserFromStorage();
@@ -391,41 +401,67 @@ const MyAchievementsModal = ({ isOpen, onClose, currentUserId, allPosts }) => {
     }
   };
 
-  const fetchUserAchievements = () => {
+  const fetchUserAchievements = async () => {
     setLoading(true);
-
-    // Filter posts for current user only - USING employeeId
-    let achievements = allPosts.filter((post) => {
-      const postEmployeeId = post.employee?.employeeId;
-      return postEmployeeId === currentUserId;
-    });
-
-    // Apply filter if not 'all'
-    if (filterType !== "all") {
-      achievements = achievements.filter(
-        (ach) => ach.recognitionType === filterType
-      );
-    }
-
-    // Apply sorting
-    achievements.sort((a, b) => {
-      const dateA = new Date(a.createdAt);
-      const dateB = new Date(b.createdAt);
-
-      switch (sortBy) {
-        case "newest":
-          return dateB - dateA;
-        case "oldest":
-          return dateA - dateB;
-        case "award_type":
-          return a.recognitionType.localeCompare(b.recognitionType);
-        default:
-          return dateB - dateA;
+    
+    try {
+      // Try to fetch from API first for complete data
+      const response = await api.get(`/recognition/employee/${currentUserId}/all`);
+      
+      let achievements = [];
+      if (response.data && response.data.success) {
+        achievements = response.data.data || [];
+      } else {
+        // Fallback to local filtering
+        achievements = allPosts.filter((post) => {
+          const postEmployeeId = post.employee?.employeeId;
+          return postEmployeeId === currentUserId;
+        });
       }
-    });
 
-    setUserAchievements(achievements);
-    setLoading(false);
+      // Apply filter if not 'all'
+      if (filterType !== "all") {
+        achievements = achievements.filter(
+          (ach) => ach.recognitionType === filterType
+        );
+      }
+
+      // Apply sorting
+      achievements.sort((a, b) => {
+        const dateA = new Date(a.createdAt);
+        const dateB = new Date(b.createdAt);
+
+        switch (sortBy) {
+          case "newest":
+            return dateB - dateA;
+          case "oldest":
+            return dateA - dateB;
+          case "award_type":
+            return (a.recognitionType || '').localeCompare(b.recognitionType || '');
+          default:
+            return dateB - dateA;
+        }
+      });
+
+      setUserAchievements(achievements);
+    } catch (error) {
+      console.error("Error fetching achievements:", error);
+      // Fallback to local data
+      let achievements = allPosts.filter((post) => {
+        const postEmployeeId = post.employee?.employeeId;
+        return postEmployeeId === currentUserId;
+      });
+      
+      if (filterType !== "all") {
+        achievements = achievements.filter(
+          (ach) => ach.recognitionType === filterType
+        );
+      }
+      
+      setUserAchievements(achievements);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getAchievementTypeInfo = (type) => {
@@ -481,10 +517,12 @@ const MyAchievementsModal = ({ isOpen, onClose, currentUserId, allPosts }) => {
     const types = {};
 
     userAchievements.forEach((ach) => {
-      if (!types[ach.recognitionType]) {
-        types[ach.recognitionType] = 0;
+      if (ach.recognitionType) {
+        if (!types[ach.recognitionType]) {
+          types[ach.recognitionType] = 0;
+        }
+        types[ach.recognitionType]++;
       }
-      types[ach.recognitionType]++;
     });
 
     return { total, types };
@@ -761,7 +799,7 @@ const MyAchievementsModal = ({ isOpen, onClose, currentUserId, allPosts }) => {
 
                   return (
                     <div
-                      key={achievement._id}
+                      key={achievement._id || index}
                       className="group border border-gray-200 rounded-2xl p-5 hover:border-red-300 hover:shadow-xl transition-all duration-300 bg-white"
                     >
                       <div className="flex gap-4">
@@ -941,7 +979,7 @@ const MyAchievementsModal = ({ isOpen, onClose, currentUserId, allPosts }) => {
         </div>
       </div>
 
-      {/* Certificate Modal (Reuse existing Certificate component) */}
+      {/* Certificate Modal */}
       {showCertificate && selectedAchievement && (
         <Certificate
           post={selectedAchievement}
@@ -955,27 +993,27 @@ const MyAchievementsModal = ({ isOpen, onClose, currentUserId, allPosts }) => {
   );
 };
 
-// Employee Badges Component - SIMPLE WORKING VERSION
+// Employee Badges Component - UPDATED VERSION
 const EmployeeBadges = ({ allPosts }) => {
   const [showAchievementsModal, setShowAchievementsModal] = useState(false);
   const [currentUserData, setCurrentUserData] = useState(null);
   const [badgeCounts, setBadgeCounts] = useState({ total: 0 });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Get user from localStorage
-    const fetchCurrentUser = () => {
+    const fetchAndCalculateBadges = async () => {
       try {
+        setLoading(true);
         const userData = localStorage.getItem("user");
         if (userData) {
           const user = JSON.parse(userData);
           setCurrentUserData(user);
 
-          // Calculate badge counts if we have posts
-          if (allPosts && allPosts.length > 0) {
+          // Calculate badge counts from local posts
+          if (allPosts && allPosts.length > 0 && user.employeeId) {
             const userRecognitions = allPosts.filter((post) => {
               const postEmployeeId = post.employee?.employeeId;
-              const userEmployeeId = user.employeeId;
-              return postEmployeeId === userEmployeeId;
+              return postEmployeeId === user.employeeId;
             });
 
             const counts = {
@@ -987,29 +1025,46 @@ const EmployeeBadges = ({ allPosts }) => {
             };
 
             userRecognitions.forEach((rec) => {
-              if (counts[rec.recognitionType] !== undefined) {
+              if (rec.recognitionType && counts[rec.recognitionType] !== undefined) {
                 counts[rec.recognitionType]++;
               }
             });
 
             setBadgeCounts(counts);
           }
-        } else {
-          console.log("No user data in localStorage");
         }
       } catch (error) {
-        console.error("Error fetching current user from localStorage:", error);
+        console.error("Error fetching badges:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchCurrentUser();
+    fetchAndCalculateBadges();
   }, [allPosts]);
 
   if (!currentUserData) {
     return (
-      <button className="px-4 py-3 bg-gray-300 text-gray-600 rounded-xl font-medium flex items-center gap-2 opacity-50">
+      <button 
+        className="px-4 py-3 bg-gray-300 text-gray-600 rounded-xl font-medium flex items-center gap-2 opacity-50 cursor-not-allowed"
+        disabled
+      >
         <Badge size={20} />
-        <span>My Achievements</span>
+        <span>Loading...</span>
+      </button>
+    );
+  }
+
+  if (loading) {
+    return (
+      <button className="relative flex items-center gap-2 p-2.5 bg-gradient-to-r from-gray-100 to-gray-200 border border-gray-300 rounded-xl">
+        <div className="relative">
+          <div className="w-8 h-8 rounded-full bg-gray-400 animate-pulse"></div>
+        </div>
+        <div className="text-left">
+          <div className="text-xs text-gray-600 font-medium">Loading...</div>
+          <div className="text-sm font-semibold text-gray-700">My Achievements</div>
+        </div>
       </button>
     );
   }
@@ -1018,10 +1073,15 @@ const EmployeeBadges = ({ allPosts }) => {
     <>
       <button
         onClick={() => {
-          setShowAchievementsModal(true);
+          if (currentUserData) {
+            setShowAchievementsModal(true);
+          } else {
+            alert("Please log in to view your achievements");
+          }
         }}
         className="relative flex items-center gap-2 p-2.5 bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-xl hover:border-red-300 hover:shadow-md transition-all duration-300 group"
         title="View My Badges & Achievements"
+        disabled={loading}
       >
         <div className="relative">
           <div className="w-8 h-8 rounded-full bg-gradient-to-r from-red-600 to-red-500 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -1039,7 +1099,7 @@ const EmployeeBadges = ({ allPosts }) => {
           </div>
           <div className="text-sm font-semibold text-gray-900">
             {badgeCounts.total > 0
-              ? `${badgeCounts.total} Awards`
+              ? `${badgeCounts.total} Award${badgeCounts.total !== 1 ? 's' : ''}`
               : "View Awards"}
           </div>
         </div>
@@ -1047,7 +1107,7 @@ const EmployeeBadges = ({ allPosts }) => {
       </button>
 
       {/* My Achievements Modal */}
-      {showAchievementsModal && (
+      {showAchievementsModal && currentUserData && (
         <MyAchievementsModal
           isOpen={showAchievementsModal}
           onClose={() => setShowAchievementsModal(false)}
@@ -1062,6 +1122,16 @@ const EmployeeBadges = ({ allPosts }) => {
 // Improved Certificate Component
 const Certificate = ({ post, onClose }) => {
   const [downloading, setDownloading] = useState(false);
+  
+  // Add debugging
+  useEffect(() => {
+    console.log("Certificate component mounted for post:", {
+      postId: post._id,
+      employee: post.employee,
+      currentUser: getCurrentUserFromStorage(),
+      isRecipient: isCurrentUserRecipient(post)
+    });
+  }, [post]);
 
   const getCertificateData = () => {
     const typeInfo = {
@@ -1114,10 +1184,23 @@ const Certificate = ({ post, onClose }) => {
   const certificateInfo = getCertificateData();
 
   const downloadCertificate = async () => {
-    // Double-check if current user is the recipient before downloading
-    if (!isCurrentUserRecipient(post)) {
+    // Enhanced check
+    const isRecipient = isCurrentUserRecipient(post);
+    
+    console.log("Download attempt:", {
+      isRecipient,
+      currentUser: getCurrentUserFromStorage(),
+      postEmployee: post.employee,
+      postEmployeeId: post.employee?.employeeId,
+      currentUserId: getCurrentUserFromStorage()?.employeeId
+    });
+
+    if (!isRecipient) {
       alert(
-        "You are not authorized to download this certificate. Only the recipient can download certificates."
+        `You are not authorized to download this certificate.\n\n` +
+        `Recipient: ${post.employee?.name}\n` +
+        `Your Employee ID: ${getCurrentUserFromStorage()?.employeeId}\n` +
+        `Award Employee ID: ${post.employee?.employeeId}`
       );
       return;
     }
@@ -2357,83 +2440,75 @@ const AgentRecognition = () => {
     { id: "team_player", name: "Team Player Award" },
   ];
 
-  // Initialize Socket.io
+  // Fix: Simplify Socket.io connection
   useEffect(() => {
     console.log("🔌 Initializing Socket.io connection for Agent...");
 
-    // Join agent room for real-time updates
-    socket.emit("joinAgentRoom");
+    // Connect socket
+    socket.connect();
 
-    // Request initial data
-    socket.emit("getAgentRecognitionData");
+    // Listen for connection
+    socket.on("connect", () => {
+      console.log("✅ Connected to socket server");
+      socket.emit("joinAgentRoom");
+    });
 
     // Listen for initial data
     socket.on("initialAgentRecognitionData", (data) => {
-      console.log("📥 Received initial agent recognition data:", data.length);
-      setPosts(data);
+      console.log("📥 Received initial agent recognition data:", data?.length || 0);
+      if (Array.isArray(data)) {
+        setPosts(data);
+      }
       setLoading(false);
     });
 
     // Listen for new recognition posts
     socket.on("newRecognition", (newPost) => {
-      console.log("🆕 New recognition from socket:", newPost.title);
-      setPosts((prev) => {
-        const exists = prev.some((post) => post._id === newPost._id);
-        if (exists) {
-          return prev.map((post) =>
-            post._id === newPost._id ? newPost : post
-          );
-        }
-        return [newPost, ...prev];
-      });
-      showCustomToast("New recognition added", "success");
+      console.log("🆕 New recognition from socket:", newPost?.title);
+      if (newPost && newPost._id) {
+        setPosts(prevPosts => {
+          const exists = prevPosts.some(post => post._id === newPost._id);
+          if (exists) {
+            return prevPosts.map(post => 
+              post._id === newPost._id ? newPost : post
+            );
+          }
+          return [newPost, ...prevPosts];
+        });
+        showCustomToast("New recognition added!", "success");
+      }
     });
 
     // Listen for updated recognition posts
     socket.on("recognitionUpdated", (updatedPost) => {
-      console.log("📝 Recognition updated from socket:", updatedPost.title);
-      setPosts((prev) =>
-        prev.map((post) => (post._id === updatedPost._id ? updatedPost : post))
-      );
+      console.log("📝 Recognition updated from socket:", updatedPost?.title);
+      if (updatedPost && updatedPost._id) {
+        setPosts(prevPosts => 
+          prevPosts.map(post => 
+            post._id === updatedPost._id ? updatedPost : post
+          )
+        );
+      }
     });
 
-    // Listen for archived recognitions
-    socket.on("recognitionArchived", (data) => {
-      console.log("🗄️ Recognition archived from socket:", data.recognitionId);
-      setPosts((prev) =>
-        prev.filter((post) => post._id !== data.recognitionId)
-      );
-      showCustomToast("Recognition archived", "success");
+    // Listen for deleted recognitions
+    socket.on("recognitionDeleted", (deletedId) => {
+      console.log("🗑️ Recognition deleted from socket:", deletedId);
+      setPosts(prevPosts => prevPosts.filter(post => post._id !== deletedId));
+      showCustomToast("Recognition removed", "info");
     });
 
-    // Listen for restored recognitions
-    socket.on("recognitionRestored", (data) => {
-      console.log("♻️ Recognition restored from socket:", data.recognitionId);
-      // Refresh data to get the restored post
-      socket.emit("getAgentRecognitionData");
-    });
+    // Request initial data
+    socket.emit("getAgentRecognitionData");
 
-    // Listen for refresh requests
-    socket.on("refreshRecognitionData", () => {
-      console.log("🔄 Refresh requested via socket");
-      fetchRecognitions();
-    });
-
-    // Listen for errors
-    socket.on("error", (error) => {
-      console.error("Socket error:", error);
-      showCustomToast("Socket connection error", "error");
-    });
-
-    // Cleanup on unmount
+    // Cleanup
     return () => {
+      socket.off("connect");
       socket.off("initialAgentRecognitionData");
       socket.off("newRecognition");
       socket.off("recognitionUpdated");
-      socket.off("recognitionArchived");
-      socket.off("recognitionRestored");
-      socket.off("refreshRecognitionData");
-      socket.off("error");
+      socket.off("recognitionDeleted");
+      socket.disconnect();
     };
   }, []);
 
@@ -2468,24 +2543,29 @@ const AgentRecognition = () => {
         case "Team Player Award":
           params.recognitionType = "team_player";
           break;
-        // For 'Recent posts' and 'All Awards', use default params
+        case "All Awards":
+          // No filter for all awards
+          break;
+        case "Recent posts":
+          // Get recent posts (last 30 days)
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          params.startDate = thirtyDaysAgo.toISOString();
+          break;
       }
 
       const response = await api.get("/recognition", { params });
+      console.log("API Response:", response.data);
 
       if (response.data.success) {
-        setPosts(response.data.data || []);
+        const fetchedPosts = response.data.data || [];
+        setPosts(fetchedPosts);
 
-        // Calculate total pages from API response
-        const pagination = response.data.pagination;
-        if (pagination) {
-          setTotalPages(pagination.pages || 1);
-        } else {
-          const totalCount =
-            response.data.total || response.data.count || posts.length;
-          setTotalPages(Math.ceil(totalCount / postsPerPage));
-        }
+        // Calculate total pages
+        const total = response.data.total || response.data.count || fetchedPosts.length;
+        setTotalPages(Math.ceil(total / postsPerPage));
       } else {
+        console.error("API Error:", response.data.message);
         setPosts([]);
         setTotalPages(1);
       }
@@ -2493,6 +2573,7 @@ const AgentRecognition = () => {
       console.error("Error fetching recognitions:", error);
       setPosts([]);
       setTotalPages(1);
+      showCustomToast("Failed to load recognitions", "error");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -2503,8 +2584,13 @@ const AgentRecognition = () => {
     setRefreshing(true);
     setCurrentPage(1);
     fetchRecognitions();
-    // Request refresh from socket
-    socket.emit("getAgentRecognitionData");
+    
+    // Request fresh data via socket
+    if (socket.connected) {
+      socket.emit("getAgentRecognitionData");
+    }
+    
+    showCustomToast("Refreshing data...", "info");
   };
 
   // Handle view post details
@@ -2531,11 +2617,13 @@ const AgentRecognition = () => {
     return <LoadingSpinner />;
   }
 
-     return (
+
+    return (
     <section className="h-full">
       <UnderContruction />
     </section>
   );
+
 
   return (
     <div className="min-h-screen from-gray-50 to-gray-100 p-4 md:p-6">
@@ -2574,6 +2662,24 @@ const AgentRecognition = () => {
 
             <div className="flex items-center gap-3">
               <EmployeeBadges allPosts={posts} />
+              
+              {/* Debug Button (remove in production) */}
+              {process.env.NODE_ENV === 'development' && (
+                <button
+                  onClick={() => {
+                    const user = getCurrentUserFromStorage();
+                    console.log("Current User Debug:", {
+                      user,
+                      postsCount: posts.length,
+                      userPosts: posts.filter(p => isCurrentUserRecipient(p)).length
+                    });
+                    alert(`Current User:\nID: ${user?.employeeId}\nName: ${user?.firstName} ${user?.lastName}\n\nYour Posts: ${posts.filter(p => isCurrentUserRecipient(p)).length}`);
+                  }}
+                  className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm"
+                >
+                  Debug User
+                </button>
+              )}
             </div>
           </div>
 
