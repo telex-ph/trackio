@@ -8,6 +8,7 @@ import {
   GalleryVerticalEnd,
   Ticket,
   CalendarPlus,
+  Video,
 } from "lucide-react";
 import SidebarLink from "../sidebars/SidebarLink";
 import CustomCollapse from "../sidebars/CustomCollapse";
@@ -83,7 +84,13 @@ const AgentSidebar = ({
         label="Apply Leave"
         isCollapsed={isCollapsed}
       /> */}
-    </div>
+       {/* <SidebarLink
+      to="/agent/courses"
+      icon={Video}
+      label="Video Courses"
+      isCollapsed={isCollapsed}
+    /> */}
+  </div>
   );
 };
 

@@ -7,6 +7,7 @@ import AgentCreateOffenses from "../pages/agent/AgentCreateOffenses";
 import SharedAttendance from "../pages/shared/SharedAttendance";
 import SharedSettings from "../pages/shared/SharedSettings";
 import SharedTicket from "../pages/shared/SharedTicket";
+// import AgentCourses from "../pages/agent/AgentCourses";
 import { Navigate } from "react-router-dom";
 import SharedCreateApplyLeave from "../pages/shared/SharedCreateApplyLeave";
 
@@ -27,6 +28,7 @@ const AGENT_ROUTES = [
   { path: "createoffense", element: <AgentCreateOffenses /> },
 
   { path: "apply-leave", element: <SharedCreateApplyLeave /> },
+  // { path: "courses", element: <AgentCourses /> },
 ];
 
 export default AGENT_ROUTES;
