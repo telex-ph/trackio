@@ -32,7 +32,7 @@ import api from "../../utils/axios";
 import socket from "../../utils/socket";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import UnderContruction from "../../assets/illustrations/UnderContruction";
+// import UnderContruction from "../../assets/illustrations/UnderContruction";
 
 // Helper function to get user from localStorage
 const getCurrentUserFromStorage = () => {
@@ -308,7 +308,7 @@ const MyAchievementsModal = ({ isOpen, onClose, currentUserId, allPosts }) => {
                   <span>My Achievements</span>
                 </h2>
                 <p className="text-gray-600 mt-1">
-                  Your personal recognition gallery - Private to you only
+                  Your personal recognition gallery
                 </p>
               </div>
               <button
@@ -2039,7 +2039,7 @@ const RecognitionCard = ({ post, onView }) => {
         </div>
 
         {/* Card Footer */}
-        <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t border-light">
+        <div className="flex items-center justify-between text-sm text-gray-500 pt-4">
           <div className="text-xs text-gray-500">
             {formatDateTime(post.createdAt)}
           </div>
@@ -2281,14 +2281,14 @@ const AgentRecognition = () => {
     return <LoadingSpinner />;
   }
 
-  return (
-    <section className="h-full">
-      <UnderContruction />
-    </section>
-  );
+  // return (
+  //   <section className="h-full">
+  //     <UnderContruction />
+  //   </section>
+  // );
 
   return (
-    <div className="min-h-screen bg-red-300 -to-br from-gray-50 to-gray-100 p-4 md:p-6">
+    <div className="min-h-screen from-gray-50 to-gray-100 p-4 md:p-6">
       {/* Toast Component */}
       {showToast && (
         <Toast
@@ -2323,22 +2323,8 @@ const AgentRecognition = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Badges Button - Now opens My Achievements Modal */}
+            
               <EmployeeBadges currentUserId={currentUserId} allPosts={posts} />
-
-              {/* Refresh Button */}
-              <button
-                onClick={handleRefresh}
-                disabled={refreshing}
-                className="p-2.5 bg-white border border-gray-300 hover:border-red-300 text-gray-700 hover:text-red-600 rounded-xl font-medium transition-all flex items-center gap-2 hover:shadow-md"
-                title="Refresh"
-              >
-                {refreshing ? (
-                  <Loader size={18} className="animate-spin" />
-                ) : (
-                  <RefreshCw size={18} />
-                )}
-              </button>
             </div>
           </div>
 
@@ -2462,11 +2448,9 @@ const AgentRecognition = () => {
               </>
             )}
           </div>
-
-          {/* Right Column */}
-          <div className="space-y-8">
-            {/* Monthly Highlights Card */}
-            <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-2xl p-5 text-white shadow-lg">
+          
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl border border-light shadow-sm p-5">
               <h3 className="text-xl font-bold mb-4 flex items-center">
                 <BarChart3 className="mr-2" size={22} />
                 {getCurrentMonth()} Highlights
@@ -2635,27 +2619,6 @@ const AgentRecognition = () => {
               </div>
             </div>
           </div>
-        </div>
-
-        <div className="mt-12 pt-8 border-t border-light text-center">
-          <div className="flex flex-wrap gap-6 justify-center mb-4">
-            {categories.slice(0, 6).map((category) => (
-              <button
-                key={category.id}
-                onClick={() => {
-                  setActiveCategory(category.name);
-                  setCurrentPage(1);
-                }}
-                className="text-gray-600 hover:text-red-600 text-sm font-medium transition-colors hover:underline"
-              >
-                {category.name}
-              </button>
-            ))}
-          </div>
-          <p className="text-sm text-gray-500">
-            Celebrate excellence • Recognize achievements • Download
-            certificates • View history
-          </p>
         </div>
       </div>
     </div>
