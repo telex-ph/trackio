@@ -278,10 +278,19 @@ const SharedMyTeamLeave = () => {
         isApprovedByHR: false,
       };
 
+      const { data: existingLeave } = await api.get(`/leave/${editingId}`);
+
+      await api.post("/auditlogs", {
+        timestamp: today,
+        action: "update",
+        before: { ...existingLeave },
+        after: { ...existingLeave, ...payload },
+        collection: "leave"
+      });
+
       await api.put(`/leave/${editingId}`, payload);
 
       showNotification("Leave approved!", "success");
-
       resetForm();
       fetchLeaves();
     } catch (error) {
@@ -308,6 +317,16 @@ const SharedMyTeamLeave = () => {
         isReadByApprover: true,
         isApprovedBySupervisor: false,
       };
+
+      const { data: existingLeave } = await api.get(`/leave/${editingId}`);
+
+      await api.post("/auditlogs", {
+        timestamp: today,
+        action: "update",
+        before: { ...existingLeave },
+        after: { ...existingLeave, ...payload },
+        collection: "leave"
+      });
 
       await api.put(`/leave/${editingId}`, payload);
       showNotification("Leave rejected.", "success");
