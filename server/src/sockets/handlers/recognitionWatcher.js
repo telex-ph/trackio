@@ -427,9 +427,6 @@ export default async function recognitionWatcher(io) {
       }
     };
 
-    // Check scheduled posts every 30 seconds
-    const scheduleCheckInterval = setInterval(checkScheduledPosts, 30000);
-
     // Initial check on startup
     checkScheduledPosts();
 
