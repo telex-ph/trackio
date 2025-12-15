@@ -281,6 +281,16 @@ const SharedMyOffences = () => {
         explanationDateTime: now.toISOString(),
       };
 
+      const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
+
+      await api.post("/auditlogs", {
+        timestamp: today,
+        action: "update",
+        before: { ...existingOffense },
+        after: { ...existingOffense, ...payload },
+        collection: "offense-ir",
+      });
+
       await api.put(`/offenses/${editingId}`, payload);
 
       showNotification("Explanation submitted successfully!", "success");
@@ -321,6 +331,16 @@ const SharedMyOffences = () => {
         explanationDateTime: now.toISOString(),
       };
 
+      const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
+
+      await api.post("/auditlogs", {
+        timestamp: today,
+        action: "update",
+        before: { ...existingOffense },
+        after: { ...existingOffense, ...payload },
+        collection: "offense-coaching",
+      });
+
       await api.put(`/offenses/${editingId}`, payload);
 
       showNotification("Explanation submitted successfully!", "success");
@@ -353,6 +373,16 @@ const SharedMyOffences = () => {
         acknowledgedDateTime: now.toISOString(),
       };
 
+      const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
+
+      await api.post("/auditlogs", {
+        timestamp: today,
+        action: "update",
+        before: { ...existingOffense },
+        after: { ...existingOffense, ...payload },
+        collection: "offense-ir",
+      });
+
       await api.put(`/offenses/${editingId}`, payload);
       showNotification("Case has been acknowledged.", "success");
       resetForm();
@@ -380,6 +410,16 @@ const SharedMyOffences = () => {
         isReadByRespondant: true,
         acknowledgedDateTime: now.toISOString(),
       };
+
+      const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
+
+      await api.post("/auditlogs", {
+        timestamp: today,
+        action: "update",
+        before: { ...existingOffense },
+        after: { ...existingOffense, ...payload },
+        collection: "offense-coaching",
+      });
 
       await api.put(`/offenses/${editingId}`, payload);
       showNotification("Case has been acknowledged.", "success");
