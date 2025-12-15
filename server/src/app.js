@@ -12,7 +12,6 @@ import accountRoutes from "../src/routes/accountRoutes.js";
 import attendanceRoutes from "../src/routes/attendanceRoutes.js";
 import announcementRoutes from "../src/routes/announcementRoutes.js";
 import recognitionRoutes from "../src/routes/recognitionRoutes.js";
-import recognitionRoutes from "../src/routes/recognitionRoutes.js";
 import absenceRoutes from "../src/routes/absenceRoutes.js";
 import mediaRoutes from "../src/routes/mediaRoutes.js";
 import requestRoutes from "../src/routes/requestRoutes.js";
@@ -24,16 +23,10 @@ import biometricRoute from "./routes/biometricRoute.js";
 import leaveRoutes from "./routes/leaveRoutes.js";
 import auditlogsRoutes from "./routes/auditlogsRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
-import biometricRoute from "./routes/biometricRoute.js";
-import leaveRoutes from "./routes/leaveRoutes.js";
-import uploadRoutes from "./routes/uploadRoutes.js";
 import webhook from "./utils/webhook.js";
 
 dotenv.config();
-dotenv.config();
 const app = express();
-
-// CORS (should come before routes)
 
 // CORS (should come before routes)
 app.use(
@@ -61,27 +54,11 @@ app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(express.text({ type: "*/*", limit: "50mb" }));
 
 // Other routes
-); 
-
-// Cookie parser
-app.use(cookieParser());
-
-// --- IMPORTANT ---
-// Register /api/upload BEFORE body parsers
-app.use("/api/upload", uploadRoutes);
-
-// Body parsers (JSON, URL-encoded, text)
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ extended: true, limit: "50mb" }));
-app.use(express.text({ type: "*/*", limit: "50mb" }));
-
-// Other routes
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/accounts", accountRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/announcements", announcementRoutes);
-app.use("/api/recognition", recognitionRoutes);
 app.use("/api/recognition", recognitionRoutes);
 app.use("/api/absence", absenceRoutes);
 app.use("/api/media", mediaRoutes);
@@ -93,10 +70,7 @@ app.use("/api/server", serverRoutes);
 app.use("/api/biometric", biometricRoute);
 app.use("/api/leave", leaveRoutes);
 app.use("/api/auditlogs", auditlogsRoutes);
-app.use("/api/biometric", biometricRoute);
-app.use("/api/leave", leaveRoutes);
 
-// Health check
 // Health check
 app.get("/", async (req, res) => {
   res.json({
@@ -107,4 +81,3 @@ app.get("/", async (req, res) => {
 });
 
 export default app;
-
