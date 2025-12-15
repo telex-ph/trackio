@@ -20,6 +20,7 @@ import LeaveForm from "../../components/leave/LeaveForm";
 import { fetchUserById } from "../../store/stores/getUserById";
 import LeaveDetails from "../../components/leave/LeaveDetails";
 import socket from "../../utils/socket";
+import SCHEDULE from "../../../../server/constants/schedule";
 
 const Notification = ({ message, type, onClose }) => {
   const [isVisible, setIsVisible] = useState(true);
@@ -234,6 +235,11 @@ const SharedCreateApplyLeave = () => {
       !formData.endDate ||
       !formData.remarks
     ) {
+      showNotification("Please fill out the required forms.", "error");
+      return;
+    }
+
+    if (formData.leaveType === SCHEDULE.SICK_LEAVE && !selectedFile) {
       showNotification("Please fill out the required forms.", "error");
       return;
     }
