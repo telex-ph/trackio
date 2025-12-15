@@ -185,7 +185,9 @@ const LeaveForm = ({
         {/* Upload Leave Section */}
         <div className="space-y-2">
           <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-            Upload file
+            {formData.leaveType === SCHEDULE.SICK_LEAVE
+              ? "Upload Medical Certificate *"
+              : "Upload file"}
           </label>
           {selectedFile ? (
             <div className="border-2 border-dashed rounded-2xl p-4 border-green-400 bg-green-50">
