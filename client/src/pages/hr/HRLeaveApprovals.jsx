@@ -276,11 +276,21 @@ const HRLeaveApprovals = () => {
         isApprovedByHR: true,
       };
 
+      const { data: existingLeave } = await api.get(`/leave/${editingId}`);
+
+      await api.post("/auditlogs", {
+        timestamp: today,
+        action: "update",
+        before: { ...existingLeave },
+        after: { ...existingLeave, ...payload },
+        collection: "leave",
+      });
+
       await api.put(`/leave/${editingId}`, payload);
 
       const { data: selectedLeave } = await api.get(`/leave/${editingId}`);
 
-      const leaveStart = selectedLeave.startDate; // Example: "2025-12-20"
+      const leaveStart = selectedLeave.startDate;
       const leaveEnd = selectedLeave.endDate;
 
       let formattedShiftStart = DateTime.fromISO(leaveStart);
@@ -342,6 +352,16 @@ const HRLeaveApprovals = () => {
         isApprovedBySupervisor: true,
         isApprovedByHR: false,
       };
+
+      const { data: existingLeave } = await api.get(`/leave/${editingId}`);
+
+      await api.post("/auditlogs", {
+        timestamp: today,
+        action: "update",
+        before: { ...existingLeave },
+        after: { ...existingLeave, ...payload },
+        collection: "leave",
+      });
 
       await api.put(`/leave/${editingId}`, payload);
       showNotification("Leave rejected.", "success");
