@@ -28,7 +28,7 @@ async function handleUpload(req, res, folder) {
     }
 
     const originalName = req.file.originalname;
-    const ext = path.extname(originalName); // .png / .pdf / .mp4
+    const ext = path.extname(originalName);
     const baseName = path.basename(originalName, ext);
 
     // Ensures uniqueness (prevents overwrite)
