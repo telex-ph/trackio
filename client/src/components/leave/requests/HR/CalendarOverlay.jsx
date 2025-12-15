@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -8,12 +8,6 @@ const CalendarOverlay = ({
   onChange,
   isViewMode,
 }) => {
-  const ADVANCE_LEAVE_TYPES = [
-    "parental leave",
-    "vacation leave",
-    "leave without pay",
-  ];
-
   useEffect(() => {
     if (!isViewMode) return;
 
