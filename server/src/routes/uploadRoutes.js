@@ -16,6 +16,8 @@ const folderMap = {
   mom: "trackio/offense/MOM",
   nda: "trackio/offense/NDA",
   leave: "trackio/leave",
+  announcement: "trackio/announcement",
+  recognition: "trackio/recognition",
 };
 
 // Reusable upload handler
@@ -26,7 +28,7 @@ async function handleUpload(req, res, folder) {
     }
 
     const originalName = req.file.originalname;
-    const ext = path.extname(originalName); // .png / .pdf / .mp4
+    const ext = path.extname(originalName);
     const baseName = path.basename(originalName, ext);
 
     // Ensures uniqueness (prevents overwrite)
@@ -69,5 +71,6 @@ router.post("/:type", upload.single("file"), async (req, res) => {
 
   handleUpload(req, res, folder);
 });
+
 
 export default router;

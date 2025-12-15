@@ -7,10 +7,6 @@ const CalendarOverlay = ({
   endDate,
   onChange,
   isViewMode,
-  blockedRanges,
-  leaves = [],
-  leaveType,
-  onView,
 }) => {
   const ADVANCE_LEAVE_TYPES = [
     "parental leave",
@@ -39,31 +35,11 @@ const CalendarOverlay = ({
 
   const today = new Date();
 
-  //Detect booked leave
+  //Detect booked leave helper
   const normalizeDate = (date) => {
     const dates = new Date(date);
     dates.setHours(0, 0, 0, 0);
     return dates;
-  };
-
-  const getStatusForDate = (date) => {
-    if (!blockedRanges || blockedRanges.length === 0) return null;
-
-    const todayMidnight = normalizeDate(new Date());
-    const dates = normalizeDate(date);
-
-    return (
-      blockedRanges
-        .filter((range) => {
-          const end = normalizeDate(range.end);
-          return end >= todayMidnight;
-        })
-        .find((range) => {
-          const start = normalizeDate(range.start);
-          const end = normalizeDate(range.end);
-          return dates >= start && dates <= end;
-        })?.status || null
-    );
   };
 
   today.setHours(0, 0, 0, 0);
@@ -140,62 +116,6 @@ const CalendarOverlay = ({
     return days;
   };
 
-  const handleDateClick = (date) => {
-    if (isBeforeToday(date)) return;
-
-    const dates = normalizeDate(date);
-
-    // First, check if the clicked date is part of an existing leave or blocked range
-    const itemForDate =
-      leaves.find((leave) => {
-        const start = normalizeDate(leave.startDate);
-        const end = normalizeDate(leave.endDate);
-        return dates >= start && dates <= end;
-      }) ||
-      blockedRanges.find((range) => {
-        const start = normalizeDate(range.start);
-        const end = normalizeDate(range.end);
-        return dates >= start && dates <= end;
-      });
-
-    if (itemForDate) {
-      // If we are viewing or clicking an existing leave, open the view
-      onView(itemForDate._id ? itemForDate : itemForDate.id);
-    } else if (!isViewMode) {
-      // If no leave exists and not in view mode, select the date for new leave
-      if (!selectedStart || (selectedStart && selectedEnd)) {
-        setSelectedStart(dates);
-        setSelectedEnd(null);
-        onChange({ startDate: formatDate(dates), endDate: "" });
-      } else if (selectedStart && !selectedEnd) {
-        // Complete the range
-        const start = selectedStart < dates ? selectedStart : dates;
-        const end = selectedStart > dates ? selectedStart : dates;
-        setSelectedStart(start);
-        setSelectedEnd(end);
-        onChange({ startDate: formatDate(start), endDate: formatDate(end) });
-      }
-    }
-  };
-
-  const isBeforeToday = (date) => {
-    const dates = normalizeDate(date);
-
-    // Always block past dates
-    if (dates < today) return true;
-
-    // If restricted leave is selected, block dates earlier than 30 days from now
-    if (ADVANCE_LEAVE_TYPES.includes(leaveType)) {
-      const minAllowed = new Date();
-      minAllowed.setDate(minAllowed.getDate() + 30);
-      minAllowed.setHours(0, 0, 0, 0);
-
-      return dates < minAllowed;
-    }
-
-    return false; // Open dates for normal leave types
-  };
-
   const isInRange = (date) => {
     if (!selectedStart) return false;
     const end = selectedEnd || hoverDate;
@@ -235,7 +155,6 @@ const CalendarOverlay = ({
           ◀
         </button>
 
-        {/* Current Month & Year */}
         <span className="text-gray-800 font-semibold">
           {currentMonth.toLocaleString("default", {
             month: "long",
@@ -262,6 +181,7 @@ const CalendarOverlay = ({
         </button>
       </div>
 
+      {/* Week Days */}
       <div className="grid grid-cols-7 text-center font-medium text-gray-500 mb-1 select-none">
         {WEEK_DAYS.map((dates) => (
           <div key={dates} className="text-sm py-1">
@@ -279,14 +199,10 @@ const CalendarOverlay = ({
           const isEnd =
             selectedEnd && date.toDateString() === selectedEnd.toDateString();
           const inRange = isInRange(date);
-          const beforeToday = isBeforeToday(date);
-
-          const status = getStatusForDate(date);
 
           return (
             <button
               key={idx}
-              onClick={() => handleDateClick(date)}
               onMouseEnter={() => setHoverDate(date)}
               onMouseLeave={() => setHoverDate(null)}
               className={`
@@ -294,27 +210,6 @@ const CalendarOverlay = ({
     aspect-square outline-none focus:outline-none focus:ring-0 cursor-pointer
     ${currentMonth ? "text-gray-700" : "text-gray-300 text-xs"}
     ${isToday ? "border-2 border-red-500 font-semibold" : ""}
-    ${
-      beforeToday &&
-      !leaves.some((l) => {
-        const start = normalizeDate(l.startDate);
-        const end = normalizeDate(l.endDate);
-        const dates = normalizeDate(date);
-        return dates >= start && dates <= end;
-      })
-        ? "opacity-40 cursor-not-allowed"
-        : "hover:bg-red-100"
-    }
-    ${
-      ["For approval", "Approved by TL"].includes(status)
-        ? "bg-yellow-200 text-yellow-900 opacity-80"
-        : ""
-    }
-    ${
-      status === "Approved by HR"
-        ? "bg-green-200 text-green-900 opacity-80"
-        : ""
-    }
   `}
             >
               {inRange && !isStart && !isEnd && (
@@ -336,7 +231,7 @@ const CalendarOverlay = ({
           );
         })}
       </div>
- 
+
       {(selectedStart || selectedEnd) && (
         <p className="mt-2 mb-2 text-gray-700 text-sm font-medium text-center">
           Selected: {selectedStart ? formatDate(selectedStart) : "—"}{" "}

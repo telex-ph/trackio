@@ -10,6 +10,8 @@ import {
   GalleryVerticalEnd,
   Users2Icon,
   Ticket,
+  CalendarPlus,
+  FileCheck,
 } from "lucide-react";
 import SidebarLink from "../sidebars/SidebarLink";
 import CustomCollapse from "../sidebars/CustomCollapse";
@@ -97,6 +99,29 @@ const HRSidebar = ({
         label="Reported IR"
         isCollapsed={isCollapsed}
         badge={!isCollapsed ? unreadIR : 0}
+      />
+    </CustomCollapse>
+
+    <CustomCollapse
+      icon={<Clock className="w-5 h-5" />}
+      label="Leave"
+      isCollapsed={isCollapsed}
+      open={activeDropdown === "leaves"}
+      onToggle={() =>
+        setActiveDropdown(activeDropdown === "leaves" ? null : "leaves")
+      }
+    >
+      <SidebarLink
+        to={`/human-resources/apply-leave`}
+        icon={CalendarPlus}
+        label="Apply Leave"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to={`/human-resources/for-approvals`}
+        icon={FileCheck}
+        label="For approvals"
+        isCollapsed={isCollapsed}
       />
     </CustomCollapse>
 

@@ -11,6 +11,7 @@ import {
   Eye,
   Download,
 } from "lucide-react";
+import SCHEDULE from "../../../../server/constants/schedule";
 
 const LeaveForm = ({
   formData,
@@ -26,7 +27,15 @@ const LeaveForm = ({
   isUploading,
 }) => {
   const onFormChange = ({ target }) => {
-    setFormData({ ...formData, [target.name]: target.value });
+    const updatedForm = { ...formData, [target.name]: target.value };
+
+    // Clear dates if leaveType changes
+    if (target.name === "leaveType") {
+      updatedForm.startDate = "";
+      updatedForm.endDate = "";
+    }
+
+    setFormData(updatedForm);
   };
 
   const existingLeave = formData.leave || [];
@@ -95,21 +104,25 @@ const LeaveForm = ({
                 })
               }
               className="w-full p-3 sm:p-4 bg-gray-50 border-2 border-gray-200 rounded-xl
-      focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800
-      text-sm sm:text-base"
+  focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800
+  text-sm sm:text-base"
             >
               <option value="" disabled>
                 Select a type
               </option>
-              <option value="Sick Leave">Sick Leave</option>
-              <option value="Vacation Leave">Vacation Leave</option>
-              <option value="Maternity Leave">Maternity Leave</option>
-              <option value="Paternity Leave">Paternity Leave</option>
-              <option value="Parental Leave">
+
+              <option value={SCHEDULE.SICK_LEAVE}>Sick Leave</option>
+              <option value={SCHEDULE.VACATION_LEAVE}>Vacation Leave</option>
+              <option value={SCHEDULE.MATERNITY_LEAVE}>Maternity Leave</option>
+              <option value={SCHEDULE.PATERNITY_LEAVE}>Paternity Leave</option>
+              <option value={SCHEDULE.SOLO_PARENT_LEAVE}>
                 Parental Leave: Solo Parent
               </option>
-              <option value="Leave Without Pay">Leave Without Pay</option>
-              <option value="Emergency Leave">Emergency Leave</option>
+              <option value={SCHEDULE.LIVE_WITHOUT_PAY}>
+                Leave Without Pay
+              </option>
+              <option value={SCHEDULE.EMERGENCY_LEAVE}>Emergency Leave</option>
+
               <option value="Other">Other</option>
             </select>
           </div>

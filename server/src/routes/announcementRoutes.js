@@ -8,7 +8,9 @@ import {
   deleteAnnouncement,
   addView,
   addAcknowledgement,
-  removeAcknowledgement
+  removeAcknowledgement,
+  approveAnnouncement,
+  cancelApproval,
 } from "../controllers/announcementControllers.js";
 
 // GET all announcements
@@ -19,9 +21,15 @@ router.post("/", addAnnouncement);
 
 // PUT (Update) an existing announcement
 router.put("/:id", updateAnnouncement);
-
+router.patch("/:id", updateAnnouncement);
 // DELETE an announcement
 router.delete("/:id", deleteAnnouncement);
+
+// POST - Approve announcement (New Route)
+router.post("/:id/approve", approveAnnouncement);
+
+router.post("/:id/cancel-approval", cancelApproval);
+router.patch("/:id/cancel-approval", cancelApproval);
 
 // POST - Add view to announcement
 router.post("/:id/view", addView);

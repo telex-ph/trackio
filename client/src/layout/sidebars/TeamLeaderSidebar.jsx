@@ -11,6 +11,9 @@ import {
   GalleryVerticalEnd,
   Users2Icon,
   Ticket,
+  CalendarPlus,
+  FileCheck,
+  CalendarClock,
 } from "lucide-react";
 import SidebarLink from "../sidebars/SidebarLink";
 import CustomCollapse from "../sidebars/CustomCollapse";
@@ -127,6 +130,30 @@ const TeamLeaderSidebar = ({
           label="My Offenses"
           isCollapsed={isCollapsed}
           badge={!isCollapsed ? totalUnread : 0}
+        />
+      </CustomCollapse>
+
+      <CustomCollapse
+        icon={<CalendarClock className="w-5 h-5" />}
+        label="Leave"
+        isCollapsed={isCollapsed}
+        open={activeDropdown === "leave"}
+        onToggle={() =>
+          setActiveDropdown(activeDropdown === "leave" ? null : "leave")
+        }
+        badge={totalUnread}
+      >
+        <SidebarLink
+          to="/team-leader/apply-leave"
+          icon={CalendarPlus}
+          label="Apply Leave"
+          isCollapsed={isCollapsed}
+        />
+        <SidebarLink
+          to={`/team-leader/my-team-requests`}
+          icon={FileCheck}
+          label="Team Requests"
+          isCollapsed={isCollapsed}
         />
       </CustomCollapse>
     </div>
