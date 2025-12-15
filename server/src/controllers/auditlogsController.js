@@ -21,9 +21,19 @@ export const addLog = async (req, res) => {
         "rejectedByHRDate",
         "createdAt",
         "updatedAt",
+        "dateOfMistake",
+        "coachingDate",
+        "explanationDateTime",
       ];
 
-      const objectIdFields = ["_id", "isRequestedToId", "createdById"];
+      const objectIdFields = [
+        "_id",
+        "isRequestedToId", 
+        "createdById", 
+        "respondantId", 
+        "coachId", 
+        "reportedById"
+      ];
 
       const transformed = { ...entry };
 
