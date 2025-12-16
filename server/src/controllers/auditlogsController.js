@@ -32,15 +32,14 @@ export const addLog = async (req, res) => {
         "momSentDateTime",
         "ndaSentDateTime",
         "acknowledgedDateTime",
-        
       ];
 
       const objectIdFields = [
         "_id",
-        "isRequestedToId", 
-        "createdById", 
-        "respondantId", 
-        "coachId", 
+        "isRequestedToId",
+        "createdById",
+        "respondantId",
+        "coachId",
         "reportedById"
       ];
 
