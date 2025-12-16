@@ -317,7 +317,6 @@ const SharedCreateOffences = () => {
         );
 
         await api.post("/auditlogs", {
-          timestamp: today,
           action: "update",
           before: { ...existingOffense },
           after: { ...existingOffense, ...payload },
@@ -330,7 +329,6 @@ const SharedCreateOffences = () => {
         const offenseResponse = await api.post("/offenses", payload);
 
         await api.post("/auditlogs", {
-          timestamp: today,
           action: "create",
           after: { ...offenseResponse.data },
           collection: "offense-ir",
@@ -396,7 +394,6 @@ const SharedCreateOffences = () => {
       const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
 
       await api.post("/auditlogs", {
-        timestamp: today,
         action: "update",
         before: { ...existingOffense },
         after: {
@@ -437,7 +434,6 @@ const SharedCreateOffences = () => {
       const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
 
       await api.post("/auditlogs", {
-        timestamp: today,
         action: "update",
         before: { ...existingOffense },
         after: { ...existingOffense, ...payload },
@@ -511,7 +507,6 @@ const SharedCreateOffences = () => {
         );
 
         await api.post("/auditlogs", {
-          timestamp: today,
           action: "update",
           before: { ...existingOffense },
           after: { ...existingOffense, ...payload },
@@ -524,7 +519,6 @@ const SharedCreateOffences = () => {
         const offenseResponse = await api.post("/offenses", payload);
 
         await api.post("/auditlogs", {
-          timestamp: today,
           action: "create",
           after: { ...offenseResponse.data },
           collection: "offense-coaching",
@@ -616,7 +610,6 @@ const SharedCreateOffences = () => {
         );
 
         await api.post("/auditlogs", {
-          timestamp: today,
           action: "update",
           before: { ...existingOffense },
           after: { ...existingOffense, ...payload },
@@ -627,7 +620,6 @@ const SharedCreateOffences = () => {
         showNotification("Coaching log updated!", "success");
       } else {
         await api.post("/auditlogs", {
-          timestamp: today,
           action: "create",
           after: { ...payload },
           collection: "offense-coaching",
@@ -792,7 +784,6 @@ const SharedCreateOffences = () => {
       const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
 
       await api.post("/auditlogs", {
-        timestamp: today,
         action: "delete",
         before: { ...existingOffense },
         collection:

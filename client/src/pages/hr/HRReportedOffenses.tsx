@@ -332,7 +332,6 @@ const HRReportedOffenses = () => {
       const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
 
       await api.post("/auditlogs", {
-        timestamp: today,
         action: "update",
         before: { ...existingOffense },
         after: { ...existingOffense, ...payload },
@@ -379,7 +378,6 @@ const HRReportedOffenses = () => {
       const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
 
       await api.post("/auditlogs", {
-        timestamp: today,
         action: "update",
         before: { ...existingOffense },
         after: { ...existingOffense, ...payload },
@@ -439,7 +437,6 @@ const HRReportedOffenses = () => {
       const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
 
       await api.post("/auditlogs", {
-        timestamp: today,
         action: "update",
         before: { ...existingOffense },
         after: { ...existingOffense, ...payload },
@@ -501,7 +498,6 @@ const HRReportedOffenses = () => {
       const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
 
       await api.post("/auditlogs", {
-        timestamp: today,
         action: "update",
         before: { ...existingOffense },
         after: { ...existingOffense, ...payload },
@@ -543,7 +539,6 @@ const HRReportedOffenses = () => {
       const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
 
       await api.post("/auditlogs", {
-        timestamp: today,
         action: "update",
         before: { ...existingOffense },
         after: { ...existingOffense, ...payload },

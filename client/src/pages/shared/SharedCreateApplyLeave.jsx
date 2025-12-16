@@ -299,7 +299,6 @@ const SharedCreateApplyLeave = () => {
       }
 
       await api.post("/auditlogs", {
-        timestamp: today,
         action: "create",
         after: { ...payload },
         collection: "leave",
