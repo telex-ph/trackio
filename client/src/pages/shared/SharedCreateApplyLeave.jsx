@@ -244,6 +244,34 @@ const SharedCreateApplyLeave = () => {
       return;
     }
 
+    const response = await api.get("/leave");
+
+    const existingLeaves = response.data || [];
+
+    const newStart = new Date(formData.startDate);
+    const newEnd = new Date(formData.endDate);
+
+    const hasConflict = existingLeaves.some((leave) => {
+      const existingStart = new Date(leave.startDate);
+      const existingEnd = new Date(leave.endDate);
+
+      const isOverlapping = newStart <= existingEnd && newEnd >= existingStart;
+
+      const isRestrictedStatus =
+        leave.status === "For approval" ||
+        leave.isApprovedBySupervisor === true;
+
+      return isOverlapping && isRestrictedStatus;
+    });
+
+    if (hasConflict) {
+      showNotification(
+        "You already have a leave requested or approved within the selected date range.",
+        "error"
+      );
+      return;
+    }
+
     try {
       setIsUploading(true);
 
