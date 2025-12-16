@@ -362,6 +362,10 @@ class User {
   static async getUserAccountsById(userId) {
     if (!userId) throw new Error("User ID is required");
 
+    if (!ObjectId.isValid(userId)) {
+      throw new Error(`Invalid userId: ${userId}`);
+    }
+
     const db = await connectDB();
     const users = db.collection("users");
 
