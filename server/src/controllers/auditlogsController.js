@@ -24,6 +24,15 @@ export const addLog = async (req, res) => {
         "dateOfMistake",
         "coachingDate",
         "explanationDateTime",
+        "dateOfOffense",
+        "nteSentDateTime",
+        "hearingDate",
+        "schedHearingDateTime",
+        "afterHearingDateTime",
+        "momSentDateTime",
+        "ndaSentDateTime",
+        "acknowledgedDateTime",
+        
       ];
 
       const objectIdFields = [
@@ -51,6 +60,8 @@ export const addLog = async (req, res) => {
 
       return transformed;
     };
+
+    ["agentName", "reporterName"].forEach((field) => delete auditLogData[field]);
 
     const newAuditLogData = {
       ...auditLogData,
