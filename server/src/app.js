@@ -40,7 +40,7 @@ app.use(
     ],
     credentials: true,
   })
-); 
+);
 
 // Cookie parser
 app.use(cookieParser());
@@ -58,7 +58,7 @@ app.use(express.text({ type: "*/*", limit: "50mb" }));
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/accounts", accountRoutes);
-app.use("/api/course", courseRoutes);
+app.use("/api/courses", courseRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use("/api/recognition", recognitionRoutes);
