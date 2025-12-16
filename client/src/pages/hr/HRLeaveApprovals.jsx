@@ -279,7 +279,6 @@ const HRLeaveApprovals = () => {
       const { data: existingLeave } = await api.get(`/leave/${editingId}`);
 
       await api.post("/auditlogs", {
-        timestamp: today,
         action: "update",
         before: { ...existingLeave },
         after: { ...existingLeave, ...payload },
@@ -356,7 +355,6 @@ const HRLeaveApprovals = () => {
       const { data: existingLeave } = await api.get(`/leave/${editingId}`);
 
       await api.post("/auditlogs", {
-        timestamp: today,
         action: "update",
         before: { ...existingLeave },
         after: { ...existingLeave, ...payload },

@@ -189,23 +189,6 @@ const HR_OffenseDetails = ({
 
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                Offense Level
-              </label>
-              {/* This could be a <select> if you have predefined levels */}
-              <input
-                type="text"
-                name="offenseLevel"
-                value="Feature coming soon!"
-                onChange={onFormChange}
-                className={inputStyle}
-                disabled={true}
-              />
-            </div>
-          </div>
-
-          <div className="gap-4 sm:gap-6">
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                 Date of Offense
               </label>
               <div className="relative">

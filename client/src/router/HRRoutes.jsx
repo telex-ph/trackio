@@ -25,10 +25,12 @@ import TeamLeaderOffenses from "../pages/team-leader/TeamLeaderOffenses";
 import SharedCreateApplyLeave from "../pages/shared/SharedCreateApplyLeave";
 import HRLeaveApprovals from "../pages/hr/HRLeaveApprovals";
 import SharedCourse from "../pages/shared/SharedCourse";
+import AdminAnnouncement from "../pages/admin/AdminAnnouncement";
+import AdminDashboard from "../pages/admin/AdminDashboard";
 
 const HR_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
-  { path: "dashboard", element: <OMDashboard /> },
+  { path: "dashboard", element: <AdminDashboard /> },
   { path: "attendance", element: <SharedAttendance /> },
   { path: "schedule", element: <SharedSchedule role={Roles.HR} /> },
   {
@@ -36,6 +38,7 @@ const HR_ROUTES = [
     element: <SharedViewSchedule role={Roles.HR} />,
   },
   { path: "ticket", element: <SharedTicket /> },
+  { path: "announcement", element: <AdminAnnouncement /> },
   {
     path: "tracking",
     element: <TrackingLayout role={Roles.HR} />,

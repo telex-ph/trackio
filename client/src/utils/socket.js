@@ -9,7 +9,7 @@ const socket = io(SOCKET_URL, {
 });
 
 socket.on("connect", () => {
-  console.log("Socket connected with id:", socket.id);
+  // console.log("Socket connected with id:", socket.id);
 });
 
 socket.on("connect_error", (err) => {

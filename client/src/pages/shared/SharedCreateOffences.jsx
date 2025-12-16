@@ -312,10 +312,27 @@ const SharedCreateOffences = () => {
       }
 
       if (panelMode === "edit") {
+        const { data: existingOffense } = await api.get(
+          `/offenses/${editingId}`
+        );
+
+        await api.post("/auditlogs", {
+          action: "update",
+          before: { ...existingOffense },
+          after: { ...existingOffense, ...payload },
+          collection: "offense-ir",
+        });
+
         await api.put(`/offenses/${editingId}`, payload);
         showNotification("Offense updated!", "success");
       } else {
-        await api.post("/offenses", payload);
+        const offenseResponse = await api.post("/offenses", payload);
+
+        await api.post("/auditlogs", {
+          action: "create",
+          after: { ...offenseResponse.data },
+          collection: "offense-ir",
+        });
         showNotification("Offense created!", "success");
       }
 
@@ -332,6 +349,7 @@ const SharedCreateOffences = () => {
     panelMode,
     editingId,
     selectedFile,
+    today,
     resetFormAndPanel,
     fetchTeamOffenses,
     showNotification,
@@ -373,6 +391,18 @@ const SharedCreateOffences = () => {
         public_id: uploadRes.data.public_id,
       };
 
+      const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
+
+      await api.post("/auditlogs", {
+        action: "update",
+        before: { ...existingOffense },
+        after: {
+          ...existingOffense,
+          evidence: [...(formData.evidence || []), newEvidence],
+        },
+        collection: "offense-ir",
+      });
+
       await api.put(`/offenses/${editingId}`, {
         evidence: [...(formData.evidence || []), newEvidence],
       });
@@ -400,6 +430,15 @@ const SharedCreateOffences = () => {
         remarks: formData.remarks,
         evidence: formData.evidence,
       };
+
+      const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
+
+      await api.post("/auditlogs", {
+        action: "update",
+        before: { ...existingOffense },
+        after: { ...existingOffense, ...payload },
+        collection: "offense-ir",
+      });
 
       await api.put(`/offenses/${editingId}`, payload);
       showNotification("Offense updated successfully!", "success");
@@ -463,14 +502,31 @@ const SharedCreateOffences = () => {
       }
 
       if (panelMode === "edit") {
+        const { data: existingOffense } = await api.get(
+          `/offenses/${editingId}`
+        );
+
+        await api.post("/auditlogs", {
+          action: "update",
+          before: { ...existingOffense },
+          after: { ...existingOffense, ...payload },
+          collection: "offense-coaching",
+        });
+
         await api.put(`/offenses/${editingId}`, payload);
         showNotification("Coaching log updated!", "success");
       } else {
-        await api.post("/offenses", payload);
+        const offenseResponse = await api.post("/offenses", payload);
+
+        await api.post("/auditlogs", {
+          action: "create",
+          after: { ...offenseResponse.data },
+          collection: "offense-coaching",
+        });
+
         showNotification("Coaching log created!", "success");
       }
 
-      // Reset form and refresh list
       resetFormAndPanel();
       fetchTeamOffenses();
     } catch (err) {
@@ -480,6 +536,7 @@ const SharedCreateOffences = () => {
       setIsUploading(false);
     }
   }, [
+    today,
     formData,
     panelMode,
     editingId,
@@ -548,9 +605,26 @@ const SharedCreateOffences = () => {
       // 3. SUBMIT BASED ON EDIT OR CREATE
       // -----------------------------------------
       if (panelMode === "edit") {
+        const { data: existingOffense } = await api.get(
+          `/offenses/${editingId}`
+        );
+
+        await api.post("/auditlogs", {
+          action: "update",
+          before: { ...existingOffense },
+          after: { ...existingOffense, ...payload },
+          collection: "offense-coaching",
+        });
+
         await api.put(`/offenses/${editingId}`, payload);
         showNotification("Coaching log updated!", "success");
       } else {
+        await api.post("/auditlogs", {
+          action: "create",
+          after: { ...payload },
+          collection: "offense-coaching",
+        });
+
         await api.post("/offenses", payload);
         showNotification("Coaching log created!", "success");
       }
@@ -567,6 +641,7 @@ const SharedCreateOffences = () => {
       setIsUploading(false);
     }
   }, [
+    today,
     formData,
     panelMode,
     editingId,
@@ -682,8 +757,10 @@ const SharedCreateOffences = () => {
           isReadByCoach: true,
         });
         setOffenses((prev) =>
-          prev.map((o) =>
-            o._id === off._id ? { ...o, isReadByCoach: true } : o
+          prev.map((offense) =>
+            offense._id === off._id
+              ? { ...offense, isReadByCoach: true }
+              : offense
           )
         );
       } catch (err) {
@@ -703,6 +780,17 @@ const SharedCreateOffences = () => {
   const handleDelete = async () => {
     try {
       setIsUploading(true);
+
+      const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
+
+      await api.post("/auditlogs", {
+        action: "delete",
+        before: { ...existingOffense },
+        collection:
+          existingOffense.type === "COACHING"
+            ? "offense-coaching"
+            : "offense-ir",
+      });
 
       await api.delete(`/offenses/${editingId}`);
       showNotification("Deleted successfully", "success");

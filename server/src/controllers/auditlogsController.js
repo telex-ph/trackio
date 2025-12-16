@@ -21,9 +21,27 @@ export const addLog = async (req, res) => {
         "rejectedByHRDate",
         "createdAt",
         "updatedAt",
+        "dateOfMistake",
+        "coachingDate",
+        "explanationDateTime",
+        "dateOfOffense",
+        "nteSentDateTime",
+        "hearingDate",
+        "schedHearingDateTime",
+        "afterHearingDateTime",
+        "momSentDateTime",
+        "ndaSentDateTime",
+        "acknowledgedDateTime",
       ];
 
-      const objectIdFields = ["_id", "isRequestedToId", "createdById"];
+      const objectIdFields = [
+        "_id",
+        "isRequestedToId",
+        "createdById",
+        "respondantId",
+        "coachId",
+        "reportedById"
+      ];
 
       const transformed = { ...entry };
 
@@ -41,6 +59,8 @@ export const addLog = async (req, res) => {
 
       return transformed;
     };
+
+    ["agentName", "reporterName"].forEach((field) => delete auditLogData[field]);
 
     const newAuditLogData = {
       ...auditLogData,

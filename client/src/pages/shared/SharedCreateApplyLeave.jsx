@@ -232,15 +232,50 @@ const SharedCreateApplyLeave = () => {
     if (
       !formData.leaveType ||
       !formData.startDate ||
-      !formData.endDate ||
       !formData.remarks
     ) {
       showNotification("Please fill out the required forms.", "error");
       return;
     }
 
+    let rangeEndDate;
+
+    if(!formData.endDate) {
+      rangeEndDate = formData.startDate;
+    } else {
+      rangeEndDate = formData.endDate;
+    }
+
     if (formData.leaveType === SCHEDULE.SICK_LEAVE && !selectedFile) {
       showNotification("Please fill out the required forms.", "error");
+      return;
+    }
+
+    const response = await api.get("/leave");
+
+    const existingLeaves = response.data || [];
+
+    const newStart = new Date(formData.startDate);
+    const newEnd = new Date(formData.endDate);
+
+    const hasConflict = existingLeaves.some((leave) => {
+      const existingStart = new Date(leave.startDate);
+      const existingEnd = new Date(leave.endDate);
+
+      const isOverlapping = newStart <= existingEnd && newEnd >= existingStart;
+
+      const isRestrictedStatus =
+        leave.status === "For approval" ||
+        leave.isApprovedBySupervisor === true;
+
+      return isOverlapping && isRestrictedStatus;
+    });
+
+    if (hasConflict) {
+      showNotification(
+        "You already have a leave requested or approved within the selected date range.",
+        "error"
+      );
       return;
     }
 
@@ -257,7 +292,7 @@ const SharedCreateApplyLeave = () => {
       const payload = {
         leaveType: userLeaveType,
         startDate: formData.startDate,
-        endDate: formData.endDate,
+        endDate: rangeEndDate,
         remarks: formData.remarks,
         leaveFile: formData.leave || [],
         status: "For approval",
@@ -299,7 +334,6 @@ const SharedCreateApplyLeave = () => {
       }
 
       await api.post("/auditlogs", {
-        timestamp: today,
         action: "create",
         after: { ...payload },
         collection: "leave",

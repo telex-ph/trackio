@@ -329,6 +329,15 @@ const HRReportedOffenses = () => {
         ];
       }
 
+      const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
+
+      await api.post("/auditlogs", {
+        action: "update",
+        before: { ...existingOffense },
+        after: { ...existingOffense, ...payload },
+        collection: "offense-ir",
+      });
+
       await api.put(`/offenses/${editingId}`, payload);
 
       showNotification("Offense validated. NTE sent!", "success");
@@ -365,6 +374,15 @@ const HRReportedOffenses = () => {
         witnesses,
         schedHearingDateTime: now.toISOString(),
       };
+
+      const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
+
+      await api.post("/auditlogs", {
+        action: "update",
+        before: { ...existingOffense },
+        after: { ...existingOffense, ...payload },
+        collection: "offense-ir",
+      });
 
       await api.put(`/offenses/${editingId}`, payload);
 
@@ -415,6 +433,15 @@ const HRReportedOffenses = () => {
           },
         ];
       }
+
+      const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
+
+      await api.post("/auditlogs", {
+        action: "update",
+        before: { ...existingOffense },
+        after: { ...existingOffense, ...payload },
+        collection: "offense-ir",
+      });
 
       await api.put(`/offenses/${editingId}`, payload);
 
@@ -468,6 +495,15 @@ const HRReportedOffenses = () => {
         ];
       }
 
+      const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
+
+      await api.post("/auditlogs", {
+        action: "update",
+        before: { ...existingOffense },
+        after: { ...existingOffense, ...payload },
+        collection: "offense-ir",
+      });
+
       await api.put(`/offenses/${editingId}`, payload);
 
       showNotification("NDA uploaded!", "success");
@@ -499,6 +535,15 @@ const HRReportedOffenses = () => {
         invalidReason,
         isReadByReporter: false,
       };
+
+      const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
+
+      await api.post("/auditlogs", {
+        action: "update",
+        before: { ...existingOffense },
+        after: { ...existingOffense, ...payload },
+        collection: "offense-ir",
+      });
 
       await api.put(`/offenses/${editingId}`, payload);
       showNotification("Case rejected.", "success");

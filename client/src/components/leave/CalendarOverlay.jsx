@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import SCHEDULE from "../../../../server/constants/schedule";
 
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -13,9 +14,14 @@ const CalendarOverlay = ({
   onView,
 }) => {
   const ADVANCE_LEAVE_TYPES = [
-    "parental leave",
-    "vacation leave",
-    "leave without pay",
+    SCHEDULE.SOLO_PARENT_LEAVE,
+    SCHEDULE.VACATION_LEAVE,
+    SCHEDULE.LIVE_WITHOUT_PAY,
+  ];
+
+  const BACKDATE_ALLOWED_TYPES = [
+    SCHEDULE.SICK_LEAVE,
+    SCHEDULE.EMERGENCY_LEAVE,
   ];
 
   useEffect(() => {
@@ -180,11 +186,13 @@ const CalendarOverlay = ({
 
   const isBeforeToday = (date) => {
     const dates = normalizeDate(date);
+    
+    if (BACKDATE_ALLOWED_TYPES.includes(leaveType)) {
+      return false;
+    }
 
-    // Always block past dates
     if (dates < today) return true;
 
-    // If restricted leave is selected, block dates earlier than 30 days from now
     if (ADVANCE_LEAVE_TYPES.includes(leaveType)) {
       const minAllowed = new Date();
       minAllowed.setDate(minAllowed.getDate() + 30);
@@ -193,7 +201,7 @@ const CalendarOverlay = ({
       return dates < minAllowed;
     }
 
-    return false; // Open dates for normal leave types
+    return false;
   };
 
   const isInRange = (date) => {
@@ -336,7 +344,7 @@ const CalendarOverlay = ({
           );
         })}
       </div>
- 
+
       {(selectedStart || selectedEnd) && (
         <p className="mt-2 mb-2 text-gray-700 text-sm font-medium text-center">
           Selected: {selectedStart ? formatDate(selectedStart) : "—"}{" "}
