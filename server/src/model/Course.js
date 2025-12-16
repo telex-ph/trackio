@@ -59,5 +59,18 @@ class Course {
     // Return the updated document
     return await collection.findOne({ _id: new ObjectId(id) });
   }
+
+  static async findByIdAndAddLesson(id, newLesson) {
+    const db = await connectDB();
+    const collection = await db.collection(this.#collection);
+
+    const result = await collection.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $push: { lessons: newLesson } },
+      { returnDocument: "after" }
+    );
+
+    return result;
+  }
 }
 export default Course;

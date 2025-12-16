@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { Upload, Video, X, FileUp } from "lucide-react";
 import Spinner from "../../../assets/loaders/Spinner";
+import { toast } from "react-hot-toast";
 
 const FileDrop = ({ onFileSelect }) => {
   const ref = useRef(null);
@@ -112,24 +113,14 @@ const CourseUploadModal = ({ onClose, onUpload, courseToAddTo, uploading }) => {
   const [lTitle, setLTitle] = useState(""),
     [lDesc, setLDesc] = useState("");
   const [file, setFile] = useState(null);
-  const [cId] = useState(courseToAddTo?.course?.id || "");
 
   const isLessonReady = useMemo(() => lTitle.trim() && file, [lTitle, file]);
-  const isCourseReady = useMemo(
-    () => cTitle.trim() && cDesc.trim(),
-    [cTitle, cDesc]
-  );
-  const isDisabled = useMemo(
-    () =>
-      isNewCourse
-        ? !isCourseReady || !isLessonReady
-        : !isLessonReady || (isAddingToCourse && !cId),
-    [isNewCourse, isCourseReady, isLessonReady, cId, isAddingToCourse]
-  );
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (isDisabled) {
+
+    if (!file) {
+      toast.error("Video file is required. Please select a video to upload.");
       return;
     }
 
@@ -150,7 +141,12 @@ const CourseUploadModal = ({ onClose, onUpload, courseToAddTo, uploading }) => {
           newLesson: lessonData,
           completed: false,
         }
-      : { type: "video", courseId: cId || null, newLesson: lessonData };
+      : {
+          type: "video",
+          courseId: courseToAddTo.course._id,
+          newLesson: lessonData,
+        };
+    console.log(courseToAddTo.course);
     onUpload(data);
   };
 
@@ -247,6 +243,7 @@ const CourseUploadModal = ({ onClose, onUpload, courseToAddTo, uploading }) => {
                     value={lDesc}
                     onChange={(e) => setLDesc(e.target.value)}
                     rows={1}
+                    required
                     className={InputStyle}
                     placeholder="Brief summary..."
                   />
@@ -282,12 +279,7 @@ const CourseUploadModal = ({ onClose, onUpload, courseToAddTo, uploading }) => {
               ) : (
                 <button
                   type="submit"
-                  className={`px-4 py-2 text-sm text-white rounded-lg transition ${
-                    isDisabled
-                      ? "bg-red-400 cursor-not-allowed"
-                      : "bg-red-800 hover:bg-red-700"
-                  }`}
-                  disabled={uploading}
+                  className={`px-4 py-2 text-sm text-white rounded-lg transition bg-red-800 hover:bg-red-700`}
                 >
                   {isNewCourse ? "Create Course & Upload" : "Upload Lesson"}
                 </button>

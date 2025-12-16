@@ -225,25 +225,31 @@ const VideoItem = ({ v, i, onPlay }) => (
 );
 
 const CourseCard = ({ c, onViewDetails, onOpenUpload }) => {
+  const lessons = c.lessons;
+  const overAllDuration = lessons.reduce((acc, current) => {
+    return acc + current.duration;
+  }, 0);
+
   return (
-    <div className="bg-white border border-gray-100 rounded-xl shadow-lg hover:shadow-xl transition duration-300 overflow-hidden cursor-pointer">
+    <div className="bg-white border-white rounded-xl shadow-lg hover:shadow-xl transition duration-300 overflow-hidden cursor-pointer">
       <div className="h-32 sm:h-40 bg-white relative">
         <div className="absolute inset-0 flex items-center justify-center text-4xl font-bold text-red-800">
           <BookOpen className="w-8 h-8 sm:w-10 sm:h-10" />
         </div>
         <div className="absolute bottom-2 right-2 flex items-center bg-red-900/80 text-white text-xs font-semibold px-2 py-1 rounded-full">
           <Play className="w-3 h-3 mr-1" />
-          {c.duration}
+          {Math.floor(overAllDuration)} minutes
         </div>
       </div>
       <div className="p-4">
         <h4 className="font-semibold text-lg truncate mb-1">{c.title}</h4>
+        <p>{c.description}</p>
         <div className="text-sm text-gray-500 flex items-center mb-3">
           <User className="w-4 h-4 mr-1 text-red-700" />
           <span className="text-red-800 font-medium">{c.instructor}</span>
         </div>
         <div className="flex items-center justify-between mb-3">
-          <p className="text-base font-bold text-gray-800 flex items-center text-base">
+          <p className="text-base font-bold text-gray-800 flex items-center">
             <BookOpenText className="w-4 h-4 mr-1 text-red-600" />
             {c.lessons.length} Lessons
           </p>
@@ -277,7 +283,7 @@ const CourseCard = ({ c, onViewDetails, onOpenUpload }) => {
 const CourseLessonsModal = ({ course, onClose, onPlayLesson }) => {
   if (!course) return null;
 
-  const { lessons: list, counts: count, duration, progress, title } = course;
+  const { lessons: list, duration, progress, title } = course;
   const [selectedLesson, setSelectedLesson] = useState(null);
 
   const lessonItem = (l, i) => (
@@ -340,7 +346,7 @@ const CourseLessonsModal = ({ course, onClose, onPlayLesson }) => {
             }`}
           >
             <p className="text-sm text-gray-600 border-b pb-3 mb-4 border-gray-100">
-              {count} lessons • Duration:{" "}
+              {list.length} lessons • Duration:{" "}
               <span className="text-red-800 font-bold">{duration}</span> •
               Progress:{" "}
               <span className="text-red-800 font-bold">{progress}%</span>
@@ -674,22 +680,6 @@ const VideoPlayer = ({ media, onClose }) => {
                   </video>
                 )}
               </div>
-
-              {/* {isExpanded ? (
-                <button
-                  onClick={() => setIsExpanded(false)}
-                  className="absolute top-4 right-4 z-10 w-8 h-8 sm:w-10 sm:h-10 bg-black/70 text-white rounded-full flex items-center justify-center hover:bg-red-700"
-                >
-                  <Minimize2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
-              ) : (
-                <button
-                  onClick={() => setIsExpanded(true)}
-                  className="absolute bottom-4 right-4 z-10 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-red-700"
-                >
-                  <Maximize className="w-4 h-4" />
-                </button>
-              )} */}
             </div>
           </div>
           <div className={oClass}>
@@ -754,18 +744,19 @@ const SharedCourse = () => {
   const [courses, setCourses] = useState([]);
   const [coursesLoading, setCoursesLoading] = useState(false);
 
+  const fetchCourses = async () => {
+    try {
+      setCoursesLoading(true);
+      const { data: responseCourses } = await api.get("/courses");
+      setCourses(responseCourses);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setCoursesLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        setCoursesLoading(true);
-        const { data: responseCourses } = await api.get("/courses");
-        setCourses(responseCourses);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setCoursesLoading(false);
-      }
-    };
     fetchCourses();
   }, []);
 
@@ -780,19 +771,6 @@ const SharedCourse = () => {
 
   const [uploading, setUploading] = useState(false);
 
-  const featuredCourse = mockCourses.find((c) => c.id === 4) || mockCourses[0];
-  const [activityFilter, setActivityFilter] = useState("All");
-  const filteredActivity = useMemo(
-    () =>
-      activityFilter === "Today"
-        ? mockActivity.filter(
-            (a) => a.time.includes("min ago") || a.time.includes("hr ago")
-          )
-        : mockActivity,
-    [activityFilter]
-  );
-
-  const handleAction = (a) => console.log("Action:", a);
   const playVideo = (v) => {
     setCurrentVideo(v);
     setShowLessons(false);
@@ -801,7 +779,6 @@ const SharedCourse = () => {
     setUploadContext(null);
     setShowAllInstructors(false);
     setShowAllActivity(false);
-    handleAction(`Playing: ${v.title}`);
   };
   const playLesson = (lesson, course) =>
     playVideo({
@@ -818,31 +795,14 @@ const SharedCourse = () => {
     setUploadContext(null);
     setShowAllInstructors(false);
     setShowAllActivity(false);
-    handleAction(`Lessons for: ${c.title}`);
   };
   const openUpload = (context) => {
     setUploadContext(context);
-    handleAction(`Opening Upload Modal. Context: ${context.type}`);
-  };
-  const createNewLesson = (c, l) => ({
-    id: l.id,
-    title: l.title,
-    course: c.title,
-    instructor: c.instructor,
-    time: l.duration,
-    type: c.title.split(" ")[0] || "General",
-    progress: 0,
-    description: l.description,
-  });
-
-  const openAllActivity = () => {
-    setShowAllActivity(true);
-    handleAction("Viewing all activity log.");
   };
 
   const handleUpload = async (data) => {
     if (data.type === "course") {
-      const { title, newLesson } = data;
+      const { title, description, newLesson } = data;
       try {
         setUploading(true);
         const form = new FormData();
@@ -857,12 +817,11 @@ const SharedCourse = () => {
           }
         );
 
-        console.log(uploadResponse);
-
         newLesson.url = uploadResponse.url;
         newLesson.duration = uploadResponse.duration;
         const newCourse = {
           title,
+          description,
           instructor: "Admin",
           duration: uploadResponse.duration,
           progress: 0,
@@ -871,7 +830,7 @@ const SharedCourse = () => {
         };
         setCourses((prev) => [newCourse, ...prev]);
         // Create a course
-        const { data: courseResponse } = await api.post("/courses", newCourse);
+        await api.post("/courses", newCourse);
       } catch (error) {
         console.error(error);
       } finally {
@@ -881,38 +840,34 @@ const SharedCourse = () => {
     } else if (data.type === "video") {
       const { courseId, newLesson } = data;
 
-      if (!courseId) {
-        const uncategorizedCourse = {
-          id: Date.now(),
-          title: "Uncategorized Video",
-          instructor: "Admin",
-          duration: newLesson.duration,
-          lessons: 1,
-          progress: 0,
-          lessonsList: [newLesson],
-        };
-        // setVideos((prev) => [
-        //   createNewLesson(uncategorizedCourse, newLesson),
-        //   ...prev,
-        // ]);
-        return;
-      }
+      try {
+        setUploading(true);
 
-      // setCourses((prev) =>
-      //   prev.map((c) => {
-      //     if (c.id.toString() === courseId.toString()) {
-      //       const newLessonsList = [...(c.lessonsList || []), newLesson];
-      //       setVideos((prev) => [createNewLesson(c, newLesson), ...prev]);
-      //       return {
-      //         ...c,
-      //         lessonsList: newLessonsList,
-      //         lessons: newLessonsList.length,
-      //       };
-      //     }
-      //     return c;
-      //   })
-      // );
+        const form = new FormData();
+        form.append("file", newLesson.file);
+
+        // Upload to cloudinary then get the url to store in the database
+        const { data: uploadResponse } = await api.post(
+          "/upload/course",
+          form,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+          }
+        );
+
+        newLesson.url = uploadResponse.url;
+        newLesson.duration = uploadResponse.duration;
+
+        await api.post(`/courses/${courseId}`, newLesson);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setUploading(false);
+        setUploadContext(null);
+      }
     }
+    // Fetch the updated courses
+    fetchCourses();
   };
 
   const isOverlay = !!(
@@ -959,14 +914,12 @@ const SharedCourse = () => {
         <AllInstructorsModal
           instructors={mockInstructors}
           onClose={() => setShowAllInstructors(false)}
-          onCardClick={handleAction}
         />
       )}
       {showAllActivity && (
         <AllActivityModal
           activity={mockActivity}
           onClose={() => setShowAllActivity(false)}
-          onActivityClick={handleAction}
         />
       )}
       {uploadContext && (
@@ -1010,11 +963,9 @@ const SharedCourse = () => {
             <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {!coursesLoading &&
                 courses.map((c) => {
-                  console.log(c);
-
                   return (
                     <CourseCard
-                      key={c.id}
+                      key={c._id}
                       c={c}
                       onViewDetails={openLessons}
                       onOpenUpload={(course) =>

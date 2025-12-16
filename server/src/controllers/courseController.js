@@ -58,15 +58,17 @@ export const updateCourse = async (req, res) => {
 };
 
 export const addCourseLesson = async (req, res) => {
-  // const { id } = req.params;
-  // const newCourse = req.body;
-  // if (!newCourse)
-  //   return res.status(400).json({ message: "New course is required" });
-  // try {
-  //   const result = await Course.update(id, newCourse);
-  //   res.status(200).json(result);
-  // } catch (error) {
-  //   console.error("Updating course error:", error.message);
-  //   res.status(400).json({ error: error.message });
-  // }
+  const newLesson = req.body;
+  const id = req.params.id;
+
+  if (!id || !newLesson)
+    return res.status(400).json({ message: "New lesson is required" });
+
+  try {
+    const result = await Course.findByIdAndAddLesson(id, newLesson);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error adding error:", error.message);
+    res.status(400).json({ error: error.message });
+  }
 };
