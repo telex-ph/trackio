@@ -232,11 +232,18 @@ const SharedCreateApplyLeave = () => {
     if (
       !formData.leaveType ||
       !formData.startDate ||
-      !formData.endDate ||
       !formData.remarks
     ) {
       showNotification("Please fill out the required forms.", "error");
       return;
+    }
+
+    let rangeEndDate;
+
+    if(!formData.endDate) {
+      rangeEndDate = formData.startDate;
+    } else {
+      rangeEndDate = formData.endDate;
     }
 
     if (formData.leaveType === SCHEDULE.SICK_LEAVE && !selectedFile) {
@@ -285,7 +292,7 @@ const SharedCreateApplyLeave = () => {
       const payload = {
         leaveType: userLeaveType,
         startDate: formData.startDate,
-        endDate: formData.endDate,
+        endDate: rangeEndDate,
         remarks: formData.remarks,
         leaveFile: formData.leave || [],
         status: "For approval",
