@@ -20,107 +20,8 @@ import {
 import api from "../../utils/axios";
 import CourseHeaderPage from "../../components/courses/CourseHeaderPage";
 import CourseUploadModal from "../../components/courses/modals/CourseUploadModal";
+import { useStore } from "../../store/useStore";
 
-const mockCourses = [
-  {
-    id: 1,
-    title: "React Hooks Masterclass",
-    instructor: "John Doe",
-    duration: "10 hrs",
-    lessons: 3,
-    progress: 85,
-    lessonsList: [
-      {
-        id: 1,
-        title: "Introduction to State Hook",
-        duration: "12:30",
-        completed: true,
-        description: "useState fundamentals.",
-        url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-      },
-      {
-        id: 2,
-        title: "Deep Dive into Effect Hook",
-        duration: "15:00",
-        completed: true,
-        description: "useEffect and cleanup.",
-        url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-      },
-      {
-        id: 4,
-        title: "Performance Optimization",
-        duration: "10:10",
-        completed: false,
-        description: "useCallback & useMemo.",
-        url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-      },
-    ],
-  },
-  {
-    id: 2,
-    title: "Figma UI/UX Essentials",
-    instructor: "Jane Smith",
-    duration: "8 hrs",
-    lessons: 2,
-    progress: 100,
-    lessonsList: [
-      {
-        id: 1,
-        title: "Figma Interface Tour",
-        duration: "5:00",
-        completed: true,
-        description: "Quick tour of the interface.",
-      },
-      {
-        id: 2,
-        title: "Mastering Auto Layout 3.0",
-        duration: "14:20",
-        completed: true,
-        description: "Responsive components.",
-      },
-    ],
-  },
-  {
-    id: 3,
-    title: "Next.js & Server Components",
-    instructor: "Alex Kim",
-    duration: "12 hrs",
-    lessons: 0,
-    progress: 40,
-    lessonsList: [],
-  },
-  {
-    id: 4,
-    title: "Advanced Web Security",
-    instructor: "Jane Smith",
-    duration: "15 hrs",
-    lessons: 5,
-    progress: 60,
-    lessonsList: [
-      {
-        id: 1,
-        title: "XSS Prevention",
-        duration: "2:00",
-        completed: true,
-        description: "Cross-site scripting mitigation.",
-      },
-      {
-        id: 2,
-        title: "CSRF & Session Hijacking",
-        duration: "3:30",
-        completed: false,
-        description: "Protecting against forgery.",
-      },
-      {
-        id: 3,
-        title: "API Security Best Practices",
-        duration: "4:00",
-        completed: false,
-        description: "Auth and rate limiting.",
-      },
-    ],
-  },
-];
 const mockActivity = [
   {
     id: 1,
@@ -174,10 +75,10 @@ const VideoItem = ({ v, i, onPlay }) => (
     className="flex items-center justify-between p-3 border-b border-gray-100 last:border-b-0 hover:bg-red-50 rounded-lg transition"
   >
     <div className="flex items-center space-x-4">
-      <span className="text-lg font-bold text-gray-400 w-6 flex-shrink-0 hidden sm:inline">
+      <span className="text-lg font-bold text-gray-400 w-6 shrink-0 hidden sm:inline">
         {String(i + 1).padStart(2, "0")}
       </span>
-      <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg bg-red-800 flex items-center justify-center flex-shrink-0">
+      <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg bg-red-800 flex items-center justify-center shrink-0">
         <Play className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
       </div>
       <div>
@@ -238,7 +139,7 @@ const CourseCard = ({ c, onViewDetails, onOpenUpload }) => {
         </div>
         <div className="absolute bottom-2 right-2 flex items-center bg-red-900/80 text-white text-xs font-semibold px-2 py-1 rounded-full">
           <Play className="w-3 h-3 mr-1" />
-          {Math.floor(overAllDuration)} minutes
+          {(Math.floor(overAllDuration) / 60).toFixed(1)} minutes
         </div>
       </div>
       <div className="p-4">
@@ -246,7 +147,11 @@ const CourseCard = ({ c, onViewDetails, onOpenUpload }) => {
         <p>{c.description}</p>
         <div className="text-sm text-gray-500 flex items-center mb-3">
           <User className="w-4 h-4 mr-1 text-red-700" />
-          <span className="text-red-800 font-medium">{c.instructor}</span>
+          <span className="text-red-800 font-medium">
+            {c.instructor
+              ? c.instructor.charAt(0).toUpperCase() + c.instructor.slice(1)
+              : ""}
+          </span>
         </div>
         <div className="flex items-center justify-between mb-3">
           <p className="text-base font-bold text-gray-800 flex items-center">
@@ -304,7 +209,8 @@ const CourseLessonsModal = ({ course, onClose, onPlayLesson }) => {
       <div className="flex-grow">
         <p className="font-medium text-gray-800">{l.title}</p>
         <p className="text-xs text-gray-500 flex items-center">
-          <Clock className="w-3 h-3 mr-1" /> {l.duration}
+          <Clock className="w-3 h-3 mr-1" />{" "}
+          {(Math.floor(l.duration) / 60).toFixed(1)} minutes
         </p>
       </div>
       <div className="flex items-center space-x-2">
@@ -347,8 +253,10 @@ const CourseLessonsModal = ({ course, onClose, onPlayLesson }) => {
           >
             <p className="text-sm text-gray-600 border-b pb-3 mb-4 border-gray-100">
               {list.length} lessons • Duration:{" "}
-              <span className="text-red-800 font-bold">{duration}</span> •
-              Progress:{" "}
+              <span className="text-red-800 font-bold">
+                {(Math.floor(duration) / 60).toFixed(1)} minutes
+              </span>{" "}
+              • Progress:{" "}
               <span className="text-red-800 font-bold">{progress}%</span>
             </p>
             {list?.length > 0 ? (
@@ -374,7 +282,9 @@ const CourseLessonsModal = ({ course, onClose, onPlayLesson }) => {
                   {selectedLesson.title}
                 </p>
                 <p className="text-xs text-gray-600 mb-4 flex items-center">
-                  <Clock className="w-3 h-3 mr-1" /> {selectedLesson.duration}
+                  <Clock className="w-3 h-3 mr-1" />{" "}
+                  {(Math.floor(selectedLesson.duration) / 60).toFixed(1)}{" "}
+                  minutes
                 </p>
                 <div className="p-3 bg-white rounded-lg border border-gray-200">
                   <p className="text-sm text-gray-600 whitespace-pre-wrap">
@@ -699,7 +609,9 @@ const VideoPlayer = ({ media, onClose }) => {
                   <User className="w-4 h-4 mr-2 text-red-600" />
                   Instructor:{" "}
                   <span className="ml-1 font-normal text-gray-600">
-                    {instructor}
+                    {instructor
+                      ? instructor.charAt(0).toUpperCase() + instructor.slice(1)
+                      : ""}
                   </span>
                 </p>
               </div>
@@ -743,6 +655,7 @@ const VideoPlayer = ({ media, onClose }) => {
 const SharedCourse = () => {
   const [courses, setCourses] = useState([]);
   const [coursesLoading, setCoursesLoading] = useState(false);
+  const user = useStore((store) => store.user);
 
   const fetchCourses = async () => {
     try {
@@ -822,7 +735,7 @@ const SharedCourse = () => {
         const newCourse = {
           title,
           description,
-          instructor: "Admin",
+          instructor: user.role,
           duration: uploadResponse.duration,
           progress: 0,
           completed: false,
@@ -881,7 +794,7 @@ const SharedCourse = () => {
   );
 
   return (
-    <div className="bg-gray-100 min-h-screen">
+    <div className="min-h-screen">
       {showLessons && (
         <CourseLessonsModal
           course={selectedCourse}
@@ -932,9 +845,7 @@ const SharedCourse = () => {
       )}
 
       <div
-        className={`flex flex-col lg:flex-row p-4 md:p-6 space-y-6 lg:space-y-0 lg:space-x-6 ${
-          isOverlay ? "pointer-events-none blur-sm" : ""
-        }`}
+        className={`flex flex-col lg:flex-row space-y-6 lg:space-y-0 lg:space-x-6`}
       >
         <div className="grow w-full">
           {/* Header Page */}

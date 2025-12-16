@@ -146,7 +146,6 @@ const CourseUploadModal = ({ onClose, onUpload, courseToAddTo, uploading }) => {
           courseId: courseToAddTo.course._id,
           newLesson: lessonData,
         };
-    console.log(courseToAddTo.course);
     onUpload(data);
   };
 
