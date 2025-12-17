@@ -591,6 +591,7 @@ const VideoPlayer = ({ media, onClose }) => {
                     controlsList="nodownload"
                   >
                     <source src={url} type="video/webm" />
+                    <source src={url} type="video/mp4" />
                     Your browser does not support playing this video.
                   </video>
                 )}
