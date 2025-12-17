@@ -22,6 +22,7 @@ import CourseHeaderPage from "../../components/courses/CourseHeaderPage";
 import CourseUploadModal from "../../components/courses/modals/CourseUploadModal";
 import { useStore } from "../../store/useStore";
 import Spinner from "../../assets/loaders/Spinner";
+import Empty from "../../assets/illustrations/Empty";
 
 const mockActivity = [
   {
@@ -861,23 +862,42 @@ const SharedCourse = ({ isWatchOnly = true }) => {
               )}
             </div>
 
-            {!coursesLoading ? (
-              <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {courses.map((c) => {
-                  return (
-                    <CourseCard
-                      key={c._id}
-                      c={c}
-                      onViewDetails={openLessons}
-                      onOpenUpload={(course) =>
-                        openUpload({ type: "video", course })
-                      }
-                    />
-                  );
-                })}
-              </section>
-            ) : (
+            {coursesLoading ? (
               <Spinner size={30} />
+            ) : (
+              <section>
+                {courses.length > 0 ? (
+                  <div>
+                    {courses.map((c) => {
+                      return (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                          <CourseCard
+                            key={c._id}
+                            c={c}
+                            onViewDetails={openLessons}
+                            onOpenUpload={(course) =>
+                              openUpload({ type: "video", course })
+                            }
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="w-full max-w-lg mx-auto mt-80">
+                    <Empty />
+                    <div className="mt-10">
+                      <h3 className="font-bold mb-2 text-center">
+                        Page is Currently Empty
+                      </h3>
+                      <p className="text-lg mb-6 text-center">
+                        This page doesn't have any content yet. Please check
+                        back later!
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </section>
             )}
           </section>
         </div>
