@@ -9,8 +9,8 @@ import SharedSettings from "../pages/shared/SharedSettings";
 import SharedTicket from "../pages/shared/SharedTicket";
 // import AgentCourses from "../pages/agent/AgentCourses";
 import { Navigate } from "react-router-dom";
-import SharedCreateApplyLeave from "../pages/shared/SharedCreateApplyLeave";
 import SharedCourse from "../pages/shared/SharedCourse";
+import SharedCreateApplyLeave from "../pages/shared/SharedCreateApplyLeave";
 
 const AGENT_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -22,9 +22,8 @@ const AGENT_ROUTES = [
   },
   { path: "coaching", element: <AgentCoaching /> },
   { path: "offenses", element: <AgentOffences /> },
-
   {
-    path: "course",
+    path: "courses",
     element: <SharedCourse />,
   },
   { path: "ticket", element: <SharedTicket /> },

@@ -69,8 +69,8 @@ const PRESIDENT_ROUTES = [
     element: <SharedTeamViewMembers />,
   },
   {
-    path: "course",
-    element: <SharedCourse />,
+    path: "courses",
+    element: <SharedCourse isWatchOnly={false}/>,
   },
   {
     path: "account-management",

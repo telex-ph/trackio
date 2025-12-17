@@ -12,6 +12,7 @@ import {
   Ticket,
   BarChart2,
   ClipboardList,
+  Book,
 } from "lucide-react";
 import SidebarLink from "./SidebarLink";
 import CustomCollapse from "./CustomCollapse";
@@ -127,6 +128,12 @@ const ComplianceHeadSidebar = ({
           isCollapsed={isCollapsed}
         />
       </CustomCollapse>
+      <SidebarLink
+        to="/compliance-head/courses"
+        icon={Book}
+        label="Courses"
+        isCollapsed={isCollapsed}
+      />
       <CustomCollapse
         icon={<Clock className="w-5 h-5" />}
         label="Offenses"

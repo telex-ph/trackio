@@ -190,7 +190,6 @@ const SharedAbsentees = () => {
           <span>Export</span>
         </button>
       </section>
-
       {/* Table Section */}
       <Table
         columns={columns}
@@ -198,18 +197,17 @@ const SharedAbsentees = () => {
         tableRef={tableRef}
         loading={loading}
       />
-
       {/* Modal */}
       {isModalOpen && selectedRow && (
         <AbsenteeModal employee={selectedRow} onClose={handleModalClose} />
       )}
-
       {isUploadOpen && selectedRow && (
         <AbsenteeDocumentsModal
           employee={selectedRow}
           onClose={handleModalClose}
         />
       )}
+    
     </div>
   );
 };

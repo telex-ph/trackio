@@ -14,6 +14,7 @@ import {
   CalendarPlus,
   FileCheck,
   CalendarClock,
+  Book,
 } from "lucide-react";
 import SidebarLink from "../sidebars/SidebarLink";
 import CustomCollapse from "../sidebars/CustomCollapse";
@@ -84,17 +85,24 @@ const TeamLeaderSidebar = ({
         isCollapsed={isCollapsed}
       />
       <SidebarLink
-        to="/team-leader/ticket"
-        icon={Ticket}
-        label="Ticket"
-        isCollapsed={isCollapsed}
-      />
-      <SidebarLink
         to="/team-leader/coaching"
         icon={Video}
         label="Coaching"
         isCollapsed={isCollapsed}
       />
+      <SidebarLink
+        to="/team-leader/courses"
+        icon={Book}
+        label="Courses"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to="/team-leader/ticket"
+        icon={Ticket}
+        label="Ticket"
+        isCollapsed={isCollapsed}
+      />
+
       <SidebarLink
         to="/team-leader/performance"
         icon={BarChart}

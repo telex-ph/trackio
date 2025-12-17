@@ -9,6 +9,7 @@ import {
   Ticket,
   CalendarPlus,
   Video,
+  Book,
 } from "lucide-react";
 import SidebarLink from "../sidebars/SidebarLink";
 import CustomCollapse from "../sidebars/CustomCollapse";
@@ -40,6 +41,12 @@ const AgentSidebar = ({
         to="/agent/attendance"
         icon={Bell}
         label="Attendance"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to="/agent/courses"
+        icon={Book}
+        label="Courses"
         isCollapsed={isCollapsed}
       />
       <SidebarLink

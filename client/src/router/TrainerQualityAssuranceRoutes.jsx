@@ -8,6 +8,7 @@ import SharedAttendance from "../pages/shared/SharedAttendance";
 import SharedSettings from "../pages/shared/SharedSettings";
 import SharedTicket from "../pages/shared/SharedTicket";
 import { Navigate } from "react-router-dom";
+import SharedCourse from "../pages/shared/SharedCourse";
 
 const TRAINER_QUALITY_ASSURANCE_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -21,6 +22,7 @@ const TRAINER_QUALITY_ASSURANCE_ROUTES = [
   { path: "offenses", element: <AgentOffences /> },
 
   { path: "ticket", element: <SharedTicket /> },
+  { path: "courses", element: <SharedCourse /> },
   { path: "account-settings", element: <SharedSettings /> },
 
   { path: "createoffense", element: <AgentCreateOffenses /> },

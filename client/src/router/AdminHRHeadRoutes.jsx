@@ -30,6 +30,7 @@ import SharedTicket from "../pages/shared/SharedTicket";
 import TeamLeaderCreateOffenses from "../pages/team-leader/TeamLeaderCreateOffense";
 import TeamLeaderOffenses from "../pages/team-leader/TeamLeaderOffenses";
 import SharedCreateApplyLeave from "../pages/shared/SharedCreateApplyLeave";
+import SharedCourse from "../pages/shared/SharedCourse";
 import HRLeaveApprovals from "../pages/hr/HRLeaveApprovals";
 
 const ADMIN_HR_HEAD_ROUTES = [
@@ -73,6 +74,10 @@ const ADMIN_HR_HEAD_ROUTES = [
   {
     path: "offenses",
     element: <TeamLeaderOffenses />,
+  },
+  {
+    path: "courses",
+    element: <SharedCourse />,
   },
   {
     path: "createoffense",

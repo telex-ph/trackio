@@ -52,7 +52,7 @@ const OPERATIONS_ASSOCIATE_ROUTES = [
     element: <SharedViewSchedule role={Roles.TEAM_LEADER} readOnly={false} />,
   },
   {
-    path: "course",
+    path: "courses",
     element: <SharedCourse />,
   },
   { path: "performance", element: <TeamLeaderPerformance /> },

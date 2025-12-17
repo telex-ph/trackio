@@ -66,7 +66,7 @@ const BACK_OFFICE_HEAD_ROUTES = [
     element: <TeamLeaderOffenses />,
   },
   {
-    path: "course",
+    path: "courses",
     element: <SharedCourse />,
   },
   {

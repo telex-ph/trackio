@@ -4,7 +4,7 @@ export const uploadMedia = async (req, res) => {
   const folder = req.body.folder;
 
   console.log("Files received:", req.files);
-  console.log("Body:", req.body);
+  req.files.forEach((f, i) => console.log(i, f.originalname, f.buffer.length));
 
   try {
     if (!req.files || req.files.length === 0) {

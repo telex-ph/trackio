@@ -83,8 +83,8 @@ const COMPLIANCE_HEAD_ROUTES = [
     element: <OffenseMonitoring />,
   },
   {
-    path: "course",
-    element: <SharedCourse />,
+    path: "courses",
+    element: <SharedCourse isWatchOnly={false} />,
   },
   {
     path: "ticket",

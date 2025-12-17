@@ -10,6 +10,7 @@ import {
   GalleryVerticalEnd,
   Users2Icon,
   Ticket,
+  Book,
 } from "lucide-react";
 import SidebarLink from "./SidebarLink";
 import CustomCollapse from "./CustomCollapse";
@@ -77,6 +78,12 @@ const BackOfficeHeadSidebar = ({
         to="/back-office-head/ticket"
         icon={Ticket}
         label="Ticket"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to="/back-office-head/courses"
+        icon={Book}
+        label="Courses"
         isCollapsed={isCollapsed}
       />
       <SidebarLink

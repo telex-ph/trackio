@@ -13,6 +13,7 @@ import {
   CalendarPlus,
   FileCheck,
   Megaphone,
+  Book,
 } from "lucide-react";
 import SidebarLink from "../sidebars/SidebarLink";
 import CustomCollapse from "../sidebars/CustomCollapse";
@@ -136,6 +137,12 @@ const HRSidebar = ({
       to="/human-resources/ticket"
       icon={Ticket}
       label="Ticket"
+      isCollapsed={isCollapsed}
+    />
+    <SidebarLink
+      to="/human-resources/courses"
+      icon={Book}
+      label="Courses"
       isCollapsed={isCollapsed}
     />
     <SidebarLink

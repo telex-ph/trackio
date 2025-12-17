@@ -18,6 +18,7 @@ const folderMap = {
   leave: "trackio/leave",
   announcement: "trackio/announcement",
   recognition: "trackio/recognition",
+  course: "trackio/course",
 };
 
 // Reusable upload handler
@@ -36,10 +37,16 @@ async function handleUpload(req, res, folder) {
 
     const publicId = `${baseName}-${uniqueSuffix}`;
 
+    // Detect what file is it
+    let resourceType = "auto";
+    if (req.file.mimetype.startsWith("video/")) {
+      resourceType = "video";
+    }
+
     // Upload buffer to Cloudinary
     const result = await cloudUpload(req.file.buffer, {
       folder,
-      resource_type: "auto",
+      resource_type: resourceType,
       public_id: publicId,
       format: ext.replace(".", ""),
     });
@@ -50,6 +57,7 @@ async function handleUpload(req, res, folder) {
       fileName: originalName,
       size: req.file.size,
       type: req.file.mimetype,
+      duration: resourceType === "video" ? result.duration : null,
     });
   } catch (err) {
     console.error("Cloudinary upload error:", err);
@@ -71,6 +79,5 @@ router.post("/:type", upload.single("file"), async (req, res) => {
 
   handleUpload(req, res, folder);
 });
-
 
 export default router;

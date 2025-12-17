@@ -15,6 +15,7 @@ import SharedTrackingLists from "../pages/shared/SharedTrackingLists";
 import SharedTrackingHistory from "../pages/shared/SharedTrackingHistory";
 import SharedSchedule from "../pages/shared/SharedSchedule";
 import SharedViewSchedule from "../pages/shared/SharedViewSchedule";
+import SharedCourse from "../pages/shared/SharedCourse";
 
 // Others
 import { Navigate } from "react-router-dom";
@@ -62,6 +63,7 @@ const TEAM_LEADER_ROUTES = [
   // { path: "bio-break", element: <TeamLeaderBioBreak /> },
   { path: "coaching", element: <TeamLeaderCoaching /> },
   { path: "agentrequest", element: <TeamLeaderAgentRequest /> },
+  { path: "courses", element: <SharedCourse /> },
   { path: "ticket", element: <SharedTicket /> },
   { path: "account-settings", element: <SharedSettings /> },
   {
@@ -72,13 +74,13 @@ const TEAM_LEADER_ROUTES = [
     path: "createoffense",
     element: <TeamLeaderCreateOffense />,
   },
-  { 
-    path: "apply-leave", 
-    element: <SharedCreateApplyLeave /> 
+  {
+    path: "apply-leave",
+    element: <SharedCreateApplyLeave />,
   },
-  { 
-    path: "my-team-requests", 
-    element: <SharedMyTeamLeave /> 
+  {
+    path: "my-team-requests",
+    element: <SharedMyTeamLeave />,
   },
 ];
 
