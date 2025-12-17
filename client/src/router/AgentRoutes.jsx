@@ -22,9 +22,8 @@ const AGENT_ROUTES = [
   },
   { path: "coaching", element: <AgentCoaching /> },
   { path: "offenses", element: <AgentOffences /> },
-
   {
-    path: "course",
+    path: "courses",
     element: <SharedCourse />,
   },
   { path: "ticket", element: <SharedTicket /> },

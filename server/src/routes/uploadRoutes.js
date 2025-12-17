@@ -40,7 +40,6 @@ async function handleUpload(req, res, folder) {
     // Detect what file is it
     let resourceType = "auto";
     if (req.file.mimetype.startsWith("video/")) {
-      console.log("this is a video format!");
       resourceType = "video";
     }
 

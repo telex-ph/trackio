@@ -253,15 +253,6 @@ const CourseUploadModal = ({ onClose, onUpload, courseToAddTo, uploading }) => {
                   </label>
                   <FileDrop onFileSelect={setFile} />
                 </div>
-                <p
-                  className={`text-xs mt-2 font-medium ${
-                    !isLessonReady ? "text-red-600" : "text-gray-500"
-                  }`}
-                >
-                  {isLessonReady
-                    ? "Video complete."
-                    : "**REQUIRED:** Title, Duration (MM:SS), File."}
-                </p>
               </div>
             </div>
             <div className="pt-4 flex justify-end space-x-3 border-t border-gray-100">

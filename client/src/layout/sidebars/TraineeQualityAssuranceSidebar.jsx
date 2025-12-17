@@ -7,6 +7,7 @@ import {
   List,
   GalleryVerticalEnd,
   Ticket,
+  Book,
 } from "lucide-react";
 import SidebarLink from "./SidebarLink";
 import CustomCollapse from "./CustomCollapse";
@@ -74,6 +75,12 @@ const TraineeQualityAssuranceSidebar = ({
         to="/trainer-quality-assurance/ticket"
         icon={Ticket}
         label="Ticket"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to="/trainer-quality-assurance/courses"
+        icon={Book}
+        label="Courses"
         isCollapsed={isCollapsed}
       />
     </div>

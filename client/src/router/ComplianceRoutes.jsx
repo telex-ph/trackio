@@ -70,8 +70,8 @@ const COMPLIANCE_ROUTES = [
     element: <TeamLeaderCreateOffenses />,
   },
   {
-    path: "course",
-    element: <SharedCourse />,
+    path: "courses",
+    element: <SharedCourse isWatchOnly={false} />,
   },
   {
     path: "offenses-monitoring",

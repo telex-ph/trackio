@@ -15,6 +15,7 @@ import {
   Calendar,
   BarChart2,
   ClipboardList,
+  Book,
 } from "lucide-react";
 import SidebarLink from "../sidebars/SidebarLink";
 import CustomCollapse from "../sidebars/CustomCollapse";
@@ -32,7 +33,7 @@ const PresidentSidebar = ({
       label="Dashboard"
       isCollapsed={isCollapsed}
     />
-     <SidebarLink
+    <SidebarLink
       to="/president/recognition"
       icon={LayoutGrid}
       label="Recognition Wall"
@@ -167,6 +168,12 @@ const PresidentSidebar = ({
         isCollapsed={isCollapsed}
       />
     </CustomCollapse>
+    <SidebarLink
+      to="/president/courses"
+      icon={Book}
+      label="Courses"
+      isCollapsed={isCollapsed}
+    />
     <SidebarLink
       to="/president/account-management"
       icon={Users2Icon}

@@ -11,6 +11,7 @@ class Course {
 
     const newRecord = {
       ...newCourse,
+      createdBy: new ObjectId(newCourse.createdBy),
       createdAt: DateTime.utc().toJSDate(),
       updatedAt: DateTime.utc().toJSDate(),
     };

@@ -59,7 +59,7 @@ const MANAGER_ROUTES = [
     element: <TeamLeaderOffenses />,
   },
   {
-    path: "course",
+    path: "courses",
     element: <SharedCourse />,
   },
   {

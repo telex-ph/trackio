@@ -10,6 +10,7 @@ import {
   GalleryVerticalEnd,
   Users2Icon,
   Ticket,
+  Book,
 } from "lucide-react";
 import SidebarLink from "./SidebarLink";
 import CustomCollapse from "./CustomCollapse";
@@ -70,6 +71,12 @@ const OperationsAssociateSidebar = ({
         to="/operations-associate/ticket"
         icon={Ticket}
         label="Ticket"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to="/operations-associate/courses"
+        icon={Book}
+        label="Courses"
         isCollapsed={isCollapsed}
       />
       <SidebarLink
