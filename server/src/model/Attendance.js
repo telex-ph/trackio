@@ -59,7 +59,20 @@ class Attendance {
       // Get the attendance records of those who where late / for late page
       case "late":
         matchStage.$expr = {
-          $gt: ["$timeIn", "$shiftStart"], // timeIn > shiftStart → late
+          $gt: [
+            {
+              $dateTrunc: {
+                date: "$timeIn",
+                unit: "minute",
+              },
+            },
+            {
+              $dateTrunc: {
+                date: "$shiftStart",
+                unit: "minute",
+              },
+            },
+          ],
         };
         break;
       // Get the attendance record who currently on break / for break page

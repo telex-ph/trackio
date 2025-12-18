@@ -47,33 +47,9 @@ const SharedTimeIn = () => {
     }));
   };
 
-  const handleUpdate = () => {
-    if (!selectedRow) return;
-    setData((prev) =>
-      prev.map((item) =>
-        item.id === selectedRow.id
-          ? { ...item, notes: selectedRow.notes }
-          : item
-      )
-    );
-  };
-
   const actionClicked = (rowData) => {
     setSelectedRow(rowData);
     setIsModalOpen(true);
-  };
-
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case "working":
-        return "bg-green-100 text-green-800 border border-green-300";
-      case "on break":
-        return "bg-yellow-100 text-yellow-800 border border-yellow-400";
-      case "shift ended":
-        return "bg-gray-100 text-gray-800 border border-gray-300";
-      default:
-        return "bg-gray-50 text-gray-600 border border-gray-200";
-    }
   };
 
   const handleModalOnClose = () => {
