@@ -94,31 +94,6 @@ const Topbar = ({ toggleSidebar }) => {
         </button>
       </div>
 
-      <section>
-        <Alert
-          color="info"
-          icon={Info}
-          rounded
-          className="border border-blue-200"
-        >
-          <span className="font-medium text-blue-900 text-sm!">
-            Acceptance Testing Phase
-          </span>
-          <p className="text-sm! text-blue-800">
-            The system is currently undergoing{" "}
-            <strong className="text-sm!">Acceptance Testing</strong>. This phase
-            focuses on identifying any{" "}
-            <strong className="text-sm!">bugs</strong>,{" "}
-            <strong className="text-sm!">errors</strong>,{" "}
-            <strong className="text-sm!">inaccuracies</strong>, or{" "}
-            <strong className="text-sm!">missing features</strong>. If you
-            encounter any issues, please report them to the{" "}
-            <strong className="text-sm!">Tech Team</strong> so we can address
-            them promptly.
-          </p>
-        </Alert>
-      </section>
-
       {/* Right Section */}
       <div
         className="flex items-center gap-0 md:gap-2 relative"

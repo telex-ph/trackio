@@ -63,7 +63,10 @@ export const useAttendance = (userId, filter) => {
             month: timeIn.month,
             day: timeIn.day,
           });
-          punctuality = timeIn <= shiftStart ? "On Time" : "Late";
+          punctuality =
+            timeIn.startOf("minute") <= shiftStart.startOf("minute")
+              ? "On Time"
+              : "Late";
         }
 
         // Adherence
