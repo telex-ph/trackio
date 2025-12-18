@@ -10,20 +10,6 @@ import {
 import { DateTime } from "luxon";
 import { IP } from "../../constants/biometricsIp.js";
 
-const lastEventMap = new Map();
-const THROTTLE_MS = 5000;
-const CLEANUP_MS = 60 * 60 * 1000;
-
-// Periodically clear old entries from the event map
-setInterval(() => {
-  const now = Date.now();
-  for (const [employeeId, timestamp] of lastEventMap.entries()) {
-    if (now - timestamp > CLEANUP_MS) {
-      lastEventMap.delete(employeeId);
-    }
-  }
-}, CLEANUP_MS);
-
 export const getEvents = async (req, res) => {
   try {
     let data = req.body;
@@ -46,16 +32,6 @@ export const getEvents = async (req, res) => {
         // Proceed only if a valid employee or known name is found
         if (ac.employeeNoString && ac.name && ac.name !== "Unknown") {
           const ipAddress = event.ipAddress;
-          const now = Date.now();
-          // const lastTime = lastEventMap.get(ac.employeeNoString) || 0;
-
-          // // Throttle duplicate events within a short time window
-          // if (now - lastTime < THROTTLE_MS) {
-          //     console.log(`Event for ${ac.name} ignored due to throttle`);
-          //     return res.status(200).send("OK");
-          // }
-          // lastEventMap.set(ac.employeeNoString, now);
-
           // Ignore events from specific devices
           if (ipAddress === IP.ADMINDOOR) {
             return res.status(200).send("OK");
