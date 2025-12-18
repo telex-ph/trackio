@@ -1,4 +1,5 @@
 import Course from "../model/Course.js";
+import generateSignedUrl from "../utils/signUrl.js";
 
 export const addCourse = async (req, res) => {
   const newCourse = req.body;
@@ -19,8 +20,23 @@ export const getCourses = async (req, res) => {
   const category = req.query.category;
 
   try {
-    const result = await Course.getAll(category);
-    res.status(200).json(result);
+    const courses = await Course.getAll(category);
+
+    const convertedCourses = courses.map((course) => {
+      const lessons = course.lessons || [];
+
+      const convertedLessons = lessons.map((lesson) => ({
+        ...lesson,
+        url: generateSignedUrl(lesson.publicId),
+      }));
+
+      return {
+        ...course,
+        lessons: convertedLessons,
+      };
+    });
+
+    res.status(200).json(convertedCourses);
   } catch (error) {
     console.error("Fetching courses error:", error.message);
     res.status(400).json({ error: error.message });

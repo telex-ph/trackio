@@ -49,6 +49,7 @@ async function handleUpload(req, res, folder) {
       resource_type: resourceType,
       public_id: publicId,
       format: ext.replace(".", ""),
+      type: "authenticated",
     });
 
     res.json({
