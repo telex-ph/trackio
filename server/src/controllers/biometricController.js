@@ -38,6 +38,8 @@ export const getEvents = async (req, res) => {
       if (event.AccessControllerEvent) {
         const ac = event.AccessControllerEvent;
 
+        console.log(ac);
+
         // Ignore invalid verification attempts
         if (!ac.employeeNoString && !ac.name && ac.verifyMode === "invalid") {
           return res.status(200).send("OK");
