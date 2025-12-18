@@ -8,37 +8,48 @@ export default async function announcementWatcher(io) {
     const collection = db.collection(COLLECTION);
 
     const changeStream = collection.watch([
-      { $match: { operationType: { $in: ["insert", "update", "replace", "delete"] } } },
+      {
+        $match: {
+          operationType: { $in: ["insert", "update", "replace", "delete"] },
+        },
+      },
     ]);
 
     changeStream.on("change", async (change) => {
       console.log("🔄 MongoDB Change Detected:", change.operationType);
-      
+
       if (change.operationType === "insert") {
         console.log("🆕 New announcement:", change.fullDocument?.title);
         io.emit("newAnnouncement", change.fullDocument);
       }
 
-      if (change.operationType === "update" || change.operationType === "replace") {
+      if (
+        change.operationType === "update" ||
+        change.operationType === "replace"
+      ) {
         // Kumuha ng buong updated document
-        const updatedAnnouncement = await collection.findOne({ _id: change.documentKey._id });
-        
-        console.log("📝 Updated announcement (via DB Watcher):", updatedAnnouncement?.title);
-        
+        const updatedAnnouncement = await collection.findOne({
+          _id: change.documentKey._id,
+        });
+
+        console.log(
+          "📝 Updated announcement (via DB Watcher):",
+          updatedAnnouncement?.title
+        );
+
         io.emit("announcementUpdated", updatedAnnouncement);
-      
+
         const updateDescription = change.updateDescription || {};
         const updatedFields = updateDescription.updatedFields || {};
-        
-        if (updatedFields.approvalStatus === 'Approved') {
-            console.log("📢 Approval detected, emitting announcementApproved");
-            io.emit('announcementApproved', updatedAnnouncement);
+
+        if (updatedFields.approvalStatus === "Approved") {
+          console.log("📢 Approval detected, emitting announcementApproved");
+          io.emit("announcementApproved", updatedAnnouncement);
         }
-        if (updatedFields.approvalStatus === 'Cancelled') {
-            console.log("📢 Cancellation detected, emitting approvalCancelled");
-            io.emit('approvalCancelled', updatedAnnouncement);
+        if (updatedFields.approvalStatus === "Cancelled") {
+          console.log("📢 Cancellation detected, emitting approvalCancelled");
+          io.emit("approvalCancelled", updatedAnnouncement);
         }
-        
       }
 
       if (change.operationType === "delete") {
@@ -48,11 +59,7 @@ export default async function announcementWatcher(io) {
     });
 
     io.on("connection", (socket) => {
-      console.log("👤 User connected:", socket.id);
-      
-     
       socket.on("announcementUpdated", (data) => {
-     
         socket.broadcast.emit("announcementUpdated", data);
         socket.broadcast.emit("updatedAnnouncement", data);
       });
