@@ -328,6 +328,24 @@ class Attendance {
     return result;
   }
 
+  static async removeLastBreakById(id) {
+    if (!id) {
+      throw new Error("ID is required");
+    }
+
+    const db = await connectDB();
+    const collection = db.collection(this.#collection);
+
+    const result = await collection.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $pop: { breaks: 1 },
+      }
+    );
+
+    return result;
+  }
+
   /**
    * Record a user's time-in for today.
    *

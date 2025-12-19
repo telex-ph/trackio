@@ -109,3 +109,25 @@ export const biometricBreakOut = async (docId, breaks) => {
     return false;
   }
 };
+
+export const biomtricCorrection = async (docId) => {
+  if (!docId) {
+    throw new Error("Document ID is required");
+  }
+
+  try {
+    const result = await Attendance.removeLastBreakById(docId);
+
+    if (result.matchedCount === 0) {
+      throw new Error("Document not found");
+    }
+
+    return {
+      success: true,
+      message: "Last break removed successfully",
+    };
+  } catch (error) {
+    console.error(`Error removing last break:`, error);
+    return false;
+  }
+};
