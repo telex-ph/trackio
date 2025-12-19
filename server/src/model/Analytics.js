@@ -461,7 +461,7 @@ class Analytics {
         const db = await connectDB();
         const collection = db.collection(this.#collection_attendance);
 
-        // 🔹 Default to current month
+        // Default to current month
         const now = new Date();
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
@@ -496,7 +496,7 @@ class Analytics {
         const pipeline = [
             { $match: matchStage },
 
-            // 🔹 Join users
+            // Join users
             {
                 $lookup: {
                     from: "users",
@@ -507,7 +507,7 @@ class Analytics {
             },
             { $unwind: "$user" },
 
-            // 🔹 Calculate overBreak per attendance
+            // Calculate overBreak per attendance
             {
                 $addFields: {
                     overBreak: {
@@ -530,7 +530,7 @@ class Analytics {
                 },
             },
 
-            // 🔹 Group per user
+            // Group per user
             {
                 $group: {
                     _id: "$user._id",
@@ -555,7 +555,7 @@ class Analytics {
                 },
             },
 
-            // 🔹 Score calculation
+            // Score calculation
             {
                 $addFields: {
                     score: {
@@ -573,7 +573,7 @@ class Analytics {
                 },
             },
 
-            // 🔹 Assign role group
+            // Assign role group
             {
                 $addFields: {
                     roleGroup: {
@@ -598,10 +598,10 @@ class Analytics {
                 },
             },
 
-            // 🔹 Rank best employees
+            // Rank best employees
             { $sort: { score: -1, total: -1 } },
 
-            // 🔹 Transform role to Title Case with spaces
+            // Transform role to Title Case with spaces
             {
                 $addFields: {
                     roleTitleCase: {
@@ -640,7 +640,7 @@ class Analytics {
                 }
             },
 
-            // 🔹 Top 3 per role group
+            // Top 3 per role group
             {
                 $group: {
                     _id: "$roleGroup",
