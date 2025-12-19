@@ -867,19 +867,17 @@ const SharedCourse = ({ isWatchOnly = true }) => {
             ) : (
               <section>
                 {courses.length > 0 ? (
-                  <div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {courses.map((c) => {
                       return (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                          <CourseCard
-                            key={c._id}
-                            c={c}
-                            onViewDetails={openLessons}
-                            onOpenUpload={(course) =>
-                              openUpload({ type: "video", course })
-                            }
-                          />
-                        </div>
+                        <CourseCard
+                          key={c._id}
+                          c={c}
+                          onViewDetails={openLessons}
+                          onOpenUpload={(course) =>
+                            openUpload({ type: "video", course })
+                          }
+                        />
                       );
                     })}
                   </div>
