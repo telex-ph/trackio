@@ -328,7 +328,7 @@ class Attendance {
     return result;
   }
 
-  static async removeLastBreakById(id) {
+  static async updateLastBreakStartById(id) {
     if (!id) {
       throw new Error("ID is required");
     }
@@ -336,11 +336,31 @@ class Attendance {
     const db = await connectDB();
     const collection = db.collection(this.#collection);
 
+    const nowUTC = DateTime.utc().toJSDate();
+
     const result = await collection.updateOne(
-      { _id: new ObjectId(id) },
-      {
-        $pop: { breaks: 1 },
-      }
+      { _id: new ObjectId(id), "breaks.0": { $exists: true } },
+      [
+        {
+          $set: {
+            breaks: {
+              $concatArrays: [
+                {
+                  $slice: ["$breaks", { $subtract: [{ $size: "$breaks" }, 1] }],
+                },
+                [
+                  {
+                    $mergeObjects: [
+                      { $arrayElemAt: ["$breaks", -1] },
+                      { start: nowUTC },
+                    ],
+                  },
+                ],
+              ],
+            },
+          },
+        },
+      ]
     );
 
     return result;

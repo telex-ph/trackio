@@ -116,7 +116,7 @@ export const biomtricCorrection = async (docId) => {
   }
 
   try {
-    const result = await Attendance.removeLastBreakById(docId);
+    const result = await Attendance.updateLastBreakStartById(docId);
 
     if (result.matchedCount === 0) {
       throw new Error("Document not found");
