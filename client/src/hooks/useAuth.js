@@ -66,9 +66,8 @@ export const useAuth = () => {
       }
 
       setError({
-        message: error.response?.data
-          ? error.response?.data.error
-          : "Oops! We couldn't log you in. Please check your email and password.",
+        message:
+          "Oops! We couldn't log you in. Please check your email and password.",
         hasError: true,
       });
       console.error("Error: ", error);
