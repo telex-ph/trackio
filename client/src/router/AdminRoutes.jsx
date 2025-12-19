@@ -25,10 +25,12 @@ import SharedTicket from "../pages/shared/SharedTicket";
 import TeamLeaderOffenses from "../pages/team-leader/TeamLeaderOffenses";
 import TeamLeaderCreateOffenses from "../pages/team-leader/TeamLeaderCreateOffense";
 import SharedCourse from "../pages/shared/SharedCourse";
+import SharedAnalytics from "../pages/shared/SharedAnalytics";
 
 const ADMIN_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
   { path: "dashboard", element: <AdminDashboard /> },
+  { path: "analytics", element: <SharedAnalytics /> },
   { path: "recognition", element: <AdminRecognition /> },
   { path: "attendance", element: <SharedAttendance /> },
   { path: "ticket", element: <SharedTicket /> },
