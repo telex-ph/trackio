@@ -534,6 +534,7 @@ const HRReportedOffenses = () => {
         status: "Invalid",
         invalidReason,
         isReadByReporter: false,
+        isReadByHR: true,
       };
 
       const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
