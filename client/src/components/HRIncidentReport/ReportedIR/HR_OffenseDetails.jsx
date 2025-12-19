@@ -503,7 +503,7 @@ const HR_OffenseDetails = ({
                   Set Hearing Date
                 </button>
               )}
-              {["Respondant Explained", "MOM Uploaded"].includes(
+              {["NTE", "Respondant Explained", "MOM Uploaded"].includes(
                 formData.status
               ) && (
                 <button
