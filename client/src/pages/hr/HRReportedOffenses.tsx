@@ -595,7 +595,7 @@ const HRReportedOffenses = () => {
 
   // Filter resolved cases (history)
   const resolvedOffenses = offenses.filter((off) => {
-    const isResolved = ["Acknowledged"].includes(off.status);
+    const isResolved = ["Invalid", "Acknowledged"].includes(off.status);
     if (!isResolved) return false;
     if (off.type === "COACHING") return false;
 
