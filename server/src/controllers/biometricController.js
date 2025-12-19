@@ -109,8 +109,7 @@ export const getEvents = async (req, res) => {
                   console.log(
                     `Ignoring event at ${IP.BIO_OUT}: Employee ${ac.name} attempted BIO_OUT while already in ON_BREAK status.`
                   );
-                  await biomtricCorrection(attendanceId);
-                  await biometricBreakIn(attendanceId, breaks, totalBreak);
+                
                   return res.status(200).send("OK");
                 }
 
