@@ -24,6 +24,7 @@ import biometricRoute from "./routes/biometricRoute.js";
 import leaveRoutes from "./routes/leaveRoutes.js";
 import auditlogsRoutes from "./routes/auditlogsRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
+import analyticsRoutes from "./routes/analyticsRoutes.js";
 import webhook from "./utils/webhook.js";
 
 dotenv.config();
@@ -71,6 +72,7 @@ app.use("/api/group", groupRoutes);
 app.use("/api/server", serverRoutes);
 app.use("/api/biometric", biometricRoute);
 app.use("/api/leave", leaveRoutes);
+app.use("/api/analytics", analyticsRoutes);
 app.use("/api/auditlogs", auditlogsRoutes);
 
 // Health check
