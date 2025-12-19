@@ -33,6 +33,12 @@ const AdminSidebar = ({
         isCollapsed={isCollapsed}
       />
       <SidebarLink
+        to="/admin/analytics"
+        icon={LayoutGrid}
+        label="Analytics"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
         to="/admin/recognition"
         icon={Trophy}
         label="Recognition Wall"
