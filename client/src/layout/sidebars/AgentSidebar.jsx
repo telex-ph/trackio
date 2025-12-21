@@ -10,6 +10,9 @@ import {
   CalendarPlus,
   Video,
   Book,
+  AlertTriangle,
+  PlusCircle,
+  FileText,
 } from "lucide-react";
 import SidebarLink from "../sidebars/SidebarLink";
 import CustomCollapse from "../sidebars/CustomCollapse";
@@ -56,7 +59,7 @@ const AgentSidebar = ({
         isCollapsed={isCollapsed}
       />
       <CustomCollapse
-        icon={<Clock className="w-5 h-5" />}
+        icon={<AlertTriangle className="w-5 h-5" />}
         label="Offenses"
         isCollapsed={isCollapsed}
         open={activeDropdown === "offenses"}
@@ -67,13 +70,13 @@ const AgentSidebar = ({
       >
         <SidebarLink
           to={`agent/createoffense`}
-          icon={List}
+          icon={PlusCircle}
           label="Create Offense"
           isCollapsed={isCollapsed}
         />
         <SidebarLink
           to={`/agent/offenses`}
-          icon={GalleryVerticalEnd}
+          icon={FileText}
           label="My Offenses"
           isCollapsed={isCollapsed}
           badge={!isCollapsed ? totalUnread : 0}
