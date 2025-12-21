@@ -124,6 +124,10 @@ const CaseHistory = ({
                               "bg-teal-100 text-teal-700 border border-teal-200",
                             Acknowledged:
                               "bg-green-100 text-green-700 border border-green-200",
+                            "Findings sent":
+                              "bg-cyan-100 text-cyan-700 border border-cyan-200",
+                            "Escalated to Compliance":
+                              "bg-orange-100 text-orange-700 border border-orange-200",
                           }[off.status] ||
                           "bg-gray-100 text-gray-700 border border-gray-200"
                         }`}
