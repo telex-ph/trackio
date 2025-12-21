@@ -141,13 +141,14 @@ const HR_CasesInProgress = ({
 
                           const statusReaderMap = {
                             "Pending Review": "isReadByHR",
-                            "Respondant Explained": "isReadByHR",
-                            Acknowledged: "isReadByHR",
+                            Invalid: "isReadByReporter",
+                            "Escalated to Compliance": "isReadByCompliance",
                             NTE: "isReadByRespondant",
+                            "Respondant Explained": "isReadByHR",
                             "Scheduled for hearing": "isReadByRespondant",
                             "After Hearing": "isReadByRespondant",
                             "For Acknowledgement": "isReadByRespondant",
-                            Invalid: "isReadByReporter",
+                            Acknowledged: "isReadByHR",
                           };
 
                           const readerKey = statusReaderMap[status];
@@ -157,6 +158,10 @@ const HR_CasesInProgress = ({
                             isReadByHR: {
                               read: "Read",
                               unread: "Unread",
+                            },
+                            isReadByCompliance: {
+                              read: "Read by Compliance",
+                              unread: "Unread by Compliance",
                             },
                             isReadByRespondant: {
                               read: "Read by Respondant",

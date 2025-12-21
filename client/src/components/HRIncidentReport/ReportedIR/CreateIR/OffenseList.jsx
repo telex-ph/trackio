@@ -152,6 +152,7 @@ const OffenseList = ({
                         const statusReaderMap = {
                           "Pending Review": "isReadByHR",
                           "Respondant Explained": "isReadByHR",
+                          "Escalated to Compliance": "isReadByCompliance",
                           Acknowledged: "isReadByHR",
                           NTE: "isReadByRespondant",
                           "Scheduled for hearing": "isReadByRespondant",
@@ -167,6 +168,10 @@ const OffenseList = ({
                           isReadByHR: {
                             read: "Read by HR",
                             unread: "Unread by HR",
+                          },
+                          isReadByCompliance: {
+                            read: "Read by Compliance",
+                            unread: "Unread by Compliance",
                           },
                           isReadByRespondant: {
                             read: "Read by Respondant",

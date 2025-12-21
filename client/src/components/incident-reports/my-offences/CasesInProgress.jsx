@@ -19,7 +19,7 @@ const CasesInProgress = ({
   isLoading,
   formatDisplayDate,
   loggedUser,
-  userMap
+  userMap,
 }) => {
   const safeOffenses = Array.isArray(offenses)
     ? offenses.filter((o) => o && o._id)
@@ -109,6 +109,7 @@ const CasesInProgress = ({
                         const statusReaderMap = {
                           "Pending Review": "isReadByHR",
                           "Respondant Explained": "isReadByHR",
+                          "Escalated to Compliance": "isReadByCompliance",
                           Acknowledged: "isReadByHR",
                           NTE: "isReadByRespondant",
                           "Scheduled for hearing": "isReadByRespondant",
@@ -126,13 +127,17 @@ const CasesInProgress = ({
                             read: "Read by HR",
                             unread: "Unread by HR",
                           },
+                          isReadByCompliance: {
+                            read: "Read by Compliance",
+                            unread: "Unread by Compliance",
+                          },
                           isReadByRespondant: {
                             read: "Read by Respondant",
                             unread: "Unread by Respondant",
                           },
                           isReadByReporter: {
-                            read: "Read by You",
-                            unread: "Unread by You",
+                            read: "Read",
+                            unread: "Unread",
                           },
                         };
 
