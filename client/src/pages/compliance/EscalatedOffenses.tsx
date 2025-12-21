@@ -42,6 +42,7 @@ interface Offense {
   remarks?: string;
   evidence?: FileUpload[];
   fileNTE?: FileUpload[];
+  fileFindings?: FileUpload[];
   fileEscalation?: FileUpload[];
   fileMOM?: FileUpload[];
   fileNDA?: FileUpload[];
@@ -76,7 +77,7 @@ const EscalatedOffenses = () => {
 
   const today: string = DateTime.now().toISODate()!;
 
-  // Logged in HR user
+  // Logged in Compliance user
   const loggedUser = useStore((state) => state.user);
 
   // Decrement unread IR count
@@ -108,6 +109,7 @@ const EscalatedOffenses = () => {
     remarks: "",
     evidence: [],
     fileNTE: [],
+    fileFindings: [],
     fileEscalation: [],
     fileMOM: [],
     fileNDA: [],
@@ -213,7 +215,7 @@ const EscalatedOffenses = () => {
     setEditingId(null);
   };
 
-  // When HR clicks "View"
+  // When Compliance clicks "View"
   const handleView = async (off: Offense) => {
     if (!off) return;
 
@@ -252,6 +254,7 @@ const EscalatedOffenses = () => {
       fileMOM: off.fileMOM || [],
       fileNDA: off.fileNDA || [],
       fileNTE: off.fileNTE || [],
+      fileFindings: off.fileFindings || [],
     });
 
     // Auto-mark as read
@@ -295,27 +298,23 @@ const EscalatedOffenses = () => {
 
       const payload = {
         ...formData,
-        offenseCategory: Array.isArray(formData.offenseCategory)
-          ? formData.offenseCategory
-          : formData.offenseCategory
-          ? [formData.offenseCategory]
-          : [],
-        isReadByRespondant: false,
-        status: "NTE",
-        nteSentDateTime: now.toISOString(),
-        isReadByHR: true,
+        isReadByRespondant: true,
+        status: "Findings sent",
+        findingsSentDateTime: now.toISOString(),
+        isReadByHR: false,
+        isReadByCompliance: true,
       };
 
-      // Upload NTE file
+      // Upload file
       if (selectedFile) {
         const form = new FormData();
         form.append("file", selectedFile);
 
-        const uploadRes = await api.post("/upload/nte", form, {
+        const uploadRes = await api.post("/upload/escalate", form, {
           headers: { "Content-Type": "multipart/form-data" },
         });
 
-        payload.fileNTE = [
+        payload.fileFindings = [
           {
             fileName: uploadRes.data.fileName,
             size: uploadRes.data.size,
@@ -337,7 +336,7 @@ const EscalatedOffenses = () => {
 
       await api.put(`/offenses/${editingId}`, payload);
 
-      showNotification("Offense validated. NTE sent!", "success");
+      showNotification("Offense Findings Uploaded!", "success");
 
       resetForm();
       setSelectedFile(null);
@@ -366,6 +365,7 @@ const EscalatedOffenses = () => {
   const filteredOffenses = offenses.filter(
     (off) =>
       !["Invalid", "Acknowledged"].includes(off.status) &&
+      ["Escalated to Compliance"].includes(off.status) &&
       off.respondantId !== loggedUser._id &&
       off.type === "IR" &&
       [
@@ -386,7 +386,7 @@ const EscalatedOffenses = () => {
 
   // Filter resolved cases (history)
   const resolvedOffenses = offenses.filter((off) => {
-    const isResolved = ["Invalid", "Acknowledged"].includes(off.status);
+    const isResolved = ["Findings sent"].includes(off.status);
     if (!isResolved) return false;
     if (off.type === "COACHING") return false;
 
@@ -486,6 +486,7 @@ const EscalatedOffenses = () => {
         isLoading={isLoading}
         formatDisplayDate={formatDisplayDate}
         today={today}
+        userMap={userMap}
         onView={handleView}
       />
     </div>

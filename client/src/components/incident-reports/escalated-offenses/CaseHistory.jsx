@@ -10,6 +10,7 @@ const CaseHistory = ({
   isLoading,
   formatDisplayDate,
   today,
+  userMap,
   onView,
 }) => {
   return (
@@ -82,9 +83,7 @@ const CaseHistory = ({
                 <th className="p-4 whitespace-nowrap">Date Created</th>
                 <th className="p-4 whitespace-nowrap">Respondant</th>
                 <th className="p-4 whitespace-nowrap">Category</th>
-                <th className="p-4 whitespace-nowrap">NTE Date</th>
-                <th className="p-4 whitespace-nowrap">Hearing Date</th>
-                <th className="p-4 whitespace-nowrap">NDA Date</th>
+                <th className="p-4 whitespace-nowrap">Findings Date</th>
                 <th className="p-4 whitespace-nowrap">Status</th>
                 <th className="p-4 whitespace-nowrap">Action</th>
               </tr>
@@ -101,33 +100,17 @@ const CaseHistory = ({
                       {formatDisplayDate(off.dateOfOffense)}
                     </td>
                     <td className="p-4 text-sm text-gray-600">
-                      {off.agentName || "N/A"}
+                      {userMap[off.respondantId]
+                        ? `${userMap[off.respondantId].firstName} ${
+                            userMap[off.respondantId].lastName
+                          }`
+                        : "N/A"}
                     </td>
                     <td className="p-4 text-sm text-gray-600">
                       {off.offenseCategory}
                     </td>
                     <td className="p-4 text-sm text-gray-600">
-                      {DateTime.fromISO(
-                        off.nteSentDateTime
-                      ).toLocaleString({
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </td>
-                    <td className="p-4 text-sm text-gray-600">
-                      {DateTime.fromISO(
-                        off.hearingDate
-                      ).toLocaleString({
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </td>
-                    <td className="p-4 text-sm text-gray-600">
-                      {DateTime.fromISO(
-                        off.ndaSentDateTime
-                      ).toLocaleString({
+                      {DateTime.fromISO(off.nteSentDateTime).toLocaleString({
                         month: "long",
                         day: "numeric",
                         year: "numeric",
@@ -150,6 +133,10 @@ const CaseHistory = ({
                               "bg-teal-100 text-teal-700 border border-teal-200",
                             Acknowledged:
                               "bg-green-100 text-green-700 border border-green-200",
+                            "Findings sent":
+                              "bg-cyan-100 text-cyan-700 border border-cyan-200",
+                            "Escalated to Compliance":
+                              "bg-orange-100 text-orange-700 border border-orange-200",
                           }[off.status] ||
                           "bg-gray-100 text-gray-700 border border-gray-200"
                         }`}

@@ -115,6 +115,7 @@ export const updateOffense = async (req, res) => {
       "afterHearingDateTime",
       "momSentDateTime",
       "escalationSentDateTime",
+      "findingsSentDateTime",
       "ndaSentDateTime",
     ].forEach((field) => {
       if (payload[field]) {

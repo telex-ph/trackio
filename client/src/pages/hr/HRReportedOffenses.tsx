@@ -782,6 +782,7 @@ const HRReportedOffenses = () => {
         isLoading={isLoading}
         formatDisplayDate={formatDisplayDate}
         today={today}
+        userMap={userMap}
         onView={handleView}
       />
     </div>
