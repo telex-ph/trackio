@@ -114,7 +114,8 @@ export const updateOffense = async (req, res) => {
       "schedHearingDateTime",
       "afterHearingDateTime",
       "momSentDateTime",
-      "ndaSentDateTime"
+      "escalationSentDateTime",
+      "ndaSentDateTime",
     ].forEach((field) => {
       if (payload[field]) {
         payload[field] = DateTime.fromISO(payload[field], { zone: "utc" }).toJSDate();
