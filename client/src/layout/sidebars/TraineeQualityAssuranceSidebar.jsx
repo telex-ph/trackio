@@ -41,12 +41,6 @@ const TraineeQualityAssuranceSidebar = ({
         label="Attendance"
         isCollapsed={isCollapsed}
       />
-      <SidebarLink
-        to="/trainer-quality-assurance/coaching"
-        icon={NotebookTabs}
-        label="Coaching"
-        isCollapsed={isCollapsed}
-      />
       <CustomCollapse
         icon={<Clock className="w-5 h-5" />}
         label="Offenses"
