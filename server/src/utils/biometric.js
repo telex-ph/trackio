@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
 import Attendance from "../model/Attendance.js";
 import { STATUS } from "../../constants/status.js";
-import Schedules from "../model/Schedule.js";
+import Schedules from "../modules/schedule/schedule.model.js";
 
 export const biometricIn = async (userId, employeeId) => {
   const TARDINESS_TOLERANCE_HOURS = 4;

@@ -1,7 +1,6 @@
 import connectDB from "../config/db.js";
 import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
-import Schedule from "../model/Schedule.js";
 import Roles from "../../../client/src/constants/roles.js";
 
 class User {

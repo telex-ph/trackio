@@ -17,7 +17,7 @@ import absenceRoutes from "../src/routes/absenceRoutes.js";
 import mediaRoutes from "../src/routes/mediaRoutes.js";
 import requestRoutes from "../src/routes/requestRoutes.js";
 import offenseRoutes from "./routes/offenseRoutes.js";
-import scheduleRoutes from "./routes/scheduleRoutes.js";
+// import scheduleRoutes from "./routes/scheduleRoutes.js";
 import groupRoutes from "./routes/groupRoutes.js";
 import serverRoutes from "./routes/serverRoutes.js";
 import biometricRoute from "./routes/biometricRoute.js";
@@ -26,6 +26,9 @@ import auditlogsRoutes from "./routes/auditlogsRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
 import webhook from "./utils/webhook.js";
+
+// New folder strucutre// remove this comment later and ensure older files and folders are deleted
+import scheduleRoutes from "./modules/schedule/schedule.route.js";
 
 dotenv.config();
 const app = express();

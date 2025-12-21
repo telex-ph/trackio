@@ -1,6 +1,6 @@
 import Attendance from "../model/Attendance.js";
 import { DateTime } from "luxon";
-import Schedules from "../model/Schedule.js";
+import Schedules from "../modules/schedule/schedule.model.js";
 import { STATUS } from "../../../client/src/constants/status.js";
 
 export const addAttendance = async (userId) => {
