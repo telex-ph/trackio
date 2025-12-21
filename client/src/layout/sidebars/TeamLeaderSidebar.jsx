@@ -85,12 +85,6 @@ const TeamLeaderSidebar = ({
         isCollapsed={isCollapsed}
       />
       <SidebarLink
-        to="/team-leader/coaching"
-        icon={Video}
-        label="Coaching"
-        isCollapsed={isCollapsed}
-      />
-      <SidebarLink
         to="/team-leader/courses"
         icon={Book}
         label="Courses"
