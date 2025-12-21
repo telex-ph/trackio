@@ -4,12 +4,14 @@ import socket from "../../utils/socket";
 
 export const offenseBadge = (set, get) => ({
   unreadIR: 0,
+  unreadMyOffenses: 0,
 
   fetchUnreadOffenses: async (user) => {
     try {
       const { data } = await api.get("/offenses");
 
       let unreadIR = 0;
+      let unreadMyOffenses = 0;
 
       data.forEach((offense) => {
         if (offense.type !== "IR") return;
@@ -18,16 +20,16 @@ export const offenseBadge = (set, get) => ({
           if (!offense.isReadByHR) unreadIR++;
         }
 
-        if (!offense.isReadByRespondant && offense.status !== "Pending Review" && offense.respondantId === user._id) {
-          unreadIR++;
+        if (!offense.isReadByRespondant && !["Pending Review", "Escalated to Compliance", "Findings sent"].includes(offense.status) && offense.respondantId === user._id) {
+          unreadMyOffenses++;
         }
 
-        if (!offense.isReadByReporter && offense.reportedById === user._id) {
-          unreadIR++;
-        }
+        // if (!offense.isReadByReporter && offense.reportedById === user._id) {
+        //   unreadIR++;
+        // }
       });
 
-      set({ unreadIR });
+      set({ unreadIR, unreadMyOffenses });
     } catch (err) {
       console.error("Error fetching unread offenses:", err);
     }

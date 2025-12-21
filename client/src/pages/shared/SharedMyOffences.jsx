@@ -624,14 +624,10 @@ const SharedMyOffences = () => {
   const resolvedOffensesForHistory = useMemo(() => {
     return safeOffenses.filter((off) => {
       const isResolved =
-        (loggedUser &&
-          off.reportedById === loggedUser._id &&
-          ["Invalid", "Acknowledged"].includes(off.status) &&
-          off.type !== "COACHING") ||
-        (loggedUser &&
-          off.respondantId === loggedUser._id &&
-          ["Invalid", "Acknowledged"].includes(off.status) &&
-          off.type !== "COACHING");
+        loggedUser &&
+        off.respondantId === loggedUser._id &&
+        ["Invalid", "Acknowledged"].includes(off.status) &&
+        off.type !== "COACHING";
       if (!isResolved) return false;
 
       const textMatch = [
