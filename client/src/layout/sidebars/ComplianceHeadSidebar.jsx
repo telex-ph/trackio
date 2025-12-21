@@ -165,12 +165,12 @@ const ComplianceHeadSidebar = ({
           isCollapsed={isCollapsed}
           badge={!isCollapsed ? totalUnread : 0}
         />
-        <SidebarLink
+        {/* <SidebarLink
           to={`/compliance-head/escalated-offenses`}
           icon={TrendingUp}
           label="Escalated Offenses"
           badge={!isCollapsed ? unreadEscalation : 0}
-        />
+        /> */}
         <SidebarLink
           to={`/compliance-head/offenses-monitoring`}
           icon={Eye}
