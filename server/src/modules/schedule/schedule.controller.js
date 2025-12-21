@@ -1,0 +1,155 @@
+import { DateTime } from "luxon";
+import { ObjectId } from "mongodb";
+import SCHEDULE from "../../../constants/schedule.js";
+import Schedule from "./schedule.model.js";
+import User from "../user/user.model.js";
+
+export const addSchedules = async (req, res) => {
+  const { schedules, id, schedType, updatedBy } = req.body;
+
+  // Early return if the id is invalid
+  const user = await User.getById(id);
+  if (!user) {
+    return res.status(404).json({
+      message: "User not found. Cannot add list of schedules.",
+    });
+  }
+
+  const formattedSchedules = schedules.map((schedule) => {
+    const baseDate = DateTime.fromISO(schedule.date, {
+      zone: "Asia/Manila",
+    }).startOf("day");
+
+    // Merge a time with baseDate
+    const mergeDateAndTime = (timeISO, shiftStartTime = null) => {
+      let time = DateTime.fromISO(timeISO, { zone: "Asia/Manila" });
+      let dateTime = baseDate.set({
+        hour: time.hour,
+        minute: time.minute,
+        second: time.second,
+        millisecond: 0,
+      });
+
+      // If shiftEnd (or mealEnd) is earlier than shiftStart, assume it is the next day
+      if (shiftStartTime && dateTime < shiftStartTime) {
+        dateTime = dateTime.plus({ days: 1 });
+      }
+
+      return dateTime.toJSDate();
+    };
+
+    switch (schedType) {
+      case SCHEDULE.WORK_DAY:
+      case SCHEDULE.REPORTING:
+        // First get shiftStart datetime
+        const shiftStartDateTime = mergeDateAndTime(schedule.shiftStart);
+
+        return {
+          userId: new ObjectId(id),
+          date: baseDate.toJSDate(),
+          shiftStart: shiftStartDateTime,
+          shiftEnd: mergeDateAndTime(schedule.shiftEnd, shiftStartDateTime),
+          type: schedType,
+          notes: schedule.notes,
+          createdAt: DateTime.utc().toJSDate(),
+          updatedAt: DateTime.utc().toJSDate(),
+          updatedBy: new ObjectId(updatedBy),
+        };
+
+      default:
+        return {
+          userId: new ObjectId(id),
+          date: baseDate.toJSDate(),
+          type: schedType,
+          notes: schedule.notes,
+          createdAt: DateTime.utc().toJSDate(),
+          updatedAt: DateTime.utc().toJSDate(),
+          updatedBy: new ObjectId(updatedBy),
+        };
+    }
+  });
+
+  try {
+    const result = await Schedule.addAll(formattedSchedules);
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("Error adding schedules: ", error);
+    return res.status(500).json({
+      message: "Failed to add list of schedules",
+      error: error.message,
+    });
+  }
+};
+
+export const deleteSchedules = async (req, res) => {
+  const shiftSchedules = req.body.shiftSchedules;
+  const userId = req.body.userId;
+
+  // Since the date stored in db is in utc
+  const shiftSchedulesInUTC = shiftSchedules.map((schedule) => {
+    return DateTime.fromISO(schedule, { zone: "Asia/Manila" })
+      .toUTC()
+      .toJSDate();
+  });
+
+  try {
+    const schedules = await Schedule.deleteAll(
+      shiftSchedulesInUTC,
+      new ObjectId(userId)
+    );
+    return res.status(200).json(schedules);
+  } catch (error) {
+    console.error("Error deleting schedules: ", error);
+    res.status(500).json({
+      message: "Failed to delete list of schedules",
+      error: error.message,
+    });
+  }
+};
+
+export const getSchedules = async (req, res) => {
+  const id = req.params.id;
+  const currentMonth = parseInt(req.query.currentMonth);
+  const currentYear = parseInt(req.query.currentYear);
+
+  try {
+    // Get the urrent month
+    const now = DateTime.fromObject({
+      year: currentYear,
+      month: currentMonth,
+      day: 1,
+    });
+    //  Prev month
+    const prevMonth = now.minus({ months: 1 }).startOf("month").toJSDate();
+    //  Next month
+    const nextMonth = now.plus({ months: 1 }).endOf("month").toJSDate();
+    // Get start of current month and end of current month
+
+    const result = await Schedule.getAll(id, prevMonth, nextMonth);
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error fetching all user's schedules:", error);
+    res.status(500).json({
+      message: "Failed to user schedules",
+      error: error.message,
+    });
+  }
+};
+
+export const getSchedule = async (req, res) => {
+  const id = req.params.id;
+  // YYYY-MM-DD
+  const date = req.params.date;
+
+  try {
+    const result = await Schedule.get(id, date);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error fetching user schedule: ", error);
+    res.status(500).json({
+      message: "Failed to fetch user schedule: ",
+      error: error.message,
+    });
+  }
+};
