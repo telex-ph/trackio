@@ -8,6 +8,9 @@ import {
   GalleryVerticalEnd,
   Ticket,
   Book,
+  AlertTriangle,
+  PlusCircle,
+  FileText,
 } from "lucide-react";
 import SidebarLink from "./SidebarLink";
 import CustomCollapse from "./CustomCollapse";
@@ -42,7 +45,7 @@ const TraineeQualityAssuranceSidebar = ({
         isCollapsed={isCollapsed}
       />
       <CustomCollapse
-        icon={<Clock className="w-5 h-5" />}
+        icon={<AlertTriangle className="w-5 h-5" />}
         label="Offenses"
         isCollapsed={isCollapsed}
         open={activeDropdown === "offenses"}
@@ -53,13 +56,13 @@ const TraineeQualityAssuranceSidebar = ({
       >
         <SidebarLink
           to={`trainer-quality-assurance/createoffense`}
-          icon={List}
+          icon={PlusCircle}
           label="Create Offense"
           isCollapsed={isCollapsed}
         />
         <SidebarLink
           to={`/trainer-quality-assurance/offenses`}
-          icon={GalleryVerticalEnd}
+          icon={FileText}
           label="My Offenses"
           isCollapsed={isCollapsed}
           badge={!isCollapsed ? totalUnread : 0}

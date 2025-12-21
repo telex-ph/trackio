@@ -13,6 +13,10 @@ import {
   CalendarPlus,
   FileCheck,
   Book,
+  AlertTriangle,
+  PlusCircle,
+  FileText,
+  ClipboardList,
 } from "lucide-react";
 import SidebarLink from "../sidebars/SidebarLink";
 import CustomCollapse from "../sidebars/CustomCollapse";
@@ -104,7 +108,7 @@ const AdminHRHeadSidebar = ({
         isCollapsed={isCollapsed}
       />
       <CustomCollapse
-        icon={<Clock className="w-5 h-5" />}
+        icon={<AlertTriangle className="w-5 h-5" />}
         label="Offenses"
         isCollapsed={isCollapsed}
         open={activeDropdown === "offenses"}
@@ -115,20 +119,20 @@ const AdminHRHeadSidebar = ({
       >
         <SidebarLink
           to={`/admin-hr-head/createoffense`}
-          icon={List}
+          icon={PlusCircle}
           label="Create Offense"
           isCollapsed={isCollapsed}
         />
         <SidebarLink
           to={`/admin-hr-head/offenses`}
-          icon={GalleryVerticalEnd}
+          icon={FileText}
           label="My Offenses"
           isCollapsed={isCollapsed}
           badge={!isCollapsed ? unreadIR : 0}
         />
         <SidebarLink
           to={`/admin-hr-head/reported-ir`}
-          icon={GalleryVerticalEnd}
+          icon={ClipboardList}
           label="Reported IR"
           isCollapsed={isCollapsed}
           badge={!isCollapsed ? unreadIR : 0}
