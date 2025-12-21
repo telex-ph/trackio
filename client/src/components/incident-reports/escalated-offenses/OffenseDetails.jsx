@@ -407,7 +407,7 @@ const OffenseDetails = ({
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-bold text-gray-900">
-                    Send NTE Confirmation
+                    Send File
                   </h2>
                   <button
                     onClick={() => setShowFindingsModal(false)}
@@ -419,7 +419,7 @@ const OffenseDetails = ({
 
                 {/* Body */}
                 <p className="text-gray-700 mb-4">
-                  Are you sure you want to upload the finding file?
+                  Are you sure you want to upload the file?
                 </p>
 
                 {/* Drag-and-drop Attachment Input */}
@@ -487,7 +487,7 @@ const OffenseDetails = ({
                         Uploading...
                       </>
                     ) : (
-                      "Send NTE"
+                      "Send File"
                     )}
                   </button>
                 </div>
