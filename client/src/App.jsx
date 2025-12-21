@@ -2,6 +2,7 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
 import { useStore } from "./store/useStore";
 import { useEffect } from "react";
+import Spinner from "./assets/loaders/Spinner";
 
 function App() {
   const { isLoading, user } = useAuth();
@@ -13,8 +14,11 @@ function App() {
 
   if (isLoading) {
     return (
-      <div>
-        <p>Loading...</p>
+      <div className="w-full h-screen grid place-items-center">
+        <div className="flex flex-col gap-3">
+          <Spinner size={30} />
+          <p className="text-light">We're loading the page. Please wait.</p>
+        </div>
       </div>
     );
   }
