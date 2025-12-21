@@ -17,6 +17,7 @@ import {
   FileText,
   TrendingUp,
   Eye,
+  AlertTriangle,
 } from "lucide-react";
 import SidebarLink from "./SidebarLink";
 import CustomCollapse from "./CustomCollapse";
