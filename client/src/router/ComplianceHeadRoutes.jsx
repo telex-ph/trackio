@@ -31,6 +31,7 @@ import TeamLeaderCreateOffenses from "../pages/team-leader/TeamLeaderCreateOffen
 import HRReportedOffenses from "../pages/hr/HRReportedOffenses";
 import OffenseMonitoring from "../pages/compliance/OffenseMonitoring";
 import SharedCourse from "../pages/shared/SharedCourse";
+import EscalatedOffenses from "../pages/compliance/EscalatedOffenses";
 
 const COMPLIANCE_HEAD_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -77,6 +78,10 @@ const COMPLIANCE_HEAD_ROUTES = [
   {
     path: "createoffense",
     element: <TeamLeaderCreateOffenses />,
+  },
+  {
+    path: "escalated-offenses",
+    element: <EscalatedOffenses />,
   },
   {
     path: "offenses-monitoring",
