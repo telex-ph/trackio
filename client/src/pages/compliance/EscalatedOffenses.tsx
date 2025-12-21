@@ -95,17 +95,6 @@ const EscalatedOffenses = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
 
-  const [selectedEscalateFile, setSelectedEscalateFile] = useState<File | null>(
-    null
-  );
-  const [isDragOverEscalate, setIsDragOverEscalate] = useState(false);
-
-  const [selectedMOMFile, setSelectedMOMFile] = useState<File | null>(null);
-  const [isDragOverMOM, setIsDragOverMOM] = useState(false);
-
-  const [selectedNDAFile, setSelectedNDAFile] = useState<File | null>(null);
-  const [isDragOverNDA, setIsDragOverNDA] = useState(false);
-
   //Loader state
   const [isUploading, setIsUploading] = useState(false);
 
@@ -295,8 +284,8 @@ const EscalatedOffenses = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Validate offense → send NTE
-  const handleValid = async () => {
+  // Send Findings
+  const handleFindings = async () => {
     if (!editingId) return;
 
     const now = new Date();
@@ -356,274 +345,6 @@ const EscalatedOffenses = () => {
     } catch (error) {
       console.error("Error updating offense:", error);
       showNotification("Failed to update.", "error");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  // Hearing modal states
-  const [_showHearingModal, setShowHearingModal] = useState<boolean>(false);
-  const [_hearingDate, setHearingDate] = React.useState("");
-
-  // Set hearing schedule
-  const handleHearingDate = async (
-    hearingDate: string,
-    witnesses: { _id: string; name: string; employeeId: string }[]
-  ) => {
-    try {
-      setIsUploading(true);
-      const now = new Date();
-
-      const payload = {
-        ...formData,
-        status: "Scheduled for hearing",
-        isReadByRespondant: false,
-        hearingDate,
-        witnesses,
-        schedHearingDateTime: now.toISOString(),
-      };
-
-      const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
-
-      await api.post("/auditlogs", {
-        action: "update",
-        before: { ...existingOffense },
-        after: { ...existingOffense, ...payload },
-        collection: "offense-ir",
-      });
-
-      await api.put(`/offenses/${editingId}`, payload);
-
-      showNotification("Hearing has been set.", "success");
-      resetForm();
-      fetchOffenses();
-      setHearingDate("");
-      setShowHearingModal(false);
-    } catch (error) {
-      console.error("Error setting hearing:", error);
-      showNotification("Failed to set hearing date.", "error");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  // Upload Escalation File for Compliance
-  const handleUploadEscalate = async () => {
-    if (!editingId) return;
-
-    const now = new Date();
-
-    try {
-      setIsUploading(true);
-      const payload = {
-        ...formData,
-        status: "Escalated to Compliance",
-        isReadByRespondant: true,
-        isReadByHR: true,
-        isReadByCompliance: false,
-        afterHearingDateTime: now.toISOString(),
-        escalationSentDateTime: now.toISOString(),
-      };
-
-      if (selectedEscalateFile) {
-        const formData = new FormData();
-        formData.append("file", selectedEscalateFile);
-
-        const uploadRes = await api.post("/upload/escalate", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-
-        payload.fileEscalation = [
-          {
-            fileName: uploadRes.data.fileName,
-            size: uploadRes.data.size,
-            type: uploadRes.data.type,
-            url: uploadRes.data.url,
-            public_id: uploadRes.data.public_id,
-          },
-        ];
-      }
-
-      const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
-
-      await api.post("/auditlogs", {
-        action: "update",
-        before: { ...existingOffense },
-        after: { ...existingOffense, ...payload },
-        collection: "offense-ir",
-      });
-
-      await api.put(`/offenses/${editingId}`, payload);
-
-      showNotification("Escalation Sent To Compliance!", "success");
-
-      resetForm();
-      setSelectedEscalateFile(null);
-      setSelectedMOMFile(null);
-      setSelectedNDAFile(null);
-      fetchOffenses();
-    } catch (error) {
-      console.error("Error updating offense:", error);
-      showNotification("Failed to upload.", "error");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  // Upload MOM
-  const handleUploadMOM = async () => {
-    if (!editingId) return;
-
-    const now = new Date();
-
-    try {
-      setIsUploading(true);
-      const payload = {
-        ...formData,
-        status: "MOM Uploaded",
-        isReadByRespondant: false,
-        afterHearingDateTime: now.toISOString(),
-        momSentDateTime: now.toISOString(),
-      };
-
-      if (selectedMOMFile) {
-        const formData = new FormData();
-        formData.append("file", selectedMOMFile);
-
-        const uploadRes = await api.post("/upload/mom", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-
-        payload.fileMOM = [
-          {
-            fileName: uploadRes.data.fileName,
-            size: uploadRes.data.size,
-            type: uploadRes.data.type,
-            url: uploadRes.data.url,
-            public_id: uploadRes.data.public_id,
-          },
-        ];
-      }
-
-      const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
-
-      await api.post("/auditlogs", {
-        action: "update",
-        before: { ...existingOffense },
-        after: { ...existingOffense, ...payload },
-        collection: "offense-ir",
-      });
-
-      await api.put(`/offenses/${editingId}`, payload);
-
-      showNotification("MOM uploaded!", "success");
-
-      resetForm();
-      setSelectedMOMFile(null);
-      fetchOffenses();
-    } catch (error) {
-      console.error("Error updating offense:", error);
-      showNotification("Failed to upload.", "error");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  // Upload NDA
-  const handleUploadNDA = async () => {
-    if (!editingId) return;
-
-    const now = new Date();
-
-    try {
-      setIsUploading(true);
-      const payload = {
-        ...formData,
-        isAcknowledged: false,
-        status: "For Acknowledgement",
-        isReadByRespondant: false,
-        afterHearingDateTime: now.toISOString(),
-        ndaSentDateTime: now.toISOString(),
-      };
-
-      if (selectedNDAFile) {
-        const formData = new FormData();
-        formData.append("file", selectedNDAFile);
-
-        const uploadRes = await api.post("/upload/nda", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-
-        payload.fileNDA = [
-          {
-            fileName: uploadRes.data.fileName,
-            size: uploadRes.data.size,
-            type: uploadRes.data.type,
-            url: uploadRes.data.url,
-            public_id: uploadRes.data.public_id,
-          },
-        ];
-      }
-
-      const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
-
-      await api.post("/auditlogs", {
-        action: "update",
-        before: { ...existingOffense },
-        after: { ...existingOffense, ...payload },
-        collection: "offense-ir",
-      });
-
-      await api.put(`/offenses/${editingId}`, payload);
-
-      showNotification("NDA uploaded!", "success");
-
-      resetForm();
-      setSelectedNDAFile(null);
-
-      fetchOffenses();
-    } catch (error) {
-      console.error("Error updating offense:", error);
-      showNotification("Failed to upload.", "error");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  // Reject modal states
-  const [_showInvalidModal, setShowInvalidModal] = useState(false);
-  const [_invalidReason, setInvalidReason] = useState("");
-
-  // Reject offense
-  const handleInvalid = async (invalidReason: string) => {
-    try {
-      setIsUploading(true);
-      const payload = {
-        ...formData,
-        status: "Invalid",
-        invalidReason,
-        isReadByReporter: false,
-        isReadByHR: true,
-      };
-
-      const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
-
-      await api.post("/auditlogs", {
-        action: "update",
-        before: { ...existingOffense },
-        after: { ...existingOffense, ...payload },
-        collection: "offense-ir",
-      });
-
-      await api.put(`/offenses/${editingId}`, payload);
-      showNotification("Case rejected.", "success");
-      resetForm();
-      fetchOffenses();
-      setShowInvalidModal(false);
-      setInvalidReason("");
-    } catch (error) {
-      console.error("Error rejecting case:", error);
-      showNotification("Failed to reject.", "error");
     } finally {
       setIsUploading(false);
     }
@@ -727,28 +448,11 @@ const EscalatedOffenses = () => {
           formData={formData as Offense}
           onClose={resetForm}
           onFormChange={handleFormChange}
-          handleValid={handleValid}
-          handleInvalid={handleInvalid}
-          handleHearingDate={handleHearingDate}
-          handleUploadEscalate={handleUploadEscalate}
-          handleUploadMOM={handleUploadMOM}
-          handleUploadNDA={handleUploadNDA}
+          handleFindings={handleFindings}
           selectedFile={selectedFile}
           setSelectedFile={setSelectedFile}
-          selectedEscalateFile={selectedEscalateFile}
-          setSelectedEscalateFile={setSelectedEscalateFile}
-          selectedMOMFile={selectedMOMFile}
-          setSelectedMOMFile={setSelectedMOMFile}
-          selectedNDAFile={selectedNDAFile}
-          setSelectedNDAFile={setSelectedNDAFile}
           isDragOver={isDragOver}
           setIsDragOver={setIsDragOver}
-          isDragOverEscalate={isDragOverEscalate}
-          setIsDragOverEscalate={setIsDragOverEscalate}
-          isDragOverMOM={isDragOverMOM}
-          setIsDragOverMOM={setIsDragOverMOM}
-          isDragOverNDA={isDragOverNDA}
-          setIsDragOverNDA={setIsDragOverNDA}
           isUploading={isUploading}
         />
 
