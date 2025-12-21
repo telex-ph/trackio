@@ -679,6 +679,7 @@ const SharedCreateOffences = () => {
       fileMOM: off.fileMOM || [],
       fileNDA: off.fileNDA || [],
       isAcknowledged: off.isAcknowledged,
+      ackMessage: off.ackMessage
     });
 
     setEditingId(off._id);
