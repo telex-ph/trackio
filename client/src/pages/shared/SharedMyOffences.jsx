@@ -561,7 +561,14 @@ const SharedMyOffences = () => {
       off.witnesses?.some((witness) => witness._id === loggedUser._id);
 
     if (!isInvolved) return false;
-    if (["Pending Review", "Invalid", "Acknowledged"].includes(off.status))
+    if (
+      [
+        "Pending Review",
+        "Escalated to Compliance",
+        "Invalid",
+        "Acknowledged",
+      ].includes(off.status)
+    )
       return false;
     if (off.type !== "IR") return false;
 

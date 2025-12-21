@@ -23,18 +23,23 @@ const HR_OffenseDetails = ({
   onClose,
   onFormChange,
   handleValid,
-  rejectOffense,
+  handleInvalid,
   handleHearingDate,
+  handleUploadEscalate,
   handleUploadMOM,
   handleUploadNDA,
   selectedFile,
   setSelectedFile,
+  selectedEscalateFile,
+  setSelectedEscalateFile,
   selectedMOMFile,
   setSelectedMOMFile,
   selectedNDAFile,
   setSelectedNDAFile,
   isDragOver,
   setIsDragOver,
+  isDragOverEscalate,
+  setIsDragOverEscalate,
   isDragOverMOM,
   setIsDragOverMOM,
   isDragOverNDA,
@@ -49,6 +54,7 @@ const HR_OffenseDetails = ({
   const [showHearingModal, setShowHearingModal] = React.useState(false);
   const [hearingDate, setHearingDate] = React.useState("");
 
+  const [showEscalateModal, setShowEscalateModal] = React.useState(false);
   const [showMOMModal, setShowMOMModal] = React.useState(false);
   const [showNDAModal, setShowNDAModal] = React.useState(false);
 
@@ -484,6 +490,12 @@ const HR_OffenseDetails = ({
                     Valid
                   </button>
                   <button
+                    onClick={() => setShowEscalateModal(true)}
+                    className="flex-1 bg-linear-to-r from-amber-500 to-amber-600 text-white p-3 sm:p-4 rounded-2xl hover:from-amber-600 hover:to-amber-700 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                  >
+                    Escalate
+                  </button>
+                  <button
                     onClick={() => setShowInvalidModal(true)}
                     className="flex-1 bg-linear-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
                   >
@@ -503,6 +515,14 @@ const HR_OffenseDetails = ({
                   Set Hearing Date
                 </button>
               )}
+              {formData.status === "Scheduled for hearing" && (
+                <button
+                  onClick={() => setShowMOMModal(true)}
+                  className="flex-1 bg-linear-to-r from-indigo-600 to-indigo-700 text-white p-3 sm:p-4 rounded-2xl hover:from-indigo-700 hover:to-indigo-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                >
+                  Upload Minutes of Meeting
+                </button>
+              )}
               {["NTE", "Respondant Explained", "MOM Uploaded"].includes(
                 formData.status
               ) && (
@@ -511,14 +531,6 @@ const HR_OffenseDetails = ({
                   className="flex-1 bg-linear-to-r from-indigo-600 to-indigo-700 text-white p-3 sm:p-4 rounded-2xl hover:from-indigo-700 hover:to-indigo-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
                 >
                   Upload NDA
-                </button>
-              )}
-              {formData.status === "Scheduled for hearing" && (
-                <button
-                  onClick={() => setShowMOMModal(true)}
-                  className="flex-1 bg-linear-to-r from-indigo-600 to-indigo-700 text-white p-3 sm:p-4 rounded-2xl hover:from-indigo-700 hover:to-indigo-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
-                >
-                  Upload Minutes of Meeting
                 </button>
               )}
             </div>
@@ -753,7 +765,7 @@ const HR_OffenseDetails = ({
                     className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50"
                     onClick={() => {
                       if (!invalidReason.trim()) return;
-                      rejectOffense(invalidReason);
+                      handleInvalid(invalidReason);
                     }}
                     disabled={isUploading || !invalidReason.trim()}
                   >
@@ -886,6 +898,91 @@ const HR_OffenseDetails = ({
                       </>
                     ) : (
                       "Set Hearing"
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showEscalateModal && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-gray-900">
+                    Escalate IR to Compliance for Further Investigation
+                  </h2>
+                  <button
+                    onClick={() => setShowEscalateModal(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Body */}
+                <div
+                  className={`mb-4 mt-1 p-4 border-2 rounded-xl border-dashed text-center cursor-pointer transition-colors ${
+                    isDragOverEscalate
+                      ? "border-indigo-500 bg-indigo-50"
+                      : "border-gray-300 bg-white"
+                  }`}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragOverEscalate(true);
+                  }}
+                  onDragLeave={() => setIsDragOverEscalate(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragOverEscalate(false);
+                    if (e.dataTransfer.files?.[0])
+                      setSelectedEscalateFile(e.dataTransfer.files[0]);
+                  }}
+                  onClick={() =>
+                    document.getElementById("escalateFileInput")?.click()
+                  }
+                >
+                  {selectedEscalateFile ? (
+                    <p className="text-gray-700 text-sm">
+                      Selected file: {selectedEscalateFile.name}
+                    </p>
+                  ) : (
+                    <p className="text-gray-500 text-sm">
+                      Drag & drop or click to upload file
+                    </p>
+                  )}
+                  <input
+                    type="file"
+                    id="escalateFileInput"
+                    className="hidden"
+                    accept=".pdf,.doc,.docx,.jpg,.png"
+                    onChange={(e) =>
+                      setSelectedEscalateFile(e.target.files?.[0] || null)
+                    }
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="mt-6 flex justify-end gap-3">
+                  <button
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors"
+                    onClick={() => setShowEscalateModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleUploadEscalate}
+                    disabled={isUploading || !selectedEscalateFile}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isUploading ? (
+                      <>
+                        <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
+                        Uploading...
+                      </>
+                    ) : (
+                      "Send Escalation"
                     )}
                   </button>
                 </div>

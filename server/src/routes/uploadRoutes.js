@@ -13,6 +13,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 const folderMap = {
   evidence: "trackio/offense/evidence",
   nte: "trackio/offense/NTE",
+  escalate: "trackio/offense/escalate",
   mom: "trackio/offense/MOM",
   nda: "trackio/offense/NDA",
   leave: "trackio/leave",

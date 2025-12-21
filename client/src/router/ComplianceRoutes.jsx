@@ -26,6 +26,7 @@ import TeamLeaderOffenses from "../pages/team-leader/TeamLeaderOffenses";
 import TeamLeaderCreateOffenses from "../pages/team-leader/TeamLeaderCreateOffense";
 import OffenseMonitoring from "../pages/compliance/OffenseMonitoring";
 import SharedCourse from "../pages/shared/SharedCourse";
+import EscalatedOffenses from "../pages/compliance/EscalatedOffenses";
 
 const COMPLIANCE_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -72,6 +73,10 @@ const COMPLIANCE_ROUTES = [
   {
     path: "courses",
     element: <SharedCourse isWatchOnly={false} />,
+  },
+  {
+    path: "escalated-offenses",
+    element: <EscalatedOffenses />,
   },
   {
     path: "offenses-monitoring",

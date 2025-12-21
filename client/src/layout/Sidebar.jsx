@@ -22,13 +22,18 @@ export const Sidebar = ({ isCollapsed }) => {
   // User and badge counts from zustand
   const user = useStore((state) => state.user);
   const unreadIR = useStore((state) => state.unreadIR);
+  const unreadEscalation = useStore((state) => state.unreadEscalation);
   const unreadCoaching = useStore((state) => state.unreadCoaching);
 
   // Functions to fetch badges and attach socket listeners
   const fetchUnreadOffenses = useStore((state) => state.fetchUnreadOffenses);
+  const fetchUnreadEscalatedOffenses = useStore((state) => state.fetchUnreadEscalatedOffenses);
   const fetchUnreadCoaching = useStore((state) => state.fetchUnreadCoaching);
   const attachOffenseSocketListeners = useStore(
     (state) => state.attachOffenseSocketListeners
+  );
+  const attachOffenseEscalatedSocketListeners = useStore(
+    (state) => state.attachOffenseEscalatedSocketListeners
   );
   const attachCoachingSocketListeners = useStore(
     (state) => state.attachCoachingSocketListeners
@@ -45,8 +50,10 @@ export const Sidebar = ({ isCollapsed }) => {
     if (!user?.employeeId) return;
 
     fetchUnreadOffenses(user);
+    fetchUnreadEscalatedOffenses(user);
     fetchUnreadCoaching(user);
     attachOffenseSocketListeners();
+    attachOffenseEscalatedSocketListeners();
     attachCoachingSocketListeners();
 
     return () => {
@@ -56,8 +63,10 @@ export const Sidebar = ({ isCollapsed }) => {
   }, [
     user,
     fetchUnreadOffenses,
+    fetchUnreadEscalatedOffenses,
     fetchUnreadCoaching,
     attachOffenseSocketListeners,
+    attachOffenseEscalatedSocketListeners,
     attachCoachingSocketListeners,
     removeOffenseSocketListeners,
     removeCoachingSocketListeners,
@@ -151,6 +160,7 @@ export const Sidebar = ({ isCollapsed }) => {
           <ComplianceSidebar
             {...sidebarProps}
             unreadIR={unreadIR}
+            unreadEscalation={unreadEscalation}
             unreadCoaching={unreadCoaching}
           />
         );
@@ -159,6 +169,7 @@ export const Sidebar = ({ isCollapsed }) => {
           <ComplianceHeadSidebar
             {...sidebarProps}
             unreadIR={unreadIR}
+            unreadEscalation={unreadEscalation}
             unreadCoaching={unreadCoaching}
           />
         );

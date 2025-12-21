@@ -11,6 +11,12 @@ import {
   Users2Icon,
   Ticket,
   Book,
+  AlertTriangle,
+  PlusCircle,
+  ListChecks,
+  TrendingUp,
+  FileText,
+  Eye,
 } from "lucide-react";
 import SidebarLink from "./SidebarLink";
 import CustomCollapse from "./CustomCollapse";
@@ -21,8 +27,11 @@ const ComplianceSidebar = ({
   activeDropdown,
   setActiveDropdown,
   unreadIR,
+  unreadEscalation,
   unreadCoaching,
 }) => {
+  const totalUnreadWithEscalation =
+    (unreadIR || 0) + (unreadEscalation || 0) + (unreadCoaching || 0);
   const totalUnread = (unreadIR || 0) + (unreadCoaching || 0);
 
   return (
@@ -111,31 +120,38 @@ const ComplianceSidebar = ({
         isCollapsed={isCollapsed}
       />
       <CustomCollapse
-        icon={<Clock className="w-5 h-5" />}
+        icon={<AlertTriangle className="w-5 h-5" />}
         label="Offenses"
         isCollapsed={isCollapsed}
         open={activeDropdown === "offenses"}
         onToggle={() =>
           setActiveDropdown(activeDropdown === "offenses" ? null : "offenses")
         }
-        badge={totalUnread}
+        badge={totalUnreadWithEscalation}
       >
         <SidebarLink
           to={`/compliance/createoffense`}
-          icon={List}
+          icon={PlusCircle}
           label="Create Offense"
           isCollapsed={isCollapsed}
         />
         <SidebarLink
           to={`/compliance/offenses`}
-          icon={GalleryVerticalEnd}
+          icon={FileText}
           label="My Offenses"
           isCollapsed={isCollapsed}
           badge={!isCollapsed ? totalUnread : 0}
         />
         <SidebarLink
+          to={`/compliance/escalated-offenses`}
+          icon={TrendingUp}
+          label="Escalated Offenses"
+          isCollapsed={isCollapsed}
+          badge={!isCollapsed ? unreadEscalation : 0}
+        />
+        <SidebarLink
           to={`/compliance/offenses-monitoring`}
-          icon={GalleryVerticalEnd}
+          icon={Eye}
           label="Offense Monitoring"
           isCollapsed={isCollapsed}
         />
