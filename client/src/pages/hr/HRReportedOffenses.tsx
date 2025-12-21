@@ -42,6 +42,7 @@ interface Offense {
   remarks?: string;
   evidence?: FileUpload[];
   fileNTE?: FileUpload[];
+  fileEscalation?: FileUpload[];
   fileMOM?: FileUpload[];
   fileNDA?: FileUpload[];
   isReadByHR?: boolean;
@@ -94,6 +95,11 @@ const HRReportedOffenses = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
 
+  const [selectedEscalateFile, setSelectedEscalateFile] = useState<File | null>(
+    null
+  );
+  const [isDragOverEscalate, setIsDragOverEscalate] = useState(false);
+
   const [selectedMOMFile, setSelectedMOMFile] = useState<File | null>(null);
   const [isDragOverMOM, setIsDragOverMOM] = useState(false);
 
@@ -113,6 +119,7 @@ const HRReportedOffenses = () => {
     remarks: "",
     evidence: [],
     fileNTE: [],
+    fileEscalation: [],
     fileMOM: [],
     fileNDA: [],
   });
@@ -252,6 +259,7 @@ const HRReportedOffenses = () => {
       status: off.status || "",
       remarks: off.remarks || "",
       evidence: off.evidence || [],
+      fileEscalation: off.fileEscalation || [],
       fileMOM: off.fileMOM || [],
       fileNDA: off.fileNDA || [],
       fileNTE: off.fileNTE || [],
@@ -399,6 +407,69 @@ const HRReportedOffenses = () => {
     }
   };
 
+  // Upload Escalation File for Compliance
+  const handleUploadEscalate = async () => {
+    if (!editingId) return;
+
+    const now = new Date();
+
+    try {
+      setIsUploading(true);
+      const payload = {
+        ...formData,
+        status: "Escalated to Compliance",
+        isReadByRespondant: true,
+        isReadByHR: true,
+        isReadByCompliance: false,
+        afterHearingDateTime: now.toISOString(),
+        escalationSentDateTime: now.toISOString(),
+      };
+
+      if (selectedEscalateFile) {
+        const formData = new FormData();
+        formData.append("file", selectedEscalateFile);
+
+        const uploadRes = await api.post("/upload/escalate", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        payload.fileEscalation = [
+          {
+            fileName: uploadRes.data.fileName,
+            size: uploadRes.data.size,
+            type: uploadRes.data.type,
+            url: uploadRes.data.url,
+            public_id: uploadRes.data.public_id,
+          },
+        ];
+      }
+
+      const { data: existingOffense } = await api.get(`/offenses/${editingId}`);
+
+      await api.post("/auditlogs", {
+        action: "update",
+        before: { ...existingOffense },
+        after: { ...existingOffense, ...payload },
+        collection: "offense-ir",
+      });
+
+      await api.put(`/offenses/${editingId}`, payload);
+
+      showNotification("Escalation Sent To Compliance!", "success");
+
+      resetForm();
+      setSelectedEscalateFile(null);
+      setSelectedMOMFile(null);
+      setSelectedNDAFile(null);
+      fetchOffenses();
+    } catch (error) {
+      console.error("Error updating offense:", error);
+      showNotification("Failed to upload.", "error");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   // Upload MOM
   const handleUploadMOM = async () => {
     if (!editingId) return;
@@ -449,7 +520,6 @@ const HRReportedOffenses = () => {
 
       resetForm();
       setSelectedMOMFile(null);
-      setSelectedNDAFile(null);
       fetchOffenses();
     } catch (error) {
       console.error("Error updating offense:", error);
@@ -509,7 +579,6 @@ const HRReportedOffenses = () => {
       showNotification("NDA uploaded!", "success");
 
       resetForm();
-      setSelectedMOMFile(null);
       setSelectedNDAFile(null);
 
       fetchOffenses();
@@ -526,7 +595,7 @@ const HRReportedOffenses = () => {
   const [_invalidReason, setInvalidReason] = useState("");
 
   // Reject offense
-  const rejectOffense = async (invalidReason: string) => {
+  const handleInvalid = async (invalidReason: string) => {
     try {
       setIsUploading(true);
       const payload = {
@@ -659,18 +728,23 @@ const HRReportedOffenses = () => {
           onClose={resetForm}
           onFormChange={handleFormChange}
           handleValid={handleValid}
+          handleInvalid={handleInvalid}
           handleHearingDate={handleHearingDate}
+          handleUploadEscalate={handleUploadEscalate}
           handleUploadMOM={handleUploadMOM}
           handleUploadNDA={handleUploadNDA}
-          rejectOffense={rejectOffense}
           selectedFile={selectedFile}
           setSelectedFile={setSelectedFile}
+          selectedEscalateFile={selectedEscalateFile}
+          setSelectedEscalateFile={setSelectedEscalateFile}
           selectedMOMFile={selectedMOMFile}
           setSelectedMOMFile={setSelectedMOMFile}
           selectedNDAFile={selectedNDAFile}
           setSelectedNDAFile={setSelectedNDAFile}
           isDragOver={isDragOver}
           setIsDragOver={setIsDragOver}
+          isDragOverEscalate={isDragOverEscalate}
+          setIsDragOverEscalate={setIsDragOverEscalate}
           isDragOverMOM={isDragOverMOM}
           setIsDragOverMOM={setIsDragOverMOM}
           isDragOverNDA={isDragOverNDA}
