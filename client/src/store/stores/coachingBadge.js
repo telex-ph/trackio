@@ -2,25 +2,27 @@ import api from "../../utils/axios";
 import socket from "../../utils/socket";
 
 export const coachingBadge = (set, get) => ({
-    unreadCoaching: 0,
+    unreadMyCoaching: 0,
+    unreadCreatedCoaching: 0,
 
     fetchUnreadCoaching: async (user) => {
         try {
             const { data } = await api.get("/offenses");
 
-            let unreadCoaching = 0;
+            let unreadMyCoaching = 0;
+            let unreadCreatedCoaching = 0;
 
             data.forEach((log) => {
                 if (log.type !== "COACHING") return;
 
                 if (!log.isReadByRespondant && log.respondantId === user._id)
-                    unreadCoaching++;
+                    unreadMyCoaching++;
 
                 if (!log.isReadByCoach && log.coachId === user._id)
-                    unreadCoaching++;
+                    unreadCreatedCoaching++;
             });
 
-            set({ unreadCoaching });
+            set({ unreadMyCoaching, unreadCreatedCoaching });
         } catch (err) {
             console.error("Error fetching unread coaching logs:", err);
         }
