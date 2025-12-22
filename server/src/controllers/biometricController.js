@@ -150,7 +150,7 @@ export const getEvents = async (req, res) => {
                     `Employee ${ac.name} is ON_BREAK, processing break-out`
                   );
                   try {
-                    await biometricBreakOut(attendanceId, breaks);
+                    await biometricBreakOut(attendanceId, breaks, now);
                     console.log(`Break-out successful for user ${ac.name}`);
                   } catch (error) {
                     console.error(`Break-out failed:`, error);

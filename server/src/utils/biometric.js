@@ -79,11 +79,14 @@ export const biometricBreakIn = async (docId, breaks, totalBreak, now) => {
   }
 };
 
-export const biometricBreakOut = async (docId, breaks) => {
+export const biometricBreakOut = async (docId, breaks, now) => {
   const prevBreak = breaks[breaks.length - 1];
 
   const endUtc = DateTime.utc();
   prevBreak.end = endUtc.toJSDate();
+
+  const testEndUtc = DateTime.fromISO(now).toUTC();
+  console.log(`biometricBreakOut(): endUtc ${endUtc} / testEndUtc ${testEndUtc}`);
 
   const startUtc = DateTime.fromJSDate(prevBreak.start);
   prevBreak.duration = endUtc.diff(startUtc).milliseconds;
