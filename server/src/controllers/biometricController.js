@@ -92,7 +92,7 @@ export const getEvents = async (req, res) => {
                   await biometricBreakOut(attendanceId, breaks);
                 }
                 // Shift already ended
-                await biometricOut(attendanceId);
+                await biometricOut(attendanceId, now);
                 console.log(
                   `Employee ${ac.name} is about to go out of the office`
                 );

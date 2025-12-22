@@ -35,8 +35,8 @@ export const biometricIn = async (userId, employeeId, now) => {
   }
 };
 
-export const biometricOut = async (attendanceId) => {
-  const nowUtc = DateTime.utc().toJSDate();
+export const biometricOut = async (attendanceId, now) => {
+  const nowUtc = DateTime.fromISO(now).toUTC();
 
   try {
     // await Attendance.updateFieldById(attendanceId, "status", STATUS.OOF);
