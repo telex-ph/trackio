@@ -6,7 +6,6 @@ import cookieParser from "cookie-parser";
 import "./cron.js";
 
 // Routes imports
-import accountRoutes from "../src/routes/accountRoutes.js";
 import announcementRoutes from "../src/routes/announcementRoutes.js";
 import recognitionRoutes from "../src/routes/recognitionRoutes.js";
 import mediaRoutes from "../src/routes/mediaRoutes.js";
@@ -29,6 +28,7 @@ import courseRoutes from "./modules/course/course.model.js";
 import authRoutes from "./modules/auth/auth.route.js";
 import attendanceRoutes from "./modules/attendance/attendance.routes.js";
 import absenceRoutes from "./modules/absence/absence.route.js";
+import accountRoutes from "./modules/account/account.route.js";
 
 dotenv.config();
 const app = express();
