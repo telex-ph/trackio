@@ -24,7 +24,6 @@ const PresidentSidebar = ({
   isCollapsed,
   activeDropdown,
   setActiveDropdown,
-  unreadOffenses,
 }) => (
   <div className="space-y-1">
     <SidebarLink
@@ -143,7 +142,6 @@ const PresidentSidebar = ({
         icon={GalleryVerticalEnd}
         label="Reported IR"
         isCollapsed={isCollapsed}
-        badge={unreadOffenses}
       />
     </CustomCollapse>
     <CustomCollapse

@@ -21,10 +21,11 @@ const AgentSidebar = ({
   isCollapsed,
   activeDropdown,
   setActiveDropdown,
-  unreadIR,
-  unreadCoaching,
+  unreadMyOffenses,
+  unreadMyCoaching,
 }) => {
-  const totalUnread = (unreadIR || 0) + (unreadCoaching || 0);
+  const totalUnread =
+    (unreadMyOffenses || 0) + (unreadMyCoaching || 0);
 
   return (
     <div className="space-y-1">

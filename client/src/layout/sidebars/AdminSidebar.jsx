@@ -22,10 +22,15 @@ const AdminSidebar = ({
   isCollapsed,
   activeDropdown,
   setActiveDropdown,
-  unreadIR,
-  unreadCoaching,
+  unreadCreatedCoaching,
+  unreadMyOffenses,
+  unreadMyCoaching,
 }) => {
-  const totalUnread = (unreadIR || 0) + (unreadCoaching || 0);
+  const totalUnread =
+    (unreadMyOffenses || 0) +
+    (unreadCreatedCoaching || 0) +
+    (unreadMyCoaching || 0);
+  const totalMyOffenseUnread = (unreadMyOffenses || 0) + (unreadMyCoaching || 0);
 
   return (
     <div className="space-y-1">
@@ -124,13 +129,14 @@ const AdminSidebar = ({
           icon={PlusCircle}
           label="Create Offense"
           isCollapsed={isCollapsed}
+          badge={!isCollapsed ? unreadCreatedCoaching : 0}
         />
         <SidebarLink
           to={`/admin/offenses`}
           icon={FileText}
           label="My Offenses"
           isCollapsed={isCollapsed}
-          badge={!isCollapsed ? totalUnread : 0}
+          badge={!isCollapsed ? totalMyOffenseUnread : 0}
         />
       </CustomCollapse>
 

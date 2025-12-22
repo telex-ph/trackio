@@ -27,13 +27,16 @@ const ComplianceHeadSidebar = ({
   isCollapsed,
   activeDropdown,
   setActiveDropdown,
-  unreadIR,
+  unreadMyOffenses,
   unreadEscalation,
-  unreadCoaching,
+  unreadMyCoaching,
 }) => {
-  const totalUnreadWithEscalation =
-    (unreadIR || 0) + (unreadEscalation || 0) + (unreadCoaching || 0);
-  const totalUnread = (unreadIR || 0) + (unreadCoaching || 0);
+  const totalUnread =
+    +(unreadMyOffenses || 0) +
+    (unreadEscalation || 0) +
+    (unreadMyCoaching || 0);
+  const totalUnreadMyOffense =
+    (unreadMyOffenses || 0) + (unreadMyCoaching || 0);
 
   return (
     <div className="space-y-1">
@@ -150,7 +153,7 @@ const ComplianceHeadSidebar = ({
         onToggle={() =>
           setActiveDropdown(activeDropdown === "offenses" ? null : "offenses")
         }
-        badge={totalUnreadWithEscalation}
+        badge={totalUnread}
       >
         <SidebarLink
           to={`/compliance-head/createoffense`}
@@ -163,14 +166,14 @@ const ComplianceHeadSidebar = ({
           icon={FileText}
           label="My Offenses"
           isCollapsed={isCollapsed}
-          badge={!isCollapsed ? totalUnread : 0}
+          badge={!isCollapsed ? totalUnreadMyOffense : 0}
         />
-        {/* <SidebarLink
+        <SidebarLink
           to={`/compliance-head/escalated-offenses`}
           icon={TrendingUp}
           label="Escalated Offenses"
           badge={!isCollapsed ? unreadEscalation : 0}
-        /> */}
+        />
         <SidebarLink
           to={`/compliance-head/offenses-monitoring`}
           icon={Eye}

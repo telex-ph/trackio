@@ -27,7 +27,17 @@ const AdminHRHeadSidebar = ({
   activeDropdown,
   setActiveDropdown,
   unreadIR,
+  unreadCreatedCoaching,
+  unreadMyOffenses,
+  unreadMyCoaching,
 }) => {
+  const totalUnread =
+    (unreadIR || 0) +
+    (unreadMyOffenses || 0) +
+    (unreadCreatedCoaching || 0) +
+    (unreadMyCoaching || 0);
+  const totalMyOffenseUnread = (unreadMyOffenses || 0) + (unreadMyCoaching || 0);
+
   return (
     <div className="space-y-1">
       <SidebarLink
@@ -115,20 +125,21 @@ const AdminHRHeadSidebar = ({
         onToggle={() =>
           setActiveDropdown(activeDropdown === "offenses" ? null : "offenses")
         }
-        badge={unreadIR}
+        badge={totalUnread}
       >
         <SidebarLink
           to={`/admin-hr-head/createoffense`}
           icon={PlusCircle}
           label="Create Offense"
           isCollapsed={isCollapsed}
+          badge={!isCollapsed ? unreadCreatedCoaching : 0}
         />
         <SidebarLink
           to={`/admin-hr-head/offenses`}
           icon={FileText}
           label="My Offenses"
           isCollapsed={isCollapsed}
-          badge={!isCollapsed ? unreadIR : 0}
+          badge={!isCollapsed ? totalMyOffenseUnread : 0}
         />
         <SidebarLink
           to={`/admin-hr-head/reported-ir`}

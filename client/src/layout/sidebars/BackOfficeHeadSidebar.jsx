@@ -22,10 +22,16 @@ const BackOfficeHeadSidebar = ({
   isCollapsed,
   activeDropdown,
   setActiveDropdown,
-  unreadIR,
-  unreadCoaching,
+  unreadCreatedCoaching,
+  unreadMyOffenses,
+  unreadMyCoaching,
 }) => {
-  const totalUnread = (unreadIR || 0) + (unreadCoaching || 0);
+  const totalUnread =
+    (unreadCreatedCoaching || 0) +
+    (unreadMyOffenses || 0) +
+    (unreadMyCoaching || 0);
+  const totalUnreadMyOffense =
+    (unreadMyOffenses || 0) + (unreadMyCoaching || 0);
 
   return (
     <div className="space-y-1">
@@ -123,13 +129,14 @@ const BackOfficeHeadSidebar = ({
           icon={PlusCircle}
           label="Create Offense"
           isCollapsed={isCollapsed}
+          badge={!isCollapsed ? unreadCreatedCoaching : 0}
         />
         <SidebarLink
           to={`/back-office-head/offenses`}
           icon={FileText}
           label="My Offenses"
           isCollapsed={isCollapsed}
-          badge={!isCollapsed ? totalUnread : 0}
+          badge={!isCollapsed ? totalUnreadMyOffense : 0}
         />
       </CustomCollapse>
     </div>
