@@ -1,5 +1,5 @@
 import Absence from "../model/Absence.js";
-import Attendance from "../model/Attendance.js";
+import Attendance from "../modules/attendance/attendace.model.js";
 import User from "../modules/user/user.model.js";
 import { DateTime, Interval } from "luxon";
 

@@ -7,7 +7,6 @@ import "./cron.js";
 
 // Routes imports
 import accountRoutes from "../src/routes/accountRoutes.js";
-import attendanceRoutes from "../src/routes/attendanceRoutes.js";
 import announcementRoutes from "../src/routes/announcementRoutes.js";
 import recognitionRoutes from "../src/routes/recognitionRoutes.js";
 import absenceRoutes from "../src/routes/absenceRoutes.js";
@@ -29,6 +28,7 @@ import scheduleRoutes from "./modules/schedule/schedule.route.js";
 import userRoutes from "./modules/user/user.route.js";
 import courseRoutes from "./modules/course/course.model.js";
 import authRoutes from "./modules/auth/auth.route.js";
+import attendanceRoutes from "./modules/attendance/attendance.routes.js";
 
 dotenv.config();
 const app = express();
