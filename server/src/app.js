@@ -12,7 +12,6 @@ import mediaRoutes from "../src/routes/mediaRoutes.js";
 import serverRoutes from "./routes/serverRoutes.js";
 import biometricRoute from "./routes/biometricRoute.js";
 import leaveRoutes from "./routes/leaveRoutes.js";
-import auditlogsRoutes from "./routes/auditlogsRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import webhook from "./utils/webhook.js";
 
@@ -29,6 +28,7 @@ import offenseRoutes from "./modules/offense/offense.route.js";
 import requestRoutes from "./modules/request/request.route.js";
 import analyticsRoutes from "./modules/analytics/analytics.routes.js";
 import announcementRoutes from "./modules/announcement/announcement.route.js";
+import auditlogsRoutes from "./modules/audit/auditlogs.route.js";
 
 
 dotenv.config();

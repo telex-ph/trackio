@@ -1,12 +1,13 @@
 import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
-import AuditLogs from "../model/AudiLogs.js";
+import AuditLogs from "./auditlogs.model.js";
 
 export const addLog = async (req, res) => {
   try {
     const auditLogData = req.body;
     const user = req.user;
-    const timestamp = auditLogData.timestamp ? DateTime.fromISO(auditLogData.timestamp, { zone: "utc" }).toJSDate()
+    const timestamp = auditLogData.timestamp
+      ? DateTime.fromISO(auditLogData.timestamp, { zone: "utc" }).toJSDate()
       : new Date();
 
     const transformAuditLogEntry = (entry) => {
@@ -40,7 +41,7 @@ export const addLog = async (req, res) => {
         "createdById",
         "respondantId",
         "coachId",
-        "reportedById"
+        "reportedById",
       ];
 
       const transformed = { ...entry };
@@ -53,14 +54,18 @@ export const addLog = async (req, res) => {
 
       dateFields.forEach((field) => {
         if (entry[field]) {
-          transformed[field] = DateTime.fromISO(entry[field], { zone: "utc" }).toJSDate();
+          transformed[field] = DateTime.fromISO(entry[field], {
+            zone: "utc",
+          }).toJSDate();
         }
       });
 
       return transformed;
     };
 
-    ["agentName", "reporterName"].forEach((field) => delete auditLogData[field]);
+    ["agentName", "reporterName"].forEach(
+      (field) => delete auditLogData[field]
+    );
 
     const newAuditLogData = {
       ...auditLogData,
