@@ -12,7 +12,6 @@ import mediaRoutes from "../src/routes/mediaRoutes.js";
 import requestRoutes from "../src/routes/requestRoutes.js";
 import offenseRoutes from "./routes/offenseRoutes.js";
 // import scheduleRoutes from "./routes/scheduleRoutes.js";
-import groupRoutes from "./routes/groupRoutes.js";
 import serverRoutes from "./routes/serverRoutes.js";
 import biometricRoute from "./routes/biometricRoute.js";
 import leaveRoutes from "./routes/leaveRoutes.js";
@@ -24,11 +23,12 @@ import webhook from "./utils/webhook.js";
 // New folder strucutre// remove this comment later and ensure older files and folders are deleted
 import scheduleRoutes from "./modules/schedule/schedule.route.js";
 import userRoutes from "./modules/user/user.route.js";
-import courseRoutes from "./modules/course/course.model.js";
+import courseRoutes from "./modules/course/course.route.js";
 import authRoutes from "./modules/auth/auth.route.js";
 import attendanceRoutes from "./modules/attendance/attendance.routes.js";
 import absenceRoutes from "./modules/absence/absence.route.js";
 import accountRoutes from "./modules/account/account.route.js";
+import groupRoutes from "./modules/group/group.route.js";
 
 dotenv.config();
 const app = express();

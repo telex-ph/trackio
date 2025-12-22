@@ -1,4 +1,4 @@
-import connectDB from "../config/db.js";
+import connectDB from "../../config/db.js";
 import { ObjectId } from "mongodb";
 
 class Group {

@@ -6,7 +6,7 @@ import {
   getGroup,
   addMember,
   removeMember,
-} from "../controllers/groupController.js";
+} from "./group.controller.js";
 
 const router = express.Router();
 
