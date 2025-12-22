@@ -21,12 +21,11 @@ const AgentSidebar = ({
   isCollapsed,
   activeDropdown,
   setActiveDropdown,
-  unreadIR,
   unreadMyOffenses,
-  unreadCoaching,
+  unreadMyCoaching,
 }) => {
   const totalUnread =
-    (unreadIR || 0) + (unreadMyOffenses || 0) + (unreadCoaching || 0);
+    (unreadMyOffenses || 0) + (unreadMyCoaching || 0);
 
   return (
     <div className="space-y-1">
@@ -81,7 +80,7 @@ const AgentSidebar = ({
           icon={FileText}
           label="My Offenses"
           isCollapsed={isCollapsed}
-          badge={!isCollapsed ? unreadMyOffenses : 0}
+          badge={!isCollapsed ? totalUnread : 0}
         />
       </CustomCollapse>
       <SidebarLink
