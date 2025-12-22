@@ -1,6 +1,6 @@
 import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
-import Leave from "../model/Leave.js";
+import Leave from "./leave.model.js";
 
 export const addLeave = async (req, res) => {
   try {

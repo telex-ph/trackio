@@ -1,6 +1,12 @@
 import express from "express";
-import { verifyJWT as auth } from "../middlewares/verifyJWT.js";
-import { addLeave, deleteLeave, getLeaveById, getLeaves, updateLeave } from "../controllers/leaveController.js";
+import { verifyJWT as auth } from "../../middlewares/verifyJWT.js";
+import {
+  addLeave,
+  deleteLeave,
+  getLeaveById,
+  getLeaves,
+  updateLeave,
+} from "./leave.controller.js";
 
 const router = express.Router();
 
