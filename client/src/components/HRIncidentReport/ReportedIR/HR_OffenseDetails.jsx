@@ -274,6 +274,49 @@ const HR_OffenseDetails = ({
           </div>
 
           <div className="space-y-2">
+            {formData.fileFindings && formData.fileFindings.length > 0 && (
+              <div>
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  Investiagation Findings
+                </label>
+                <div className="border-2 border-dashed rounded-2xl p-4 border-blue-400 bg-blue-50">
+                  {formData.fileFindings.slice(0, 2).map((finding, idx) => {
+                    const viewUrl = finding.url;
+                    return (
+                      <div key={idx} className="flex flex-col gap-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 shrink-0" />
+                          <p className="font-medium text-blue-700 text-xs sm:text-sm truncate">
+                            {finding.fileName}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={viewUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View
+                          </a>
+                          <a
+                            href={finding.url}
+                            download={finding.fileName}
+                            className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                          >
+                            <Download className="w-4 h-4" />
+                            Download
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="space-y-2">
             {formData.fileNTE && formData.fileNTE.length > 0 && (
               <div>
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -480,7 +523,12 @@ const HR_OffenseDetails = ({
           )}
 
           {!formData.nteSentDateTime &&
-            !["Invalid", "Respondant Explained"].includes(formData.status) && (
+            ![
+              "Invalid",
+              "Escalated to Compliance",
+              "Findings sent",
+              "Respondant Explained",
+            ].includes(formData.status) && (
               <div className="space-y-3 pt-4">
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button
@@ -504,6 +552,19 @@ const HR_OffenseDetails = ({
                 </div>
               </div>
             )}
+
+          {["Findings sent"].includes(formData.status) && (
+            <div className="space-y-3 pt-4">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => setShowValidModal(true)}
+                  className="flex-1 bg-linear-to-r from-indigo-600 to-indigo-700 text-white p-3 sm:p-4 rounded-2xl hover:from-indigo-700 hover:to-indigo-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                >
+                  Upload NTE
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-3 pt-4">
             <div className="flex flex-col sm:flex-row gap-3">
