@@ -53,6 +53,8 @@ export const getEvents = async (req, res) => {
               break;
           }
 
+          console.log(event);
+
           const user = await User.getById(ac.employeeNoString);
           if (user) {
             const userId = user._id.toString();
