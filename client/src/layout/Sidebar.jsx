@@ -24,7 +24,8 @@ export const Sidebar = ({ isCollapsed }) => {
   const unreadIR = useStore((state) => state.unreadIR);
   const unreadMyOffenses = useStore((state) => state.unreadMyOffenses);
   const unreadEscalation = useStore((state) => state.unreadEscalation);
-  const unreadCoaching = useStore((state) => state.unreadCoaching);
+  const unreadCreatedCoaching = useStore((state) => state.unreadCreatedCoaching);
+  const unreadMyCoaching = useStore((state) => state.unreadMyCoaching);
 
   // Functions to fetch badges and attach socket listeners
   const fetchUnreadOffenses = useStore((state) => state.fetchUnreadOffenses);
@@ -80,7 +81,6 @@ export const Sidebar = ({ isCollapsed }) => {
     isCollapsed,
     activeDropdown,
     setActiveDropdown,
-    unreadMyOffenses
   };
 
   const renderSidebar = () => {
@@ -89,56 +89,62 @@ export const Sidebar = ({ isCollapsed }) => {
         return (
           <AgentSidebar
             {...sidebarProps}
-            unreadIR={unreadIR}
-            unreadCoaching={unreadCoaching}
+            unreadMyOffenses={unreadMyOffenses}
+            unreadMyCoaching={unreadMyCoaching}
           />
         );
       case Role.TRAINER_QUALITY_ASSURANCE:
         return (
           <TraineeQualityAssuranceSidebar
             {...sidebarProps}
-            unreadIR={unreadIR}
-            unreadCoaching={unreadCoaching}
+            unreadCreatedCoaching={unreadCreatedCoaching}
+            unreadMyOffenses={unreadMyOffenses}
+            unreadMyCoaching={unreadMyCoaching}
           />
         );
       case Role.TEAM_LEADER:
         return (
           <TeamLeaderSidebar
             {...sidebarProps}
-            unreadIR={unreadIR}
-            unreadCoaching={unreadCoaching}
+            unreadCreatedCoaching={unreadCreatedCoaching}
+            unreadMyOffenses={unreadMyOffenses}
+            unreadMyCoaching={unreadMyCoaching}
           />
         );
       case Role.OPERATION_ASSOCIATE:
         return (
           <OperationsAssociateSidebar
             {...sidebarProps}
-            unreadIR={unreadIR}
-            unreadCoaching={unreadCoaching}
+            unreadCreatedCoaching={unreadCreatedCoaching}
+            unreadMyOffenses={unreadMyOffenses}
+            unreadMyCoaching={unreadMyCoaching}
           />
         );
       case Role.BACK_OFFICE_HEAD:
         return (
           <BackOfficeHeadSidebar
             {...sidebarProps}
-            unreadIR={unreadIR}
-            unreadCoaching={unreadCoaching}
+            unreadCreatedCoaching={unreadCreatedCoaching}
+            unreadMyOffenses={unreadMyOffenses}
+            unreadMyCoaching={unreadMyCoaching}
           />
         );
       case Role.MANAGER:
         return (
           <ManagerSidebar
             {...sidebarProps}
-            unreadIR={unreadIR}
-            unreadCoaching={unreadCoaching}
+            unreadCreatedCoaching={unreadCreatedCoaching}
+            unreadMyOffenses={unreadMyOffenses}
+            unreadMyCoaching={unreadMyCoaching}
           />
         );
       case Role.OM:
         return (
           <OMSidebar
             {...sidebarProps}
-            unreadIR={unreadIR}
-            unreadCoaching={unreadCoaching}
+            unreadCreatedCoaching={unreadCreatedCoaching}
+            unreadMyOffenses={unreadMyOffenses}
+            unreadMyCoaching={unreadMyCoaching}
           />
         );
       case Role.HR:
@@ -146,14 +152,16 @@ export const Sidebar = ({ isCollapsed }) => {
           <HRSidebar
             {...sidebarProps}
             unreadIR={unreadIR}
+            unreadMyOffenses={unreadMyOffenses}
           />
         );
       case Role.ADMIN:
         return (
           <AdminSidebar
             {...sidebarProps}
-            unreadIR={unreadIR}
-            unreadCoaching={unreadCoaching}
+            unreadCreatedCoaching={unreadCreatedCoaching}
+            unreadMyOffenses={unreadMyOffenses}
+            unreadMyCoaching={unreadMyCoaching}
           />
         );
       case Role.ADMIN_HR_HEAD:
@@ -161,33 +169,33 @@ export const Sidebar = ({ isCollapsed }) => {
           <AdminHRHeadSidebar
             {...sidebarProps}
             unreadIR={unreadIR}
-            unreadCoaching={unreadCoaching}
+            unreadCreatedCoaching={unreadCreatedCoaching}
+            unreadMyOffenses={unreadMyOffenses}
+            unreadMyCoaching={unreadMyCoaching}
           />
         );
       case Role.COMPLIANCE:
         return (
           <ComplianceSidebar
             {...sidebarProps}
-            unreadIR={unreadIR}
             unreadEscalation={unreadEscalation}
-            unreadCoaching={unreadCoaching}
+            unreadMyOffenses={unreadMyOffenses}
+            unreadMyCoaching={unreadMyCoaching}
           />
         );
       case Role.COMPLIANCE_HEAD:
         return (
           <ComplianceHeadSidebar
             {...sidebarProps}
-            unreadIR={unreadIR}
             unreadEscalation={unreadEscalation}
-            unreadCoaching={unreadCoaching}
+            unreadMyOffenses={unreadMyOffenses}
+            unreadMyCoaching={unreadMyCoaching}
           />
         );
       case Role.PRESIDENT:
         return (
           <PresidentSidebar
             {...sidebarProps}
-            unreadIR={unreadIR}
-            unreadCoaching={unreadCoaching}
           />
         );
       default:

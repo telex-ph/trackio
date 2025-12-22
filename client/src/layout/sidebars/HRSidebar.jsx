@@ -27,137 +27,145 @@ const HRSidebar = ({
   activeDropdown,
   setActiveDropdown,
   unreadIR,
-  unreadMyOffenses
-}) => (
-  <div className="space-y-1">
-    <SidebarLink
-      to="/human-resources/dashboard"
-      icon={LayoutGrid}
-      label="Dashboard"
-      isCollapsed={isCollapsed}
-    />
-    <SidebarLink
-      to="/human-resources/attendance"
-      icon={Bell}
-      label="Attendance"
-      isCollapsed={isCollapsed}
-    />
-    <SidebarLink
-      to="/human-resources/schedule"
-      icon={BookPlus}
-      label="Schedule"
-      isCollapsed={isCollapsed}
-    />
-    <CustomCollapse
-      icon={<Clock className="w-5 h-5" />}
-      label="Tracking"
-      isCollapsed={isCollapsed}
-      open={activeDropdown === "tracking"}
-      onToggle={() =>
-        setActiveDropdown(activeDropdown === "tracking" ? null : "tracking")
-      }
-    >
-      <SidebarLink
-        to={`/human-resources/tracking/list`}
-        icon={List}
-        label="List"
-        isCollapsed={isCollapsed}
-      />
-      <SidebarLink
-        to={`/human-resources/tracking/history`}
-        icon={GalleryVerticalEnd}
-        label="History"
-        isCollapsed={isCollapsed}
-      />
-    </CustomCollapse>
+  unreadMyOffenses,
+  unreadMyCoaching,
+}) => {
+  const totalUnread =
+    (unreadIR || 0) + (unreadMyOffenses || 0) + (unreadMyCoaching || 0);
+  const totalUnreadMyOffense =
+    (unreadMyOffenses || 0) + (unreadMyCoaching || 0);
 
-    <SidebarLink
-      to="/human-resources/monitoring"
-      icon={Activity}
-      label="Monitoring"
-      isCollapsed={isCollapsed}
-    />
+  return (
+    <div className="space-y-1">
+      <SidebarLink
+        to="/human-resources/dashboard"
+        icon={LayoutGrid}
+        label="Dashboard"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to="/human-resources/attendance"
+        icon={Bell}
+        label="Attendance"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to="/human-resources/schedule"
+        icon={BookPlus}
+        label="Schedule"
+        isCollapsed={isCollapsed}
+      />
+      <CustomCollapse
+        icon={<Clock className="w-5 h-5" />}
+        label="Tracking"
+        isCollapsed={isCollapsed}
+        open={activeDropdown === "tracking"}
+        onToggle={() =>
+          setActiveDropdown(activeDropdown === "tracking" ? null : "tracking")
+        }
+      >
+        <SidebarLink
+          to={`/human-resources/tracking/list`}
+          icon={List}
+          label="List"
+          isCollapsed={isCollapsed}
+        />
+        <SidebarLink
+          to={`/human-resources/tracking/history`}
+          icon={GalleryVerticalEnd}
+          label="History"
+          isCollapsed={isCollapsed}
+        />
+      </CustomCollapse>
 
-    <CustomCollapse
-      icon={<AlertTriangle className="w-5 h-5" />}
-      label="Offenses"
-      isCollapsed={isCollapsed}
-      open={activeDropdown === "offenses"}
-      onToggle={() =>
-        setActiveDropdown(activeDropdown === "offenses" ? null : "offenses")
-      }
-      badge={unreadIR}
-    >
       <SidebarLink
-        to={`/human-resources/createoffense`}
-        icon={PlusCircle}
-        label="Create Offense"
+        to="/human-resources/monitoring"
+        icon={Activity}
+        label="Monitoring"
         isCollapsed={isCollapsed}
       />
-      <SidebarLink
-        to={`/human-resources/offenses`}
-        icon={FileText}
-        label="My Offenses"
-        isCollapsed={isCollapsed}
-        badge={!isCollapsed ? unreadMyOffenses : 0}
-      />
-      <SidebarLink
-        to={`/human-resources/reported-ir`}
-        icon={ClipboardList}
-        label="Reported IR"
-        isCollapsed={isCollapsed}
-        badge={!isCollapsed ? unreadIR : 0}
-      />
-    </CustomCollapse>
 
-    <CustomCollapse
-      icon={<Clock className="w-5 h-5" />}
-      label="Leave"
-      isCollapsed={isCollapsed}
-      open={activeDropdown === "leaves"}
-      onToggle={() =>
-        setActiveDropdown(activeDropdown === "leaves" ? null : "leaves")
-      }
-    >
-      <SidebarLink
-        to={`/human-resources/apply-leave`}
-        icon={CalendarPlus}
-        label="Apply Leave"
+      <CustomCollapse
+        icon={<AlertTriangle className="w-5 h-5" />}
+        label="Offenses"
         isCollapsed={isCollapsed}
-      />
-      <SidebarLink
-        to={`/human-resources/for-approvals`}
-        icon={FileCheck}
-        label="For approvals"
-        isCollapsed={isCollapsed}
-      />
-    </CustomCollapse>
+        open={activeDropdown === "offenses"}
+        onToggle={() =>
+          setActiveDropdown(activeDropdown === "offenses" ? null : "offenses")
+        }
+        badge={totalUnread}
+      >
+        <SidebarLink
+          to={`/human-resources/createoffense`}
+          icon={PlusCircle}
+          label="Create Offense"
+          isCollapsed={isCollapsed}
+        />
+        <SidebarLink
+          to={`/human-resources/offenses`}
+          icon={FileText}
+          label="My Offenses"
+          isCollapsed={isCollapsed}
+          badge={!isCollapsed ? totalUnreadMyOffense : 0}
+        />
+        <SidebarLink
+          to={`/human-resources/reported-ir`}
+          icon={ClipboardList}
+          label="Reported IR"
+          isCollapsed={isCollapsed}
+          badge={!isCollapsed ? unreadIR : 0}
+        />
+      </CustomCollapse>
 
-    <SidebarLink
-      to="/human-resources/team"
-      icon={Users2Icon}
-      label="Team"
-      isCollapsed={isCollapsed}
-    />
-    <SidebarLink
-      to="/human-resources/ticket"
-      icon={Ticket}
-      label="Ticket"
-      isCollapsed={isCollapsed}
-    />
-    <SidebarLink
-      to="/human-resources/courses"
-      icon={Book}
-      label="Courses"
-      isCollapsed={isCollapsed}
-    />
-    <SidebarLink
-      to="/human-resources/announcement"
-      icon={Megaphone}
-      label="Announcement"
-      isCollapsed={isCollapsed}
-    />
-  </div>
-);
+      <CustomCollapse
+        icon={<Clock className="w-5 h-5" />}
+        label="Leave"
+        isCollapsed={isCollapsed}
+        open={activeDropdown === "leaves"}
+        onToggle={() =>
+          setActiveDropdown(activeDropdown === "leaves" ? null : "leaves")
+        }
+      >
+        <SidebarLink
+          to={`/human-resources/apply-leave`}
+          icon={CalendarPlus}
+          label="Apply Leave"
+          isCollapsed={isCollapsed}
+        />
+        <SidebarLink
+          to={`/human-resources/for-approvals`}
+          icon={FileCheck}
+          label="For approvals"
+          isCollapsed={isCollapsed}
+        />
+      </CustomCollapse>
+
+      <SidebarLink
+        to="/human-resources/team"
+        icon={Users2Icon}
+        label="Team"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to="/human-resources/ticket"
+        icon={Ticket}
+        label="Ticket"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to="/human-resources/courses"
+        icon={Book}
+        label="Courses"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
+        to="/human-resources/announcement"
+        icon={Megaphone}
+        label="Announcement"
+        isCollapsed={isCollapsed}
+      />
+    </div>
+  );
+};
 
 export default HRSidebar;
