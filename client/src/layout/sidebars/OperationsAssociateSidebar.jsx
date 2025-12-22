@@ -89,12 +89,6 @@ const OperationsAssociateSidebar = ({
         isCollapsed={isCollapsed}
       />
       <SidebarLink
-        to="/operations-associate/coaching"
-        icon={Video}
-        label="Coaching"
-        isCollapsed={isCollapsed}
-      />
-      <SidebarLink
         to="/operations-associate/performance"
         icon={BarChart}
         label="Performance"
