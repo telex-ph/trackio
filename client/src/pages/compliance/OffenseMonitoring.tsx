@@ -78,10 +78,6 @@ const OffenseMonitoring = () => {
   // Logged in HR user
   const loggedUser = useStore((state) => state.user);
 
-  // Decrement unread IR count
-  const decrementUnreadOffensesHR = useStore(
-    (state) => state.decrementUnreadOffensesHR
-  );
 
   // Notification popup
   const [notification, setNotification] = useState({
