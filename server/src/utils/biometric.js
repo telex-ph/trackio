@@ -51,8 +51,11 @@ export const biometricOut = async (attendanceId) => {
   }
 };
 
-export const biometricBreakIn = async (docId, breaks, totalBreak) => {
+export const biometricBreakIn = async (docId, breaks, totalBreak, now) => {
   const nowUtc = DateTime.utc().toJSDate();
+  const test = DateTime.fromISO(now).toUTC().toJSDate();
+
+  console.log(`biometricBreakIn(): nowUtc ${nowUtc} / test ${test}`);
 
   const newBreak = { start: nowUtc };
   const newBreaks = [...breaks, newBreak];

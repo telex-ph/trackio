@@ -33,6 +33,7 @@ export const getEvents = async (req, res) => {
         // Proceed only if a valid employee or known name is found
         if (ac.employeeNoString && ac.name && ac.name !== "Unknown") {
           const ipAddress = event.ipAddress;
+          const now = event.dateTime;
           // Ignore events from specific devices
           if (ipAddress === IP.ADMINDOOR) {
             return res.status(200).send("OK");
@@ -52,8 +53,6 @@ export const getEvents = async (req, res) => {
             default:
               break;
           }
-
-          console.log(event);
 
           const user = await User.getById(ac.employeeNoString);
           if (user) {
@@ -127,7 +126,12 @@ export const getEvents = async (req, res) => {
                     `Employee ${ac.name} is WORKING, processing break-in`
                   );
                   try {
-                    await biometricBreakIn(attendanceId, breaks, totalBreak);
+                    await biometricBreakIn(
+                      attendanceId,
+                      breaks,
+                      totalBreak,
+                      now
+                    );
                     console.log(`Break-in successful for user ${ac.name}`);
                   } catch (error) {
                     console.error(`Break-in failed:`, error);
