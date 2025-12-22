@@ -53,12 +53,6 @@ const AgentSidebar = ({
         label="Courses"
         isCollapsed={isCollapsed}
       />
-      <SidebarLink
-        to="/agent/coaching"
-        icon={NotebookTabs}
-        label="Coaching"
-        isCollapsed={isCollapsed}
-      />
       <CustomCollapse
         icon={<AlertTriangle className="w-5 h-5" />}
         label="Offenses"

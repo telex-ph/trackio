@@ -96,12 +96,6 @@ const BackOfficeHeadSidebar = ({
         isCollapsed={isCollapsed}
       />
       <SidebarLink
-        to="/back-office-head/coaching"
-        icon={Video}
-        label="Coaching"
-        isCollapsed={isCollapsed}
-      />
-      <SidebarLink
         to="/back-office-head/performance"
         icon={BarChart}
         label="Performance"
