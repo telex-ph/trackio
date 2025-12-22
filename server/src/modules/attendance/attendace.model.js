@@ -379,7 +379,7 @@ class Attendance {
    * @throws {Error} If no ID is provided or if a record already exists for today.
    * @returns {Promise<Object>} The result of the insert operation (new record info).
    */
-  static async timeIn(id, employeeId, shiftStart, shiftEnd) {
+  static async timeIn(id, employeeId, shiftStart, shiftEnd, now) {
     if (!id) throw new Error("ID is required");
 
     const db = await connectDB();
@@ -400,7 +400,9 @@ class Attendance {
       throw new Error("Attendance already recorded for today.");
     }
 
-    const nowUtc = DateTime.utc();
+    // const nowUtc = DateTime.utc();
+    const nowUtc = DateTime.fromISO(now).toUTC();
+    // console.log(`biometricIn(): nowUtc ${nowUtc} / timeInTest ${timeInTest}`);
 
     try {
       const result = await collection.insertOne({

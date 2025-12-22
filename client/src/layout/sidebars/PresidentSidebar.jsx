@@ -91,22 +91,11 @@ const PresidentSidebar = ({
       isCollapsed={isCollapsed}
     />
     {/* <SidebarLink
-      to="/president/ticket"
-      icon={Ticket}
-      label="Ticket"
-      isCollapsed={isCollapsed}
-    /> */}
-    {/* <SidebarLink
       to="/president/performance"
       icon={BarChart}
       label="Performance"
       isCollapsed={isCollapsed}
     />
-    <SidebarLink
-      to="/president/coaching"
-      icon={Video}
-      label="Coaching"
-      isCollapsed={isCollapsed}
     />
       */}
     {/* <SidebarLink
@@ -115,7 +104,6 @@ const PresidentSidebar = ({
       label="Agent Request"
       isCollapsed={isCollapsed}
     /> */}
-
     <CustomCollapse
       icon={<Clock className="w-5 h-5" />}
       label="Offenses"

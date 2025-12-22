@@ -3,7 +3,7 @@ import Attendance from "../modules/attendance/attendace.model.js";
 import { STATUS } from "../../constants/status.js";
 import Schedules from "../modules/schedule/schedule.model.js";
 
-export const biometricIn = async (userId, employeeId) => {
+export const biometricIn = async (userId, employeeId, now) => {
   const TARDINESS_TOLERANCE_HOURS = 4;
   const EARLY_GRACE_HOURS = 4;
 
@@ -26,7 +26,8 @@ export const biometricIn = async (userId, employeeId) => {
       userId,
       employeeId,
       matchingSchedule.shiftStart,
-      matchingSchedule.shiftEnd
+      matchingSchedule.shiftEnd,
+      now
     );
   } catch (error) {
     console.error("Error adding user's attendance:", error);
@@ -34,8 +35,8 @@ export const biometricIn = async (userId, employeeId) => {
   }
 };
 
-export const biometricOut = async (attendanceId) => {
-  const nowUtc = DateTime.utc().toJSDate();
+export const biometricOut = async (attendanceId, now) => {
+  const nowUtc = DateTime.fromISO(now).toUTC();
 
   try {
     // await Attendance.updateFieldById(attendanceId, "status", STATUS.OOF);
@@ -51,8 +52,11 @@ export const biometricOut = async (attendanceId) => {
   }
 };
 
-export const biometricBreakIn = async (docId, breaks, totalBreak) => {
-  const nowUtc = DateTime.utc().toJSDate();
+export const biometricBreakIn = async (docId, breaks, totalBreak, now) => {
+  // const nowUtc = DateTime.utc().toJSDate();
+  const nowUtc = DateTime.fromISO(now).toUTC().toJSDate();
+
+  // console.log(`biometricBreakIn(): nowUtc ${nowUtc} / test ${test}`);
 
   const newBreak = { start: nowUtc };
   const newBreaks = [...breaks, newBreak];
@@ -76,11 +80,16 @@ export const biometricBreakIn = async (docId, breaks, totalBreak) => {
   }
 };
 
-export const biometricBreakOut = async (docId, breaks) => {
+export const biometricBreakOut = async (docId, breaks, now) => {
   const prevBreak = breaks[breaks.length - 1];
 
-  const endUtc = DateTime.utc();
+  // const endUtc = DateTime.utc();
+  const endUtc = DateTime.fromISO(now).toUTC();
   prevBreak.end = endUtc.toJSDate();
+
+  // console.log(
+  //   `biometricBreakOut(): endUtc ${endUtc} / testEndUtc ${testEndUtc}`
+  // );
 
   const startUtc = DateTime.fromJSDate(prevBreak.start);
   prevBreak.duration = endUtc.diff(startUtc).milliseconds;

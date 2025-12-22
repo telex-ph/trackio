@@ -33,6 +33,7 @@ export const getEvents = async (req, res) => {
         // Proceed only if a valid employee or known name is found
         if (ac.employeeNoString && ac.name && ac.name !== "Unknown") {
           const ipAddress = event.ipAddress;
+          const now = event.dateTime;
           // Ignore events from specific devices
           if (ipAddress === IP.ADMINDOOR) {
             return res.status(200).send("OK");
@@ -91,7 +92,7 @@ export const getEvents = async (req, res) => {
                   await biometricBreakOut(attendanceId, breaks);
                 }
                 // Shift already ended
-                await biometricOut(attendanceId);
+                await biometricOut(attendanceId, now);
                 console.log(
                   `Employee ${ac.name} is about to go out of the office`
                 );
@@ -125,7 +126,12 @@ export const getEvents = async (req, res) => {
                     `Employee ${ac.name} is WORKING, processing break-in`
                   );
                   try {
-                    await biometricBreakIn(attendanceId, breaks, totalBreak);
+                    await biometricBreakIn(
+                      attendanceId,
+                      breaks,
+                      totalBreak,
+                      now
+                    );
                     console.log(`Break-in successful for user ${ac.name}`);
                   } catch (error) {
                     console.error(`Break-in failed:`, error);
@@ -144,7 +150,7 @@ export const getEvents = async (req, res) => {
                     `Employee ${ac.name} is ON_BREAK, processing break-out`
                   );
                   try {
-                    await biometricBreakOut(attendanceId, breaks);
+                    await biometricBreakOut(attendanceId, breaks, now);
                     console.log(`Break-out successful for user ${ac.name}`);
                   } catch (error) {
                     console.error(`Break-out failed:`, error);
@@ -163,7 +169,7 @@ export const getEvents = async (req, res) => {
             } else {
               // No existing attendance record
               try {
-                await biometricIn(userId, ac.employeeNoString);
+                await biometricIn(userId, ac.employeeNoString, now);
               } catch (error) {
                 const stack = (error.stack || error.message || "").slice(
                   0,

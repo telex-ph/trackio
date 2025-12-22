@@ -25,6 +25,7 @@ import CoachingHistory from "../../components/incident-reports/coaching/Coaching
 import CoachingDetails from "../../components/incident-reports/coaching/CoachingDetails";
 import { fetchUserById } from "../../store/stores/getUserById";
 import { fetchAccountsById } from "../../store/stores/getAccountById";
+import Roles from "../../constants/roles";
 
 // -----------------------------
 // Component
@@ -981,10 +982,12 @@ const SharedCreateOffences = () => {
               <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-4">
                 Team Offense Management
                 {[
-                  "team-leader",
-                  "operations-manager",
-                  "trainer-quality-assurance",
-                  "manager",
+                  Roles.TEAM_LEADER,
+                  Roles.OM,
+                  Roles.TRAINER_QUALITY_ASSURANCE,
+                  Roles.MANAGER,
+                  Roles.OPERATION_ASSOCIATE,
+                  Roles.BACK_OFFICE_HEAD,
                 ].includes(loggedUser.role) && (
                   <div className="bg-gray-200 rounded-full p-1 flex shadow-inner">
                     {["COACHING", "IR"].map((type) => (
@@ -1022,10 +1025,12 @@ const SharedCreateOffences = () => {
           {/* Define forms based on role + offenseType */}
           {(() => {
             const isTLOrOM = [
-              "team-leader",
-              "operations-manager",
-              "trainer-quality-assurance",
-              "manager",
+              Roles.TEAM_LEADER,
+              Roles.OM,
+              Roles.TRAINER_QUALITY_ASSURANCE,
+              Roles.MANAGER,
+              Roles.OPERATION_ASSOCIATE,
+              Roles.BACK_OFFICE_HEAD,
             ].includes(loggedUser.role);
 
             // If not TL/OM → always IR
@@ -1086,10 +1091,12 @@ const SharedCreateOffences = () => {
         {/* Cases In Progress */}
         {(() => {
           const isTLOrOM = [
-            "team-leader",
-            "operations-manager",
-            "trainer-quality-assurance",
-            "manager",
+            Roles.TEAM_LEADER,
+            Roles.OM,
+            Roles.TRAINER_QUALITY_ASSURANCE,
+            Roles.MANAGER,
+            Roles.OPERATION_ASSOCIATE,
+            Roles.BACK_OFFICE_HEAD,
           ].includes(loggedUser.role);
 
           // Force IR for non-TL/OM
@@ -1122,10 +1129,12 @@ const SharedCreateOffences = () => {
       {/* Case History */}
       {(() => {
         const isTLOrOM = [
-          "team-leader",
-          "operations-manager",
-          "trainer-quality-assurance",
-          "manager",
+          Roles.TEAM_LEADER,
+          Roles.OM,
+          Roles.TRAINER_QUALITY_ASSURANCE,
+          Roles.MANAGER,
+          Roles.OPERATION_ASSOCIATE,
+          Roles.BACK_OFFICE_HEAD,
         ].includes(loggedUser.role);
 
         const effectiveType = isTLOrOM ? offenseType : "IR";
