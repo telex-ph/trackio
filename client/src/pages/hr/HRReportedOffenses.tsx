@@ -79,11 +79,6 @@ const HRReportedOffenses = () => {
   // Logged in HR user
   const loggedUser = useStore((state) => state.user);
 
-  // Decrement unread IR count
-  const decrementUnreadOffensesHR = useStore(
-    (state) => state.decrementUnreadOffensesHR
-  );
-
   // Notification popup
   const [notification, setNotification] = useState({
     message: "",
@@ -275,7 +270,6 @@ const HRReportedOffenses = () => {
           isReadByHR: true,
         });
 
-        decrementUnreadOffensesHR();
         showNotification("New offense has been marked as read!", "success");
         fetchOffenses();
       }
