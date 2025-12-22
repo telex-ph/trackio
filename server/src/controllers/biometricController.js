@@ -169,7 +169,7 @@ export const getEvents = async (req, res) => {
             } else {
               // No existing attendance record
               try {
-                await biometricIn(userId, ac.employeeNoString);
+                await biometricIn(userId, ac.employeeNoString, now);
               } catch (error) {
                 const stack = (error.stack || error.message || "").slice(
                   0,
