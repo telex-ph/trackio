@@ -1,5 +1,5 @@
-import Absence from "../model/Absence.js";
-import { checkAbsences, markAbsences } from "../services/absence.services.js";
+import Absence from "./absence.model.js";
+import { checkAbsences, markAbsences } from "../../services/absence.services.js";
 
 export const getAbsentees = async (req, res) => {
   const params = req.query;
