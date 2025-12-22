@@ -349,7 +349,6 @@ const SharedCreateOffences = () => {
     panelMode,
     editingId,
     selectedFile,
-    today,
     resetFormAndPanel,
     fetchTeamOffenses,
     showNotification,
@@ -536,7 +535,6 @@ const SharedCreateOffences = () => {
       setIsUploading(false);
     }
   }, [
-    today,
     formData,
     panelMode,
     editingId,
@@ -641,7 +639,6 @@ const SharedCreateOffences = () => {
       setIsUploading(false);
     }
   }, [
-    today,
     formData,
     panelMode,
     editingId,
@@ -679,7 +676,7 @@ const SharedCreateOffences = () => {
       fileMOM: off.fileMOM || [],
       fileNDA: off.fileNDA || [],
       isAcknowledged: off.isAcknowledged,
-      ackMessage: off.ackMessage
+      ackMessage: off.ackMessage,
     });
 
     setEditingId(off._id);
