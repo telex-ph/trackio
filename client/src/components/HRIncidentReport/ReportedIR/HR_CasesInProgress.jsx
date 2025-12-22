@@ -109,6 +109,10 @@ const HR_CasesInProgress = ({
                             {
                               "Pending Review":
                                 "bg-amber-100 text-amber-700 border border-amber-200",
+                              "Escalated to Compliance":
+                                "bg-orange-100 text-orange-700 border border-orange-200",
+                              "Findings sent":
+                                "bg-cyan-100 text-cyan-700 border border-cyan-200",
                               NTE: "bg-blue-100 text-blue-700 border border-blue-200",
                               Invalid:
                                 "bg-red-100 text-red-700 border border-red-200",
@@ -141,8 +145,10 @@ const HR_CasesInProgress = ({
 
                           const statusReaderMap = {
                             "Pending Review": "isReadByHR",
+
                             Invalid: "isReadByReporter",
                             "Escalated to Compliance": "isReadByCompliance",
+                            "Findings sent": "isReadByHR",
                             NTE: "isReadByRespondant",
                             "Respondant Explained": "isReadByHR",
                             "Scheduled for hearing": "isReadByRespondant",
