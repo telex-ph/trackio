@@ -1,6 +1,12 @@
 import express from "express";
-import { verifyJWT as auth } from "../middlewares/verifyJWT.js";
-import { getAttendanceAll, getAttendancePerOrganization, getAttendanceUsers, getAttendanceListPerUser, getTopThreePerOrganization } from "../controllers/analyticsController.js";
+import { verifyJWT as auth } from "../../middlewares/verifyJWT.js";
+import {
+  getAttendanceAll,
+  getAttendancePerOrganization,
+  getAttendanceUsers,
+  getAttendanceListPerUser,
+  getTopThreePerOrganization,
+} from "./analytics.controller.js";
 
 const router = express.Router();
 

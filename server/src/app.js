@@ -15,7 +15,6 @@ import biometricRoute from "./routes/biometricRoute.js";
 import leaveRoutes from "./routes/leaveRoutes.js";
 import auditlogsRoutes from "./routes/auditlogsRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
-import analyticsRoutes from "./routes/analyticsRoutes.js";
 import webhook from "./utils/webhook.js";
 
 // New folder strucutre// remove this comment later and ensure older files and folders are deleted
@@ -29,6 +28,7 @@ import accountRoutes from "./modules/account/account.route.js";
 import groupRoutes from "./modules/group/group.route.js";
 import offenseRoutes from "./modules/offense/offense.route.js";
 import requestRoutes from "./modules/request/request.route.js";
+import analyticsRoutes from "./modules/analytics/analytics.routes.js";
 
 
 dotenv.config();

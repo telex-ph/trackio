@@ -1,6 +1,6 @@
-import connectDB from "../config/db.js";
+import connectDB from "../../config/db.js";
 import { ObjectId } from "mongodb";
-import Roles from "../../../client/src/constants/roles.js";
+import Roles from "../../../constants/roles.js";
 
 class Analytics {
     static #collection_attendance = "attendances";
