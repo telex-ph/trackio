@@ -400,9 +400,9 @@ class Attendance {
       throw new Error("Attendance already recorded for today.");
     }
 
-    const nowUtc = DateTime.utc();
-    const timeInTest = DateTime.fromISO(now).toUTC();
-    console.log(`biometricIn(): nowUtc ${nowUtc} / timeInTest ${timeInTest}`);
+    // const nowUtc = DateTime.utc();
+    const nowUtc = DateTime.fromISO(now).toUTC();
+    // console.log(`biometricIn(): nowUtc ${nowUtc} / timeInTest ${timeInTest}`);
 
     try {
       const result = await collection.insertOne({
