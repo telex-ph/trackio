@@ -1,5 +1,5 @@
 import { DateTime } from "luxon";
-import Attendance from "../modules/attendance/attendace.model.js";
+import Attendance from "../modules/attendance/attendance.model.js";
 import { STATUS } from "../../constants/status.js";
 import Schedules from "../modules/schedule/schedule.model.js";
 

@@ -1,4 +1,4 @@
-import Attendance from "./attendace.model.js";
+import Attendance from "./attendance.model.js";
 import { DateTime } from "luxon";
 import Schedules from "../schedule/schedule.model.js";
 import { STATUS } from "../../../constants/status.js";
