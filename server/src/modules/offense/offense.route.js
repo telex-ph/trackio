@@ -9,9 +9,9 @@ import {
   getOffensesByCategory,
   getOffensesByStatus,
   getOffensesByReporter,
-} from "../controllers/offenseControllers.js";
+} from "./offense.controller.js";
 
-import { verifyJWT as auth } from "../middlewares/verifyJWT.js";
+import { verifyJWT as auth } from "../../middlewares/verifyJWT.js";
 
 const router = express.Router();
 

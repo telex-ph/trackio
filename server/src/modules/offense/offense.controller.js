@@ -1,6 +1,6 @@
 // controllers/offenseControllers.js
 import { DateTime } from "luxon";
-import Offense from "../model/Offense.js";
+import Offense from "./offense.model.js";
 import { ObjectId } from "mongodb";
 
 // Get all
@@ -23,8 +23,7 @@ export const getOffenseById = async (req, res) => {
 
   try {
     const offense = await Offense.getById(id);
-    if (!offense)
-      return res.status(404).json({ message: "Offense not found" });
+    if (!offense) return res.status(404).json({ message: "Offense not found" });
     res.status(200).json(offense);
   } catch (error) {
     res
@@ -91,11 +90,7 @@ export const updateOffense = async (req, res) => {
 
     ["agentName", "reporterName"].forEach((field) => delete payload[field]);
 
-    [
-      "respondantId",
-      "coachId",
-      "reportedById"
-    ].forEach((field) => {
+    ["respondantId", "coachId", "reportedById"].forEach((field) => {
       if (payload[field] && ObjectId.isValid(payload[field])) {
         payload[field] = new ObjectId(payload[field]);
       }
@@ -119,7 +114,9 @@ export const updateOffense = async (req, res) => {
       "ndaSentDateTime",
     ].forEach((field) => {
       if (payload[field]) {
-        payload[field] = DateTime.fromISO(payload[field], { zone: "utc" }).toJSDate();
+        payload[field] = DateTime.fromISO(payload[field], {
+          zone: "utc",
+        }).toJSDate();
       }
     });
 
@@ -133,7 +130,9 @@ export const updateOffense = async (req, res) => {
     res.status(200).json(updatedOffense);
   } catch (error) {
     console.error("Update error details:", error);
-    res.status(500).json({ message: "Failed to update offense", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to update offense", error: error.message });
   }
 };
 

@@ -1,5 +1,5 @@
 // src/model/Offense.js
-import connectDB from "../config/db.js";
+import connectDB from "../../config/db.js";
 import { ObjectId } from "mongodb";
 
 class Offense {
@@ -50,7 +50,7 @@ class Offense {
       { $set: dataWithTimestamp },
       { returnDocument: "after" }
     );
-    
+
     return result.value;
   }
 
