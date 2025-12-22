@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 import Group from "../model/Group.js";
-import User from "../model/User.js";
+import User from "../modules/user/user.model.js";
 
 export const getUserGroups = async (req, res) => {
   const id = req.params.id;

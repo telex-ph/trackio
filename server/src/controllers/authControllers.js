@@ -1,5 +1,5 @@
 import * as jose from "jose";
-import User from "../model/User.js";
+import User from "../modules/user/user.model.js";
 import Auth from "../model/Auth.js";
 import Otp from "../model/Otp.js";
 import bcrypt from "bcrypt";

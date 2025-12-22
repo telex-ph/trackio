@@ -6,7 +6,6 @@ import cookieParser from "cookie-parser";
 import "./cron.js";
 
 // Routes imports
-import userRoutes from "../src/routes/userRoutes.js";
 import authRoutes from "../src/routes/authRoutes.js";
 import accountRoutes from "../src/routes/accountRoutes.js";
 import attendanceRoutes from "../src/routes/attendanceRoutes.js";
@@ -29,6 +28,7 @@ import webhook from "./utils/webhook.js";
 
 // New folder strucutre// remove this comment later and ensure older files and folders are deleted
 import scheduleRoutes from "./modules/schedule/schedule.route.js";
+import userRoutes from "./modules/user/user.route.js";
 
 dotenv.config();
 const app = express();
