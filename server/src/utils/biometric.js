@@ -3,7 +3,7 @@ import Attendance from "../model/Attendance.js";
 import { STATUS } from "../../constants/status.js";
 import Schedules from "../model/Schedule.js";
 
-export const biometricIn = async (userId, employeeId) => {
+export const biometricIn = async (userId, employeeId, now) => {
   const TARDINESS_TOLERANCE_HOURS = 4;
   const EARLY_GRACE_HOURS = 4;
 
@@ -26,7 +26,8 @@ export const biometricIn = async (userId, employeeId) => {
       userId,
       employeeId,
       matchingSchedule.shiftStart,
-      matchingSchedule.shiftEnd
+      matchingSchedule.shiftEnd,
+      now
     );
   } catch (error) {
     console.error("Error adding user's attendance:", error);
@@ -86,7 +87,9 @@ export const biometricBreakOut = async (docId, breaks, now) => {
   prevBreak.end = endUtc.toJSDate();
 
   const testEndUtc = DateTime.fromISO(now).toUTC();
-  console.log(`biometricBreakOut(): endUtc ${endUtc} / testEndUtc ${testEndUtc}`);
+  console.log(
+    `biometricBreakOut(): endUtc ${endUtc} / testEndUtc ${testEndUtc}`
+  );
 
   const startUtc = DateTime.fromJSDate(prevBreak.start);
   prevBreak.duration = endUtc.diff(startUtc).milliseconds;
