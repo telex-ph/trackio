@@ -9,7 +9,6 @@ import "./cron.js";
 import announcementRoutes from "../src/routes/announcementRoutes.js";
 import recognitionRoutes from "../src/routes/recognitionRoutes.js";
 import mediaRoutes from "../src/routes/mediaRoutes.js";
-import requestRoutes from "../src/routes/requestRoutes.js";
 // import scheduleRoutes from "./routes/scheduleRoutes.js";
 import serverRoutes from "./routes/serverRoutes.js";
 import biometricRoute from "./routes/biometricRoute.js";
@@ -29,6 +28,8 @@ import absenceRoutes from "./modules/absence/absence.route.js";
 import accountRoutes from "./modules/account/account.route.js";
 import groupRoutes from "./modules/group/group.route.js";
 import offenseRoutes from "./modules/offense/offense.route.js";
+import requestRoutes from "./modules/request/request.route.js";
+
 
 dotenv.config();
 const app = express();

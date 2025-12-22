@@ -14,7 +14,7 @@ import {
   getRequestsByType,
   approveRequest,  
   rejectRequest,
-} from "../controllers/requestControllers.js";
+} from "./request.controller.js";
 
 // GET all
 router.get("/", getRequests);

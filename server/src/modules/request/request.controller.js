@@ -1,4 +1,4 @@
-import Request from "../model/Request.js";
+import Request from "./request.model.js";
 import { ObjectId } from "mongodb";
 
 // ================== Get All ==================
