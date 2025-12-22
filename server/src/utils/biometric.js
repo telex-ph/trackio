@@ -53,10 +53,10 @@ export const biometricOut = async (attendanceId) => {
 };
 
 export const biometricBreakIn = async (docId, breaks, totalBreak, now) => {
-  const nowUtc = DateTime.utc().toJSDate();
-  const test = DateTime.fromISO(now).toUTC().toJSDate();
+  // const nowUtc = DateTime.utc().toJSDate();
+  const nowUtc = DateTime.fromISO(now).toUTC().toJSDate();
 
-  console.log(`biometricBreakIn(): nowUtc ${nowUtc} / test ${test}`);
+  // console.log(`biometricBreakIn(): nowUtc ${nowUtc} / test ${test}`);
 
   const newBreak = { start: nowUtc };
   const newBreaks = [...breaks, newBreak];
@@ -83,13 +83,13 @@ export const biometricBreakIn = async (docId, breaks, totalBreak, now) => {
 export const biometricBreakOut = async (docId, breaks, now) => {
   const prevBreak = breaks[breaks.length - 1];
 
-  const endUtc = DateTime.utc();
+  // const endUtc = DateTime.utc();
+  const endUtc = DateTime.fromISO(now).toUTC();
   prevBreak.end = endUtc.toJSDate();
 
-  const testEndUtc = DateTime.fromISO(now).toUTC();
-  console.log(
-    `biometricBreakOut(): endUtc ${endUtc} / testEndUtc ${testEndUtc}`
-  );
+  // console.log(
+  //   `biometricBreakOut(): endUtc ${endUtc} / testEndUtc ${testEndUtc}`
+  // );
 
   const startUtc = DateTime.fromJSDate(prevBreak.start);
   prevBreak.duration = endUtc.diff(startUtc).milliseconds;
