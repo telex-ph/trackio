@@ -11,7 +11,7 @@ import {
   removeAcknowledgement,
   approveAnnouncement,
   cancelApproval,
-} from "../controllers/announcementControllers.js";
+} from "./announcement.controller.js";
 
 // GET all announcements
 router.get("/", getAnnouncements);

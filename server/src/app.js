@@ -6,7 +6,6 @@ import cookieParser from "cookie-parser";
 import "./cron.js";
 
 // Routes imports
-import announcementRoutes from "../src/routes/announcementRoutes.js";
 import recognitionRoutes from "../src/routes/recognitionRoutes.js";
 import mediaRoutes from "../src/routes/mediaRoutes.js";
 // import scheduleRoutes from "./routes/scheduleRoutes.js";
@@ -29,6 +28,7 @@ import groupRoutes from "./modules/group/group.route.js";
 import offenseRoutes from "./modules/offense/offense.route.js";
 import requestRoutes from "./modules/request/request.route.js";
 import analyticsRoutes from "./modules/analytics/analytics.routes.js";
+import announcementRoutes from "./modules/announcement/announcement.route.js";
 
 
 dotenv.config();
