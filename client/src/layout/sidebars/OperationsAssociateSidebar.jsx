@@ -23,9 +23,11 @@ const OperationsAssociateSidebar = ({
   activeDropdown,
   setActiveDropdown,
   unreadIR,
+  unreadMyOffenses,
   unreadCoaching,
 }) => {
-  const totalUnread = (unreadIR || 0) + (unreadCoaching || 0);
+  const totalUnread =
+    (unreadIR || 0) + (unreadMyOffenses || 0) + (unreadCoaching || 0);
 
   return (
     <div className="space-y-1">
@@ -122,7 +124,7 @@ const OperationsAssociateSidebar = ({
           icon={FileText}
           label="My Offenses"
           isCollapsed={isCollapsed}
-          badge={!isCollapsed ? totalUnread : 0}
+          badge={!isCollapsed ? unreadMyOffenses : 0}
         />
       </CustomCollapse>
     </div>

@@ -22,12 +22,15 @@ export const Sidebar = ({ isCollapsed }) => {
   // User and badge counts from zustand
   const user = useStore((state) => state.user);
   const unreadIR = useStore((state) => state.unreadIR);
+  const unreadMyOffenses = useStore((state) => state.unreadMyOffenses);
   const unreadEscalation = useStore((state) => state.unreadEscalation);
   const unreadCoaching = useStore((state) => state.unreadCoaching);
 
   // Functions to fetch badges and attach socket listeners
   const fetchUnreadOffenses = useStore((state) => state.fetchUnreadOffenses);
-  const fetchUnreadEscalatedOffenses = useStore((state) => state.fetchUnreadEscalatedOffenses);
+  const fetchUnreadEscalatedOffenses = useStore(
+    (state) => state.fetchUnreadEscalatedOffenses
+  );
   const fetchUnreadCoaching = useStore((state) => state.fetchUnreadCoaching);
   const attachOffenseSocketListeners = useStore(
     (state) => state.attachOffenseSocketListeners
@@ -77,6 +80,7 @@ export const Sidebar = ({ isCollapsed }) => {
     isCollapsed,
     activeDropdown,
     setActiveDropdown,
+    unreadMyOffenses
   };
 
   const renderSidebar = () => {
@@ -138,7 +142,12 @@ export const Sidebar = ({ isCollapsed }) => {
           />
         );
       case Role.HR:
-        return <HRSidebar {...sidebarProps} unreadIR={unreadIR} />;
+        return (
+          <HRSidebar
+            {...sidebarProps}
+            unreadIR={unreadIR}
+          />
+        );
       case Role.ADMIN:
         return (
           <AdminSidebar

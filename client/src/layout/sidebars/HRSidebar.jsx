@@ -27,6 +27,7 @@ const HRSidebar = ({
   activeDropdown,
   setActiveDropdown,
   unreadIR,
+  unreadMyOffenses
 }) => (
   <div className="space-y-1">
     <SidebarLink
@@ -98,7 +99,7 @@ const HRSidebar = ({
         icon={FileText}
         label="My Offenses"
         isCollapsed={isCollapsed}
-        badge={!isCollapsed ? unreadIR : 0}
+        badge={!isCollapsed ? unreadMyOffenses : 0}
       />
       <SidebarLink
         to={`/human-resources/reported-ir`}

@@ -27,12 +27,12 @@ const ComplianceSidebar = ({
   activeDropdown,
   setActiveDropdown,
   unreadIR,
+  unreadMyOffenses,
   unreadEscalation,
   unreadCoaching,
 }) => {
   const totalUnreadWithEscalation =
-    (unreadIR || 0) + (unreadEscalation || 0) + (unreadCoaching || 0);
-  const totalUnread = (unreadIR || 0) + (unreadCoaching || 0);
+    (unreadIR || 0) + (unreadMyOffenses || 0) + (unreadEscalation || 0) + (unreadCoaching || 0);
 
   return (
     <div className="space-y-1">
@@ -140,7 +140,7 @@ const ComplianceSidebar = ({
           icon={FileText}
           label="My Offenses"
           isCollapsed={isCollapsed}
-          badge={!isCollapsed ? totalUnread : 0}
+          badge={!isCollapsed ? unreadMyOffenses : 0}
         />
         {/* <SidebarLink
           to={`/compliance/escalated-offenses`}
