@@ -3,125 +3,112 @@ import {
   Trophy,
   Crown,
   RefreshCw,
-  ArrowUpRight,
+  ArrowRight,
   Zap,
+  Sparkles
 } from "lucide-react";
 
 const QuickActionsCard = ({ posts, onViewPost, onRefresh }) => {
   return (
-    <div className="bg-white rounded-2xl border border-light shadow-sm p-5">
-      <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-        <Zap className="mr-2" size={20} />
-        Quick Actions
-      </h3>
+    <div className="relative overflow-hidden bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 p-6 transition-all duration-300">
+      
+      {/* Decorative Background Blur */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-400/5 rounded-full blur-3xl" />
+
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6 px-1">
+        <div className="flex items-center gap-2">
+          <div className="p-2 bg-amber-100 rounded-xl">
+            <Zap size={18} className="text-amber-600 fill-amber-600" />
+          </div>
+          <h3 className="text-lg font-black text-slate-800 uppercase tracking-tighter">
+            Quick Actions
+          </h3>
+        </div>
+        <Sparkles size={16} className="text-slate-300" />
+      </div>
+
       <div className="space-y-3">
+        {/* Latest Recognition Button */}
         <button
-          onClick={() => {
-            if (posts.length > 0) {
-              onViewPost(posts[0]);
-            }
-          }}
-          className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 rounded-xl transition-all group/action"
+          onClick={() => posts.length > 0 && onViewPost(posts[0])}
+          className="w-full group relative flex items-center justify-between p-4 bg-slate-50 hover:bg-white rounded-[1.8rem] transition-all duration-300 border border-transparent hover:border-rose-100 hover:shadow-lg hover:shadow-rose-500/5 overflow-hidden"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-red-600 to-red-500 rounded-full flex items-center justify-center shadow-sm">
-              <Trophy className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-4 relative z-10">
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300 border border-slate-100">
+              <Trophy className="w-6 h-6 text-rose-500" />
             </div>
             <div className="text-left">
-              <div className="font-medium text-gray-900">
-                Latest Recognition
-              </div>
-              <div className="text-xs text-gray-600">
-                View most recent award
-              </div>
+              <div className="font-bold text-slate-800 text-sm">Latest Recog</div>
+              <div className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Recent Award</div>
             </div>
           </div>
-          <ArrowUpRight
-            size={16}
-            className="text-gray-400 group-hover/action:text-red-600 transition-colors"
-          />
+          <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 transition-all duration-300">
+            <ArrowRight size={14} className="text-rose-600" />
+          </div>
         </button>
 
+        {/* Top Performer Button */}
         <button
           onClick={() => {
-            // Find employee with most recognitions
             const employeeMap = {};
             posts.forEach((post) => {
               if (post.employee) {
-                const employeeKey = post.employee.employeeId || post.employee._id;
-                if (employeeKey) {
-                  if (!employeeMap[employeeKey]) {
-                    employeeMap[employeeKey] = {
-                      employee: post.employee,
-                      count: 0,
-                    };
-                  }
-                  employeeMap[employeeKey].count++;
+                const key = post.employee.employeeId || post.employee._id;
+                if (key) {
+                  employeeMap[key] = {
+                    employee: post.employee,
+                    count: (employeeMap[key]?.count || 0) + 1,
+                  };
                 }
               }
             });
-
-            const topEmployee = Object.values(employeeMap).sort(
-              (a, b) => b.count - a.count
-            )[0];
+            const topEmployee = Object.values(employeeMap).sort((a, b) => b.count - a.count)[0];
             if (topEmployee) {
-              const topPost = posts.find(
-                (post) => {
-                  if (!post.employee) return false;
-                  const postEmployeeKey = post.employee.employeeId || post.employee._id;
-                  const topEmployeeKey = topEmployee.employee.employeeId || topEmployee.employee._id;
-                  return postEmployeeKey === topEmployeeKey;
-                }
-              );
-              if (topPost) {
-                onViewPost(topPost);
-              }
+              const topPost = posts.find(p => (p.employee?.employeeId || p.employee?._id) === (topEmployee.employee.employeeId || topEmployee.employee._id));
+              if (topPost) onViewPost(topPost);
             }
           }}
-          className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 rounded-xl transition-all group/action"
+          className="w-full group relative flex items-center justify-between p-4 bg-slate-50 hover:bg-white rounded-[1.8rem] transition-all duration-300 border border-transparent hover:border-amber-100 hover:shadow-lg hover:shadow-amber-500/5 overflow-hidden"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-full flex items-center justify-center shadow-sm">
-              <Crown className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-4 relative z-10">
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300 border border-slate-100">
+              <Crown className="w-6 h-6 text-amber-500" />
             </div>
             <div className="text-left">
-              <div className="font-medium text-gray-900">
-                Top Performer
-              </div>
-              <div className="text-xs text-gray-600">
-                View employee with most awards
-              </div>
+              <div className="font-bold text-slate-800 text-sm">Top Performer</div>
+              <div className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Most Awards</div>
             </div>
           </div>
-          <ArrowUpRight
-            size={16}
-            className="text-gray-400 group-hover/action:text-yellow-600 transition-colors"
-          />
+          <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 transition-all duration-300">
+            <ArrowRight size={14} className="text-amber-600" />
+          </div>
         </button>
 
+        {/* Refresh Button */}
         <button
           onClick={onRefresh}
-          className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 rounded-xl transition-all group/action"
+          className="w-full group relative flex items-center justify-between p-4 bg-slate-50 hover:bg-white rounded-[1.8rem] transition-all duration-300 border border-transparent hover:border-blue-100 hover:shadow-lg hover:shadow-blue-500/5 overflow-hidden"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center shadow-sm">
-              <RefreshCw className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-4 relative z-10">
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:rotate-180 transition-transform duration-500 border border-slate-100">
+              <RefreshCw className="w-6 h-6 text-blue-500" />
             </div>
             <div className="text-left">
-              <div className="font-medium text-gray-900">
-                Refresh Data
-              </div>
-              <div className="text-xs text-gray-600">
-                Update with latest recognitions
-              </div>
+              <div className="font-bold text-slate-800 text-sm">Sync Data</div>
+              <div className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Update Feed</div>
             </div>
           </div>
-          <ArrowUpRight
-            size={16}
-            className="text-gray-400 group-hover/action:text-blue-600 transition-colors"
-          />
+          <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 transition-all duration-300">
+            <ArrowRight size={14} className="text-blue-600" />
+          </div>
         </button>
       </div>
+
+      {/* Footer Info */}
+      <p className="mt-6 text-center text-[10px] font-bold text-slate-300 uppercase tracking-widest">
+        Select an action to begin
+      </p>
     </div>
   );
 };
