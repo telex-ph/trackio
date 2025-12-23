@@ -1,6 +1,6 @@
-import Absence from "../model/Absence.js";
-import Attendance from "../model/Attendance.js";
-import User from "../model/User.js";
+import Absence from "../modules/absence/absence.model.js";
+import Attendance from "../modules/attendance/attendance.model.js";
+import User from "../modules/user/user.model.js";
 import { DateTime, Interval } from "luxon";
 
 export const checkAbsences = async () => {
