@@ -6,7 +6,7 @@ const router = express.Router();
 router.get('/', recognitionController.getRecognitions);
 router.get('/:id', recognitionController.getRecognitionById);
 router.get('/employees/search', recognitionController.searchEmployees);
-
+router.get('/employee/:employeeId', recognitionController.getRecognitionByEmployeeId);
 
 router.post('/', recognitionController.createRecognition);
 router.put('/:id', recognitionController.updateRecognition);

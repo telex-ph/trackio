@@ -13,7 +13,9 @@ export const recognitionController = {
         page = 1, 
         limit = 12,
         sortBy = 'createdAt',
-        sortOrder = 'desc'
+        sortOrder = 'desc',
+        recognitionType,
+        employeeId // Added for filtering by employee
       } = req.query;
       
       const filter = {};
@@ -30,6 +32,16 @@ export const recognitionController = {
         } else {
           filter.status = status;
         }
+      }
+      
+      // Filter by recognition type
+      if (recognitionType) {
+        filter.recognitionType = recognitionType;
+      }
+      
+      // Filter by employee ID
+      if (employeeId) {
+        filter.employeeId = employeeId.toString();
       }
       
       const pageNum = parseInt(page);
@@ -199,6 +211,88 @@ export const recognitionController = {
       res.status(500).json({ 
         success: false, 
         message: 'Error fetching recognition',
+        error: error.message 
+      });
+    }
+  },
+
+  async getRecognitionByEmployeeId(req, res) {
+    try {
+      const { employeeId } = req.params;
+      
+      if (!employeeId) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Employee ID is required' 
+        });
+      }
+      
+      const db = await connectDB();
+      const recognitionsCollection = db.collection('recognitions');
+      const usersCollection = db.collection('users');
+      
+      // Get employee details first
+      const employee = await usersCollection.findOne(
+        { employeeId: employeeId.toString() },
+        { 
+          projection: { 
+            _id: 1,
+            employeeId: 1,
+            firstName: 1,
+            lastName: 1,
+            department: 1,
+            role: 1,
+            email: 1,
+            avatar: 1
+          } 
+        }
+      );
+      
+      if (!employee) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Employee not found' 
+        });
+      }
+      
+      // Get recognitions for this employee (excluding archived)
+      const recognitions = await recognitionsCollection
+        .find({ 
+          employeeId: employeeId.toString(),
+          status: { $in: ['published', 'scheduled', 'draft'] }
+        })
+        .sort({ createdAt: -1 })
+        .toArray();
+      
+      // Format employee data
+      const employeeData = {
+        _id: employee._id,
+        employeeId: employee.employeeId,
+        name: `${employee.firstName} ${employee.lastName}`,
+        department: employee.department,
+        position: employee.role,
+        email: employee.email,
+        avatar: employee.avatar
+      };
+      
+      // Format recognitions
+      const formattedRecognitions = recognitions.map(recognition => ({
+        ...recognition,
+        employee: employeeData
+      }));
+      
+      res.json({
+        success: true,
+        data: formattedRecognitions,
+        employee: employeeData,
+        count: formattedRecognitions.length
+      });
+      
+    } catch (error) {
+      console.error('Error fetching employee recognitions:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Error fetching employee recognitions',
         error: error.message 
       });
     }
@@ -838,5 +932,6 @@ export const recognitionController = {
         error: error.message 
       });
     }
-  }
+  } 
+  
 };

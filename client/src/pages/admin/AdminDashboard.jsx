@@ -563,7 +563,6 @@ const AdminDashboard = () => {
 
   // ✅ UPDATED: Socket listeners with expiry check
   useEffect(() => {
-    console.log("🔄 Setting up socket listeners for admin...");
 
     if (!socket) {
       console.log("❌ Socket not available for admin");
@@ -814,18 +813,15 @@ const AdminDashboard = () => {
     socket.on("announcementUpdated", handleAnnouncementUpdated);
     socket.on("updatedAnnouncement", handleAnnouncementUpdated);
 
-    console.log("📤 Requesting initial admin data via socket...");
     socket.emit("getAgentData");
 
     const fallbackTimeout = setTimeout(() => {
       if (!dataLoaded) {
-        console.log("⏰ Socket timeout for admin, falling back to API...");
         fetchAnnouncements();
       }
     }, 3000);
 
     return () => {
-      console.log("🧹 Cleaning up socket listeners for admin");
       clearTimeout(fallbackTimeout);
       
       socket.off("initialAgentData", handleInitialData);

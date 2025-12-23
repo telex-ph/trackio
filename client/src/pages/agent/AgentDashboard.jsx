@@ -358,7 +358,7 @@ const AgentDashboard = () => {
 
   // ✅ FIXED SOCKET LISTENERS FOR REAL-TIME UPDATES WITH APPROVAL SYSTEM
   useEffect(() => {
-    console.log("🔄 Setting up socket listeners for agent...");
+   
 
     // Check socket connection
     if (!socket) {
@@ -664,10 +664,6 @@ const AgentDashboard = () => {
       console.log("✅ Announcement updated in real-time:", announcementWithRealTime.title);
     };
 
-    // ✅ DEBUG: Log socket connection status
-    console.log("🔌 Socket connection status:", socket.connected);
-    console.log("🔌 Socket ID:", socket.id);
-
     // Register event listeners with multiple event names for reliability
     socket.on("initialAgentData", handleInitialData);
     socket.on("agentAnnouncementUpdate", handleAgentUpdate);
@@ -687,22 +683,18 @@ const AgentDashboard = () => {
     // ✅ REGISTER THE EDIT LISTENERS
     socket.on("announcementUpdated", handleAnnouncementUpdated);
     socket.on("updatedAnnouncement", handleAnnouncementUpdated);
-
-    // Request initial data via socket
-    console.log("📤 Requesting initial agent data via socket...");
+  
     socket.emit("getAgentData");
 
     // Fallback to API if socket doesn't respond in 3 seconds
     const fallbackTimeout = setTimeout(() => {
       if (!dataLoaded) {
-        console.log("⏰ Socket timeout for agent, falling back to API...");
         fetchAnnouncements();
       }
     }, 3000);
 
     // Cleanup function
     return () => {
-      console.log("🧹 Cleaning up socket listeners for agent");
       clearTimeout(fallbackTimeout);
       
       // Remove all event listeners
