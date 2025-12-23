@@ -555,12 +555,6 @@ const OMDashboard = () => {
   const closeAnnouncementDetail = () => {
     setAnnouncementDetailModal({ isOpen: false, announcement: null });
   };
-
-  const handleSelectedEmployee = (employee) => {
-    setSelectedEmployee(employee);
-    setIsEmployeeClicked(true);
-  };
-
   const handleModalOnClose = () => {
     setIsEmployeeClicked(false);
   };
@@ -931,7 +925,7 @@ const OMDashboard = () => {
           </svg>
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm sm:text-base">Pin Limit Reached</p>
-            <p className="text-xs sm:text-sm opacity-90">
+            <p className="text-xs sm:text-sm">
               Max {MAX_PINNED_PER_DEPARTMENT} pins per department
             </p>
           </div>
@@ -986,10 +980,10 @@ const OMDashboard = () => {
         </div>
       </div>
 
-      {/* Stat Cards - Disabled */}
+  
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {stats.map((stat) => (
-          <div key={stat.key} className="bg-white rounded-xl p-4 shadow border border-gray-200 opacity-50">
+          <div key={stat.key} className="bg-white rounded-xl p-4 shadow border border-gray-200">
             <div className="flex items-start justify-between mb-3">
               <div>
                 <p className="text-sm text-gray-600 font-medium">{stat.title}</p>
@@ -1000,7 +994,7 @@ const OMDashboard = () => {
             <div className="flex items-center">
               <span className="text-lg font-bold text-gray-800">--</span>
               <span className="ml-2 text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
-                DISABLED
+                COMING SOON
               </span>
             </div>
           </div>
@@ -1010,19 +1004,21 @@ const OMDashboard = () => {
       {/* Charts and Lists - All Disabled */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Weekly Attendance Trend - Disabled */}
-        <div className="bg-white rounded-xl p-6 shadow border border-gray-200 opacity-50">
+        <div className="bg-white rounded-xl p-6 shadow border border-gray-200">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-800">Weekly Attendance Trend</h3>
-            <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded">DISABLED</span>
+            <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded">COMING SOON</span>
           </div>
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
             <div className="w-32 h-32 sm:w-40 sm:h-40 flex-shrink-0 relative">
               <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-4 border-white shadow-inner flex items-center justify-center">
                 <div className="text-center">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 bg-gradient-to-r from-gray-400 to-gray-300 rounded-full flex items-center justify-center">
-                    <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 bg-gradient-to-r from-blue-700 to-blue-500 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
                   </div>
-                  <span className="text-xs font-semibold text-gray-600">DISABLED</span>
+                  <span className="text-xs font-semibold text-gray-600">COMING SOON</span>
                 </div>
               </div>
             </div>
@@ -1030,19 +1026,19 @@ const OMDashboard = () => {
         </div>
 
         {/* Team Status Chart - Disabled */}
-        <div className="bg-white rounded-xl p-6 shadow border border-gray-200 opacity-50">
+        <div className="bg-white rounded-xl p-6 shadow border border-gray-200">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-800">Team Status Distribution</h3>
-            <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded">DISABLED</span>
+            <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded">COMING SOON</span>
           </div>
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
             <div className="w-32 h-32 sm:w-40 sm:h-40 flex-shrink-0 relative">
               <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-4 border-white shadow-inner flex items-center justify-center">
                 <div className="text-center">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 bg-gradient-to-r from-gray-400 to-gray-300 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 bg-gradient-to-r from-green-700 to-green-500 rounded-full flex items-center justify-center">
                     <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
-                  <span className="text-xs font-semibold text-gray-600">DISABLED</span>
+                  <span className="text-xs font-semibold text-gray-600">COMING SOON</span>
                 </div>
               </div>
             </div>
@@ -1050,10 +1046,10 @@ const OMDashboard = () => {
         </div>
 
         {/* Activity Monitor List - Disabled */}
-        <div className="bg-white rounded-xl p-6 shadow border border-gray-200 opacity-50">
+        <div className="bg-white rounded-xl p-6 shadow border border-gray-200">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-800">Activity Monitor</h3>
-            <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded">DISABLED</span>
+            <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded">COMING SOON</span>
           </div>
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
             <div className="w-32 h-32 sm:w-40 sm:h-40 flex-shrink-0 relative">
@@ -1062,7 +1058,7 @@ const OMDashboard = () => {
                   <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 bg-gradient-to-r from-gray-400 to-gray-300 rounded-full flex items-center justify-center">
                     <Eye className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
-                  <span className="text-xs font-semibold text-gray-600">DISABLED</span>
+                  <span className="text-xs font-semibold text-gray-600">COMING SOON</span>
                 </div>
               </div>
             </div>
@@ -1073,10 +1069,10 @@ const OMDashboard = () => {
       {/* Second Row of Disabled Components */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Work Hours Chart - Disabled */}
-        <div className="bg-white rounded-xl p-6 shadow border border-gray-200 opacity-50">
+        <div className="bg-white rounded-xl p-6 shadow border border-gray-200">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-800">Work Hours Chart</h3>
-            <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded">DISABLED</span>
+            <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded">COMING SOON</span>
           </div>
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
             <div className="w-32 h-32 sm:w-40 sm:h-40 flex-shrink-0 relative">
@@ -1085,7 +1081,7 @@ const OMDashboard = () => {
                   <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 bg-gradient-to-r from-gray-400 to-gray-300 rounded-full flex items-center justify-center">
                     <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
-                  <span className="text-xs font-semibold text-gray-600">DISABLED</span>
+                  <span className="text-xs font-semibold text-gray-600">COMING SOON</span>
                 </div>
               </div>
             </div>
@@ -1093,10 +1089,10 @@ const OMDashboard = () => {
         </div>
 
         {/* Employee Directory List - Disabled */}
-        <div className="bg-white rounded-xl p-6 shadow border border-gray-200 opacity-50">
+        <div className="bg-white rounded-xl p-6 shadow border border-gray-200">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-800">Employee Directory</h3>
-            <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded">DISABLED</span>
+            <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded">COMING SOON</span>
           </div>
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
             <div className="w-32 h-32 sm:w-40 sm:h-40 flex-shrink-0 relative">
@@ -1105,7 +1101,7 @@ const OMDashboard = () => {
                   <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 bg-gradient-to-r from-gray-400 to-gray-300 rounded-full flex items-center justify-center">
                     <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
-                  <span className="text-xs font-semibold text-gray-600">DISABLED</span>
+                  <span className="text-xs font-semibold text-gray-600">COMING SOON</span>
                 </div>
               </div>
             </div>

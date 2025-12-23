@@ -13,6 +13,4 @@ router.put('/:id', recognitionController.updateRecognition);
 router.patch('/:id/archive', recognitionController.toggleArchive);
 router.delete('/:id', recognitionController.deleteRecognition);
 
-
 export default router;
-

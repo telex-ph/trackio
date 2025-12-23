@@ -96,11 +96,12 @@ export const recognitionController = {
         
         employees.forEach(emp => {
           employeesMap[emp.employeeId] = emp;
+          employeesMap[emp._id.toString()] = emp; // ADDED: Map by _id too
         });
       }
 
       const recognitionsWithDetails = recognitions.map((recognition) => {
-        const employee = employeesMap[recognition.employeeId];
+        const employee = employeesMap[recognition.employeeId] || employeesMap[recognition.employeeMongoId];
         
         return {
           ...recognition,
@@ -167,9 +168,14 @@ export const recognitionController = {
         });
       }
       
-      // Get employee details
+      // Get employee details - UPDATED to check both employeeId and employeeMongoId
       const employee = await usersCollection.findOne(
-        { employeeId: recognition.employeeId },
+        { 
+          $or: [
+            { employeeId: recognition.employeeId },
+            { _id: new ObjectId(recognition.employeeMongoId) }
+          ]
+        },
         { 
           projection: { 
             _id: 1,
@@ -231,9 +237,14 @@ export const recognitionController = {
       const recognitionsCollection = db.collection('recognitions');
       const usersCollection = db.collection('users');
       
-      // Get employee details first
+      // Get employee details first - UPDATED to check both employeeId and _id
       const employee = await usersCollection.findOne(
-        { employeeId: employeeId.toString() },
+        { 
+          $or: [
+            { employeeId: employeeId.toString() },
+            { _id: new ObjectId(employeeId) }
+          ]
+        },
         { 
           projection: { 
             _id: 1,
@@ -258,7 +269,10 @@ export const recognitionController = {
       // Get recognitions for this employee (excluding archived)
       const recognitions = await recognitionsCollection
         .find({ 
-          employeeId: employeeId.toString(),
+          $or: [
+            { employeeId: employeeId.toString() },
+            { employeeMongoId: employeeId.toString() }
+          ],
           status: { $in: ['published', 'scheduled', 'draft'] }
         })
         .sort({ createdAt: -1 })
@@ -327,9 +341,14 @@ export const recognitionController = {
       const recognitionsCollection = db.collection('recognitions');
       const usersCollection = db.collection('users');
       
-      // Get employee details
+      // Get employee details - UPDATED to check both employeeId and _id
       const employee = await usersCollection.findOne(
-        { employeeId: employeeId.toString() },
+        { 
+          $or: [
+            { employeeId: employeeId.toString() },
+            { _id: new ObjectId(employeeId) }
+          ]
+        },
         { 
           projection: { 
             _id: 1,
@@ -373,12 +392,13 @@ export const recognitionController = {
         }
       }
       
-      // Create recognition object
+      // Create recognition object - ADDED employeeMongoId field
       const recognitionData = {
         title: title.trim(),
         description: description.trim(),
         recognitionType: recognitionType || 'employee_of_month',
         employeeId: employeeId.toString(),
+        employeeMongoId: employee ? employee._id.toString() : null, // NEW FIELD
         tags: Array.isArray(tags) ? tags : (tags ? tags.split(',').map(t => t.trim()).filter(t => t) : []),
         images: processedImages,
         status: finalStatus,
@@ -485,11 +505,16 @@ export const recognitionController = {
         });
       }
       
-      // Get employee details if employeeId is being updated
+      // Get employee details if employeeId is being updated - UPDATED
       let employee = null;
       if (updateData.employeeId) {
         employee = await usersCollection.findOne(
-          { employeeId: updateData.employeeId.toString() },
+          { 
+            $or: [
+              { employeeId: updateData.employeeId.toString() },
+              { _id: new ObjectId(updateData.employeeId) }
+            ]
+          },
           { 
             projection: { 
               _id: 1,
@@ -525,9 +550,10 @@ export const recognitionController = {
         update.recognitionType = updateData.recognitionType;
       }
       
-      // Handle employee ID
+      // Handle employee ID - ADDED employeeMongoId
       if (updateData.employeeId !== undefined) {
         update.employeeId = updateData.employeeId.toString();
+        update.employeeMongoId = employee ? employee._id.toString() : null; // NEW FIELD
         if (employee) {
           update.employeeName = `${employee.firstName} ${employee.lastName}`;
           update.employeePosition = employee.role;
@@ -611,9 +637,14 @@ export const recognitionController = {
         _id: new ObjectId(id) 
       });
       
-      // Get employee details for the response
+      // Get employee details for the response - UPDATED
       const currentEmployee = await usersCollection.findOne(
-        { employeeId: updatedRecognition.employeeId },
+        { 
+          $or: [
+            { employeeId: updatedRecognition.employeeId },
+            { _id: new ObjectId(updatedRecognition.employeeMongoId) }
+          ]
+        },
         { 
           projection: { 
             _id: 1,
@@ -727,8 +758,14 @@ export const recognitionController = {
         _id: new ObjectId(id) 
       });
       
+      // Get employee details - UPDATED
       const employee = await usersCollection.findOne(
-        { employeeId: updatedRecognition.employeeId },
+        { 
+          $or: [
+            { employeeId: updatedRecognition.employeeId },
+            { _id: new ObjectId(updatedRecognition.employeeMongoId) }
+          ]
+        },
         { 
           projection: { 
             _id: 1,
