@@ -1055,7 +1055,7 @@ const OMDashboard = () => {
             <div className="w-32 h-32 sm:w-40 sm:h-40 flex-shrink-0 relative">
               <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-4 border-white shadow-inner flex items-center justify-center">
                 <div className="text-center">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 bg-gradient-to-r from-gray-400 to-gray-300 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 bg-gradient-to-r from-violet-400 to-violet-300 rounded-full flex items-center justify-center">
                     <Eye className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
                   <span className="text-xs font-semibold text-gray-600">COMING SOON</span>
@@ -1078,7 +1078,7 @@ const OMDashboard = () => {
             <div className="w-32 h-32 sm:w-40 sm:h-40 flex-shrink-0 relative">
               <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-4 border-white shadow-inner flex items-center justify-center">
                 <div className="text-center">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 bg-gradient-to-r from-gray-400 to-gray-300 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 bg-gradient-to-r from-red-600 to-red-500 rounded-full flex items-center justify-center">
                     <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
                   <span className="text-xs font-semibold text-gray-600">COMING SOON</span>
@@ -1098,7 +1098,7 @@ const OMDashboard = () => {
             <div className="w-32 h-32 sm:w-40 sm:h-40 flex-shrink-0 relative">
               <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-4 border-white shadow-inner flex items-center justify-center">
                 <div className="text-center">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 bg-gradient-to-r from-gray-400 to-gray-300 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 bg-gradient-to-r from-purple-700 to-purple-600 rounded-full flex items-center justify-center">
                     <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
                   <span className="text-xs font-semibold text-gray-600">COMING SOON</span>
