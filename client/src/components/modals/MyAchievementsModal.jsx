@@ -17,6 +17,8 @@ import {
   Shield,
   Filter,
   ArrowUpRight,
+  FileText,
+  History,
 } from "lucide-react";
 
 const MyAchievementsModal = ({ isOpen, onClose, allPosts, currentUser }) => {
@@ -25,13 +27,16 @@ const MyAchievementsModal = ({ isOpen, onClose, allPosts, currentUser }) => {
   const [filterType, setFilterType] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
   const [userData, setUserData] = useState(null);
+  const [downloadingCertificate, setDownloadingCertificate] = useState(null);
+  const [viewingHistory, setViewingHistory] = useState(null);
 
   useEffect(() => {
-    if (isOpen) {
-      if (currentUser) {
-        setUserData(currentUser);
-        fetchUserAchievements();
-      }
+    if (isOpen && currentUser) {
+      console.log("🎯 MyAchievementsModal - currentUser:", currentUser);
+      console.log("🎯 MyAchievementsModal - allPosts count:", allPosts.length);
+      
+      setUserData(currentUser);
+      fetchUserAchievements();
     }
   }, [isOpen, filterType, sortBy, allPosts, currentUser]);
 
@@ -39,31 +44,56 @@ const MyAchievementsModal = ({ isOpen, onClose, allPosts, currentUser }) => {
     setLoading(true);
 
     if (!currentUser) {
+      console.log("❌ No currentUser available");
       setUserAchievements([]);
       setLoading(false);
       return;
     }
 
+    console.log("🔍 Filtering achievements for user:", {
+      userId: currentUser._id,
+      employeeId: currentUser.employeeId,
+      name: `${currentUser.firstName} ${currentUser.lastName}`
+    });
+
     let achievements = allPosts.filter((post) => {
-      if (!post.employee) return false;
-      
+      if (!post.employee) {
+        console.log(`Post ${post._id} has no employee data`);
+        return false;
+      }
+
       const currentUserEmployeeId = currentUser.employeeId || "";
       const currentUserId = currentUser._id || "";
       const postEmployeeId = post.employee.employeeId || "";
       const postEmployeeMongoId = post.employee._id || "";
-      
-      return (
-        currentUserEmployeeId === postEmployeeId ||
-        currentUserId === postEmployeeMongoId
+
+      const isMatch = (
+        (currentUserEmployeeId && postEmployeeId && currentUserEmployeeId === postEmployeeId) ||
+        (currentUserId && postEmployeeMongoId && currentUserId.toString() === postEmployeeMongoId.toString())
       );
+
+      if (isMatch) {
+        console.log(`✅ Match found for post: ${post.title}`, {
+          postEmployeeId,
+          postEmployeeMongoId,
+          userEmployeeId: currentUserEmployeeId,
+          userId: currentUserId
+        });
+      }
+
+      return isMatch;
     });
+
+    console.log(`📊 Found ${achievements.length} achievements for user`);
 
     if (filterType !== "all") {
       achievements = achievements.filter(
         (ach) => ach.recognitionType === filterType
       );
+      console.log(`📊 Filtered to ${achievements.length} ${filterType} achievements`);
     }
 
+    // Sorting
     achievements.sort((a, b) => {
       const dateA = new Date(a.createdAt);
       const dateB = new Date(b.createdAt);
@@ -130,6 +160,97 @@ const MyAchievementsModal = ({ isOpen, onClose, allPosts, currentUser }) => {
         gradient: "from-gray-500 to-slate-500",
       }
     );
+  };
+
+  // Download Certificate Function
+  const handleDownloadCertificate = async (achievement) => {
+    try {
+      setDownloadingCertificate(achievement._id);
+      
+      // Create certificate content
+      const certificateContent = `
+        CERTIFICATE OF ACHIEVEMENT
+        ===========================
+        
+        Award: ${getAchievementTypeInfo(achievement.recognitionType).label}
+        Recipient: ${achievement.employee?.name || "Employee"}
+        Title: ${achievement.title}
+        Description: ${achievement.description}
+        
+        Awarded on: ${new Date(achievement.createdAt).toLocaleDateString()}
+        Certificate ID: ${achievement._id?.substring(0, 12).toUpperCase()}
+        
+        ---
+        This certificate is officially issued in recognition
+        of outstanding performance and achievement.
+      `;
+
+      // Create blob and download
+      const blob = new Blob([certificateContent], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Certificate_${achievement.employee?.name?.replace(/\s+/g, '_') || 'Employee'}_${achievement._id?.substring(0, 8)}.txt`;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      console.log(`📄 Certificate downloaded for: ${achievement.title}`);
+
+    } catch (error) {
+      console.error("❌ Error downloading certificate:", error);
+      alert("Failed to download certificate. Please try again.");
+    } finally {
+      setDownloadingCertificate(null);
+    }
+  };
+
+  // View History Function
+  const handleViewHistory = (achievement) => {
+    setViewingHistory(achievement._id);
+    
+    // In a real app, you would fetch history from API
+    const historyData = [
+      {
+        date: new Date(achievement.createdAt).toLocaleDateString(),
+        action: "Award Created",
+        by: "Management"
+      },
+      {
+        date: new Date(new Date(achievement.createdAt).getTime() + 86400000).toLocaleDateString(),
+        action: "Certificate Issued",
+        by: "HR Department"
+      }
+    ];
+
+    const historyContent = `
+      RECOGNITION HISTORY
+      ===================
+      
+      Award: ${achievement.title}
+      Recipient: ${achievement.employee?.name || "Employee"}
+      Type: ${getAchievementTypeInfo(achievement.recognitionType).label}
+      
+      History Timeline:
+      ${historyData.map((item, index) => `
+      ${index + 1}. ${item.date} - ${item.action} (by ${item.by})
+      `).join('')}
+      
+      ---
+      Recognition ID: ${achievement._id}
+      Employee ID: ${achievement.employee?.employeeId || 'N/A'}
+    `;
+
+    // Open history in new window
+    const historyWindow = window.open();
+    historyWindow.document.write(`<pre>${historyContent}</pre>`);
+    historyWindow.document.title = `History - ${achievement.title}`;
+    
+    setTimeout(() => {
+      setViewingHistory(null);
+    }, 1000);
   };
 
   const getStats = () => {
@@ -245,15 +366,15 @@ const MyAchievementsModal = ({ isOpen, onClose, allPosts, currentUser }) => {
                     <div className="flex items-center gap-1">
                       <Shield size={14} className="text-blue-600" />
                       <span className="text-sm text-gray-600">
-                        Achievement Dashboard
+                        Employee ID: {userData.employeeId || "N/A"}
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-gray-500">Employee ID</div>
-                  <div className="font-mono font-bold text-gray-900">
-                    {userData.employeeId || "N/A"}
+                  <div className="text-xs text-gray-500">User ID</div>
+                  <div className="font-mono text-sm font-bold text-gray-900">
+                    {userData._id?.substring(0, 8).toUpperCase() || "N/A"}
                   </div>
                 </div>
               </div>
@@ -375,6 +496,9 @@ const MyAchievementsModal = ({ isOpen, onClose, allPosts, currentUser }) => {
                 <Loader size={24} className="animate-spin text-red-600" />
               </div>
               <p className="text-gray-600">Loading your achievements...</p>
+              <p className="text-sm text-gray-500 mt-2">
+                User: {currentUser?.firstName} {currentUser?.lastName}
+              </p>
             </div>
           ) : userAchievements.length === 0 ? (
             <div className="text-center py-12">
@@ -384,13 +508,15 @@ const MyAchievementsModal = ({ isOpen, onClose, allPosts, currentUser }) => {
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 No Achievements Yet
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 mb-4">
                 {filterType === "all"
-                  ? "You haven't received any recognitions yet. Keep up the great work!"
-                  : `No ${
-                      filterTypes.find((f) => f.id === filterType)?.label
-                    } recognitions found.`}
+                  ? `You haven't received any recognitions yet, ${currentUser?.firstName || "User"}. Keep up the great work!`
+                  : `No ${filterTypes.find((f) => f.id === filterType)?.label} recognitions found.`}
               </p>
+              <div className="text-sm text-gray-500 mb-6">
+                Logged in as: {currentUser?.firstName} {currentUser?.lastName} 
+                ({currentUser?.employeeId || currentUser?._id?.substring(0, 8)})
+              </div>
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-xl">
                 <Trophy className="w-4 h-4 text-blue-600" />
                 <span className="text-sm text-blue-700">
@@ -486,17 +612,39 @@ const MyAchievementsModal = ({ isOpen, onClose, allPosts, currentUser }) => {
                           </div>
                         </div>
 
-                        {/* Validation Badge */}
+                        {/* Action Buttons */}
                         <div className="mt-3 flex items-center justify-between">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleDownloadCertificate(achievement)}
+                              disabled={downloadingCertificate === achievement._id}
+                              className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-red-600 to-red-700 text-white text-xs rounded-lg hover:from-red-700 hover:to-red-800 transition-all disabled:opacity-50"
+                            >
+                              {downloadingCertificate === achievement._id ? (
+                                <Loader size={12} className="animate-spin" />
+                              ) : (
+                                <Download size={12} />
+                              )}
+                              Certificate
+                            </button>
+                            <button
+                              onClick={() => handleViewHistory(achievement)}
+                              disabled={viewingHistory === achievement._id}
+                              className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-lg hover:bg-gray-200 transition-all disabled:opacity-50"
+                            >
+                              {viewingHistory === achievement._id ? (
+                                <Loader size={12} className="animate-spin" />
+                              ) : (
+                                <History size={12} />
+                              )}
+                              History
+                            </button>
+                          </div>
                           <div className="flex items-center gap-2 text-xs text-green-600">
                             <div className="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center">
                               <Check size={10} />
                             </div>
-                            <span>Validated by management</span>
-                          </div>
-                          <div className="text-xs text-gray-400">
-                            Certificate No.{" "}
-                            {achievement._id?.substring(18, 24).toUpperCase()}
+                            <span>Validated</span>
                           </div>
                         </div>
                       </div>
@@ -519,7 +667,7 @@ const MyAchievementsModal = ({ isOpen, onClose, allPosts, currentUser }) => {
                     Achievements Dashboard
                   </div>
                   <div className="text-xs text-gray-600">
-                    Track your recognition progress
+                    For: {userData?.firstName} {userData?.lastName}
                   </div>
                 </div>
               </div>
@@ -535,13 +683,7 @@ const MyAchievementsModal = ({ isOpen, onClose, allPosts, currentUser }) => {
             </div>
             <div className="flex items-center gap-4">
               <div className="text-sm text-gray-600">
-                Last updated:{" "}
-                {new Date().toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                User: {userData?.employeeId || userData?._id?.substring(0, 8)}
               </div>
               <button
                 onClick={() => fetchUserAchievements()}

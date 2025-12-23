@@ -31,6 +31,7 @@ import {
   Lightbulb,
   Zap,
   Lock,
+  Medal // ADDED THIS IMPORT
 } from "lucide-react";
 
 const Toast = ({ message, type = "success", onClose }) => {
@@ -1280,7 +1281,7 @@ const RecognitionCard = ({ post, onArchive, onView, onEdit, activeTab }) => {
         };
       case "excellence_award":
         return {
-          icon: <Medal className="w-4 h-4" />,
+          icon: <Medal className="w-4 h-4" />, // FIXED: Now using Medal icon
           label: "Excellence Award",
           color: "from-purple-500 to-indigo-500",
           bgColor: "bg-gradient-to-r from-purple-50 to-indigo-50",
@@ -2317,6 +2318,7 @@ const AdminRecognition = () => {
   );
 };
 
+// This function needs to be declared at the top level, not inside the component
 const getRecognitionTypeInfo = (type) => {
   switch (type) {
     case "employee_of_month":
@@ -2329,7 +2331,7 @@ const getRecognitionTypeInfo = (type) => {
       };
     case "excellence_award":
       return {
-        icon: <Medal className="w-4 h-4" />,
+        icon: <Medal className="w-4 h-4" />, // FIXED: Now using Medal icon
         label: "Excellence Award",
         color: "from-purple-500 to-indigo-500",
         bgColor: "bg-gradient-to-r from-purple-50 to-indigo-50",
@@ -2360,6 +2362,6 @@ const getRecognitionTypeInfo = (type) => {
         textColor: "text-gray-700",
       };
   }
-}; 
+};
 
 export default AdminRecognition;

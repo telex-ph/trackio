@@ -1,5 +1,7 @@
+// src/controllers/recognitionController.js
 import { ObjectId } from 'mongodb';
 import connectDB from '../config/db.js';
+import { generatePDFCertificate } from '../utils/pdfGenerator.js';
 
 export const recognitionController = {
   async getRecognitions(req, res) {
@@ -15,7 +17,7 @@ export const recognitionController = {
         sortBy = 'createdAt',
         sortOrder = 'desc',
         recognitionType,
-        employeeId // Added for filtering by employee
+        employeeId
       } = req.query;
       
       const filter = {};
@@ -34,12 +36,10 @@ export const recognitionController = {
         }
       }
       
-      // Filter by recognition type
       if (recognitionType) {
         filter.recognitionType = recognitionType;
       }
       
-      // Filter by employee ID
       if (employeeId) {
         filter.employeeId = employeeId.toString();
       }
@@ -50,7 +50,6 @@ export const recognitionController = {
       
       const total = await recognitionsCollection.countDocuments(filter);
       
-      // Auto-publish scheduled posts that are due
       const now = new Date();
       await recognitionsCollection.updateMany(
         { 
@@ -73,7 +72,6 @@ export const recognitionController = {
         .limit(limitNum)
         .toArray();
       
-      // Fetch employee details
       const uniqueEmployeeIds = [...new Set(recognitions.map(r => r.employeeId).filter(Boolean))];
       const employeesMap = {};
 
@@ -96,12 +94,11 @@ export const recognitionController = {
         
         employees.forEach(emp => {
           employeesMap[emp.employeeId] = emp;
-          employeesMap[emp._id.toString()] = emp; // ADDED: Map by _id too
         });
       }
 
       const recognitionsWithDetails = recognitions.map((recognition) => {
-        const employee = employeesMap[recognition.employeeId] || employeesMap[recognition.employeeMongoId];
+        const employee = employeesMap[recognition.employeeId];
         
         return {
           ...recognition,
@@ -168,14 +165,8 @@ export const recognitionController = {
         });
       }
       
-      // Get employee details - UPDATED to check both employeeId and employeeMongoId
       const employee = await usersCollection.findOne(
-        { 
-          $or: [
-            { employeeId: recognition.employeeId },
-            { _id: new ObjectId(recognition.employeeMongoId) }
-          ]
-        },
+        { employeeId: recognition.employeeId },
         { 
           projection: { 
             _id: 1,
@@ -237,14 +228,8 @@ export const recognitionController = {
       const recognitionsCollection = db.collection('recognitions');
       const usersCollection = db.collection('users');
       
-      // Get employee details first - UPDATED to check both employeeId and _id
       const employee = await usersCollection.findOne(
-        { 
-          $or: [
-            { employeeId: employeeId.toString() },
-            { _id: new ObjectId(employeeId) }
-          ]
-        },
+        { employeeId: employeeId.toString() },
         { 
           projection: { 
             _id: 1,
@@ -266,19 +251,14 @@ export const recognitionController = {
         });
       }
       
-      // Get recognitions for this employee (excluding archived)
       const recognitions = await recognitionsCollection
         .find({ 
-          $or: [
-            { employeeId: employeeId.toString() },
-            { employeeMongoId: employeeId.toString() }
-          ],
+          employeeId: employeeId.toString(),
           status: { $in: ['published', 'scheduled', 'draft'] }
         })
         .sort({ createdAt: -1 })
         .toArray();
       
-      // Format employee data
       const employeeData = {
         _id: employee._id,
         employeeId: employee.employeeId,
@@ -289,7 +269,6 @@ export const recognitionController = {
         avatar: employee.avatar
       };
       
-      // Format recognitions
       const formattedRecognitions = recognitions.map(recognition => ({
         ...recognition,
         employee: employeeData
@@ -329,7 +308,6 @@ export const recognitionController = {
         employeePosition
       } = req.body;
       
-      // Validation
       if (!title || !description || !employeeId) {
         return res.status(400).json({ 
           success: false, 
@@ -341,14 +319,8 @@ export const recognitionController = {
       const recognitionsCollection = db.collection('recognitions');
       const usersCollection = db.collection('users');
       
-      // Get employee details - UPDATED to check both employeeId and _id
       const employee = await usersCollection.findOne(
-        { 
-          $or: [
-            { employeeId: employeeId.toString() },
-            { _id: new ObjectId(employeeId) }
-          ]
-        },
+        { employeeId: employeeId.toString() },
         { 
           projection: { 
             _id: 1,
@@ -363,7 +335,6 @@ export const recognitionController = {
         }
       );
       
-      // Handle images - should be Cloudinary objects
       let processedImages = [];
       if (Array.isArray(images) && images.length > 0) {
         processedImages = images
@@ -375,10 +346,9 @@ export const recognitionController = {
             name: img.name || `image_${Date.now()}`,
             uploadedAt: img.uploadedAt || new Date()
           }))
-          .slice(0, 5); // Limit to 5 images
+          .slice(0, 5);
       }
       
-      // Handle schedule date
       let finalStatus = status;
       let finalScheduleDate = null;
       
@@ -392,13 +362,11 @@ export const recognitionController = {
         }
       }
       
-      // Create recognition object - ADDED employeeMongoId field
       const recognitionData = {
         title: title.trim(),
         description: description.trim(),
         recognitionType: recognitionType || 'employee_of_month',
         employeeId: employeeId.toString(),
-        employeeMongoId: employee ? employee._id.toString() : null, // NEW FIELD
         tags: Array.isArray(tags) ? tags : (tags ? tags.split(',').map(t => t.trim()).filter(t => t) : []),
         images: processedImages,
         status: finalStatus,
@@ -414,7 +382,6 @@ export const recognitionController = {
         updatedAt: new Date()
       };
       
-      // Add employee name if provided or from database
       if (employee) {
         recognitionData.employeeName = `${employee.firstName} ${employee.lastName}`;
         recognitionData.employeePosition = employee.role;
@@ -423,7 +390,6 @@ export const recognitionController = {
         recognitionData.employeePosition = employeePosition || '';
       }
       
-      // Insert into database
       const result = await recognitionsCollection.insertOne(recognitionData);
       
       const createdRecognition = {
@@ -444,7 +410,6 @@ export const recognitionController = {
         }
       };
       
-      // Emit socket event
       if (io) {
         if (finalStatus === 'published') {
           io.to('admin-room').emit('adminNewRecognition', createdRecognition);
@@ -493,7 +458,6 @@ export const recognitionController = {
       const recognitionsCollection = db.collection('recognitions');
       const usersCollection = db.collection('users');
       
-      // Check if recognition exists
       const existingRecognition = await recognitionsCollection.findOne({ 
         _id: new ObjectId(id) 
       });
@@ -505,16 +469,10 @@ export const recognitionController = {
         });
       }
       
-      // Get employee details if employeeId is being updated - UPDATED
       let employee = null;
       if (updateData.employeeId) {
         employee = await usersCollection.findOne(
-          { 
-            $or: [
-              { employeeId: updateData.employeeId.toString() },
-              { _id: new ObjectId(updateData.employeeId) }
-            ]
-          },
+          { employeeId: updateData.employeeId.toString() },
           { 
             projection: { 
               _id: 1,
@@ -530,30 +488,24 @@ export const recognitionController = {
         );
       }
       
-      // Prepare update object
       const update = {
         updatedAt: new Date()
       };
       
-      // Handle title
       if (updateData.title !== undefined) {
         update.title = updateData.title.trim();
       }
       
-      // Handle description
       if (updateData.description !== undefined) {
         update.description = updateData.description.trim();
       }
       
-      // Handle recognition type
       if (updateData.recognitionType !== undefined) {
         update.recognitionType = updateData.recognitionType;
       }
       
-      // Handle employee ID - ADDED employeeMongoId
       if (updateData.employeeId !== undefined) {
         update.employeeId = updateData.employeeId.toString();
-        update.employeeMongoId = employee ? employee._id.toString() : null; // NEW FIELD
         if (employee) {
           update.employeeName = `${employee.firstName} ${employee.lastName}`;
           update.employeePosition = employee.role;
@@ -564,19 +516,16 @@ export const recognitionController = {
         }
       }
       
-      // Handle department
       if (updateData.department !== undefined) {
         update.department = updateData.department;
       }
       
-      // Handle tags
       if (updateData.tags !== undefined) {
         update.tags = Array.isArray(updateData.tags) 
           ? updateData.tags.map(t => t.trim()).filter(t => t)
           : updateData.tags.split(',').map(t => t.trim()).filter(t => t);
       }
       
-      // Handle images
       if (updateData.images !== undefined) {
         let processedImages = [];
         
@@ -590,7 +539,7 @@ export const recognitionController = {
               name: img.name || `image_${Date.now()}`,
               uploadedAt: img.uploadedAt || new Date()
             }))
-            .slice(0, 5); // Limit to 5 images
+            .slice(0, 5);
         }
         
         update.images = processedImages;
@@ -600,7 +549,6 @@ export const recognitionController = {
         };
       }
       
-      // Handle status and schedule date
       let newStatus = existingRecognition.status;
       if (updateData.status !== undefined || updateData.scheduleDate !== undefined) {
         newStatus = updateData.status || existingRecognition.status;
@@ -619,7 +567,6 @@ export const recognitionController = {
         }
       }
       
-      // Perform update
       const result = await recognitionsCollection.updateOne(
         { _id: new ObjectId(id) },
         { $set: update }
@@ -632,19 +579,12 @@ export const recognitionController = {
         });
       }
       
-      // Get updated recognition
       const updatedRecognition = await recognitionsCollection.findOne({ 
         _id: new ObjectId(id) 
       });
       
-      // Get employee details for the response - UPDATED
       const currentEmployee = await usersCollection.findOne(
-        { 
-          $or: [
-            { employeeId: updatedRecognition.employeeId },
-            { _id: new ObjectId(updatedRecognition.employeeMongoId) }
-          ]
-        },
+        { employeeId: updatedRecognition.employeeId },
         { 
           projection: { 
             _id: 1,
@@ -676,7 +616,6 @@ export const recognitionController = {
         }
       };
       
-      // Emit socket event
       if (io) {
         if (newStatus === 'published' && existingRecognition.status !== 'published') {
           io.to('admin-room').emit('adminRecognitionPublished', recognitionWithDetails);
@@ -753,19 +692,12 @@ export const recognitionController = {
         }
       );
       
-      // Get updated recognition with employee details
       const updatedRecognition = await recognitionsCollection.findOne({ 
         _id: new ObjectId(id) 
       });
       
-      // Get employee details - UPDATED
       const employee = await usersCollection.findOne(
-        { 
-          $or: [
-            { employeeId: updatedRecognition.employeeId },
-            { _id: new ObjectId(updatedRecognition.employeeMongoId) }
-          ]
-        },
+        { employeeId: updatedRecognition.employeeId },
         { 
           projection: { 
             _id: 1,
@@ -797,7 +729,6 @@ export const recognitionController = {
         }
       };
       
-      // Emit socket event
       if (io) {
         if (action === 'archive') {
           io.to('admin-room').emit('adminRecognitionArchived', { 
@@ -879,7 +810,6 @@ export const recognitionController = {
         });
       }
       
-      // Emit socket event
       if (io) {
         io.to('admin-room').emit('adminRecognitionDeleted', { 
           recognitionId: id,
@@ -969,6 +899,143 @@ export const recognitionController = {
         error: error.message 
       });
     }
-  } 
-  
+  },
+
+  async generateCertificate(req, res) {
+    try {
+      const { 
+        recognitionId, 
+        employeeId, 
+        type, 
+        title, 
+        employeeName, 
+        date,
+        preview = false 
+      } = req.body;
+
+      console.log('🔵 Certificate generation request:', {
+        recognitionId,
+        employeeName,
+        title,
+        preview
+      });
+
+      // Basic validation
+      if (!recognitionId || !employeeName || !title) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing required fields for certificate generation'
+        });
+      }
+
+      // Generate certificate data
+      const certificateData = {
+        recognitionId: recognitionId,
+        employeeName: employeeName,
+        employeeId: employeeId || 'N/A',
+        title: title,
+        recognitionType: type || 'recognition',
+        date: date || new Date(),
+        issuedDate: new Date(),
+        certificateNumber: `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+        issuer: "Your Company",
+        signature: "CEO Signature",
+        seal: "Company Seal"
+      };
+
+      console.log('📄 Generating certificate with data:', certificateData);
+
+      // Generate PDF certificate
+      const pdfBuffer = await generatePDFCertificate(certificateData);
+      
+      // Set appropriate headers
+      if (preview) {
+        // For preview (view in browser)
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'inline; filename=certificate-preview.pdf');
+        console.log('👁️ Sending certificate for preview');
+      } else {
+        // For download
+        res.setHeader('Content-Type', 'application/pdf');
+        const filename = `certificate_${certificateData.employeeName.replace(/\s+/g, '_')}_${certificateData.certificateNumber}.pdf`;
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        console.log('⬇️ Sending certificate for download');
+      }
+      
+      res.send(pdfBuffer);
+
+    } catch (error) {
+      console.error('❌ Error generating certificate:', error);
+      
+      // Send error response
+      res.status(500).json({
+        success: false,
+        message: 'Error generating certificate',
+        error: error.message
+      });
+    }
+  },
+
+  async getCertificate(req, res) {
+    try {
+      const { recognitionId } = req.params;
+      
+      if (!recognitionId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Recognition ID is required'
+        });
+      }
+
+      const db = await connectDB();
+      const recognitionsCollection = db.collection('recognitions');
+      
+      let recognition;
+      try {
+        recognition = await recognitionsCollection.findOne({
+          _id: ObjectId.isValid(recognitionId) ? new ObjectId(recognitionId) : recognitionId
+        });
+      } catch (error) {
+        console.error('Error finding recognition:', error);
+        recognition = null;
+      }
+
+      if (!recognition) {
+        return res.status(404).json({
+          success: false,
+          message: 'Recognition not found'
+        });
+      }
+
+      // Generate certificate data from recognition
+      const certificateData = {
+        recognitionId: recognition._id,
+        employeeName: recognition.employeeName || 'Employee',
+        employeeId: recognition.employeeId || 'N/A',
+        title: recognition.title || 'Recognition',
+        recognitionType: recognition.recognitionType || 'recognition',
+        date: recognition.createdAt || new Date(),
+        issuedDate: new Date(),
+        certificateNumber: `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+        issuer: "Your Company",
+        signature: "CEO Signature",
+        seal: "Company Seal"
+      };
+
+      // Generate PDF
+      const pdfBuffer = await generatePDFCertificate(certificateData);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="certificate_${certificateData.employeeName.replace(/\s+/g, '_')}.pdf"`);
+      res.send(pdfBuffer);
+
+    } catch (error) {
+      console.error('Error getting certificate:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error getting certificate',
+        error: error.message
+      });
+    }
+  }
 };

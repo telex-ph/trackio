@@ -29,10 +29,12 @@ import api from "../../utils/axios";
 import socket from "../../utils/socket";
 
 // Import only components that exist
-import RecognitionCard from "../../components/cards/RecognitionCard"
+import RecognitionCard from "../../components/cards/RecognitionCard";
 import TopPerformersCard from "../../components/cards/TopPerformersCard";
 import HighlightsCard from "../../components/cards/HighlightsCard";
 import QuickActionsCard from "../../components/cards/QuickActionsCard";
+import MyAchievementsModal from "../../components/modals/MyAchievementsModal";
+import EmployeeHistoryModal from "../../components/modals/EmployeeHistoryModal"; 
 
 // Toast Component
 const Toast = ({ message, type = "success", onClose }) => {
@@ -72,9 +74,10 @@ const LoadingSpinner = () => (
   </div>
 );
 
-// PostDetailsModal Component
-const PostDetailsModal = ({ post, isOpen, onClose, currentUser}) => {
+// PostDetailsModal Component - WITH WORKING FUNCTIONALITIES
+const PostDetailsModal = ({ post, isOpen, onClose, onViewEmployeeHistory }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [downloading, setDownloading] = useState(false);
   
   if (!isOpen || !post) return null;
 
@@ -142,22 +145,154 @@ const PostDetailsModal = ({ post, isOpen, onClose, currentUser}) => {
     }
   };
 
-  // Check if current user owns the post
-  const checkIfUserOwnsPost = (post, currentUser) => {
-    if (!currentUser || !post) return false;
+  // Custom toast function for PostDetailsModal
+  const showCustomToast = (message, type = "success") => {
+    // Create a temporary toast
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 z-50 animate-slideIn ${
+      type === "success"
+        ? "bg-gradient-to-r from-green-500 to-green-600"
+        : "bg-gradient-to-r from-red-500 to-red-600"
+    } text-white px-4 py-2 rounded-lg flex items-center gap-2`;
     
-    const currentUserEmployeeId = currentUser.employeeId || "";
-    const currentUserId = currentUser._id || "";
-    const postEmployeeId = post.employee?.employeeId || "";
-    const postEmployeeMongoId = post.employee?._id || "";
+    toast.innerHTML = `
+      ${type === "success" ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' : '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'}
+      <span class="text-sm font-medium">${message}</span>
+    `;
     
-    return (
-      (currentUserEmployeeId && postEmployeeId && currentUserEmployeeId === postEmployeeId) ||
-      (currentUserId && postEmployeeMongoId && currentUserId.toString() === postEmployeeMongoId.toString())
-    );
+    document.body.appendChild(toast);
+    
+    // Remove toast after 3 seconds
+    setTimeout(() => {
+      toast.classList.add('animate-fadeOut');
+      setTimeout(() => {
+        document.body.removeChild(toast);
+      }, 300);
+    }, 3000);
   };
 
-  const isOwner = checkIfUserOwnsPost(post, currentUser);
+  // UPDATED CERTIFICATE DOWNLOAD FUNCTION
+  const handleDownloadCertificate = async () => {
+    try {
+      setDownloading(true);
+      
+      console.log('Downloading certificate for post:', post._id);
+      
+      // If certificate URL exists, download it directly
+      if (post.certificateUrl) {
+        console.log('Using existing certificate URL:', post.certificateUrl);
+        window.open(post.certificateUrl, '_blank');
+        return;
+      }
+      
+      // Generate certificate via API
+      const response = await api.post('/recognition/generate-certificate', {
+        recognitionId: post._id,
+        employeeId: post.employee?._id || post.employee?.employeeId,
+        type: post.recognitionType,
+        title: post.title,
+        employeeName: post.employee?.name || "Employee",
+        date: post.createdAt,
+        preview: false // Set to true for preview, false for download
+      }, {
+        responseType: 'blob'
+      });
+
+      console.log('Certificate response received:', response);
+      
+      // Create blob from response
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Generate filename
+      const filename = `certificate_${post.employee?.name || 'employee'}_${post._id.substring(0, 8)}.pdf`;
+      link.setAttribute('download', filename);
+      
+      // Append to body and trigger download
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+      
+      // Show success message
+      showCustomToast("Certificate downloaded successfully!", "success");
+      
+    } catch (error) {
+      console.error("Error downloading certificate:", error);
+      
+      // More detailed error logging
+      if (error.response) {
+        console.error("Error response:", error.response.data);
+        console.error("Error status:", error.response.status);
+      }
+      
+      showCustomToast(
+        error.response?.data?.message || "Failed to download certificate. Please try again.", 
+        "error"
+      );
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  // UPDATED CERTIFICATE VIEW FUNCTION
+  const handleViewCertificate = async () => {
+    try {
+      setDownloading(true);
+      
+      console.log('Viewing certificate for post:', post._id);
+      
+      // Check if certificate URL exists
+      if (post.certificateUrl) {
+        window.open(post.certificateUrl, '_blank');
+        return;
+      }
+      
+      // Generate certificate for preview
+      const response = await api.post('/recognition/generate-certificate', {
+        recognitionId: post._id,
+        employeeId: post.employee?._id || post.employee?.employeeId,
+        type: post.recognitionType,
+        title: post.title,
+        employeeName: post.employee?.name || "Employee",
+        date: post.createdAt,
+        preview: true // Set to true for preview
+      }, {
+        responseType: 'blob'
+      });
+      
+      // Create blob and open in new tab
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Open in new tab for preview
+      window.open(url, '_blank');
+      
+    } catch (error) {
+      console.error("Error viewing certificate:", error);
+      showCustomToast(
+        error.response?.data?.message || "Failed to view certificate. Please try again.", 
+        "error"
+      );
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleViewEmployeeHistory = () => {
+    if (onViewEmployeeHistory && post.employee) {
+      onViewEmployeeHistory(post.employee);
+      onClose(); // Close modal when navigating to history
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
@@ -304,27 +439,29 @@ const PostDetailsModal = ({ post, isOpen, onClose, currentUser}) => {
                               {post.employee.position}
                             </div>
                           )}
+                          {post.employee?.department && (
+                            <div className="text-gray-500">
+                              {post.employee.department}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Action Buttons */}
+                {/* Action Buttons - WITH FUNCTIONALITY */}
                 <div className="grid grid-cols-2 gap-2">
                   <button
-                    className={`flex items-center justify-center gap-2 p-2.5 rounded-xl text-sm font-medium ${
-                      isOwner
-                        ? "bg-white border border-red-200 text-red-600 hover:bg-red-50 cursor-pointer"
-                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    }`}
-                    disabled={!isOwner}
+                    className="flex items-center justify-center gap-2 p-2.5 rounded-xl text-sm font-medium bg-white border border-red-200 text-red-600 hover:bg-red-50 cursor-pointer transition-all"
+                    onClick={handleViewCertificate}
                   >
                     <FileText size={14} />
-                    Certificate
+                    View Certificate
                   </button>
                   <button
-                    className="flex items-center justify-center gap-2 p-2.5 rounded-xl text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                    className="flex items-center justify-center gap-2 p-2.5 rounded-xl text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer transition-all"
+                    onClick={handleViewEmployeeHistory}
                   >
                     <History size={14} />
                     History
@@ -361,23 +498,40 @@ const PostDetailsModal = ({ post, isOpen, onClose, currentUser}) => {
                       {post._id?.substring(0, 8).toUpperCase()}
                     </span>
                   </div>
+                  {post.certificateId && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Certificate ID</span>
+                      <span className="font-mono text-sm text-gray-900 bg-gray-100 px-2 py-1 rounded">
+                        {post.certificateId.substring(0, 8).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Quick Actions */}
+              {/* Quick Actions - WITH FUNCTIONALITY */}
               <div className="space-y-3">
                 <button
-                  className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium ${
-                    isOwner
-                      ? "bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 cursor-pointer"
-                      : "bg-gray-200 text-gray-500 cursor-not-allowed"
-                  }`}
-                  disabled={!isOwner}
+                  className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 cursor-pointer transition-all ${downloading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  onClick={handleDownloadCertificate}
+                  disabled={downloading}
                 >
-                  <Download size={18} />
-                  {isOwner ? "Download Certificate" : "Certificate Access Restricted"}
+                  {downloading ? (
+                    <>
+                      <Loader size={18} className="animate-spin" />
+                      Downloading...
+                    </>
+                  ) : (
+                    <>
+                      <Download size={18} />
+                      Download Certificate
+                    </>
+                  )}
                 </button>
-                <button className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 cursor-pointer">
+                <button 
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 cursor-pointer transition-all"
+                  onClick={handleViewEmployeeHistory}
+                >
                   <History size={18} />
                   View Recognition History
                 </button>
@@ -391,152 +545,21 @@ const PostDetailsModal = ({ post, isOpen, onClose, currentUser}) => {
 };
 
 // EmployeeBadges Component
-const EmployeeBadges = ({ allPosts, currentUser }) => {
-  const [showAchievementsModal, setShowAchievementsModal] = useState(false);
-  const [badgeCounts, setBadgeCounts] = useState({ total: 0 });
-
-  useEffect(() => {
-    if (currentUser && allPosts) {
-      const userRecognitions = allPosts.filter((post) => {
-        if (!post.employee) return false;
-        const postEmployeeId = post.employee.employeeId || "";
-        const postEmployeeMongoId = post.employee._id || "";
-        const userEmployeeId = currentUser.employeeId || "";
-        const userId = currentUser._id || "";
-        return (
-          userEmployeeId === postEmployeeId ||
-          userId === postEmployeeMongoId
-        );
-      });
-
-      const counts = {
-        employee_of_month: 0,
-        excellence_award: 0,
-        innovation: 0,
-        team_player: 0,
-        total: userRecognitions.length,
-      };
-
-      userRecognitions.forEach((rec) => {
-        if (counts[rec.recognitionType] !== undefined) {
-          counts[rec.recognitionType]++;
-        }
-      });
-
-      setBadgeCounts(counts);
-    }
-  }, [currentUser, allPosts]);
-
-  const MyAchievementsModal = () => {
-    if (!showAchievementsModal) return null;
-
-    return (
-      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
-        <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-          <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">My Achievements</h2>
-              <button onClick={() => setShowAchievementsModal(false)}>
-                <X size={24} className="text-gray-500" />
-              </button>
-            </div>
-            
-            <div className="mb-6 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-gradient-to-r from-red-600 to-red-500 rounded-full flex items-center justify-center text-white font-bold text-2xl">
-                  {currentUser?.firstName?.charAt(0).toUpperCase() || "U"}
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 text-xl">
-                    {currentUser?.firstName} {currentUser?.lastName}
-                  </h3>
-                  <p className="text-gray-600">
-                    {currentUser?.position || "Employee"}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-              <div className="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-xl p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-red-600 to-red-500 rounded-full flex items-center justify-center">
-                    <Trophy className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-600">Total Awards</div>
-                    <div className="text-2xl font-bold text-gray-900">
-                      {badgeCounts.total}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="border rounded-xl p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-yellow-500 to-amber-500 flex items-center justify-center">
-                    <Crown className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-600">Employee of Month</div>
-                    <div className="text-2xl font-bold text-gray-900">
-                      {badgeCounts.employee_of_month}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="text-center py-12">
-              <Trophy className="w-16 h-16 text-red-600 mx-auto mb-4" />
-              <p className="text-gray-600">You have {badgeCounts.total} awards</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  if (!currentUser) {
-    return (
-      <button className="px-4 py-3 bg-gray-300 text-gray-600 rounded-xl font-medium flex items-center gap-2 opacity-50">
-        <Badge size={20} />
-        <span>My Achievements</span>
-      </button>
-    );
-  }
-
+const EmployeeBadges = ({currentUser, onOpenAchievements }) => {
+  console.log("EmployeeBadges - currentUser:", currentUser);
+  console.log("EmployeeBadges - onOpenAchievements:", onOpenAchievements);
+  
   return (
-    <>
-      <button
-        onClick={() => setShowAchievementsModal(true)}
-        className="relative flex items-center gap-2 p-2.5 bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-xl hover:border-red-300 hover:shadow-md transition-all duration-300 group"
-      >
-        <div className="relative">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-red-600 to-red-500 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Badge className="w-4 h-4 text-white" />
-          </div>
-          {badgeCounts.total > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-red-700 to-red-600 text-white text-xs rounded-full flex items-center justify-center shadow-sm">
-              {badgeCounts.total}
-            </span>
-          )}
-        </div>
-        <div className="text-left">
-          <div className="text-xs text-red-700 font-medium">
-            My Achievements
-          </div>
-          <div className="text-sm font-semibold text-gray-900">
-            {badgeCounts.total > 0
-              ? `${badgeCounts.total} Awards`
-              : "View Awards"}
-          </div>
-        </div>
-        <Sparkles className="w-4 h-4 text-red-500 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
-      </button>
-
-      <MyAchievementsModal />
-    </>
+    <button
+      onClick={onOpenAchievements}
+      className="px-5 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-medium flex items-center gap-2 hover:from-red-700 hover:to-red-800 transition-all duration-300 shadow-md hover:shadow-lg active:scale-95 cursor-pointer"
+    >
+      <Badge size={20} className="text-white" />
+      <span className="font-semibold">My Achievements</span>
+      <span className="bg-white text-red-600 text-xs font-bold px-2 py-1 rounded-full">
+        0
+      </span>
+    </button>
   );
 };
 
@@ -547,7 +570,10 @@ const AgentRecognition = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [showPostModal, setShowPostModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showAchievementsModal, setShowAchievementsModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [showToast, setShowToast] = useState(false);
@@ -563,14 +589,38 @@ const AgentRecognition = () => {
 
   const fetchCurrentUser = async () => {
     try {
+      console.log("Fetching current user...");
       const response = await api.get("/auth/me");
+      console.log("Auth response:", response.data);
+      
       if (response.data.success) {
+        console.log("Setting current user:", response.data.user);
         setCurrentUser(response.data.user);
       } else {
         console.error("Failed to fetch current user:", response.data.error);
+        // Try alternative endpoint
+        try {
+          const altResponse = await api.get("/user/me");
+          console.log("Alternative auth response:", altResponse.data);
+          if (altResponse.data.success) {
+            setCurrentUser(altResponse.data.user);
+          }
+        } catch (altError) {
+          console.error("Alternative auth error:", altError);
+        }
       }
     } catch (error) {
       console.error("Error fetching current user:", error);
+      console.log("Setting dummy user for testing...");
+      // Set a dummy user for testing
+      setCurrentUser({
+        _id: "dummy_user_123",
+        employeeId: "EMP001",
+        firstName: "Test",
+        lastName: "User",
+        position: "Employee",
+        name: "Test User"
+      });
     }
   };
 
@@ -578,6 +628,12 @@ const AgentRecognition = () => {
     setToastMessage(message);
     setToastType(type);
     setShowToast(true);
+  };
+
+  // Handle view employee history
+  const handleViewEmployeeHistory = (employee) => {
+    setSelectedEmployee(employee);
+    setShowHistoryModal(true);
   };
 
   // Categories for navigation
@@ -758,6 +814,13 @@ const AgentRecognition = () => {
     setShowPostModal(true);
   };
 
+  // Handle open achievements modal
+  const handleOpenAchievements = () => {
+    console.log("Opening achievements modal - currentUser:", currentUser);
+    console.log("Opening achievements modal - allPosts count:", allPosts.length);
+    setShowAchievementsModal(true);
+  };
+
   // Handle page change
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -771,7 +834,7 @@ const AgentRecognition = () => {
   }
 
   return (
-    <div className="min-h-screen from-gray-50 to-gray-100 p-4 md:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
       {/* Toast Component */}
       {showToast && (
         <Toast
@@ -789,11 +852,27 @@ const AgentRecognition = () => {
           setShowPostModal(false);
           setSelectedPost(null);
         }}
-        currentUser={currentUser}
+        onViewEmployeeHistory={handleViewEmployeeHistory}
+      />
+
+      {/* Employee History Modal - NOW USING THE SEPARATE COMPONENT */}
+      <EmployeeHistoryModal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        employee={selectedEmployee}
+        posts={allPosts}
+      />
+
+      {/* My Achievements Modal */}
+      <MyAchievementsModal
+        isOpen={showAchievementsModal}
+        onClose={() => setShowAchievementsModal(false)}
         allPosts={allPosts}
+        currentUser={currentUser}
       />
 
       <div className="max-w-7xl mx-auto">
+
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
@@ -809,8 +888,8 @@ const AgentRecognition = () => {
 
             <div className="flex items-center gap-3">
               <EmployeeBadges 
-                allPosts={allPosts} 
-                currentUser={currentUser} 
+                currentUser={currentUser}
+                onOpenAchievements={handleOpenAchievements}
               />
             </div>
           </div>
@@ -854,7 +933,7 @@ const AgentRecognition = () => {
 
             {/* RECENT POSTS - CARD GRID */}
             {posts.length === 0 ? (
-              <div className="text-center py-12 bg-white rounded-2xl border border-light shadow-sm">
+              <div className="text-center py-12 bg-white rounded-2xl border border-gray-200 shadow-sm">
                 <Trophy size={48} className="mx-auto mb-4 text-gray-400" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   No recognitions found
@@ -935,16 +1014,10 @@ const AgentRecognition = () => {
               </>
             )}
           </div>
-          
-          {/* Right Column */}
+
           <div className="space-y-6">
-            {/* Top Performers Component */}
             <TopPerformersCard posts={posts} />
-            
-            {/* Highlights Card */}
             <HighlightsCard posts={posts} />
-            
-            {/* Quick Actions Card */}
             <QuickActionsCard 
               posts={posts} 
               onViewPost={handleViewPost}

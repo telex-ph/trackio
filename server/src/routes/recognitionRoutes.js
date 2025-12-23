@@ -8,6 +8,9 @@ router.get('/:id', recognitionController.getRecognitionById);
 router.get('/employees/search', recognitionController.searchEmployees);
 router.get('/employee/:employeeId', recognitionController.getRecognitionByEmployeeId);
 
+router.post('/generate-certificate', recognitionController.generateCertificate);
+router.get('/certificate/:recognitionId', recognitionController.getCertificate);
+
 router.post('/', recognitionController.createRecognition);
 router.put('/:id', recognitionController.updateRecognition);
 router.patch('/:id/archive', recognitionController.toggleArchive);
