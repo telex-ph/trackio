@@ -106,9 +106,8 @@ export const forgotPassword = async (req, res) => {
       .setProtectedHeader({ alg: "RSA-OAEP", enc: "A256GCM" })
       .encrypt(publicKey);
 
-    const resetLink = `${
-      process.env.FRONTEND_URL
-    }/reset-password?payload=${encodeURIComponent(jwe)}`;
+    const resetLink = `${process.env.FRONTEND_URL
+      }/reset-password?payload=${encodeURIComponent(jwe)}`;
 
     const result = await sendPasswordReset(email, resetLink);
     res.status(200).json({ id: result.id, redirect: true });
@@ -252,39 +251,46 @@ export const changePassword = async (req, res) => {
 
 // Creation of access and refresh token
 export const createToken = async (req, res) => {
-  const user = req.body;
+  try {
+    const user = req.body;
+    // Importing the private key (PKCS8 format) for RS256 signing
+    const privateKey = await jose.importPKCS8(privatePEM, "RS256");
 
-  // Importing the private key (PKCS8 format) for RS256 signing
-  const privateKey = await jose.importPKCS8(privatePEM, "RS256");
+    // Access token (short exp date)
+    const accessToken = await new jose.SignJWT(user)
+      .setProtectedHeader({ alg: "RS256" })
+      .setExpirationTime(ACCESS_TOKEN_EXPIRATION)
+      .sign(privateKey);
 
-  // Access token (short exp date)
-  const accessToken = await new jose.SignJWT(user)
-    .setProtectedHeader({ alg: "RS256" })
-    .setExpirationTime(ACCESS_TOKEN_EXPIRATION)
-    .sign(privateKey);
+    const refreshToken = await new jose.SignJWT(user)
+      .setProtectedHeader({ alg: "RS256" })
+      .setExpirationTime(REFRESH_TOKEN_EXPIRATION)
+      .sign(privateKey);
 
-  const refreshToken = await new jose.SignJWT(user)
-    .setProtectedHeader({ alg: "RS256" })
-    .setExpirationTime(REFRESH_TOKEN_EXPIRATION)
-    .sign(privateKey);
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      path: "/",
+      maxAge: ACCESS_TOKEN_EXPIRATION_MS,
+    });
 
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "None",
-    path: "/",
-    maxAge: ACCESS_TOKEN_EXPIRATION_MS,
-  });
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      path: "/",
+      maxAge: REFRESH_TOKEN_EXPIRATION_MS,
+    });
 
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "None",
-    path: "/",
-    maxAge: REFRESH_TOKEN_EXPIRATION_MS,
-  });
-
-  res.status(200).json({ message: "Sucessfully authenticated" });
+    res.status(200).json({ message: "Sucessfully authenticated" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while creatinga token.",
+    });
+  }
 };
 
 export const createNewToken = async (req, res) => {
