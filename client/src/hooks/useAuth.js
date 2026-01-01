@@ -83,7 +83,7 @@ export const useAuth = () => {
         return true;
       } catch (error) {
         setUser(null);
-        // console.error("Error: ", error);
+        console.error("Error: ", error);
         return false;
       }
     };
