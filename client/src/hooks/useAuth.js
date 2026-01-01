@@ -52,7 +52,7 @@ export const useAuth = () => {
       if (user) {
         const name = `${user.firstName} ${user.lastName}`;
         const email = user.email;
-        // await createAccountTicket(name, email);
+        await createAccountTicket(name, email);
         const loginResponse = await api.post("/auth/create-token", user);
         if (loginResponse.status === 200) {
           navigate(`/${user.role}/dashboard`);
@@ -83,7 +83,7 @@ export const useAuth = () => {
         return true;
       } catch (error) {
         setUser(null);
-        console.error("Error: ", error);
+        // console.error("Error: ", error);
         return false;
       }
     };

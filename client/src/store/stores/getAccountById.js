@@ -1,7 +1,6 @@
 import api from "../../utils/axios";
 
 export const fetchAccountsById = async (userId) => {
-  return null;
   if (!userId) return null;
   try {
     const res = await api.get(`/user/get-by-account/${userId}`);
