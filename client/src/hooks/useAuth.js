@@ -52,7 +52,7 @@ export const useAuth = () => {
       if (user) {
         const name = `${user.firstName} ${user.lastName}`;
         const email = user.email;
-        await createAccountTicket(name, email);
+        // await createAccountTicket(name, email);
         const loginResponse = await api.post("/auth/create-token", user);
         if (loginResponse.status === 200) {
           navigate(`/${user.role}/dashboard`);
