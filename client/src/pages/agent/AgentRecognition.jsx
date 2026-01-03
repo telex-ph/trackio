@@ -279,7 +279,28 @@ const PostDetailsModal = ({
     }
   };
 
+  // VIEW EMPLOYEE HISTORY FUNCTION - WITH PERMISSION CHECK
   const handleViewEmployeeHistory = () => {
+    // Check if user is the owner
+    if (!isOwner) {
+      showCustomToast("You can only view your own recognition history", "error");
+      return;
+    }
+
+    if (onViewEmployeeHistory && post.employee) {
+      onViewEmployeeHistory(post.employee);
+      onClose();
+    }
+  };
+
+  // VIEW ALL HISTORY FUNCTION (for the bottom button) - WITH PERMISSION CHECK
+  const handleViewAllHistory = () => {
+    // Check if user is the owner
+    if (!isOwner) {
+      showCustomToast("You can only view your own recognition history", "error");
+      return;
+    }
+
     if (onViewEmployeeHistory && post.employee) {
       onViewEmployeeHistory(post.employee);
       onClose();
@@ -458,8 +479,14 @@ const PostDetailsModal = ({
                     )}
                   </button>
                   <button
-                    className="flex items-center justify-center gap-2 p-2.5 rounded-xl text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer transition-all"
+                    className={`flex items-center justify-center gap-2 p-2.5 rounded-xl text-sm font-medium border transition-all ${
+                      isOwner
+                        ? "bg-white border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                        : "bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed"
+                    }`}
                     onClick={handleViewEmployeeHistory}
+                    disabled={!isOwner}
+                    title={isOwner ? "View Recognition History" : "Only the recognized employee can view recognition history"}
                   >
                     <History size={14} />
                     History
@@ -534,8 +561,14 @@ const PostDetailsModal = ({
                   )}
                 </button>
                 <button 
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 cursor-pointer transition-all"
-                  onClick={handleViewEmployeeHistory}
+                  className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-all ${
+                    isOwner
+                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200 cursor-pointer"
+                      : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  }`}
+                  onClick={handleViewAllHistory}
+                  disabled={!isOwner}
+                  title={isOwner ? "View Recognition History" : "Only the recognized employee can view recognition history"}
                 >
                   <History size={18} />
                   View Recognition History
@@ -693,8 +726,10 @@ const AgentRecognition = () => {
     }
   };
 
-  // Handle view OTHER employee history (from post details)
+  // Handle view OTHER employee history (from post details) - PERMISSION CHECK REMOVED
+  // This is used from the PostDetailsModal when viewing other employee's history
   const handleViewEmployeeHistory = (employee) => {
+    // No permission check here - this is for admin/viewing other employee's history
     setSelectedEmployee(employee);
     setShowHistoryModal(true);
   };
