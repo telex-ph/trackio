@@ -10,7 +10,11 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
+  Download,
+  FileText,
+  Loader,
 } from "lucide-react";
+import api from "../../utils/axios";
 import { useStore } from "../../store/useStore";
 
 const EmployeeHistoryModal = ({ 
@@ -23,6 +27,7 @@ const EmployeeHistoryModal = ({
   const [filter, setFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [filteredPosts, setFilteredPosts] = useState([]);
+  const [downloading, setDownloading] = useState({});
   const postsPerPage = 5;
   
   // Get logged-in user from store as fallback
@@ -135,6 +140,148 @@ const EmployeeHistoryModal = ({
     return posts.filter(post => 
       post.employee?.employeeId === targetEmployee.employeeId
     );
+  };
+
+  // Custom toast function
+  const showCustomToast = (message, type = "success") => {
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 z-50 animate-slideIn ${
+      type === "success"
+        ? "bg-gradient-to-r from-green-500 to-green-600"
+        : "bg-gradient-to-r from-red-500 to-red-600"
+    } text-white px-4 py-2 rounded-lg flex items-center gap-2`;
+    
+    toast.innerHTML = `
+      ${type === "success" ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' : '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'}
+      <span class="text-sm font-medium">${message}</span>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.classList.add('animate-fadeOut');
+      setTimeout(() => {
+        document.body.removeChild(toast);
+      }, 300);
+    }, 3000);
+  };
+
+  // CHECK IF CURRENT USER IS THE OWNER OF THE POST
+  const isOwnerOfPost = (post) => {
+    return currentUser && post.employee && 
+      (post.employee.employeeId === currentUser.employeeId || 
+       post.employee._id === currentUser._id);
+  };
+
+  // CHECK IF CURRENT USER CAN VIEW THIS HISTORY (is viewing their own or is admin viewing someone else's)
+  const canViewHistory = () => {
+    const targetEmployee = employee || loggedInUser;
+    if (!targetEmployee || !currentUser) return false;
+    
+    // User can view if:
+    // 1. They are viewing their own history
+    // 2. They are admin viewing someone else's history
+    return targetEmployee.employeeId === currentUser.employeeId || 
+           currentUser.role === "admin" || 
+           currentUser.role === "hr";
+  };
+
+  // CERTIFICATE DOWNLOAD FUNCTION - WITH PERMISSION CHECK
+  const handleDownloadCertificate = async (post) => {
+    // Check if user can download this certificate
+    if (!isOwnerOfPost(post)) {
+      showCustomToast("You can only download your own certificates", "error");
+      return;
+    }
+
+    try {
+      setDownloading(prev => ({ ...prev, [post._id]: true }));
+      
+      if (post.certificateUrl) {
+        window.open(post.certificateUrl, '_blank');
+        return;
+      }
+      
+      const response = await api.post('/recognition/generate-certificate', {
+        recognitionId: post._id,
+        employeeId: post.employee?._id || post.employee?.employeeId,
+        type: post.recognitionType,
+        title: post.title,
+        employeeName: post.employee?.name || "Employee",
+        date: post.createdAt,
+        preview: false
+      }, {
+        responseType: 'blob'
+      });
+
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const filename = `certificate_${post.employee?.name || 'employee'}_${post._id.substring(0, 8)}.pdf`;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+      
+      showCustomToast("Certificate downloaded successfully!", "success");
+      
+    } catch (error) {
+      console.error("Error downloading certificate:", error);
+      showCustomToast(
+        error.response?.data?.message || "Failed to download certificate. Please try again.", 
+        "error"
+      );
+    } finally {
+      setDownloading(prev => ({ ...prev, [post._id]: false }));
+    }
+  };
+
+  // CERTIFICATE VIEW FUNCTION - WITH PERMISSION CHECK
+  const handleViewCertificate = async (post) => {
+    // Check if user can view this certificate
+    if (!isOwnerOfPost(post)) {
+      showCustomToast("You can only view your own certificates", "error");
+      return;
+    }
+
+    try {
+      setDownloading(prev => ({ ...prev, [post._id]: true }));
+      
+      if (post.certificateUrl) {
+        window.open(post.certificateUrl, '_blank');
+        return;
+      }
+      
+      const response = await api.post('/recognition/generate-certificate', {
+        recognitionId: post._id,
+        employeeId: post.employee?._id || post.employee?.employeeId,
+        type: post.recognitionType,
+        title: post.title,
+        employeeName: post.employee?.name || "Employee",
+        date: post.createdAt,
+        preview: true
+      }, {
+        responseType: 'blob'
+      });
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      
+    } catch (error) {
+      console.error("Error viewing certificate:", error);
+      showCustomToast(
+        error.response?.data?.message || "Failed to view certificate. Please try again.", 
+        "error"
+      );
+    } finally {
+      setDownloading(prev => ({ ...prev, [post._id]: false }));
+    }
   };
 
   const employeePosts = getEmployeePosts();
@@ -301,6 +448,8 @@ const EmployeeHistoryModal = ({
               <div className="space-y-3 mb-6">
                 {currentPosts.map((post) => {
                   const typeInfo = getRecognitionTypeInfo(post.recognitionType);
+                  const isOwner = isOwnerOfPost(post);
+                  const isDownloading = downloading[post._id];
                   
                   return (
                     <div
@@ -328,16 +477,56 @@ const EmployeeHistoryModal = ({
                             <span className={`text-xs font-medium px-2 py-1 rounded-full ${typeInfo.bgColor} ${typeInfo.color}`}>
                               {typeInfo.label}
                             </span>
-                            {post.tags && post.tags.length > 0 && (
-                              <div className="flex gap-1">
-                                {post.tags.slice(0, 2).map((tag, index) => (
-                                  <span key={index} className="text-xs text-gray-500 italic">
-                                    #{tag}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
+                            <div className="flex items-center gap-2">
+                              {/* View Certificate Button */}
+                              <button
+                                className={`text-xs px-2 py-1 rounded flex items-center gap-1 transition-all ${
+                                  isOwner
+                                    ? "bg-gray-100 text-gray-700 hover:bg-gray-200 cursor-pointer"
+                                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                }`}
+                                onClick={() => handleViewCertificate(post)}
+                                disabled={!isOwner || isDownloading}
+                                title={isOwner ? "View Certificate" : "Only the recognized employee can view this certificate"}
+                              >
+                                <FileText size={10} />
+                                View Certificate
+                              </button>
+                              
+                              {/* Download Certificate Button */}
+                              <button
+                                className={`text-xs px-2 py-1 rounded flex items-center gap-1 transition-all ${
+                                  isOwner
+                                    ? "bg-red-100 text-red-600 hover:bg-red-200 cursor-pointer"
+                                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                } ${isDownloading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                onClick={() => handleDownloadCertificate(post)}
+                                disabled={!isOwner || isDownloading}
+                                title={isOwner ? "Download Certificate" : "Only the recognized employee can download this certificate"}
+                              >
+                                {isDownloading ? (
+                                  <>
+                                    <Loader size={10} className="animate-spin" />
+                                    Downloading...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Download size={10} />
+                                    Download
+                                  </>
+                                )}
+                              </button>
+                            </div>
                           </div>
+                          {post.tags && post.tags.length > 0 && (
+                            <div className="flex gap-1 mt-1">
+                              {post.tags.slice(0, 3).map((tag, index) => (
+                                <span key={index} className="text-xs text-gray-500 italic">
+                                  #{tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -367,6 +556,43 @@ const EmployeeHistoryModal = ({
                   >
                     <ChevronRight size={16} />
                   </button>
+                </div>
+              )}
+
+              {/* Download All Button (only if user can view all) */}
+              {filteredPosts.length > 0 && canViewHistory() && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <div className="text-center">
+                    <button
+                      className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 mx-auto transition-all ${
+                        filteredPosts.every(post => isOwnerOfPost(post))
+                          ? "bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 cursor-pointer"
+                          : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                      }`}
+                      onClick={() => {
+                        if (filteredPosts.every(post => isOwnerOfPost(post))) {
+                          // Download all certificates
+                          filteredPosts.forEach(post => {
+                            if (isOwnerOfPost(post)) {
+                              handleDownloadCertificate(post);
+                            }
+                          });
+                        } else {
+                          showCustomToast("You can only download your own certificates", "error");
+                        }
+                      }}
+                      disabled={!filteredPosts.every(post => isOwnerOfPost(post))}
+                      title={filteredPosts.every(post => isOwnerOfPost(post)) ? "Download All Certificates" : "You can only download your own certificates"}
+                    >
+                      <Download size={16} />
+                      Download All Certificates ({filteredPosts.length})
+                    </button>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {filteredPosts.every(post => isOwnerOfPost(post)) 
+                        ? "Download all your certificates in this list"
+                        : "Only download certificates that belong to you"}
+                    </p>
+                  </div>
                 </div>
               )}
             </>
