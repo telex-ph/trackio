@@ -75,19 +75,20 @@ const LoadingSpinner = () => (
   </div>
 );
 
-// PostDetailsModal Component
+// PostDetailsModal Component - UPDATED WITH PERMISSION CHECK
 const PostDetailsModal = ({ 
   post, 
   isOpen, 
   onClose, 
   onViewEmployeeHistory,
-  currentUser 
+  currentUser // ADDED: Pass currentUser to check permissions
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [downloading, setDownloading] = useState(false);
   
   if (!isOpen || !post) return null;
 
+  // CHECK IF CURRENT USER IS THE OWNER OF THE RECOGNITION
   const isOwner = currentUser && post.employee && 
     (post.employee.employeeId === currentUser.employeeId || 
      post.employee._id === currentUser._id);
@@ -156,6 +157,7 @@ const PostDetailsModal = ({
     }
   };
 
+  // Custom toast function for PostDetailsModal
   const showCustomToast = (message, type = "success") => {
     const toast = document.createElement('div');
     toast.className = `fixed top-4 right-4 z-50 animate-slideIn ${
@@ -179,7 +181,9 @@ const PostDetailsModal = ({
     }, 3000);
   };
 
+  // CERTIFICATE DOWNLOAD FUNCTION - WITH PERMISSION CHECK
   const handleDownloadCertificate = async () => {
+    // Check if user is the owner
     if (!isOwner) {
       showCustomToast("You can only download your own certificates", "error");
       return;
@@ -232,7 +236,9 @@ const PostDetailsModal = ({
     }
   };
 
+  // CERTIFICATE VIEW FUNCTION - WITH PERMISSION CHECK
   const handleViewCertificate = async () => {
+    // Check if user is the owner
     if (!isOwner) {
       showCustomToast("You can only view your own certificates", "error");
       return;
@@ -273,7 +279,9 @@ const PostDetailsModal = ({
     }
   };
 
+  // VIEW EMPLOYEE HISTORY FUNCTION - WITH PERMISSION CHECK
   const handleViewEmployeeHistory = () => {
+    // Check if user is the owner
     if (!isOwner) {
       showCustomToast("You can only view your own recognition history", "error");
       return;
@@ -285,7 +293,9 @@ const PostDetailsModal = ({
     }
   };
 
+  // VIEW ALL HISTORY FUNCTION (for the bottom button) - WITH PERMISSION CHECK
   const handleViewAllHistory = () => {
+    // Check if user is the owner
     if (!isOwner) {
       showCustomToast("You can only view your own recognition history", "error");
       return;
@@ -441,6 +451,7 @@ const PostDetailsModal = ({
                           )}
                         </div>
                       </div>
+                      {/* OWNER BADGE */}
                       {isOwner && (
                         <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
                           You
@@ -463,6 +474,9 @@ const PostDetailsModal = ({
                   >
                     <FileText size={14} />
                     View Certificate
+                    {!isOwner && (
+                      <span className="text-xs text-gray-400 ml-1"></span>
+                    )}
                   </button>
                   <button
                     className={`flex items-center justify-center gap-2 p-2.5 rounded-xl text-sm font-medium border transition-all ${
@@ -510,6 +524,7 @@ const PostDetailsModal = ({
                       </span>
                     </div>
                   )}
+                  {/* OWNERSHIP STATUS */}
                   <div className="flex justify-between items-center pt-2 border-t">
                     <span className="text-gray-600">Certificate Access</span>
                     <span className={`text-sm font-medium ${isOwner ? 'text-green-600' : 'text-gray-500'}`}>
@@ -539,6 +554,9 @@ const PostDetailsModal = ({
                     <>
                       <Download size={18} />
                       Download Certificate
+                      {!isOwner && (
+                        <span className="text-xs ml-1"></span>
+                      )}
                     </>
                   )}
                 </button>
@@ -584,7 +602,7 @@ const EmployeeBadges = ({ currentUser, onOpenAchievements }) => {
 const AgentRecognition = () => {
   const [activeCategory, setActiveCategory] = useState("Recent posts");
   const [posts, setPosts] = useState([]);
-  const [allPosts, setAllPosts] = useState([]);
+  const [allPosts, setAllPosts] = useState([]); // ALL posts for history modal
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
@@ -606,9 +624,10 @@ const AgentRecognition = () => {
 
   // Initialize current user from store
   useEffect(() => {
-    if (storeUser && !currentUser) {
+    if (storeUser) {
       console.log("User from Zustand store:", storeUser);
       
+      // Format user data for consistency
       const formattedUser = {
         _id: storeUser._id || storeUser.id,
         employeeId: storeUser.employeeId,
@@ -622,21 +641,73 @@ const AgentRecognition = () => {
       };
       
       setCurrentUser(formattedUser);
+      localStorage.setItem('currentUser', JSON.stringify(formattedUser));
     }
   }, [storeUser]);
 
-  // Update user achievements when allPosts changes
+  // Fetch user achievements when user is set
   useEffect(() => {
-    if (currentUser && allPosts.length > 0) {
-      const userPosts = allPosts.filter(post => {
-        return post.employee?.employeeId === currentUser.employeeId;
-      });
-      
-      console.log("User achievements found:", userPosts.length);
-      setUserAchievements(userPosts);
-      setAchievementCount(userPosts.length);
+    if (currentUser) {
+      fetchUserAchievements(currentUser);
     }
-  }, [allPosts, currentUser]);
+  }, [currentUser]);
+
+  // Fetch user's achievements based on logged-in user - using ALL posts
+  const fetchUserAchievements = async (user) => {
+    try {
+      console.log("Fetching achievements for user:", user);
+      
+      if (!user || !user.employeeId) {
+        console.log("No employee ID available for fetching achievements");
+        setUserAchievements([]);
+        setAchievementCount(0);
+        return;
+      }
+      
+      // Use allPosts if already fetched, otherwise fetch all
+      let allUserPosts = [];
+      if (allPosts.length > 0) {
+        allUserPosts = allPosts.filter(post => {
+          return post.employee?.employeeId === user.employeeId;
+        });
+      } else {
+        // Fetch all posts if not already fetched
+        const response = await api.get('/recognition', {
+          params: {
+            status: "published",
+            limit: 1000, // Fetch a large number to get all posts
+            sortBy: "createdAt",
+            sortOrder: "desc"
+          }
+        });
+        
+        if (response.data.success) {
+          const fetchedPosts = response.data.data || [];
+          allUserPosts = fetchedPosts.filter(post => {
+            return post.employee?.employeeId === user.employeeId;
+          });
+        }
+      }
+      
+      setUserAchievements(allUserPosts);
+      setAchievementCount(allUserPosts.length);
+      
+    } catch (error) {
+      console.error("Error fetching user achievements:", error);
+      setUserAchievements([]);
+      setAchievementCount(0);
+    }
+  };
+
+  // Update currentUser with achievement count
+  useEffect(() => {
+    if (currentUser) {
+      setCurrentUser(prev => ({
+        ...prev,
+        achievementCount: achievementCount
+      }));
+    }
+  }, [achievementCount]);
 
   const showCustomToast = (message, type = "success") => {
     setToastMessage(message);
@@ -644,6 +715,7 @@ const AgentRecognition = () => {
     setShowToast(true);
   };
 
+  // Handle view MY OWN history (logged-in user)
   const handleViewMyHistory = () => {
     if (currentUser) {
       setSelectedEmployee(currentUser);
@@ -653,11 +725,15 @@ const AgentRecognition = () => {
     }
   };
 
+  // Handle view OTHER employee history (from post details) - PERMISSION CHECK REMOVED
+  // This is used from the PostDetailsModal when viewing other employee's history
   const handleViewEmployeeHistory = (employee) => {
+    // No permission check here - this is for admin/viewing other employee's history
     setSelectedEmployee(employee);
     setShowHistoryModal(true);
   };
 
+  // Categories for navigation
   const categories = [
     { id: "recent", name: "Recent posts" },
     { id: "all", name: "All Awards" },
@@ -669,28 +745,42 @@ const AgentRecognition = () => {
 
   // Initialize Socket.io
   useEffect(() => {
-    console.log("🔌 Initializing Socket.io connection...");
+    console.log("🔌 Initializing Socket.io connection for Agent...");
 
     socket.emit("joinAgentRoom");
     socket.emit("getAgentRecognitionData");
 
     socket.on("initialAgentRecognitionData", (data) => {
-      console.log("📥 Received initial agent recognition data:", data?.length || 0);
-      if (data && Array.isArray(data)) {
-        setPosts(data);
-        setAllPosts(data);
-        setLoading(false);
-      } else {
-        console.error("Invalid data received from socket:", data);
-        setPosts([]);
-        setAllPosts([]);
-        setLoading(false);
+      console.log("📥 Received initial agent recognition data:", data.length);
+      setPosts(data);
+      setAllPosts(data); // Store ALL posts for history
+      setLoading(false);
+      
+      // Update user achievements from socket data
+      if (currentUser) {
+        const userPosts = data.filter(post => 
+          post.employee?.employeeId === currentUser.employeeId
+        );
+        
+        if (userPosts.length > 0) {
+          setUserAchievements(prev => {
+            const merged = [...prev];
+            userPosts.forEach(newPost => {
+              if (!merged.some(p => p._id === newPost._id)) {
+                merged.push(newPost);
+              }
+            });
+            return merged;
+          });
+          setAchievementCount(userPosts.length);
+        }
       }
     });
 
     socket.on("newRecognition", (newPost) => {
       console.log("🆕 New recognition from socket:", newPost.title);
       
+      // Update posts
       setPosts(prev => {
         const exists = prev.some(post => post._id === newPost._id);
         if (exists) {
@@ -707,6 +797,7 @@ const AgentRecognition = () => {
         return [newPost, ...prev];
       });
       
+      // Check if this belongs to current user
       if (currentUser && newPost.employee?.employeeId === currentUser.employeeId) {
         setUserAchievements(prev => {
           const exists = prev.some(post => post._id === newPost._id);
@@ -722,14 +813,16 @@ const AgentRecognition = () => {
     });
 
     socket.on("recognitionUpdated", (updatedPost) => {
-      setPosts(prev =>
+      console.log("📝 Recognition updated from socket:", updatedPost.title);
+      setPosts((prev) =>
         prev.map((post) => (post._id === updatedPost._id ? updatedPost : post))
       );
       
-      setAllPosts(prev =>
+      setAllPosts((prev) =>
         prev.map((post) => (post._id === updatedPost._id ? updatedPost : post))
       );
       
+      // Check if this updated post belongs to current user
       if (currentUser && updatedPost.employee?.employeeId === currentUser.employeeId) {
         setUserAchievements(prev =>
           prev.map((post) => (post._id === updatedPost._id ? updatedPost : post))
@@ -738,14 +831,16 @@ const AgentRecognition = () => {
     });
 
     socket.on("recognitionArchived", (data) => {
-      setPosts(prev =>
+      console.log("🗄️ Recognition archived from socket:", data.recognitionId);
+      setPosts((prev) =>
         prev.filter((post) => post._id !== data.recognitionId)
       );
       
-      setAllPosts(prev =>
+      setAllPosts((prev) =>
         prev.filter((post) => post._id !== data.recognitionId)
       );
       
+      // Check if this archived post belonged to current user
       if (currentUser) {
         setUserAchievements(prev =>
           prev.filter((post) => post._id !== data.recognitionId)
@@ -756,11 +851,13 @@ const AgentRecognition = () => {
       showCustomToast("Recognition archived", "success");
     });
 
-    socket.on("recognitionRestored", () => {
+    socket.on("recognitionRestored", (data) => {
+      console.log("♻️ Recognition restored from socket:", data.recognitionId);
       fetchRecognitions();
     });
 
     socket.on("refreshRecognitionData", () => {
+      console.log("🔄 Refresh requested via socket");
       fetchRecognitions();
     });
 
@@ -769,6 +866,7 @@ const AgentRecognition = () => {
       showCustomToast("Socket connection error", "error");
     });
 
+    // Cleanup on unmount
     return () => {
       socket.off("initialAgentRecognitionData");
       socket.off("newRecognition");
@@ -778,19 +876,20 @@ const AgentRecognition = () => {
       socket.off("refreshRecognitionData");
       socket.off("error");
     };
-  }, []);
+  }, [currentUser]);
 
   // Fetch data on component mount and when category or page changes
   useEffect(() => {
     fetchRecognitions();
   }, [activeCategory, currentPage]);
 
+  // NEW: Fetch ALL posts for history modal
   const fetchAllPostsForHistory = async () => {
     try {
       const response = await api.get('/recognition', {
         params: {
           status: "published",
-          limit: 100,
+          limit: 1000, // Fetch a large number to get all posts
           sortBy: "createdAt",
           sortOrder: "desc"
         }
@@ -798,7 +897,6 @@ const AgentRecognition = () => {
 
       if (response.data.success) {
         const allPostsData = response.data.data || [];
-        console.log("Fetched all posts:", allPostsData.length);
         setAllPosts(allPostsData);
         return allPostsData;
       }
@@ -821,6 +919,7 @@ const AgentRecognition = () => {
         sortOrder: "desc",
       };
 
+      // Adjust params based on selected category
       switch (activeCategory) {
         case "Employee of Month":
           params.recognitionType = "employee_of_month";
@@ -842,10 +941,21 @@ const AgentRecognition = () => {
         const fetchedPosts = response.data.data || [];
         setPosts(fetchedPosts);
 
+        // If we don't have all posts yet, fetch them for history modal
         if (allPosts.length === 0) {
-          await fetchAllPostsForHistory();
+          const allPostsData = await fetchAllPostsForHistory();
+          
+          // Update user achievements with all posts
+          if (currentUser) {
+            const userPosts = allPostsData.filter(post => 
+              post.employee?.employeeId === currentUser.employeeId
+            );
+            setUserAchievements(userPosts);
+            setAchievementCount(userPosts.length);
+          }
         }
 
+        // Calculate total pages
         const pagination = response.data.pagination;
         if (pagination) {
           setTotalPages(pagination.pages || 1);
@@ -874,25 +984,25 @@ const AgentRecognition = () => {
     socket.emit("getAgentRecognitionData");
   };
 
+  // Handle view post details
   const handleViewPost = (post) => {
     setSelectedPost(post);
     setShowPostModal(true);
   };
 
+  // Handle open achievements modal
   const handleOpenAchievements = () => {
-    console.log("Opening achievements modal...");
-    console.log("Current user:", currentUser);
-    console.log("User achievements count:", userAchievements.length);
-    console.log("Achievement count:", achievementCount);
     setShowAchievementsModal(true);
   };
 
+  // Handle page change
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
   };
 
+  // Loading state
   if (loading && posts.length === 0) {
     return <LoadingSpinner />;
   }
@@ -907,6 +1017,7 @@ const AgentRecognition = () => {
         />
       )}
 
+      {/* PASS currentUser TO PostDetailsModal */}
       <PostDetailsModal
         post={selectedPost}
         isOpen={showPostModal}
@@ -915,14 +1026,14 @@ const AgentRecognition = () => {
           setSelectedPost(null);
         }}
         onViewEmployeeHistory={handleViewEmployeeHistory}
-        currentUser={currentUser}
+        currentUser={currentUser} // ADDED: Pass currentUser for permission check
       />
 
       <EmployeeHistoryModal
         isOpen={showHistoryModal}
         onClose={() => setShowHistoryModal(false)}
         employee={selectedEmployee}
-        posts={allPosts}
+        posts={allPosts} // Pass ALL posts to history modal
         currentUser={currentUser}
       />
 

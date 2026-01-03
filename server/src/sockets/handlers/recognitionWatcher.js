@@ -337,7 +337,6 @@ export default async function recognitionWatcher(io) {
       });
 
       socket.on("getAgentRecognitionData", async () => {
-        console.log("📥 Sending initial recognition data to agent");
         try {
           const publishedRecognitions = await collection
             .find({
