@@ -1,18 +1,9 @@
 import React, { useState, useEffect } from "react";
 import {
-  X,
-  Trophy,
-  Calendar,
-  Award,
-  Crown,
-  Zap,
-  Users,
-  ChevronLeft,
-  ChevronRight,
-  User,
-  Download,
-  FileText,
-  Loader,
+  X, Trophy, Calendar, Award, Crown, 
+  Zap, Users, ChevronLeft, ChevronRight, 
+  User, Download, FileText, Loader,
+  Sparkles, TrendingUp, BarChart3, Filter
 } from "lucide-react";
 import api from "../../utils/axios";
 import { useStore } from "../../store/useStore";
@@ -43,26 +34,18 @@ const EmployeeHistoryModal = ({
   useEffect(() => {
     if (!isOpen || !posts) return;
 
-    console.log(`EmployeeHistoryModal - Employee:`, employee);
-    console.log(`Logged-in user:`, loggedInUser);
-    console.log(`Total posts available: ${posts.length}`);
-
     // If no specific employee is provided, show logged-in user's history
     const targetEmployee = employee || loggedInUser;
     
     if (!targetEmployee) {
-      console.log("No employee or logged-in user found");
       setFilteredPosts([]);
       return;
     }
 
     // Filter posts for the target employee
     const employeePosts = posts.filter(post => {
-      // Match by employee ID (most reliable)
       return post.employee?.employeeId === targetEmployee.employeeId;
     });
-
-    console.log(`Filtered posts for ${targetEmployee.name}:`, employeePosts.length);
 
     // Apply type filter
     let filtered = employeePosts;
@@ -78,38 +61,43 @@ const EmployeeHistoryModal = ({
     switch (type) {
       case "employee_of_month":
         return {
-          icon: <Crown className="w-4 h-4" />,
+          icon: <Crown size={16} />,
           label: "Employee of Month",
-          color: "text-yellow-600",
-          bgColor: "bg-yellow-50"
+          color: "text-amber-600",
+          bgColor: "bg-amber-50",
+          gradient: "from-amber-400 to-orange-500"
         };
       case "excellence_award":
         return {
-          icon: <Award className="w-4 h-4" />,
+          icon: <Award size={16} />,
           label: "Excellence Award",
           color: "text-purple-600",
-          bgColor: "bg-purple-50"
+          bgColor: "bg-purple-50",
+          gradient: "from-purple-500 to-indigo-600"
         };
       case "innovation":
         return {
-          icon: <Zap className="w-4 h-4" />,
+          icon: <Zap size={16} />,
           label: "Innovation Award",
           color: "text-blue-600",
-          bgColor: "bg-blue-50"
+          bgColor: "bg-blue-50",
+          gradient: "from-blue-400 to-cyan-500"
         };
       case "team_player":
         return {
-          icon: <Users className="w-4 h-4" />,
+          icon: <Users size={16} />,
           label: "Team Player",
-          color: "text-green-600",
-          bgColor: "bg-green-50"
+          color: "text-emerald-600",
+          bgColor: "bg-emerald-50",
+          gradient: "from-emerald-400 to-green-500"
         };
       default:
         return {
-          icon: <Trophy className="w-4 h-4" />,
+          icon: <Trophy size={16} />,
           label: "Recognition",
-          color: "text-gray-600",
-          bgColor: "bg-gray-50"
+          color: "text-slate-600",
+          bgColor: "bg-slate-50",
+          gradient: "from-slate-400 to-gray-500"
         };
     }
   };
@@ -299,15 +287,18 @@ const EmployeeHistoryModal = ({
   
   if (!targetEmployee) {
     return (
-      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
-        <div className="bg-white rounded-2xl w-full max-w-md p-6">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md animate-fadeIn" onClick={onClose} />
+        <div className="relative bg-slate-50 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl">
           <div className="text-center">
-            <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No User Found</h3>
-            <p className="text-gray-600 mb-4">Please log in to view recognition history.</p>
+            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-slate-200 to-slate-300 flex items-center justify-center mx-auto mb-4">
+              <User className="w-10 h-10 text-slate-400" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-800 mb-2">No User Found</h3>
+            <p className="text-slate-500 text-sm mb-6">Please log in to view recognition history.</p>
             <button
               onClick={onClose}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+              className="px-6 py-3 bg-slate-900 text-white rounded-full font-bold text-sm hover:bg-red-600 transition-colors shadow-lg"
             >
               Close
             </button>
@@ -318,285 +309,358 @@ const EmployeeHistoryModal = ({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
-      <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="p-6">
-          {/* Header */}
-          <div className="flex justify-between items-start mb-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+      {/* Backdrop with Blur */}
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md animate-fadeIn" onClick={onClose} />
+      
+      {/* Modal Content */}
+      <div className="relative bg-slate-50 w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-[2.5rem] shadow-2xl flex flex-col animate-scaleUp">
+        
+        {/* Header Section */}
+        <div className="p-8 bg-white flex justify-between items-center border-b border-slate-100">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-tr from-blue-500 to-cyan-400 rounded-2xl shadow-lg shadow-blue-200">
+              <BarChart3 className="w-6 h-6 text-white" />
+            </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                {employee ? "Recognition History" : "My Recognition History"}
+              <h2 className="text-2xl font-black text-slate-800 tracking-tight">
+                {employee ? "Professional Timeline" : "My Recognition History"}
               </h2>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-red-600 to-red-700 rounded-full flex items-center justify-center text-white font-bold">
-                  {targetEmployee.name?.charAt(0) || "U"}
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900">{targetEmployee.name}</h3>
-                  <p className="text-sm text-gray-600">
-                    {targetEmployee.position} {targetEmployee.department && `• ${targetEmployee.department}`}
-                    {!employee && <span className="ml-2 text-blue-600 text-xs font-medium">(You)</span>}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <X size={24} className="text-gray-500" />
-            </button>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-5 gap-2 mb-6">
-            <div className="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-lg p-3 text-center">
-              <div className="text-sm text-red-600 font-medium">Total</div>
-              <div className="text-xl font-bold text-gray-900">{stats.total}</div>
-            </div>
-            <div className="bg-gradient-to-r from-yellow-50 to-amber-100 border border-yellow-200 rounded-lg p-3 text-center">
-              <div className="text-sm text-yellow-600 font-medium">Emp. of Month</div>
-              <div className="text-xl font-bold text-gray-900">{stats.employeeOfMonth}</div>
-            </div> 
-            <div className="bg-gradient-to-r from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-3 text-center">
-              <div className="text-sm text-purple-600 font-medium">Excellence</div>
-              <div className="text-xl font-bold text-gray-900">{stats.excellenceAwards}</div>
-            </div>
-            <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-3 text-center">
-              <div className="text-sm text-blue-600 font-medium">Innovation</div>
-              <div className="text-xl font-bold text-gray-900">{stats.innovationAwards}</div>
-            </div>
-            <div className="bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg p-3 text-center">
-              <div className="text-sm text-green-600 font-medium">Team Player</div>
-              <div className="text-xl font-bold text-gray-900">{stats.teamPlayerAwards}</div>
-            </div>
-          </div>
-
-          {/* Filter Tabs */}
-          <div className="flex flex-wrap gap-2 mb-6">
-            <button
-              onClick={() => setFilter("all")}
-              className={`px-3 py-1.5 rounded-lg font-medium text-sm transition-all ${
-                filter === "all"
-                  ? "bg-gradient-to-r from-red-600 to-red-700 text-white"
-                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setFilter("employee_of_month")}
-              className={`px-3 py-1.5 rounded-lg font-medium text-sm transition-all flex items-center gap-1 ${
-                filter === "employee_of_month"
-                  ? "bg-gradient-to-r from-yellow-500 to-amber-500 text-white"
-                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              <Crown size={12} />
-              Employee of Month
-            </button>
-            <button
-              onClick={() => setFilter("excellence_award")}
-              className={`px-3 py-1.5 rounded-lg font-medium text-sm transition-all flex items-center gap-1 ${
-                filter === "excellence_award"
-                  ? "bg-gradient-to-r from-purple-500 to-indigo-500 text-white"
-                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              <Award size={12} />
-              Excellence
-            </button>
-            <button
-              onClick={() => setFilter("innovation")}
-              className={`px-3 py-1.5 rounded-lg font-medium text-sm transition-all flex items-center gap-1 ${
-                filter === "innovation"
-                  ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white"
-                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              <Zap size={12} />
-              Innovation
-            </button>
-            <button
-              onClick={() => setFilter("team_player")}
-              className={`px-3 py-1.5 rounded-lg font-medium text-sm transition-all flex items-center gap-1 ${
-                filter === "team_player"
-                  ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
-                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              <Users size={12} />
-              Team Player
-            </button>
-          </div>
-
-          {/* Recognition List */}
-          {currentPosts.length === 0 ? (
-            <div className="text-center py-8 bg-gray-50 rounded-xl">
-              <div className="w-12 h-12 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Trophy className="w-6 h-6 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                No recognitions found
-              </h3>
-              <p className="text-gray-600">
-                {targetEmployee.name} {!employee && "(You) "}hasn't received any recognitions yet.
+              <p className="text-slate-500 text-sm font-medium">
+                {employee ? `${employee.name}'s achievement journey` : "Your complete recognition timeline"}
               </p>
             </div>
-          ) : (
-            <>
-              <div className="space-y-3 mb-6">
-                {currentPosts.map((post) => {
-                  const typeInfo = getRecognitionTypeInfo(post.recognitionType);
-                  const isOwner = isOwnerOfPost(post);
-                  const isDownloading = downloading[post._id];
-                  
-                  return (
-                    <div
-                      key={post._id}
-                      className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-sm transition-shadow"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className={`p-2 ${typeInfo.bgColor} rounded-lg flex-shrink-0`}>
-                          {React.cloneElement(typeInfo.icon, {
-                            className: `w-4 h-4 ${typeInfo.color}`
-                          })}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex justify-between items-start mb-1">
-                            <h4 className="font-bold text-gray-900">{post.title}</h4>
-                            <span className="text-xs text-gray-500 flex items-center gap-1">
-                              <Calendar size={12} />
-                              {formatDate(post.createdAt)}
-                            </span>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-all group">
+            <X className="text-slate-400 group-hover:text-slate-600" size={24} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-8 space-y-8">
+          
+          {/* User Profile Card */}
+          <div className="relative overflow-hidden bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+            <div className="relative flex flex-col md:flex-row items-center gap-6">
+              <div className="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-red-500 to-orange-400">
+                <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-2xl font-black text-slate-800">
+                  {targetEmployee.name?.charAt(0).toUpperCase()}
+                </div>
+              </div>
+              <div className="text-center md:text-left flex-1">
+                <h3 className="text-xl font-bold text-slate-900">{targetEmployee.name}</h3>
+                <p className="text-slate-500 text-sm font-medium uppercase tracking-wider">
+                  {targetEmployee.position} • {targetEmployee.department}
+                </p>
+                {!employee && (
+                  <span className="inline-block mt-2 px-3 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded-full">
+                    You
+                  </span>
+                )}
+              </div>
+              <div className="flex gap-6">
+                <div className="text-center">
+                  <div className="text-3xl font-black text-red-600">{stats.total}</div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Awards</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-2xl p-4 text-center">
+              <div className="text-lg font-black text-red-600">{stats.employeeOfMonth}</div>
+              <div className="text-[10px] font-bold text-red-500 uppercase tracking-widest">Emp. of Month</div>
+            </div>
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-4 text-center">
+              <div className="text-lg font-black text-purple-600">{stats.excellenceAwards}</div>
+              <div className="text-[10px] font-bold text-purple-500 uppercase tracking-widest">Excellence</div>
+            </div> 
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-4 text-center">
+              <div className="text-lg font-black text-blue-600">{stats.innovationAwards}</div>
+              <div className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Innovation</div>
+            </div>
+            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 rounded-2xl p-4 text-center">
+              <div className="text-lg font-black text-emerald-600">{stats.teamPlayerAwards}</div>
+              <div className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Team Player</div>
+            </div>
+            <div className="col-span-2 md:col-span-1 bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-2xl p-4 text-center">
+              <div className="text-lg font-black text-slate-600">{stats.total}</div>
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">All Awards</div>
+            </div>
+          </div>
+
+          {/* Filter Tabs - Modern Design */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <Filter size={14} className="text-slate-400" />
+              <span className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Filter by Award Type</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setFilter("all")}
+                className={`px-4 py-2.5 rounded-full font-medium text-sm transition-all flex items-center gap-2 ${
+                  filter === "all"
+                    ? "bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-md"
+                    : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:shadow-sm"
+                }`}
+              >
+                <Sparkles size={12} />
+                All Awards
+              </button>
+              <button
+                onClick={() => setFilter("employee_of_month")}
+                className={`px-4 py-2.5 rounded-full font-medium text-sm transition-all flex items-center gap-2 ${
+                  filter === "employee_of_month"
+                    ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md"
+                    : "bg-white text-slate-700 border border-slate-200 hover:bg-amber-50 hover:border-amber-200 hover:shadow-sm"
+                }`}
+              >
+                <Crown size={12} />
+                Employee of Month
+              </button>
+              <button
+                onClick={() => setFilter("excellence_award")}
+                className={`px-4 py-2.5 rounded-full font-medium text-sm transition-all flex items-center gap-2 ${
+                  filter === "excellence_award"
+                    ? "bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-md"
+                    : "bg-white text-slate-700 border border-slate-200 hover:bg-purple-50 hover:border-purple-200 hover:shadow-sm"
+                }`}
+              >
+                <Award size={12} />
+                Excellence
+              </button>
+              <button
+                onClick={() => setFilter("innovation")}
+                className={`px-4 py-2.5 rounded-full font-medium text-sm transition-all flex items-center gap-2 ${
+                  filter === "innovation"
+                    ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md"
+                    : "bg-white text-slate-700 border border-slate-200 hover:bg-blue-50 hover:border-blue-200 hover:shadow-sm"
+                }`}
+              >
+                <Zap size={12} />
+                Innovation
+              </button>
+              <button
+                onClick={() => setFilter("team_player")}
+                className={`px-4 py-2.5 rounded-full font-medium text-sm transition-all flex items-center gap-2 ${
+                  filter === "team_player"
+                    ? "bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-md"
+                    : "bg-white text-slate-700 border border-slate-200 hover:bg-emerald-50 hover:border-emerald-200 hover:shadow-sm"
+                }`}
+              >
+                <Users size={12} />
+                Team Player
+              </button>
+            </div>
+          </div>
+
+          {/* Recognition Timeline */}
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">
+                Recognition Timeline {filter !== "all" && `• ${filteredPosts.length} ${filter.replace('_', ' ')} awards`}
+              </span>
+              {totalPages > 1 && (
+                <span className="text-xs font-bold text-slate-400">
+                  Page {currentPage} of {totalPages}
+                </span>
+              )}
+            </div>
+
+            {currentPosts.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-3xl border-2 border-dashed border-slate-200">
+                <Trophy className="w-16 h-16 text-slate-200 mx-auto mb-4" />
+                <h3 className="text-lg font-bold text-slate-800">
+                  {filter === "all" ? "No recognitions found" : "No awards in this category"}
+                </h3>
+                <p className="text-slate-500 text-sm max-w-xs mx-auto mt-2">
+                  {targetEmployee.name} {!employee && "(You) "}hasn't received any recognitions yet.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-3">
+                  {currentPosts.map((post) => {
+                    const typeInfo = getRecognitionTypeInfo(post.recognitionType);
+                    const isOwner = isOwnerOfPost(post);
+                    const isDownloading = downloading[post._id];
+                    
+                    return (
+                      <div
+                        key={post._id}
+                        className="group bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all hover:scale-[1.005]"
+                      >
+                        <div className="flex items-start gap-4">
+                          {/* Icon with gradient background */}
+                          <div className={`p-3 rounded-2xl ${typeInfo.bgColor} ${typeInfo.color} flex-shrink-0`}>
+                            {typeInfo.icon}
                           </div>
-                          <p className="text-gray-600 text-sm line-clamp-2">
-                            {post.description}
-                          </p>
-                          <div className="flex items-center justify-between mt-2">
-                            <span className={`text-xs font-medium px-2 py-1 rounded-full ${typeInfo.bgColor} ${typeInfo.color}`}>
-                              {typeInfo.label}
-                            </span>
-                            <div className="flex items-center gap-2">
-                              {/* View Certificate Button */}
-                              <button
-                                className={`text-xs px-2 py-1 rounded flex items-center gap-1 transition-all ${
-                                  isOwner
-                                    ? "bg-gray-100 text-gray-700 hover:bg-gray-200 cursor-pointer"
-                                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                }`}
-                                onClick={() => handleViewCertificate(post)}
-                                disabled={!isOwner || isDownloading}
-                                title={isOwner ? "View Certificate" : "Only the recognized employee can view this certificate"}
-                              >
-                                <FileText size={10} />
-                                View Certificate
-                              </button>
-                              
-                              {/* Download Certificate Button */}
-                              <button
-                                className={`text-xs px-2 py-1 rounded flex items-center gap-1 transition-all ${
-                                  isOwner
-                                    ? "bg-red-100 text-red-600 hover:bg-red-200 cursor-pointer"
-                                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                } ${isDownloading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                onClick={() => handleDownloadCertificate(post)}
-                                disabled={!isOwner || isDownloading}
-                                title={isOwner ? "Download Certificate" : "Only the recognized employee can download this certificate"}
-                              >
-                                {isDownloading ? (
-                                  <>
-                                    <Loader size={10} className="animate-spin" />
-                                    Downloading...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Download size={10} />
-                                    Download
-                                  </>
-                                )}
-                              </button>
-                            </div>
-                          </div>
-                          {post.tags && post.tags.length > 0 && (
-                            <div className="flex gap-1 mt-1">
-                              {post.tags.slice(0, 3).map((tag, index) => (
-                                <span key={index} className="text-xs text-gray-500 italic">
-                                  #{tag}
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <span className="text-[10px] font-black uppercase tracking-tighter text-slate-400">
+                                  {typeInfo.label}
                                 </span>
-                              ))}
+                                <h4 className="font-bold text-slate-800 leading-tight line-clamp-1">
+                                  {post.title}
+                                </h4>
+                              </div>
+                              <span className="text-xs font-bold text-slate-400 flex items-center gap-1 whitespace-nowrap">
+                                <Calendar size={12} />
+                                {formatDate(post.createdAt)}
+                              </span>
                             </div>
-                          )}
+                            
+                            <p className="text-sm text-slate-500 line-clamp-2 mb-3 italic">
+                              "{post.description}"
+                            </p>
+                            
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                {post.tags && post.tags.slice(0, 2).map((tag, index) => (
+                                  <span key={index} className="text-xs text-slate-400 italic bg-slate-50 px-2 py-1 rounded-full">
+                                    #{tag}
+                                  </span>
+                                ))}
+                              </div>
+                              
+                              <div className="flex items-center gap-2">
+                                {/* View Certificate Button */}
+                                <button
+                                  className={`text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-all ${
+                                    isOwner
+                                      ? "bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer"
+                                      : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                                  }`}
+                                  onClick={() => handleViewCertificate(post)}
+                                  disabled={!isOwner || isDownloading}
+                                  title={isOwner ? "View Certificate" : "Only the recognized employee can view this certificate"}
+                                >
+                                  <FileText size={12} />
+                                  View
+                                </button>
+                                
+                                {/* Download Certificate Button */}
+                                <button
+                                  className={`text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-all ${
+                                    isOwner
+                                      ? "bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 cursor-pointer shadow-sm"
+                                      : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                                  } ${isDownloading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                  onClick={() => handleDownloadCertificate(post)}
+                                  disabled={!isOwner || isDownloading}
+                                  title={isOwner ? "Download Certificate" : "Only the recognized employee can download this certificate"}
+                                >
+                                  {isDownloading ? (
+                                    <>
+                                      <Loader size={12} className="animate-spin" />
+                                      Processing...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Download size={12} />
+                                      Download
+                                    </>
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-2">
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                    className="p-2 bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  
-                  <span className="text-sm text-gray-600">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
-                    className="p-2 bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                  >
-                    <ChevronRight size={16} />
-                  </button>
+                    );
+                  })}
                 </div>
-              )}
 
-              {/* Download All Button (only if user can view all) */}
-              {filteredPosts.length > 0 && canViewHistory() && (
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <div className="text-center">
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center gap-2 mt-6">
                     <button
-                      className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 mx-auto transition-all ${
-                        filteredPosts.every(post => isOwnerOfPost(post))
-                          ? "bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 cursor-pointer"
-                          : "bg-gray-200 text-gray-500 cursor-not-allowed"
-                      }`}
-                      onClick={() => {
-                        if (filteredPosts.every(post => isOwnerOfPost(post))) {
-                          // Download all certificates
-                          filteredPosts.forEach(post => {
-                            if (isOwnerOfPost(post)) {
-                              handleDownloadCertificate(post);
-                            }
-                          });
-                        } else {
-                          showCustomToast("You can only download your own certificates", "error");
-                        }
-                      }}
-                      disabled={!filteredPosts.every(post => isOwnerOfPost(post))}
-                      title={filteredPosts.every(post => isOwnerOfPost(post)) ? "Download All Certificates" : "You can only download your own certificates"}
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="p-2 bg-white border border-slate-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 hover:shadow-sm transition-all"
                     >
-                      <Download size={16} />
-                      Download All Certificates ({filteredPosts.length})
+                      <ChevronLeft size={16} />
                     </button>
-                    <p className="text-xs text-gray-500 mt-2">
-                      {filteredPosts.every(post => isOwnerOfPost(post)) 
-                        ? "Download all your certificates in this list"
-                        : "Only download certificates that belong to you"}
-                    </p>
+                    
+                    <div className="flex items-center gap-1">
+                      {[...Array(totalPages)].map((_, index) => {
+                        const pageNum = index + 1;
+                        if (
+                          pageNum === 1 ||
+                          pageNum === totalPages ||
+                          (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                        ) {
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setCurrentPage(pageNum)}
+                              className={`w-9 h-9 rounded-full font-medium text-sm transition-all ${
+                                currentPage === pageNum
+                                  ? "bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-md"
+                                  : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:shadow-sm"
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        } else if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
+                          return <span key={pageNum} className="px-2 text-slate-400">...</span>;
+                        }
+                        return null;
+                      })}
+                    </div>
+
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="p-2 bg-white border border-slate-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 hover:shadow-sm transition-all"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
                   </div>
-                </div>
-              )}
-            </>
-          )}
+                )}
+
+                {/* Download All Button */}
+                {filteredPosts.length > 0 && canViewHistory() && (
+                  <div className="mt-8 pt-6 border-t border-slate-200">
+                    <div className="text-center">
+                      <button
+                        className={`px-6 py-3 rounded-full font-bold text-sm flex items-center gap-2 mx-auto transition-all ${
+                          filteredPosts.every(post => isOwnerOfPost(post))
+                            ? "bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 cursor-pointer shadow-lg hover:shadow-xl"
+                            : "bg-slate-200 text-slate-500 cursor-not-allowed"
+                        }`}
+                        onClick={() => {
+                          if (filteredPosts.every(post => isOwnerOfPost(post))) {
+                            filteredPosts.forEach(post => {
+                              if (isOwnerOfPost(post)) {
+                                handleDownloadCertificate(post);
+                              }
+                            });
+                          } else {
+                            showCustomToast("You can only download your own certificates", "error");
+                          }
+                        }}
+                        disabled={!filteredPosts.every(post => isOwnerOfPost(post))}
+                        title={filteredPosts.every(post => isOwnerOfPost(post)) ? "Download All Certificates" : "You can only download your own certificates"}
+                      >
+                        <Download size={16} />
+                        Download All Certificates ({filteredPosts.length})
+                      </button>
+                      <p className="text-xs text-slate-400 mt-2">
+                        {filteredPosts.every(post => isOwnerOfPost(post)) 
+                          ? "Download all certificates in this list"
+                          : "Only download certificates that belong to you"}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </section>
         </div>
       </div>
     </div>
