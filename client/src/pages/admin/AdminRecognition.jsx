@@ -77,7 +77,6 @@ const SmallLoader = () => (
 );
 
 const uploadToServer = async (file) => {
-  console.log("📤 Uploading:", file.name);
 
   const formData = new FormData();
   formData.append("file", file);
@@ -88,8 +87,6 @@ const uploadToServer = async (file) => {
         "Content-Type": "multipart/form-data",
       },
     });
-
-    console.log("✅ Upload response:", response.data);
 
     return {
       url: response.data.url || response.data.secure_url,
@@ -669,8 +666,6 @@ const CreatePostModal = ({
 
         uploadToServer(file)
           .then((cloudinaryData) => {
-            console.log("✅ Upload successful:", cloudinaryData);
-
             setImagePreviews((prev) =>
               prev.map((img) =>
                 img.id === tempId
@@ -1800,7 +1795,6 @@ const AdminRecognition = () => {
   };
 
   const handleSaveNewPost = (newPost) => {
-    console.log("💾 Saving new post:", newPost.title);
     setPosts((prev) => {
       const exists = prev.some((post) => post._id === newPost._id);
       if (exists)

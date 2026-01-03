@@ -745,6 +745,8 @@ const AgentRecognition = () => {
 
   // Initialize Socket.io
   useEffect(() => {
+    console.log("🔌 Initializing Socket.io connection for Agent...");
+
     socket.emit("joinAgentRoom");
     socket.emit("getAgentRecognitionData");
 
