@@ -1,5 +1,5 @@
-import Attendance from "../model/Attendance.js";
-import User from "../model/User.js";
+import Attendance from "../modules/attendance/attendance.model.js";
+import User from "../modules/user/user.model.js";
 import { STATUS } from "../../constants/status.js";
 import {
   biometricIn,

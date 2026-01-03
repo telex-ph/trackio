@@ -6,26 +6,30 @@ import cookieParser from "cookie-parser";
 import "./cron.js";
 
 // Routes imports
-import userRoutes from "../src/routes/userRoutes.js";
-import authRoutes from "../src/routes/authRoutes.js";
-import accountRoutes from "../src/routes/accountRoutes.js";
-import attendanceRoutes from "../src/routes/attendanceRoutes.js";
-import courseRoutes from "../src/routes/courseRoutes.js";
-import announcementRoutes from "../src/routes/announcementRoutes.js";
 import recognitionRoutes from "../src/routes/recognitionRoutes.js";
-import absenceRoutes from "../src/routes/absenceRoutes.js";
 import mediaRoutes from "../src/routes/mediaRoutes.js";
-import requestRoutes from "../src/routes/requestRoutes.js";
-import offenseRoutes from "./routes/offenseRoutes.js";
-import scheduleRoutes from "./routes/scheduleRoutes.js";
-import groupRoutes from "./routes/groupRoutes.js";
+// import scheduleRoutes from "./routes/scheduleRoutes.js";
 import serverRoutes from "./routes/serverRoutes.js";
 import biometricRoute from "./routes/biometricRoute.js";
-import leaveRoutes from "./routes/leaveRoutes.js";
-import auditlogsRoutes from "./routes/auditlogsRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
-import analyticsRoutes from "./routes/analyticsRoutes.js";
 import webhook from "./utils/webhook.js";
+
+// New folder strucutre// remove this comment later and ensure older files and folders are deleted
+import scheduleRoutes from "./modules/schedule/schedule.route.js";
+import userRoutes from "./modules/user/user.route.js";
+import courseRoutes from "./modules/course/course.route.js";
+import authRoutes from "./modules/auth/auth.route.js";
+import attendanceRoutes from "./modules/attendance/attendance.routes.js";
+import absenceRoutes from "./modules/absence/absence.route.js";
+import accountRoutes from "./modules/account/account.route.js";
+import groupRoutes from "./modules/group/group.route.js";
+import offenseRoutes from "./modules/offense/offense.route.js";
+import requestRoutes from "./modules/request/request.route.js";
+import analyticsRoutes from "./modules/analytics/analytics.routes.js";
+import announcementRoutes from "./modules/announcement/announcement.route.js";
+import auditlogsRoutes from "./modules/audit/auditlogs.route.js";
+import leaveRoutes from "./modules/leave/leave.routes.js";
+
 
 dotenv.config();
 const app = express();
