@@ -16,7 +16,6 @@ export const useSchedule = ({ id }) => {
           currentYear: currentDate.year,
         },
       });
-
       return response.data;
     } catch (error) {
       console.error(error);
