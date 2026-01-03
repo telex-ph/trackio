@@ -689,7 +689,6 @@ const AgentRecognition = () => {
         }
       }
       
-      console.log("Filtered user achievements:", allUserPosts.length);
       setUserAchievements(allUserPosts);
       setAchievementCount(allUserPosts.length);
       
@@ -746,8 +745,6 @@ const AgentRecognition = () => {
 
   // Initialize Socket.io
   useEffect(() => {
-    console.log("🔌 Initializing Socket.io connection for Agent...");
-
     socket.emit("joinAgentRoom");
     socket.emit("getAgentRecognitionData");
 
@@ -887,7 +884,6 @@ const AgentRecognition = () => {
   // NEW: Fetch ALL posts for history modal
   const fetchAllPostsForHistory = async () => {
     try {
-      console.log("📊 Fetching ALL posts for history modal...");
       const response = await api.get('/recognition', {
         params: {
           status: "published",
@@ -899,7 +895,6 @@ const AgentRecognition = () => {
 
       if (response.data.success) {
         const allPostsData = response.data.data || [];
-        console.log(`✅ Fetched ${allPostsData.length} posts for history`);
         setAllPosts(allPostsData);
         return allPostsData;
       }
@@ -995,8 +990,6 @@ const AgentRecognition = () => {
 
   // Handle open achievements modal
   const handleOpenAchievements = () => {
-    console.log("Opening achievements modal for:", currentUser?.name);
-    console.log("Achievements count:", achievementCount);
     setShowAchievementsModal(true);
   };
 
