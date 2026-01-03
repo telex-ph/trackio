@@ -9,6 +9,8 @@ import { useSchedule } from "../../hooks/useSchedule";
 import { Alert } from "flowbite-react";
 import { Info } from "lucide-react";
 import Stopwatch from "../../components/Stopwatch";
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 const SharedAttendance = () => {
   const user = useStore((state) => state.user);
@@ -23,6 +25,13 @@ const SharedAttendance = () => {
   const { loading: scheduleLoading } = useSchedule({
     id: user?._id,
   });
+
+  const queryClient = useQueryClient();
+
+  // Invalidate cache schedule on page reload.
+  useEffect(() => {
+    queryClient.invalidateQueries("schedule");
+  }, []);
 
   return (
     <div className="space-y-5">
