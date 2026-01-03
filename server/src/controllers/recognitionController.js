@@ -17,10 +17,37 @@ export const recognitionController = {
         sortBy = 'createdAt',
         sortOrder = 'desc',
         recognitionType,
-        employeeId
+        employeeId,
+        myRecognitions = false  // NEW PARAMETER: Get only current user's recognitions
       } = req.query;
       
       const filter = {};
+      
+      // NEW: Check if requesting current user's recognitions only
+      if (myRecognitions === 'true' || myRecognitions === true) {
+        // Get current user from request (assuming middleware adds user to req)
+        const currentUser = req.user;
+        
+        if (currentUser && currentUser.employeeId) {
+          filter.employeeId = currentUser.employeeId.toString();
+          console.log(`🔍 Filtering recognitions for current user: ${currentUser.employeeId}`);
+        } else if (req.headers['x-user-id']) {
+          // Alternative: Get user from header
+          const userId = req.headers['x-user-id'];
+          const user = await usersCollection.findOne(
+            { _id: new ObjectId(userId) },
+            { projection: { employeeId: 1 } }
+          );
+          if (user?.employeeId) {
+            filter.employeeId = user.employeeId.toString();
+          }
+        }
+      }
+      
+      // If specific employeeId is provided, use it (overrides myRecognitions)
+      if (employeeId && !filter.employeeId) {
+        filter.employeeId = employeeId.toString();
+      }
       
       if (status && status !== 'all') {
         if (status === 'published') {
@@ -40,16 +67,13 @@ export const recognitionController = {
         filter.recognitionType = recognitionType;
       }
       
-      if (employeeId) {
-        filter.employeeId = employeeId.toString();
-      }
-      
       const pageNum = parseInt(page);
       const limitNum = parseInt(limit);
       const skip = (pageNum - 1) * limitNum;
       
       const total = await recognitionsCollection.countDocuments(filter);
       
+      // Auto-publish scheduled posts that are due
       const now = new Date();
       await recognitionsCollection.updateMany(
         { 
@@ -72,6 +96,7 @@ export const recognitionController = {
         .limit(limitNum)
         .toArray();
       
+      // Get employee details for the recognitions
       const uniqueEmployeeIds = [...new Set(recognitions.map(r => r.employeeId).filter(Boolean))];
       const employeesMap = {};
 
@@ -97,6 +122,7 @@ export const recognitionController = {
         });
       }
 
+      // Format recognitions with employee details
       const recognitionsWithDetails = recognitions.map((recognition) => {
         const employee = employeesMap[recognition.employeeId];
         
@@ -134,6 +160,88 @@ export const recognitionController = {
       res.status(500).json({ 
         success: false, 
         message: 'Error fetching recognitions',
+        error: error.message 
+      });
+    }
+  },
+
+  async getMyRecognitions(req, res) {
+    try {
+      // NEW: Specific endpoint for current user's recognitions
+      const currentUser = req.user;
+      
+      if (!currentUser || !currentUser.employeeId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Authentication required'
+        });
+      }
+      
+      const db = await connectDB();
+      const recognitionsCollection = db.collection('recognitions');
+      
+      const { 
+        page = 1, 
+        limit = 12,
+        sortBy = 'createdAt',
+        sortOrder = 'desc',
+        recognitionType
+      } = req.query;
+      
+      const filter = {
+        employeeId: currentUser.employeeId.toString(),
+        status: 'published'
+      };
+      
+      if (recognitionType) {
+        filter.recognitionType = recognitionType;
+      }
+      
+      const pageNum = parseInt(page);
+      const limitNum = parseInt(limit);
+      const skip = (pageNum - 1) * limitNum;
+      
+      const total = await recognitionsCollection.countDocuments(filter);
+      
+      const recognitions = await recognitionsCollection
+        .find(filter)
+        .sort({ [sortBy]: sortOrder === 'desc' ? -1 : 1 })
+        .skip(skip)
+        .limit(limitNum)
+        .toArray();
+      
+      // Format response
+      const formattedRecognitions = recognitions.map(recognition => ({
+        ...recognition,
+        employee: {
+          name: recognition.employeeName || `${currentUser.firstName} ${currentUser.lastName}`,
+          employeeId: recognition.employeeId,
+          department: recognition.department || currentUser.department,
+          position: currentUser.position || currentUser.role
+        }
+      }));
+      
+      res.json({
+        success: true,
+        data: formattedRecognitions,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          pages: Math.ceil(total / limitNum)
+        },
+        user: {
+          name: `${currentUser.firstName} ${currentUser.lastName}`,
+          employeeId: currentUser.employeeId,
+          totalRecognitions: total
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error fetching my recognitions:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Error fetching your recognitions',
         error: error.message 
       });
     }
@@ -216,11 +324,22 @@ export const recognitionController = {
   async getRecognitionByEmployeeId(req, res) {
     try {
       const { employeeId } = req.params;
+      const currentUser = req.user;
       
       if (!employeeId) {
         return res.status(400).json({ 
           success: false, 
           message: 'Employee ID is required' 
+        });
+      }
+      
+      // Security check: Users can only view their own recognitions
+      // unless they're admin/manager
+      if (currentUser && currentUser.employeeId !== employeeId && 
+          currentUser.role !== 'admin' && currentUser.role !== 'manager') {
+        return res.status(403).json({
+          success: false,
+          message: 'You can only view your own recognitions'
         });
       }
       

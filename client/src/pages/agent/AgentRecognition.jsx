@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import api from "../../utils/axios";
 import socket from "../../utils/socket";
+import { useStore } from "../../store/useStore";
 
 // Import only components that exist
 import RecognitionCard from "../../components/cards/RecognitionCard";
@@ -74,12 +75,23 @@ const LoadingSpinner = () => (
   </div>
 );
 
-// PostDetailsModal Component - WITH WORKING FUNCTIONALITIES
-const PostDetailsModal = ({ post, isOpen, onClose, onViewEmployeeHistory }) => {
+// PostDetailsModal Component - UPDATED WITH PERMISSION CHECK
+const PostDetailsModal = ({ 
+  post, 
+  isOpen, 
+  onClose, 
+  onViewEmployeeHistory,
+  currentUser // ADDED: Pass currentUser to check permissions
+}) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [downloading, setDownloading] = useState(false);
   
   if (!isOpen || !post) return null;
+
+  // CHECK IF CURRENT USER IS THE OWNER OF THE RECOGNITION
+  const isOwner = currentUser && post.employee && 
+    (post.employee.employeeId === currentUser.employeeId || 
+     post.employee._id === currentUser._id);
 
   const getRecognitionTypeInfo = (type) => {
     switch (type) {
@@ -147,7 +159,6 @@ const PostDetailsModal = ({ post, isOpen, onClose, onViewEmployeeHistory }) => {
 
   // Custom toast function for PostDetailsModal
   const showCustomToast = (message, type = "success") => {
-    // Create a temporary toast
     const toast = document.createElement('div');
     toast.className = `fixed top-4 right-4 z-50 animate-slideIn ${
       type === "success"
@@ -162,7 +173,6 @@ const PostDetailsModal = ({ post, isOpen, onClose, onViewEmployeeHistory }) => {
     
     document.body.appendChild(toast);
     
-    // Remove toast after 3 seconds
     setTimeout(() => {
       toast.classList.add('animate-fadeOut');
       setTimeout(() => {
@@ -171,21 +181,22 @@ const PostDetailsModal = ({ post, isOpen, onClose, onViewEmployeeHistory }) => {
     }, 3000);
   };
 
-  // UPDATED CERTIFICATE DOWNLOAD FUNCTION
+  // CERTIFICATE DOWNLOAD FUNCTION - WITH PERMISSION CHECK
   const handleDownloadCertificate = async () => {
+    // Check if user is the owner
+    if (!isOwner) {
+      showCustomToast("You can only download your own certificates", "error");
+      return;
+    }
+
     try {
       setDownloading(true);
       
-      console.log('Downloading certificate for post:', post._id);
-      
-      // If certificate URL exists, download it directly
       if (post.certificateUrl) {
-        console.log('Using existing certificate URL:', post.certificateUrl);
         window.open(post.certificateUrl, '_blank');
         return;
       }
       
-      // Generate certificate via API
       const response = await api.post('/recognition/generate-certificate', {
         recognitionId: post._id,
         employeeId: post.employee?._id || post.employee?.employeeId,
@@ -193,47 +204,29 @@ const PostDetailsModal = ({ post, isOpen, onClose, onViewEmployeeHistory }) => {
         title: post.title,
         employeeName: post.employee?.name || "Employee",
         date: post.createdAt,
-        preview: false // Set to true for preview, false for download
+        preview: false
       }, {
         responseType: 'blob'
       });
 
-      console.log('Certificate response received:', response);
-      
-      // Create blob from response
       const blob = new Blob([response.data], { type: 'application/pdf' });
-      
-      // Create download link
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      
-      // Generate filename
       const filename = `certificate_${post.employee?.name || 'employee'}_${post._id.substring(0, 8)}.pdf`;
       link.setAttribute('download', filename);
-      
-      // Append to body and trigger download
       document.body.appendChild(link);
       link.click();
       
-      // Clean up
       setTimeout(() => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
       }, 100);
       
-      // Show success message
       showCustomToast("Certificate downloaded successfully!", "success");
       
     } catch (error) {
       console.error("Error downloading certificate:", error);
-      
-      // More detailed error logging
-      if (error.response) {
-        console.error("Error response:", error.response.data);
-        console.error("Error status:", error.response.status);
-      }
-      
       showCustomToast(
         error.response?.data?.message || "Failed to download certificate. Please try again.", 
         "error"
@@ -243,20 +236,22 @@ const PostDetailsModal = ({ post, isOpen, onClose, onViewEmployeeHistory }) => {
     }
   };
 
-  // UPDATED CERTIFICATE VIEW FUNCTION
+  // CERTIFICATE VIEW FUNCTION - WITH PERMISSION CHECK
   const handleViewCertificate = async () => {
+    // Check if user is the owner
+    if (!isOwner) {
+      showCustomToast("You can only view your own certificates", "error");
+      return;
+    }
+
     try {
       setDownloading(true);
       
-      console.log('Viewing certificate for post:', post._id);
-      
-      // Check if certificate URL exists
       if (post.certificateUrl) {
         window.open(post.certificateUrl, '_blank');
         return;
       }
       
-      // Generate certificate for preview
       const response = await api.post('/recognition/generate-certificate', {
         recognitionId: post._id,
         employeeId: post.employee?._id || post.employee?.employeeId,
@@ -264,16 +259,13 @@ const PostDetailsModal = ({ post, isOpen, onClose, onViewEmployeeHistory }) => {
         title: post.title,
         employeeName: post.employee?.name || "Employee",
         date: post.createdAt,
-        preview: true // Set to true for preview
+        preview: true
       }, {
         responseType: 'blob'
       });
       
-      // Create blob and open in new tab
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
-      
-      // Open in new tab for preview
       window.open(url, '_blank');
       
     } catch (error) {
@@ -290,7 +282,7 @@ const PostDetailsModal = ({ post, isOpen, onClose, onViewEmployeeHistory }) => {
   const handleViewEmployeeHistory = () => {
     if (onViewEmployeeHistory && post.employee) {
       onViewEmployeeHistory(post.employee);
-      onClose(); // Close modal when navigating to history
+      onClose();
     }
   };
 
@@ -298,7 +290,6 @@ const PostDetailsModal = ({ post, isOpen, onClose, onViewEmployeeHistory }) => {
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
       <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="p-6">
-          {/* Modal Header */}
           <div className="flex justify-between items-start mb-6">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -321,11 +312,8 @@ const PostDetailsModal = ({ post, isOpen, onClose, onViewEmployeeHistory }) => {
             </button>
           </div>
 
-          {/* Post Content */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Featured Image with Carousel */}
               {hasImages ? (
                 <div className="relative rounded-2xl overflow-hidden">
                   <img
@@ -391,7 +379,6 @@ const PostDetailsModal = ({ post, isOpen, onClose, onViewEmployeeHistory }) => {
                 </div>
               )}
 
-              {/* Hashtags */}
               {post.tags && post.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 pt-2">
                   {post.tags.map((tag, index) => (
@@ -405,7 +392,6 @@ const PostDetailsModal = ({ post, isOpen, onClose, onViewEmployeeHistory }) => {
                 </div>
               )}
 
-              {/* Description */}
               <div className="prose max-w-none pt-2">
                 <p className="text-gray-700 leading-relaxed whitespace-pre-line">
                   {post.description}
@@ -413,9 +399,7 @@ const PostDetailsModal = ({ post, isOpen, onClose, onViewEmployeeHistory }) => {
               </div>
             </div>
 
-            {/* Sidebar */}
             <div className="space-y-6">
-              {/* Employee Card */}
               <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-5 border border-gray-200">
                 <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <Group size={15} />
@@ -446,18 +430,32 @@ const PostDetailsModal = ({ post, isOpen, onClose, onViewEmployeeHistory }) => {
                           )}
                         </div>
                       </div>
+                      {/* OWNER BADGE */}
+                      {isOwner && (
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
+                          You
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                {/* Action Buttons - WITH FUNCTIONALITY */}
                 <div className="grid grid-cols-2 gap-2">
                   <button
-                    className="flex items-center justify-center gap-2 p-2.5 rounded-xl text-sm font-medium bg-white border border-red-200 text-red-600 hover:bg-red-50 cursor-pointer transition-all"
+                    className={`flex items-center justify-center gap-2 p-2.5 rounded-xl text-sm font-medium border transition-all ${
+                      isOwner
+                        ? "bg-white border-red-200 text-red-600 hover:bg-red-50 cursor-pointer"
+                        : "bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed"
+                    }`}
                     onClick={handleViewCertificate}
+                    disabled={!isOwner}
+                    title={isOwner ? "View Certificate" : "Only the recognized employee can view this certificate"}
                   >
                     <FileText size={14} />
                     View Certificate
+                    {!isOwner && (
+                      <span className="text-xs text-gray-400 ml-1"></span>
+                    )}
                   </button>
                   <button
                     className="flex items-center justify-center gap-2 p-2.5 rounded-xl text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer transition-all"
@@ -469,7 +467,6 @@ const PostDetailsModal = ({ post, isOpen, onClose, onViewEmployeeHistory }) => {
                 </div>
               </div>
 
-              {/* Stats Card */}
               <div className="bg-white border border-light rounded-2xl p-5">
                 <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <BarChart3 size={18} />
@@ -492,12 +489,6 @@ const PostDetailsModal = ({ post, isOpen, onClose, onViewEmployeeHistory }) => {
                       })}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Recognition ID</span>
-                    <span className="font-mono text-sm text-gray-900 bg-gray-100 px-2 py-1 rounded">
-                      {post._id?.substring(0, 8).toUpperCase()}
-                    </span>
-                  </div>
                   {post.certificateId && (
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Certificate ID</span>
@@ -506,15 +497,26 @@ const PostDetailsModal = ({ post, isOpen, onClose, onViewEmployeeHistory }) => {
                       </span>
                     </div>
                   )}
+                  {/* OWNERSHIP STATUS */}
+                  <div className="flex justify-between items-center pt-2 border-t">
+                    <span className="text-gray-600">Certificate Access</span>
+                    <span className={`text-sm font-medium ${isOwner ? 'text-green-600' : 'text-gray-500'}`}>
+                      {isOwner ? 'You own this certificate' : 'Restricted to owner'}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Quick Actions - WITH FUNCTIONALITY */}
               <div className="space-y-3">
                 <button
-                  className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 cursor-pointer transition-all ${downloading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-all ${
+                    isOwner
+                      ? `bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 cursor-pointer ${downloading ? 'opacity-70 cursor-not-allowed' : ''}`
+                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                  }`}
                   onClick={handleDownloadCertificate}
-                  disabled={downloading}
+                  disabled={!isOwner || downloading}
+                  title={isOwner ? "Download Certificate" : "Only the recognized employee can download this certificate"}
                 >
                   {downloading ? (
                     <>
@@ -525,6 +527,9 @@ const PostDetailsModal = ({ post, isOpen, onClose, onViewEmployeeHistory }) => {
                     <>
                       <Download size={18} />
                       Download Certificate
+                      {!isOwner && (
+                        <span className="text-xs ml-1"></span>
+                      )}
                     </>
                   )}
                 </button>
@@ -545,10 +550,7 @@ const PostDetailsModal = ({ post, isOpen, onClose, onViewEmployeeHistory }) => {
 };
 
 // EmployeeBadges Component
-const EmployeeBadges = ({currentUser, onOpenAchievements }) => {
-  console.log("EmployeeBadges - currentUser:", currentUser);
-  console.log("EmployeeBadges - onOpenAchievements:", onOpenAchievements);
-  
+const EmployeeBadges = ({ currentUser, onOpenAchievements }) => {
   return (
     <button
       onClick={onOpenAchievements}
@@ -557,7 +559,7 @@ const EmployeeBadges = ({currentUser, onOpenAchievements }) => {
       <Badge size={20} className="text-white" />
       <span className="font-semibold">My Achievements</span>
       <span className="bg-white text-red-600 text-xs font-bold px-2 py-1 rounded-full">
-        0
+        {currentUser?.achievementCount || 0}
       </span>
     </button>
   );
@@ -567,6 +569,7 @@ const EmployeeBadges = ({currentUser, onOpenAchievements }) => {
 const AgentRecognition = () => {
   const [activeCategory, setActiveCategory] = useState("Recent posts");
   const [posts, setPosts] = useState([]);
+  const [allPosts, setAllPosts] = useState([]); // ALL posts for history modal
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
@@ -580,49 +583,99 @@ const AgentRecognition = () => {
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState("success");
   const [currentUser, setCurrentUser] = useState(null);
-  const [allPosts, setAllPosts] = useState([]);
+  const [userAchievements, setUserAchievements] = useState([]);
+  const [achievementCount, setAchievementCount] = useState(0);
+  
+  // Get user from Zustand store
+  const storeUser = useStore((state) => state.user);
 
-  // Fetch current user on component mount
+  // Initialize current user from store
   useEffect(() => {
-    fetchCurrentUser();
-  }, []);
-
-  const fetchCurrentUser = async () => {
-    try {
-      console.log("Fetching current user...");
-      const response = await api.get("/auth/me");
-      console.log("Auth response:", response.data);
+    if (storeUser) {
+      console.log("User from Zustand store:", storeUser);
       
-      if (response.data.success) {
-        console.log("Setting current user:", response.data.user);
-        setCurrentUser(response.data.user);
+      // Format user data for consistency
+      const formattedUser = {
+        _id: storeUser._id || storeUser.id,
+        employeeId: storeUser.employeeId,
+        name: `${storeUser.firstName} ${storeUser.lastName}`,
+        firstName: storeUser.firstName,
+        lastName: storeUser.lastName,
+        email: storeUser.email,
+        position: storeUser.position,
+        department: storeUser.department,
+        role: storeUser.role,
+      };
+      
+      setCurrentUser(formattedUser);
+      localStorage.setItem('currentUser', JSON.stringify(formattedUser));
+    }
+  }, [storeUser]);
+
+  // Fetch user achievements when user is set
+  useEffect(() => {
+    if (currentUser) {
+      fetchUserAchievements(currentUser);
+    }
+  }, [currentUser]);
+
+  // Fetch user's achievements based on logged-in user - using ALL posts
+  const fetchUserAchievements = async (user) => {
+    try {
+      console.log("Fetching achievements for user:", user);
+      
+      if (!user || !user.employeeId) {
+        console.log("No employee ID available for fetching achievements");
+        setUserAchievements([]);
+        setAchievementCount(0);
+        return;
+      }
+      
+      // Use allPosts if already fetched, otherwise fetch all
+      let allUserPosts = [];
+      if (allPosts.length > 0) {
+        allUserPosts = allPosts.filter(post => {
+          return post.employee?.employeeId === user.employeeId;
+        });
       } else {
-        console.error("Failed to fetch current user:", response.data.error);
-        // Try alternative endpoint
-        try {
-          const altResponse = await api.get("/user/me");
-          console.log("Alternative auth response:", altResponse.data);
-          if (altResponse.data.success) {
-            setCurrentUser(altResponse.data.user);
+        // Fetch all posts if not already fetched
+        const response = await api.get('/recognition', {
+          params: {
+            status: "published",
+            limit: 1000, // Fetch a large number to get all posts
+            sortBy: "createdAt",
+            sortOrder: "desc"
           }
-        } catch (altError) {
-          console.error("Alternative auth error:", altError);
+        });
+        
+        if (response.data.success) {
+          const fetchedPosts = response.data.data || [];
+          allUserPosts = fetchedPosts.filter(post => {
+            return post.employee?.employeeId === user.employeeId;
+          });
         }
       }
+      
+      console.log("Filtered user achievements:", allUserPosts.length);
+      setUserAchievements(allUserPosts);
+      setAchievementCount(allUserPosts.length);
+      
     } catch (error) {
-      console.error("Error fetching current user:", error);
-      console.log("Setting dummy user for testing...");
-      // Set a dummy user for testing
-      setCurrentUser({
-        _id: "dummy_user_123",
-        employeeId: "EMP001",
-        firstName: "Test",
-        lastName: "User",
-        position: "Employee",
-        name: "Test User"
-      });
+      console.error("Error fetching user achievements:", error);
+      setUserAchievements([]);
+      setAchievementCount(0);
     }
   };
+
+  // Update currentUser with achievement count
+  useEffect(() => {
+    if (currentUser) {
+      setCurrentUser(prev => ({
+        ...prev,
+        achievementCount: achievementCount
+      }));
+    }
+  }, [achievementCount]);
 
   const showCustomToast = (message, type = "success") => {
     setToastMessage(message);
@@ -630,7 +683,17 @@ const AgentRecognition = () => {
     setShowToast(true);
   };
 
-  // Handle view employee history
+  // Handle view MY OWN history (logged-in user)
+  const handleViewMyHistory = () => {
+    if (currentUser) {
+      setSelectedEmployee(currentUser);
+      setShowHistoryModal(true);
+    } else {
+      showCustomToast("Please log in to view your history", "error");
+    }
+  };
+
+  // Handle view OTHER employee history (from post details)
   const handleViewEmployeeHistory = (employee) => {
     setSelectedEmployee(employee);
     setShowHistoryModal(true);
@@ -656,31 +719,61 @@ const AgentRecognition = () => {
     socket.on("initialAgentRecognitionData", (data) => {
       console.log("📥 Received initial agent recognition data:", data.length);
       setPosts(data);
-      setAllPosts(data);
+      setAllPosts(data); // Store ALL posts for history
       setLoading(false);
+      
+      // Update user achievements from socket data
+      if (currentUser) {
+        const userPosts = data.filter(post => 
+          post.employee?.employeeId === currentUser.employeeId
+        );
+        
+        if (userPosts.length > 0) {
+          setUserAchievements(prev => {
+            const merged = [...prev];
+            userPosts.forEach(newPost => {
+              if (!merged.some(p => p._id === newPost._id)) {
+                merged.push(newPost);
+              }
+            });
+            return merged;
+          });
+          setAchievementCount(userPosts.length);
+        }
+      }
     });
 
     socket.on("newRecognition", (newPost) => {
       console.log("🆕 New recognition from socket:", newPost.title);
-      setPosts((prev) => {
-        const exists = prev.some((post) => post._id === newPost._id);
+      
+      // Update posts
+      setPosts(prev => {
+        const exists = prev.some(post => post._id === newPost._id);
         if (exists) {
-          return prev.map((post) =>
-            post._id === newPost._id ? newPost : post
-          );
+          return prev.map(post => post._id === newPost._id ? newPost : post);
         }
         return [newPost, ...prev];
       });
       
-      setAllPosts((prev) => {
-        const exists = prev.some((post) => post._id === newPost._id);
+      setAllPosts(prev => {
+        const exists = prev.some(post => post._id === newPost._id);
         if (exists) {
-          return prev.map((post) =>
-            post._id === newPost._id ? newPost : post
-          );
+          return prev.map(post => post._id === newPost._id ? newPost : post);
         }
         return [newPost, ...prev];
       });
+      
+      // Check if this belongs to current user
+      if (currentUser && newPost.employee?.employeeId === currentUser.employeeId) {
+        setUserAchievements(prev => {
+          const exists = prev.some(post => post._id === newPost._id);
+          if (exists) {
+            return prev.map(post => post._id === newPost._id ? newPost : post);
+          }
+          return [newPost, ...prev];
+        });
+        setAchievementCount(prev => prev + 1);
+      }
       
       showCustomToast("New recognition added", "success");
     });
@@ -694,6 +787,13 @@ const AgentRecognition = () => {
       setAllPosts((prev) =>
         prev.map((post) => (post._id === updatedPost._id ? updatedPost : post))
       );
+      
+      // Check if this updated post belongs to current user
+      if (currentUser && updatedPost.employee?.employeeId === currentUser.employeeId) {
+        setUserAchievements(prev =>
+          prev.map((post) => (post._id === updatedPost._id ? updatedPost : post))
+        );
+      }
     });
 
     socket.on("recognitionArchived", (data) => {
@@ -705,6 +805,14 @@ const AgentRecognition = () => {
       setAllPosts((prev) =>
         prev.filter((post) => post._id !== data.recognitionId)
       );
+      
+      // Check if this archived post belonged to current user
+      if (currentUser) {
+        setUserAchievements(prev =>
+          prev.filter((post) => post._id !== data.recognitionId)
+        );
+        setAchievementCount(prev => Math.max(0, prev - 1));
+      }
       
       showCustomToast("Recognition archived", "success");
     });
@@ -734,12 +842,38 @@ const AgentRecognition = () => {
       socket.off("refreshRecognitionData");
       socket.off("error");
     };
-  }, []);
+  }, [currentUser]);
 
   // Fetch data on component mount and when category or page changes
   useEffect(() => {
     fetchRecognitions();
   }, [activeCategory, currentPage]);
+
+  // NEW: Fetch ALL posts for history modal
+  const fetchAllPostsForHistory = async () => {
+    try {
+      console.log("📊 Fetching ALL posts for history modal...");
+      const response = await api.get('/recognition', {
+        params: {
+          status: "published",
+          limit: 1000, // Fetch a large number to get all posts
+          sortBy: "createdAt",
+          sortOrder: "desc"
+        }
+      });
+
+      if (response.data.success) {
+        const allPostsData = response.data.data || [];
+        console.log(`✅ Fetched ${allPostsData.length} posts for history`);
+        setAllPosts(allPostsData);
+        return allPostsData;
+      }
+      return [];
+    } catch (error) {
+      console.error("Error fetching all posts for history:", error);
+      return [];
+    }
+  };
 
   const fetchRecognitions = async () => {
     try {
@@ -767,33 +901,43 @@ const AgentRecognition = () => {
         case "Team Player Award":
           params.recognitionType = "team_player";
           break;
-        // For 'Recent posts' and 'All Awards', use default params
       }
 
       const response = await api.get("/recognition", { params });
 
       if (response.data.success) {
-        setPosts(response.data.data || []);
-        setAllPosts(response.data.data || []);
+        const fetchedPosts = response.data.data || [];
+        setPosts(fetchedPosts);
 
-        // Calculate total pages from API response
+        // If we don't have all posts yet, fetch them for history modal
+        if (allPosts.length === 0) {
+          const allPostsData = await fetchAllPostsForHistory();
+          
+          // Update user achievements with all posts
+          if (currentUser) {
+            const userPosts = allPostsData.filter(post => 
+              post.employee?.employeeId === currentUser.employeeId
+            );
+            setUserAchievements(userPosts);
+            setAchievementCount(userPosts.length);
+          }
+        }
+
+        // Calculate total pages
         const pagination = response.data.pagination;
         if (pagination) {
           setTotalPages(pagination.pages || 1);
         } else {
-          const totalCount =
-            response.data.total || response.data.count || posts.length;
+          const totalCount = response.data.total || response.data.count || 0;
           setTotalPages(Math.ceil(totalCount / 8));
         }
       } else {
         setPosts([]);
-        setAllPosts([]);
         setTotalPages(1);
       }
     } catch (error) {
       console.error("Error fetching recognitions:", error);
       setPosts([]);
-      setAllPosts([]);
       setTotalPages(1);
     } finally {
       setLoading(false);
@@ -816,8 +960,8 @@ const AgentRecognition = () => {
 
   // Handle open achievements modal
   const handleOpenAchievements = () => {
-    console.log("Opening achievements modal - currentUser:", currentUser);
-    console.log("Opening achievements modal - allPosts count:", allPosts.length);
+    console.log("Opening achievements modal for:", currentUser?.name);
+    console.log("Achievements count:", achievementCount);
     setShowAchievementsModal(true);
   };
 
@@ -835,7 +979,6 @@ const AgentRecognition = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
-      {/* Toast Component */}
       {showToast && (
         <Toast
           message={toastMessage}
@@ -844,7 +987,7 @@ const AgentRecognition = () => {
         />
       )}
 
-      {/* Post Details Modal */}
+      {/* PASS currentUser TO PostDetailsModal */}
       <PostDetailsModal
         post={selectedPost}
         isOpen={showPostModal}
@@ -853,27 +996,26 @@ const AgentRecognition = () => {
           setSelectedPost(null);
         }}
         onViewEmployeeHistory={handleViewEmployeeHistory}
+        currentUser={currentUser} // ADDED: Pass currentUser for permission check
       />
 
-      {/* Employee History Modal - NOW USING THE SEPARATE COMPONENT */}
       <EmployeeHistoryModal
         isOpen={showHistoryModal}
         onClose={() => setShowHistoryModal(false)}
         employee={selectedEmployee}
-        posts={allPosts}
-      />
-
-      {/* My Achievements Modal */}
-      <MyAchievementsModal
-        isOpen={showAchievementsModal}
-        onClose={() => setShowAchievementsModal(false)}
-        allPosts={allPosts}
+        posts={allPosts} // Pass ALL posts to history modal
         currentUser={currentUser}
       />
 
-      <div className="max-w-7xl mx-auto">
+      <MyAchievementsModal
+        isOpen={showAchievementsModal}
+        onClose={() => setShowAchievementsModal(false)}
+        currentUser={currentUser}
+        userAchievements={userAchievements}
+        achievementCount={achievementCount}
+      />
 
-        {/* Header */}
+      <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
@@ -881,12 +1023,19 @@ const AgentRecognition = () => {
                 Recognition Wall
               </h1>
               <p className="text-gray-600">
-                Celebrating outstanding achievements and excellence in
-                performance
+                Celebrating outstanding achievements and excellence in performance
               </p>
             </div>
 
             <div className="flex items-center gap-3">
+              <button
+                onClick={handleViewMyHistory}
+                className="px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium flex items-center gap-2 hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-md hover:shadow-lg active:scale-95"
+              >
+                <History size={20} className="text-white" />
+                <span className="font-semibold">My History</span>
+              </button>
+              
               <EmployeeBadges 
                 currentUser={currentUser}
                 onOpenAchievements={handleOpenAchievements}
@@ -894,7 +1043,6 @@ const AgentRecognition = () => {
             </div>
           </div>
 
-          {/* Top Navigation */}
           <div className="flex flex-wrap gap-2 mb-8">
             {categories.map((category) => (
               <button
@@ -915,9 +1063,7 @@ const AgentRecognition = () => {
           </div>
         </div>
 
-        {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Recent Posts Grid */}
           <div className="lg:col-span-2">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900 flex items-center">
@@ -931,7 +1077,6 @@ const AgentRecognition = () => {
               )}
             </div>
 
-            {/* RECENT POSTS - CARD GRID */}
             {posts.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-2xl border border-gray-200 shadow-sm">
                 <Trophy size={48} className="mx-auto mb-4 text-gray-400" />
@@ -954,7 +1099,6 @@ const AgentRecognition = () => {
                   ))}
                 </div>
 
-                {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="flex justify-center items-center gap-2 mt-8">
                     <button
@@ -968,12 +1112,10 @@ const AgentRecognition = () => {
                     <div className="flex items-center gap-1">
                       {[...Array(totalPages)].map((_, index) => {
                         const pageNum = index + 1;
-                        // Show first page, last page, current page, and pages around current page
                         if (
                           pageNum === 1 ||
                           pageNum === totalPages ||
-                          (pageNum >= currentPage - 1 &&
-                            pageNum <= currentPage + 1)
+                          (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
                         ) {
                           return (
                             <button
@@ -988,15 +1130,8 @@ const AgentRecognition = () => {
                               {pageNum}
                             </button>
                           );
-                        } else if (
-                          pageNum === currentPage - 2 ||
-                          pageNum === currentPage + 2
-                        ) {
-                          return (
-                            <span key={pageNum} className="px-2 text-gray-500">
-                              ...
-                            </span>
-                          );
+                        } else if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
+                          return <span key={pageNum} className="px-2 text-gray-500">...</span>;
                         }
                         return null;
                       })}

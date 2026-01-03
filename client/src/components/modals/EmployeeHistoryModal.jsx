@@ -1,146 +1,376 @@
-import React from "react";
-import { History, Trophy, FileText, X, Award, Star, Users, Calendar, Image as ImageIcon } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import {
+  X,
+  Trophy,
+  Calendar,
+  Award,
+  Crown,
+  Zap,
+  Users,
+  ChevronLeft,
+  ChevronRight,
+  User,
+} from "lucide-react";
+import { useStore } from "../../store/useStore";
 
-const EmployeeHistoryModal = ({ isOpen, onClose, employee, posts }) => {
-  if (!isOpen || !employee) return null;
+const EmployeeHistoryModal = ({ 
+  isOpen, 
+  onClose, 
+  employee, 
+  posts,
+  currentUser 
+}) => {
+  const [filter, setFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filteredPosts, setFilteredPosts] = useState([]);
+  const postsPerPage = 5;
+  
+  // Get logged-in user from store as fallback
+  const storeUser = useStore((state) => state.user);
+  const loggedInUser = currentUser || (storeUser ? {
+    _id: storeUser._id || storeUser.id,
+    employeeId: storeUser.employeeId,
+    name: `${storeUser.firstName} ${storeUser.lastName}`,
+    position: storeUser.position,
+    department: storeUser.department,
+  } : null);
 
-  const employeePosts = posts.filter(
-    (post) =>
-      post.employee?._id === employee._id ||
-      post.employee?.employeeId === employee.employeeId
-  );
+  useEffect(() => {
+    if (!isOpen || !posts) return;
 
-  const stats = [
-    { label: "Total Awards", value: employeePosts.length, icon: Trophy, color: "text-blue-600", border: "border-blue-100", bg: "bg-blue-50/50" },
-    { label: "Employee of Month", value: employeePosts.filter(p => p.recognitionType === 'employee_of_month').length, icon: Star, color: "text-yellow-600", border: "border-yellow-100", bg: "bg-yellow-50/50" },
-    { label: "Excellence", value: employeePosts.filter(p => p.recognitionType === 'excellence_award').length, icon: Award, color: "text-purple-600", border: "border-purple-100", bg: "bg-purple-50/50" },
-    { label: "Team Player", value: employeePosts.filter(p => p.recognitionType === 'team_player').length, icon: Users, color: "text-green-600", border: "border-green-100", bg: "bg-green-50/50" },
-  ];
+    console.log(`EmployeeHistoryModal - Employee:`, employee);
+    console.log(`Logged-in user:`, loggedInUser);
+    console.log(`Total posts available: ${posts.length}`);
+
+    // If no specific employee is provided, show logged-in user's history
+    const targetEmployee = employee || loggedInUser;
+    
+    if (!targetEmployee) {
+      console.log("No employee or logged-in user found");
+      setFilteredPosts([]);
+      return;
+    }
+
+    // Filter posts for the target employee
+    const employeePosts = posts.filter(post => {
+      // Match by employee ID (most reliable)
+      return post.employee?.employeeId === targetEmployee.employeeId;
+    });
+
+    console.log(`Filtered posts for ${targetEmployee.name}:`, employeePosts.length);
+
+    // Apply type filter
+    let filtered = employeePosts;
+    if (filter !== "all") {
+      filtered = employeePosts.filter(post => post.recognitionType === filter);
+    }
+
+    setFilteredPosts(filtered);
+    setCurrentPage(1);
+  }, [isOpen, employee, posts, filter, loggedInUser]);
+
+  const getRecognitionTypeInfo = (type) => {
+    switch (type) {
+      case "employee_of_month":
+        return {
+          icon: <Crown className="w-4 h-4" />,
+          label: "Employee of Month",
+          color: "text-yellow-600",
+          bgColor: "bg-yellow-50"
+        };
+      case "excellence_award":
+        return {
+          icon: <Award className="w-4 h-4" />,
+          label: "Excellence Award",
+          color: "text-purple-600",
+          bgColor: "bg-purple-50"
+        };
+      case "innovation":
+        return {
+          icon: <Zap className="w-4 h-4" />,
+          label: "Innovation Award",
+          color: "text-blue-600",
+          bgColor: "bg-blue-50"
+        };
+      case "team_player":
+        return {
+          icon: <Users className="w-4 h-4" />,
+          label: "Team Player",
+          color: "text-green-600",
+          bgColor: "bg-green-50"
+        };
+      default:
+        return {
+          icon: <Trophy className="w-4 h-4" />,
+          label: "Recognition",
+          color: "text-gray-600",
+          bgColor: "bg-gray-50"
+        };
+    }
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    });
+  };
+
+  const getStats = (employeePosts) => {
+    const total = employeePosts.length;
+    const employeeOfMonth = employeePosts.filter(p => p.recognitionType === "employee_of_month").length;
+    const excellenceAwards = employeePosts.filter(p => p.recognitionType === "excellence_award").length;
+    const innovationAwards = employeePosts.filter(p => p.recognitionType === "innovation").length;
+    const teamPlayerAwards = employeePosts.filter(p => p.recognitionType === "team_player").length;
+
+    return { total, employeeOfMonth, excellenceAwards, innovationAwards, teamPlayerAwards };
+  };
+
+  // Get all posts for the current employee (before filtering by type)
+  const getEmployeePosts = () => {
+    const targetEmployee = employee || loggedInUser;
+    if (!targetEmployee || !posts) return [];
+    
+    return posts.filter(post => 
+      post.employee?.employeeId === targetEmployee.employeeId
+    );
+  };
+
+  const employeePosts = getEmployeePosts();
+  const stats = getStats(employeePosts);
+
+  // Pagination
+  const indexOfLastPost = currentPage * postsPerPage;
+  const indexOfFirstPost = indexOfLastPost - postsPerPage;
+  const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
+  const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
+
+  if (!isOpen) return null;
+
+  const targetEmployee = employee || loggedInUser;
+  
+  if (!targetEmployee) {
+    return (
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+        <div className="bg-white rounded-2xl w-full max-w-md p-6">
+          <div className="text-center">
+            <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No User Found</h3>
+            <p className="text-gray-600 mb-4">Please log in to view recognition history.</p>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop with Blur */}
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md animate-fadeIn" onClick={onClose} />
-      
-      {/* Modal Main Container */}
-      <div className="relative bg-[#F8FAFC] rounded-[32px] w-full max-w-5xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col animate-slideUp border border-white">
-        
-        {/* Header Section (White Background) */}
-        <div className="bg-white p-8 border-b border-gray-100">
-          <div className="flex justify-between items-start">
-            <div className="flex items-center gap-6">
-              <div className="relative">
-                <div className="w-20 h-20 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center text-white text-3xl font-bold shadow-lg">
-                  {employee.name?.charAt(0).toUpperCase()}
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+      <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="p-6">
+          {/* Header */}
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                {employee ? "Recognition History" : "My Recognition History"}
+              </h2>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-r from-red-600 to-red-700 rounded-full flex items-center justify-center text-white font-bold">
+                  {targetEmployee.name?.charAt(0) || "U"}
                 </div>
-                <div className="absolute -bottom-2 -right-2 bg-yellow-400 p-1.5 rounded-lg border-2 border-white shadow-sm">
-                  <Trophy size={14} className="text-white" fill="currentColor" />
-                </div>
-              </div>
-              <div>
-                <h2 className="text-2xl font-black text-gray-900 leading-tight">{employee.name}</h2>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-xs font-bold rounded uppercase tracking-wider">
-                    {employee.employeeId || "ID-104"}
-                  </span>
-                  <span className="text-gray-400 text-sm font-medium">• {employee.department}</span>
+                <div>
+                  <h3 className="font-bold text-gray-900">{targetEmployee.name}</h3>
+                  <p className="text-sm text-gray-600">
+                    {targetEmployee.position} {targetEmployee.department && `• ${targetEmployee.department}`}
+                    {!employee && <span className="ml-2 text-blue-600 text-xs font-medium">(You)</span>}
+                  </p>
                 </div>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors group">
-              <X size={20} className="text-gray-400 group-hover:text-gray-600" />
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X size={24} className="text-gray-500" />
             </button>
           </div>
 
-          {/* Stats Bar */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-            {stats.map((stat, i) => (
-              <div key={i} className={`${stat.bg} ${stat.border} border rounded-2xl p-4 transition-all hover:shadow-sm`}>
-                <div className="flex items-center gap-2 mb-1">
-                  <stat.icon size={16} className={stat.color} />
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">{stat.label}</span>
-                </div>
-                <div className="text-2xl font-black text-gray-900">{stat.value}</div>
-              </div>
-            ))}
+          {/* Stats */}
+          <div className="grid grid-cols-5 gap-2 mb-6">
+            <div className="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-lg p-3 text-center">
+              <div className="text-sm text-red-600 font-medium">Total</div>
+              <div className="text-xl font-bold text-gray-900">{stats.total}</div>
+            </div>
+            <div className="bg-gradient-to-r from-yellow-50 to-amber-100 border border-yellow-200 rounded-lg p-3 text-center">
+              <div className="text-sm text-yellow-600 font-medium">Emp. of Month</div>
+              <div className="text-xl font-bold text-gray-900">{stats.employeeOfMonth}</div>
+            </div> 
+            <div className="bg-gradient-to-r from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-3 text-center">
+              <div className="text-sm text-purple-600 font-medium">Excellence</div>
+              <div className="text-xl font-bold text-gray-900">{stats.excellenceAwards}</div>
+            </div>
+            <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-3 text-center">
+              <div className="text-sm text-blue-600 font-medium">Innovation</div>
+              <div className="text-xl font-bold text-gray-900">{stats.innovationAwards}</div>
+            </div>
+            <div className="bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg p-3 text-center">
+              <div className="text-sm text-green-600 font-medium">Team Player</div>
+              <div className="text-xl font-bold text-gray-900">{stats.teamPlayerAwards}</div>
+            </div>
           </div>
-        </div>
 
-        {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-          <div className="flex items-center gap-2 mb-6">
-            <History size={20} className="text-indigo-600" />
-            <h3 className="text-lg font-bold text-gray-800">Recognition Timeline</h3>
+          {/* Filter Tabs */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            <button
+              onClick={() => setFilter("all")}
+              className={`px-3 py-1.5 rounded-lg font-medium text-sm transition-all ${
+                filter === "all"
+                  ? "bg-gradient-to-r from-red-600 to-red-700 text-white"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setFilter("employee_of_month")}
+              className={`px-3 py-1.5 rounded-lg font-medium text-sm transition-all flex items-center gap-1 ${
+                filter === "employee_of_month"
+                  ? "bg-gradient-to-r from-yellow-500 to-amber-500 text-white"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+              }`}
+            >
+              <Crown size={12} />
+              Employee of Month
+            </button>
+            <button
+              onClick={() => setFilter("excellence_award")}
+              className={`px-3 py-1.5 rounded-lg font-medium text-sm transition-all flex items-center gap-1 ${
+                filter === "excellence_award"
+                  ? "bg-gradient-to-r from-purple-500 to-indigo-500 text-white"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+              }`}
+            >
+              <Award size={12} />
+              Excellence
+            </button>
+            <button
+              onClick={() => setFilter("innovation")}
+              className={`px-3 py-1.5 rounded-lg font-medium text-sm transition-all flex items-center gap-1 ${
+                filter === "innovation"
+                  ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+              }`}
+            >
+              <Zap size={12} />
+              Innovation
+            </button>
+            <button
+              onClick={() => setFilter("team_player")}
+              className={`px-3 py-1.5 rounded-lg font-medium text-sm transition-all flex items-center gap-1 ${
+                filter === "team_player"
+                  ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+              }`}
+            >
+              <Users size={12} />
+              Team Player
+            </button>
           </div>
 
-          {employeePosts.length === 0 ? (
-            <div className="bg-white rounded-3xl p-12 text-center border-2 border-dashed border-gray-200">
-              <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Trophy size={32} className="text-gray-300" />
+          {/* Recognition List */}
+          {currentPosts.length === 0 ? (
+            <div className="text-center py-8 bg-gray-50 rounded-xl">
+              <div className="w-12 h-12 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Trophy className="w-6 h-6 text-gray-400" />
               </div>
-              <h4 className="text-lg font-bold text-gray-900">No achievements yet</h4>
-              <p className="text-gray-500 max-w-xs mx-auto mt-2">Great things take time! Recognition posts will appear here.</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                No recognitions found
+              </h3>
+              <p className="text-gray-600">
+                {targetEmployee.name} {!employee && "(You) "}hasn't received any recognitions yet.
+              </p>
             </div>
           ) : (
-            /* Achievement Grid */
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {employeePosts.map((post, index) => (
-                <div key={index} className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all group">
-                  {/* Image Holder */}
-                  <div className="aspect-video bg-gray-100 relative overflow-hidden">
-                    {post.imageUrl ? (
-                      <img 
-                        src={post.imageUrl} 
-                        alt={post.title} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300">
-                        <ImageIcon size={32} strokeWidth={1} />
+            <>
+              <div className="space-y-3 mb-6">
+                {currentPosts.map((post) => {
+                  const typeInfo = getRecognitionTypeInfo(post.recognitionType);
+                  
+                  return (
+                    <div
+                      key={post._id}
+                      className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-sm transition-shadow"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`p-2 ${typeInfo.bgColor} rounded-lg flex-shrink-0`}>
+                          {React.cloneElement(typeInfo.icon, {
+                            className: `w-4 h-4 ${typeInfo.color}`
+                          })}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-1">
+                            <h4 className="font-bold text-gray-900">{post.title}</h4>
+                            <span className="text-xs text-gray-500 flex items-center gap-1">
+                              <Calendar size={12} />
+                              {formatDate(post.createdAt)}
+                            </span>
+                          </div>
+                          <p className="text-gray-600 text-sm line-clamp-2">
+                            {post.description}
+                          </p>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className={`text-xs font-medium px-2 py-1 rounded-full ${typeInfo.bgColor} ${typeInfo.color}`}>
+                              {typeInfo.label}
+                            </span>
+                            {post.tags && post.tags.length > 0 && (
+                              <div className="flex gap-1">
+                                {post.tags.slice(0, 2).map((tag, index) => (
+                                  <span key={index} className="text-xs text-gray-500 italic">
+                                    #{tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    )}
-                    <div className="absolute top-3 left-3">
-                      <span className="px-2 py-1 bg-white/90 backdrop-blur-sm text-[10px] font-black uppercase rounded shadow-sm text-indigo-600">
-                        {post.recognitionType?.replace(/_/g, ' ')}
-                      </span>
                     </div>
-                  </div>
+                  );
+                })}
+              </div>
 
-                  {/* Card Content */}
-                  <div className="p-5">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
-                      <Calendar size={12} />
-                      {new Date(post.createdAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
-                    </div>
-                    <h4 className="font-bold text-gray-900 mb-2 line-clamp-1">{post.title}</h4>
-                    <p className="text-gray-500 text-sm line-clamp-2 leading-relaxed mb-4">
-                      {post.description}
-                    </p>
-                    
-                    {post.certificateUrl && (
-                      <button 
-                        onClick={() => window.open(post.certificateUrl, '_blank')}
-                        className="w-full py-2 bg-gray-50 hover:bg-rose-50 text-rose-500 text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
-                      >
-                        <FileText size={14} />
-                        View Certificate
-                      </button>
-                    )}
-                  </div>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  
+                  <span className="text-sm text-gray-600">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="p-2 bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
-        </div>
-
-        {/* Footer */}
-        <div className="p-6 bg-white border-t border-gray-100 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-8 py-3 bg-gray-900 text-white rounded-2xl font-bold hover:bg-gray-800 transition-all active:scale-95 shadow-lg shadow-gray-200"
-          >
-            Close History
-          </button>
         </div>
       </div>
     </div>
