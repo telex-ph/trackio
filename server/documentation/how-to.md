@@ -8,16 +8,20 @@ Project documentation, typically written in Markdown (.md) files, provides clear
 - Learn how the code works
 - Set up, use, and maintain the system effectively
 
-To properly read a documentation press `ctrl + shift + v` on VSCode which give you a better visual ground to read this
-file/documents
-
 ## How to View Markdown Files?
 
-Markdown files are plain text, but you can view them in a **formatted, easy-to-read way:**
+> **Note!**
+> Please take time to read this
 
-- In VS Code: Press `Ctrl + Shift + V (or Cmd + Shift + V on Mac)` to open the Markdown preview.
+You might wonder how the hell am I suppose to read this? There's so much going on! Is the author of this documentation dumb? Say no more my dear friendo, just read the following bullets to light up the bulb above your head.
+
+Markdown files are plain text, but you can view them in a **formatted, easy-to-read way**:
+
+- In VS Code: Press `Ctrl + Shift + V (or Cmd + Shift + V on Mac)` to open the Markdown preview. (**Recommended**)
 - In GitHub/GitLab: Open the .md file in the repository to see it rendered with headers, lists, tables, and code blocks.
 - Using other tools: Apps like Typora, Mark Text, or Obsidian can render Markdown beautifully.
+
+voilà!!!💡
 
 ## Tips for Reading Documentation
 
