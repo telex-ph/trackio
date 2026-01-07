@@ -140,6 +140,18 @@ const CertificateModal = ({ course, user, onClose }) => {
     });
   };
 
+  // Function to get user's full name
+  const getUserFullName = () => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    } else if (user?.name) {
+      return user.name;
+    } else if (user?.email) {
+      return user.email;
+    }
+    return "Student";
+  };
+
   if (loading) {
     return (
       <Modal onClose={onClose}>
@@ -378,10 +390,10 @@ const CertificateModal = ({ course, user, onClose }) => {
                 <div className="h-1 w-64 bg-gradient-to-r from-red-600 to-red-800 mx-auto rounded-full"></div>
               </div>
               
-              {/* Student Name */}
+              {/* Student Name - UPDATED TO USE FIRST NAME AND LAST NAME */}
               <div className="mb-10">
                 <h2 className="text-5xl font-bold text-red-900 mb-3 py-2 border-b-4 border-t-4 border-red-200 px-8">
-                  {user.name || user.email}
+                  {getUserFullName()}
                 </h2>
                 <p className="text-gray-600 text-lg">has successfully completed</p>
               </div>
@@ -400,7 +412,7 @@ const CertificateModal = ({ course, user, onClose }) => {
                     <span className="text-sm font-medium text-gray-700">Completion Date</span>
                   </div>
                   <p className="font-bold text-gray-800 text-lg">
-                    {formatDate(certificate.completionDate)}
+                    {certificate?.completionDate ? formatDate(certificate.completionDate) : "N/A"}
                   </p>
                 </div>
                 <div className="text-center p-4 bg-white rounded-lg shadow-sm border">
@@ -409,7 +421,7 @@ const CertificateModal = ({ course, user, onClose }) => {
                     <span className="text-sm font-medium text-gray-700">Certificate ID</span>
                   </div>
                   <p className="font-mono font-bold text-gray-800 text-lg tracking-wider">
-                    {certificate.certificateNumber}
+                    {certificate?.certificateNumber || "N/A"}
                   </p>
                 </div>
                 <div className="text-center p-4 bg-white rounded-lg shadow-sm border">
@@ -434,7 +446,7 @@ const CertificateModal = ({ course, user, onClose }) => {
                   <div className="text-center">
                     <div className="h-0.5 w-48 bg-gray-400 mx-auto mb-3"></div>
                     <p className="text-sm text-gray-600">Issued By</p>
-                    <p className="font-bold text-gray-800 text-lg">President & CEO</p>
+                    <p className="font-bold text-gray-800 text-lg">Learning Management System</p>
                   </div>
                 </div>
               </div>
@@ -454,14 +466,18 @@ const CertificateModal = ({ course, user, onClose }) => {
                   <Calendar className="w-4 h-4 text-gray-500 mr-2" />
                   <span className="text-sm font-medium text-gray-700">Issued On</span>
                 </div>
-                <p className="font-bold text-gray-800">{formatDate(certificate.issuedAt)}</p>
+                <p className="font-bold text-gray-800">
+                  {certificate?.issuedAt ? formatDate(certificate.issuedAt) : "N/A"}
+                </p>
               </div>
               <div className="bg-white p-4 rounded-lg border border-gray-200">
                 <div className="flex items-center mb-2">
                   <Clock className="w-4 h-4 text-gray-500 mr-2" />
                   <span className="text-sm font-medium text-gray-700">Valid Until</span>
                 </div>
-                <p className="font-bold text-gray-800">{formatDate(certificate.expiryDate)}</p>
+                <p className="font-bold text-gray-800">
+                  {certificate?.expiryDate ? formatDate(certificate.expiryDate) : "N/A"}
+                </p>
               </div>
               <div className="bg-white p-4 rounded-lg border border-gray-200">
                 <div className="flex items-center mb-2">
@@ -478,8 +494,12 @@ const CertificateModal = ({ course, user, onClose }) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <button
                 onClick={downloadCertificate}
-                disabled={downloading}
-                className="col-span-2 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition font-medium flex items-center justify-center shadow-md"
+                disabled={downloading || !certificate}
+                className={`col-span-2 py-3 rounded-lg transition font-medium flex items-center justify-center shadow-md ${
+                  !certificate 
+                    ? "bg-gray-400 cursor-not-allowed" 
+                    : "bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800"
+                }`}
               >
                 {downloading ? (
                   <>
@@ -497,14 +517,24 @@ const CertificateModal = ({ course, user, onClose }) => {
               <div className="flex space-x-2">
                 <button
                   onClick={shareCertificate}
-                  className="flex-1 py-3 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium flex items-center justify-center border border-gray-200"
+                  disabled={!certificate}
+                  className={`flex-1 py-3 rounded-lg transition font-medium flex items-center justify-center border ${
+                    !certificate 
+                      ? "bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed" 
+                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                  }`}
                 >
                   <Share2 className="w-4 h-4 mr-2" />
                   Share
                 </button>
                 <button
                   onClick={() => window.print()}
-                  className="flex-1 py-3 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium flex items-center justify-center border border-gray-200"
+                  disabled={!certificate}
+                  className={`flex-1 py-3 rounded-lg transition font-medium flex items-center justify-center border ${
+                    !certificate 
+                      ? "bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed" 
+                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                  }`}
                 >
                   <Printer className="w-4 h-4 mr-2" />
                   Print
@@ -524,18 +554,20 @@ const CertificateModal = ({ course, user, onClose }) => {
                 <span className="text-sm text-gray-600">Certificate ID:</span>
                 <div className="flex items-center">
                   <code className="font-mono text-sm bg-white px-3 py-1 rounded border mr-2">
-                    {certificate.certificateNumber}
+                    {certificate?.certificateNumber || "N/A"}
                   </code>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(certificate.certificateNumber);
-                      toast.success("Certificate ID copied to clipboard!");
-                    }}
-                    className="text-blue-600 hover:text-blue-800 flex items-center text-sm"
-                  >
-                    <Copy className="w-3 h-3 mr-1" />
-                    Copy
-                  </button>
+                  {certificate?.certificateNumber && (
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(certificate.certificateNumber);
+                        toast.success("Certificate ID copied to clipboard!");
+                      }}
+                      className="text-blue-600 hover:text-blue-800 flex items-center text-sm"
+                    >
+                      <Copy className="w-3 h-3 mr-1" />
+                      Copy
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
