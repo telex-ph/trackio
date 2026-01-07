@@ -844,19 +844,62 @@ class Course {
     }
   }
 
-  static async generateCertificate(courseId, userId) {
+  // FIXED: Generate certificate with proper user name (not email)
+  static async generateCertificate(courseId, userId, userName = null) {
     const db = await connectDB();
     const certificatesCollection = await db.collection(this.#certificateCollection);
     const coursesCollection = await db.collection(this.#collection);
     const usersCollection = await db.collection("users");
 
     try {
-      // Get course and user details
+      // Get course details
       const course = await coursesCollection.findOne({ _id: new ObjectId(courseId) });
-      const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+      if (!course) {
+        throw new Error("Course not found");
+      }
 
-      if (!course || !user) {
-        throw new Error("Course or user not found");
+      // Get user details - look for firstName and lastName fields
+      const user = await usersCollection.findOne({ 
+        _id: new ObjectId(userId) 
+      }, {
+        projection: { 
+          firstName: 1, 
+          lastName: 1, 
+          name: 1, 
+          email: 1 
+        }
+      });
+
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      // Get user's full name properly
+      let certificateUserName = userName;
+      
+      if (!certificateUserName || certificateUserName.trim() === '') {
+        // Priority: firstName + lastName > name > email formatting
+        if (user.firstName && user.lastName) {
+          certificateUserName = `${user.firstName} ${user.lastName}`.trim();
+        } 
+        // Then check for name field
+        else if (user.name) {
+          certificateUserName = user.name.trim();
+        } 
+        // Finally fallback to email formatting (but we should avoid this)
+        else if (user.email) {
+          const emailPrefix = user.email.split('@')[0];
+          certificateUserName = emailPrefix
+            .replace(/[._-]/g, ' ')
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
+        }
+      }
+
+      // Ensure we have a valid name (not email)
+      if (!certificateUserName || certificateUserName.trim() === '' || certificateUserName.includes('@')) {
+        certificateUserName = "Student";
       }
 
       // Generate certificate number
@@ -875,7 +918,7 @@ class Course {
         courseTitle: course.title,
         courseDescription: course.description,
         courseDuration: course.duration,
-        userName: user.name || user.email,
+        userName: certificateUserName, // Use the properly formatted name
         userEmail: user.email,
         instructor: course.instructor || "Learning Platform",
         issuedAt,
@@ -933,6 +976,7 @@ class Course {
         doc.moveDown(2);
         doc.fillColor('#374151').fontSize(18).font('Helvetica').text('This is to certify that', { align: 'center' });
         
+        // FIXED: Show user's name (not email) - use proper name formatting
         doc.moveDown(0.5);
         doc.fillColor('#1e293b').fontSize(32).font('Helvetica-Bold').text(certificate.userName, { align: 'center' });
         

@@ -567,7 +567,7 @@ export const getCertificate = async (req, res) => {
 
 export const generateCertificate = async (req, res) => {
   const { courseId } = req.params;
-  const { userId } = req.body;
+  const { userId, userName, userEmail } = req.body;
 
   if (!courseId || !userId) {
     return res.status(400).json({ message: "Course ID and User ID are required" });
@@ -590,8 +590,56 @@ export const generateCertificate = async (req, res) => {
       return res.status(200).json(existingCertificate);
     }
 
-    // Generate new certificate
-    const certificate = await Course.generateCertificate(courseId, userId);
+    // Get user's full name from the User model
+    let certificateUserName = userName;
+    
+    // If userName not provided, fetch user data to get proper name
+    if (!certificateUserName || certificateUserName.trim() === '') {
+      try {
+        // Fetch user from database - look for firstName and lastName
+        const userData = await User.findById(userId).select('firstName lastName name email');
+        
+        if (userData) {
+          // Priority: firstName + lastName (as shown in Topbar)
+          if (userData.firstName && userData.lastName) {
+            certificateUserName = `${userData.firstName} ${userData.lastName}`.trim();
+          } 
+          // Then check for name field
+          else if (userData.name) {
+            certificateUserName = userData.name.trim();
+          } 
+          // Avoid using email if possible
+          else if (userData.email && userEmail) {
+            // Use the email from request if provided
+            const emailPrefix = userEmail.split('@')[0];
+            certificateUserName = emailPrefix
+              .replace(/[._-]/g, ' ')
+              .split(' ')
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+              .join(' ');
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        // If can't fetch from DB, use provided userName or format email
+        if (userEmail) {
+          const emailPrefix = userEmail.split('@')[0];
+          certificateUserName = emailPrefix
+            .replace(/[._-]/g, ' ')
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
+        }
+      }
+    }
+
+    // Ensure we have a valid name (not email)
+    if (!certificateUserName || certificateUserName.trim() === '' || certificateUserName.includes('@')) {
+      certificateUserName = "Student";
+    }
+
+    // Generate new certificate with proper user name
+    const certificate = await Course.generateCertificate(courseId, userId, certificateUserName);
     res.status(201).json(certificate);
   } catch (error) {
     console.error("Error generating certificate:", error);
@@ -601,7 +649,7 @@ export const generateCertificate = async (req, res) => {
 
 export const downloadCertificate = async (req, res) => {
   const { courseId } = req.params;
-  const { userId } = req.query;
+  const { userId, userName } = req.query;
 
   if (!courseId || !userId) {
     return res.status(400).json({ message: "Course ID and User ID are required" });
@@ -609,18 +657,44 @@ export const downloadCertificate = async (req, res) => {
 
   try {
     // Check if certificate exists
-    const certificate = await Course.getUserCertificate(courseId, userId);
+    let certificate = await Course.getUserCertificate(courseId, userId);
     
     if (!certificate) {
       return res.status(404).json({ error: "Certificate not found. Generate one first." });
     }
 
-    // Generate PDF certificate
+    // If userName is provided in query params, use it
+    let certificateUserName = userName || certificate.userName;
+    
+    // If still no name or name is email-like, fetch user data to get proper name
+    if (!certificateUserName || certificateUserName.includes('@') || certificateUserName === "Student") {
+      try {
+        const userData = await User.findById(userId).select('firstName lastName name email');
+        
+        if (userData) {
+          if (userData.firstName && userData.lastName) {
+            certificateUserName = `${userData.firstName} ${userData.lastName}`.trim();
+          } else if (userData.name) {
+            certificateUserName = userData.name.trim();
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user data for download:", error);
+      }
+    }
+
+    // Update certificate with proper name if needed
+    if (certificate.userName !== certificateUserName) {
+      certificate.userName = certificateUserName;
+    }
+
+    // Generate PDF certificate with proper name
     const pdfBuffer = await Course.generateCertificatePDF(certificate);
     
     // Set headers for PDF download
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=${certificate.certificateNumber}.pdf`);
+    const fileName = `${certificate.certificateNumber}_${certificateUserName.replace(/\s+/g, '_')}.pdf`;
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.send(pdfBuffer);
   } catch (error) {
     console.error("Error downloading certificate:", error);

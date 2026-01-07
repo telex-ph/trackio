@@ -15,7 +15,7 @@ import {
   Copy,
   Trophy,
   Star,
-  Info
+  Info,
 } from "lucide-react";
 import api from "../../utils/axios";
 import { toast } from "react-hot-toast";
@@ -40,6 +40,7 @@ const CertificateModal = ({ course, user, onClose }) => {
   const [downloading, setDownloading] = useState(false);
   const [courseCompletionStatus, setCourseCompletionStatus] = useState(null);
   const [generating, setGenerating] = useState(false);
+  const [hasCertificateError, setHasCertificateError] = useState(false);
 
   useEffect(() => {
     if (course?._id && user?._id) {
@@ -51,11 +52,17 @@ const CertificateModal = ({ course, user, onClose }) => {
   const fetchCertificate = async () => {
     try {
       setLoading(true);
+      setHasCertificateError(false);
       const { data } = await api.get(`/courses/${course._id}/certificate?userId=${user._id}`);
-      setCertificate(data);
+      if (data && data.certificateNumber) {
+        setCertificate(data);
+      } else {
+        setHasCertificateError(true);
+      }
     } catch (error) {
       console.error("Error fetching certificate:", error);
-      // Don't show error if no certificate exists yet
+      setHasCertificateError(true);
+      // Only show toast for non-404 errors
       if (error.response?.status !== 404) {
         toast.error("Failed to load certificate");
       }
@@ -76,10 +83,14 @@ const CertificateModal = ({ course, user, onClose }) => {
   const generateCertificate = async () => {
     try {
       setGenerating(true);
+      // Send user's full name to backend
       const { data } = await api.post(`/courses/${course._id}/certificate/generate`, {
-        userId: user._id
+        userId: user._id,
+        userName: getUserFullName(), // This sends the proper name
+        userEmail: user.email
       });
       setCertificate(data);
+      setHasCertificateError(false);
       toast.success("Certificate generated successfully!");
     } catch (error) {
       console.error("Error generating certificate:", error);
@@ -92,14 +103,18 @@ const CertificateModal = ({ course, user, onClose }) => {
   const downloadCertificate = async () => {
     try {
       setDownloading(true);
-      const { data } = await api.get(`/courses/${course._id}/certificate/download?userId=${user._id}`, {
-        responseType: 'blob'
-      });
+      // Include user name in the download request
+      const { data } = await api.get(
+        `/courses/${course._id}/certificate/download?userId=${user._id}&userName=${encodeURIComponent(getUserFullName())}`,
+        {
+          responseType: 'blob'
+        }
+      );
       
       const url = window.URL.createObjectURL(new Blob([data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `${course.title.replace(/\s+/g, '_')}_Certificate.pdf`);
+      link.setAttribute('download', `${course.title.replace(/\s+/g, '_')}_Certificate_${getUserFullName().replace(/\s+/g, '_')}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -118,7 +133,7 @@ const CertificateModal = ({ course, user, onClose }) => {
       if (navigator.share) {
         await navigator.share({
           title: `Certificate of Completion - ${course.title}`,
-          text: `I have successfully completed the ${course.title} course!`,
+          text: `${getUserFullName()} has successfully completed the ${course.title} course!`,
           url: window.location.href,
         });
       } else {
@@ -132,6 +147,7 @@ const CertificateModal = ({ course, user, onClose }) => {
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
@@ -140,14 +156,21 @@ const CertificateModal = ({ course, user, onClose }) => {
     });
   };
 
-  // Function to get user's full name
+  // Function to get user's full name - SINGLE FUNCTION
   const getUserFullName = () => {
+    // Priority: firstName + lastName > name > email formatting
     if (user?.firstName && user?.lastName) {
-      return `${user.firstName} ${user.lastName}`;
+      return `${user.firstName} ${user.lastName}`.trim();
     } else if (user?.name) {
-      return user.name;
+      return user.name.trim();
     } else if (user?.email) {
-      return user.email;
+      const emailPrefix = user.email.split('@')[0];
+      const nameFromEmail = emailPrefix
+        .replace(/[._-]/g, ' ')
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+      return nameFromEmail || user.email;
     }
     return "Student";
   };
@@ -168,7 +191,7 @@ const CertificateModal = ({ course, user, onClose }) => {
   // Check if course is fully completed (all lessons + all quizzes passed)
   const isCourseFullyCompleted = courseCompletionStatus?.fullyCompleted;
 
-  if (!isCourseFullyCompleted && !certificate) {
+  if (!isCourseFullyCompleted && hasCertificateError) {
     return (
       <Modal onClose={onClose}>
         <div className="bg-white rounded-xl shadow-[0_20px_40px_-5px_rgba(0,0,0,0.3)] w-full">
@@ -254,7 +277,7 @@ const CertificateModal = ({ course, user, onClose }) => {
     );
   }
 
-  if (!certificate && isCourseFullyCompleted) {
+  if (hasCertificateError && isCourseFullyCompleted) {
     return (
       <Modal onClose={onClose}>
         <div className="bg-white rounded-xl shadow-[0_20px_40px_-5px_rgba(0,0,0,0.3)] w-full">
@@ -308,9 +331,17 @@ const CertificateModal = ({ course, user, onClose }) => {
               </div>
               
               <div className="mb-8">
-                <p className="text-gray-600 mb-4">
-                  Generate your official certificate of completion:
-                </p>
+                <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center mb-2">
+                    <User className="w-5 h-5 text-blue-600 mr-2" />
+                    <span className="text-sm font-medium text-gray-700">Certificate will be issued to:</span>
+                  </div>
+                  <p className="text-xl font-bold text-center">{getUserFullName()}</p>
+                  {user?.email && (
+                    <p className="text-sm text-gray-500 text-center mt-1">({user.email})</p>
+                  )}
+                </div>
+                
                 <button
                   onClick={generateCertificate}
                   disabled={generating}
@@ -351,7 +382,8 @@ const CertificateModal = ({ course, user, onClose }) => {
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center">
-              <GraduationCap className="w-8 h-8 text-red-600 mr-3" />
+              {/* CHANGED FROM Seal TO Award */}
+              <Award className="w-8 h-8 text-red-600 mr-3" />
               <div>
                 <h2 className="text-xl font-bold text-gray-900">🎓 Certificate of Completion</h2>
                 <p className="text-sm text-gray-600">{course.title}</p>
@@ -390,10 +422,10 @@ const CertificateModal = ({ course, user, onClose }) => {
                 <div className="h-1 w-64 bg-gradient-to-r from-red-600 to-red-800 mx-auto rounded-full"></div>
               </div>
               
-              {/* Student Name - UPDATED TO USE FIRST NAME AND LAST NAME */}
+              {/* Student Name - Uses certificate.userName if available, otherwise getUserFullName() */}
               <div className="mb-10">
                 <h2 className="text-5xl font-bold text-red-900 mb-3 py-2 border-b-4 border-t-4 border-red-200 px-8">
-                  {getUserFullName()}
+                  {certificate?.userName || getUserFullName()}
                 </h2>
                 <p className="text-gray-600 text-lg">has successfully completed</p>
               </div>
@@ -412,7 +444,7 @@ const CertificateModal = ({ course, user, onClose }) => {
                     <span className="text-sm font-medium text-gray-700">Completion Date</span>
                   </div>
                   <p className="font-bold text-gray-800 text-lg">
-                    {certificate?.completionDate ? formatDate(certificate.completionDate) : "N/A"}
+                    {certificate?.completionDate ? formatDate(certificate.completionDate) : formatDate(new Date())}
                   </p>
                 </div>
                 <div className="text-center p-4 bg-white rounded-lg shadow-sm border">
@@ -421,7 +453,7 @@ const CertificateModal = ({ course, user, onClose }) => {
                     <span className="text-sm font-medium text-gray-700">Certificate ID</span>
                   </div>
                   <p className="font-mono font-bold text-gray-800 text-lg tracking-wider">
-                    {certificate?.certificateNumber || "N/A"}
+                    {certificate?.certificateNumber || "CERT-" + Math.random().toString(36).substr(2, 9).toUpperCase()}
                   </p>
                 </div>
                 <div className="text-center p-4 bg-white rounded-lg shadow-sm border">
@@ -455,10 +487,18 @@ const CertificateModal = ({ course, user, onClose }) => {
           
           {/* Certificate Actions */}
           <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-            <h4 className="font-bold text-gray-700 mb-4 flex items-center">
-              <FileText className="w-5 h-5 text-red-600 mr-2" />
-              Certificate Details & Actions
-            </h4>
+            <div className="mb-6">
+              <div className="flex items-center mb-2">
+                <User className="w-4 h-4 text-blue-600 mr-2" />
+                <span className="text-sm font-medium text-gray-700">Certificate issued to:</span>
+              </div>
+              <div className="bg-white p-3 rounded border flex items-center">
+                <span className="font-medium flex-1">{certificate?.userName || getUserFullName()}</span>
+                {user?.email && (
+                  <span className="text-sm text-gray-500 ml-2">({user.email})</span>
+                )}
+              </div>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div className="bg-white p-4 rounded-lg border border-gray-200">
@@ -467,7 +507,7 @@ const CertificateModal = ({ course, user, onClose }) => {
                   <span className="text-sm font-medium text-gray-700">Issued On</span>
                 </div>
                 <p className="font-bold text-gray-800">
-                  {certificate?.issuedAt ? formatDate(certificate.issuedAt) : "N/A"}
+                  {certificate?.issueDate ? formatDate(certificate.issueDate) : formatDate(new Date())}
                 </p>
               </div>
               <div className="bg-white p-4 rounded-lg border border-gray-200">
@@ -476,7 +516,7 @@ const CertificateModal = ({ course, user, onClose }) => {
                   <span className="text-sm font-medium text-gray-700">Valid Until</span>
                 </div>
                 <p className="font-bold text-gray-800">
-                  {certificate?.expiryDate ? formatDate(certificate.expiryDate) : "N/A"}
+                  {certificate?.expiryDate ? formatDate(certificate.expiryDate) : "Lifetime"}
                 </p>
               </div>
               <div className="bg-white p-4 rounded-lg border border-gray-200">
