@@ -212,15 +212,10 @@ const AdminAnnouncement = () => {
     setIsLoading(true);
     setError(null);
     try {
-      console.log("🔄 Fetching announcements from database...");
       const response = await api.get("/announcements");
 
       if (response.data && Array.isArray(response.data)) {
-        console.log(
-          "✅ Successfully loaded",
-          response.data.length,
-          "announcements"
-        );
+ 
 
         const now = DateTime.local();
         const processedAnnouncements = response.data.map((announcement) => {
@@ -281,14 +276,7 @@ const AdminAnnouncement = () => {
         });
 
         setAnnouncements(sortedAll);
-        console.log("📊 Announcements loaded:", {
-          total: sortedAll.length,
-          pending: sortedAll.filter((a) => a.actualStatus === "Pending").length,
-          active: sortedAll.filter((a) => a.actualStatus === "Active").length,
-          expired: sortedAll.filter((a) => a.actualStatus === "Expired").length,
-          inactive: sortedAll.filter((a) => a.actualStatus === "Inactive")
-            .length,
-        });
+     
       } else {
         console.warn("⚠️ No data received from API");
         setAnnouncements([]);
@@ -314,8 +302,6 @@ const AdminAnnouncement = () => {
       fetchAnnouncements();
       return;
     }
-
-    console.log("🔄 Setting up socket listeners for admin...");
 
     let dataLoaded = false;
 
@@ -666,7 +652,6 @@ const AdminAnnouncement = () => {
     // Fallback to API if socket doesn't respond in 3 seconds
     const fallbackTimeout = setTimeout(() => {
       if (!dataLoaded) {
-        console.log("⏰ Socket timeout, falling back to API...");
         fetchAnnouncements();
       }
     }, 3000);
@@ -2096,13 +2081,7 @@ const AdminAnnouncement = () => {
   };
 
   useEffect(() => {
-    console.log("📊 Current Tab:", activeTab);
-    console.log("✏️ Is edit mode:", isEditMode);
-    console.log("🔄 Is currently editing:", isCurrentlyEditing);
-    console.log("⏸️ Should stay on pending:", shouldStayOnPending);
-    console.log("🛡️ Can auto-post:", canAutoPost);
-    console.log("👑 Can approve:", canCurrentUserApprove);
-    console.log("📝 Last edited ID:", lastEditedId);
+
   }, [
     activeTab,
     isEditMode,

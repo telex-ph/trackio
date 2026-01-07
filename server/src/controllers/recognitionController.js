@@ -1,5 +1,7 @@
+// src/controllers/recognitionController.js
 import { ObjectId } from 'mongodb';
 import connectDB from '../config/db.js';
+import { generatePDFCertificate } from '../utils/pdfGenerator.js';
 
 export const recognitionController = {
   async getRecognitions(req, res) {
@@ -13,10 +15,39 @@ export const recognitionController = {
         page = 1, 
         limit = 12,
         sortBy = 'createdAt',
-        sortOrder = 'desc'
+        sortOrder = 'desc',
+        recognitionType,
+        employeeId,
+        myRecognitions = false  // NEW PARAMETER: Get only current user's recognitions
       } = req.query;
       
       const filter = {};
+      
+      // NEW: Check if requesting current user's recognitions only
+      if (myRecognitions === 'true' || myRecognitions === true) {
+        // Get current user from request (assuming middleware adds user to req)
+        const currentUser = req.user;
+        
+        if (currentUser && currentUser.employeeId) {
+          filter.employeeId = currentUser.employeeId.toString();
+          console.log(`🔍 Filtering recognitions for current user: ${currentUser.employeeId}`);
+        } else if (req.headers['x-user-id']) {
+          // Alternative: Get user from header
+          const userId = req.headers['x-user-id'];
+          const user = await usersCollection.findOne(
+            { _id: new ObjectId(userId) },
+            { projection: { employeeId: 1 } }
+          );
+          if (user?.employeeId) {
+            filter.employeeId = user.employeeId.toString();
+          }
+        }
+      }
+      
+      // If specific employeeId is provided, use it (overrides myRecognitions)
+      if (employeeId && !filter.employeeId) {
+        filter.employeeId = employeeId.toString();
+      }
       
       if (status && status !== 'all') {
         if (status === 'published') {
@@ -30,6 +61,10 @@ export const recognitionController = {
         } else {
           filter.status = status;
         }
+      }
+      
+      if (recognitionType) {
+        filter.recognitionType = recognitionType;
       }
       
       const pageNum = parseInt(page);
@@ -61,7 +96,7 @@ export const recognitionController = {
         .limit(limitNum)
         .toArray();
       
-      // Fetch employee details
+      // Get employee details for the recognitions
       const uniqueEmployeeIds = [...new Set(recognitions.map(r => r.employeeId).filter(Boolean))];
       const employeesMap = {};
 
@@ -87,6 +122,7 @@ export const recognitionController = {
         });
       }
 
+      // Format recognitions with employee details
       const recognitionsWithDetails = recognitions.map((recognition) => {
         const employee = employeesMap[recognition.employeeId];
         
@@ -129,6 +165,88 @@ export const recognitionController = {
     }
   },
 
+  async getMyRecognitions(req, res) {
+    try {
+      // NEW: Specific endpoint for current user's recognitions
+      const currentUser = req.user;
+      
+      if (!currentUser || !currentUser.employeeId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Authentication required'
+        });
+      }
+      
+      const db = await connectDB();
+      const recognitionsCollection = db.collection('recognitions');
+      
+      const { 
+        page = 1, 
+        limit = 12,
+        sortBy = 'createdAt',
+        sortOrder = 'desc',
+        recognitionType
+      } = req.query;
+      
+      const filter = {
+        employeeId: currentUser.employeeId.toString(),
+        status: 'published'
+      };
+      
+      if (recognitionType) {
+        filter.recognitionType = recognitionType;
+      }
+      
+      const pageNum = parseInt(page);
+      const limitNum = parseInt(limit);
+      const skip = (pageNum - 1) * limitNum;
+      
+      const total = await recognitionsCollection.countDocuments(filter);
+      
+      const recognitions = await recognitionsCollection
+        .find(filter)
+        .sort({ [sortBy]: sortOrder === 'desc' ? -1 : 1 })
+        .skip(skip)
+        .limit(limitNum)
+        .toArray();
+      
+      // Format response
+      const formattedRecognitions = recognitions.map(recognition => ({
+        ...recognition,
+        employee: {
+          name: recognition.employeeName || `${currentUser.firstName} ${currentUser.lastName}`,
+          employeeId: recognition.employeeId,
+          department: recognition.department || currentUser.department,
+          position: currentUser.position || currentUser.role
+        }
+      }));
+      
+      res.json({
+        success: true,
+        data: formattedRecognitions,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          pages: Math.ceil(total / limitNum)
+        },
+        user: {
+          name: `${currentUser.firstName} ${currentUser.lastName}`,
+          employeeId: currentUser.employeeId,
+          totalRecognitions: total
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error fetching my recognitions:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Error fetching your recognitions',
+        error: error.message 
+      });
+    }
+  },
+
   async getRecognitionById(req, res) {
     try {
       const { id } = req.params;
@@ -155,7 +273,6 @@ export const recognitionController = {
         });
       }
       
-      // Get employee details
       const employee = await usersCollection.findOne(
         { employeeId: recognition.employeeId },
         { 
@@ -204,6 +321,95 @@ export const recognitionController = {
     }
   },
 
+  async getRecognitionByEmployeeId(req, res) {
+    try {
+      const { employeeId } = req.params;
+      const currentUser = req.user;
+      
+      if (!employeeId) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Employee ID is required' 
+        });
+      }
+      
+      // Security check: Users can only view their own recognitions
+      // unless they're admin/manager
+      if (currentUser && currentUser.employeeId !== employeeId && 
+          currentUser.role !== 'admin' && currentUser.role !== 'manager') {
+        return res.status(403).json({
+          success: false,
+          message: 'You can only view your own recognitions'
+        });
+      }
+      
+      const db = await connectDB();
+      const recognitionsCollection = db.collection('recognitions');
+      const usersCollection = db.collection('users');
+      
+      const employee = await usersCollection.findOne(
+        { employeeId: employeeId.toString() },
+        { 
+          projection: { 
+            _id: 1,
+            employeeId: 1,
+            firstName: 1,
+            lastName: 1,
+            department: 1,
+            role: 1,
+            email: 1,
+            avatar: 1
+          } 
+        }
+      );
+      
+      if (!employee) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Employee not found' 
+        });
+      }
+      
+      const recognitions = await recognitionsCollection
+        .find({ 
+          employeeId: employeeId.toString(),
+          status: { $in: ['published', 'scheduled', 'draft'] }
+        })
+        .sort({ createdAt: -1 })
+        .toArray();
+      
+      const employeeData = {
+        _id: employee._id,
+        employeeId: employee.employeeId,
+        name: `${employee.firstName} ${employee.lastName}`,
+        department: employee.department,
+        position: employee.role,
+        email: employee.email,
+        avatar: employee.avatar
+      };
+      
+      const formattedRecognitions = recognitions.map(recognition => ({
+        ...recognition,
+        employee: employeeData
+      }));
+      
+      res.json({
+        success: true,
+        data: formattedRecognitions,
+        employee: employeeData,
+        count: formattedRecognitions.length
+      });
+      
+    } catch (error) {
+      console.error('Error fetching employee recognitions:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Error fetching employee recognitions',
+        error: error.message 
+      });
+    }
+  },
+
   async createRecognition(req, res) {
     try {
       const io = req.app.get('socketio');
@@ -221,7 +427,6 @@ export const recognitionController = {
         employeePosition
       } = req.body;
       
-      // Validation
       if (!title || !description || !employeeId) {
         return res.status(400).json({ 
           success: false, 
@@ -233,7 +438,6 @@ export const recognitionController = {
       const recognitionsCollection = db.collection('recognitions');
       const usersCollection = db.collection('users');
       
-      // Get employee details
       const employee = await usersCollection.findOne(
         { employeeId: employeeId.toString() },
         { 
@@ -250,7 +454,6 @@ export const recognitionController = {
         }
       );
       
-      // Handle images - should be Cloudinary objects
       let processedImages = [];
       if (Array.isArray(images) && images.length > 0) {
         processedImages = images
@@ -262,10 +465,9 @@ export const recognitionController = {
             name: img.name || `image_${Date.now()}`,
             uploadedAt: img.uploadedAt || new Date()
           }))
-          .slice(0, 5); // Limit to 5 images
+          .slice(0, 5);
       }
       
-      // Handle schedule date
       let finalStatus = status;
       let finalScheduleDate = null;
       
@@ -279,7 +481,6 @@ export const recognitionController = {
         }
       }
       
-      // Create recognition object
       const recognitionData = {
         title: title.trim(),
         description: description.trim(),
@@ -300,7 +501,6 @@ export const recognitionController = {
         updatedAt: new Date()
       };
       
-      // Add employee name if provided or from database
       if (employee) {
         recognitionData.employeeName = `${employee.firstName} ${employee.lastName}`;
         recognitionData.employeePosition = employee.role;
@@ -309,7 +509,6 @@ export const recognitionController = {
         recognitionData.employeePosition = employeePosition || '';
       }
       
-      // Insert into database
       const result = await recognitionsCollection.insertOne(recognitionData);
       
       const createdRecognition = {
@@ -330,7 +529,6 @@ export const recognitionController = {
         }
       };
       
-      // Emit socket event
       if (io) {
         if (finalStatus === 'published') {
           io.to('admin-room').emit('adminNewRecognition', createdRecognition);
@@ -379,7 +577,6 @@ export const recognitionController = {
       const recognitionsCollection = db.collection('recognitions');
       const usersCollection = db.collection('users');
       
-      // Check if recognition exists
       const existingRecognition = await recognitionsCollection.findOne({ 
         _id: new ObjectId(id) 
       });
@@ -391,7 +588,6 @@ export const recognitionController = {
         });
       }
       
-      // Get employee details if employeeId is being updated
       let employee = null;
       if (updateData.employeeId) {
         employee = await usersCollection.findOne(
@@ -411,27 +607,22 @@ export const recognitionController = {
         );
       }
       
-      // Prepare update object
       const update = {
         updatedAt: new Date()
       };
       
-      // Handle title
       if (updateData.title !== undefined) {
         update.title = updateData.title.trim();
       }
       
-      // Handle description
       if (updateData.description !== undefined) {
         update.description = updateData.description.trim();
       }
       
-      // Handle recognition type
       if (updateData.recognitionType !== undefined) {
         update.recognitionType = updateData.recognitionType;
       }
       
-      // Handle employee ID
       if (updateData.employeeId !== undefined) {
         update.employeeId = updateData.employeeId.toString();
         if (employee) {
@@ -444,19 +635,16 @@ export const recognitionController = {
         }
       }
       
-      // Handle department
       if (updateData.department !== undefined) {
         update.department = updateData.department;
       }
       
-      // Handle tags
       if (updateData.tags !== undefined) {
         update.tags = Array.isArray(updateData.tags) 
           ? updateData.tags.map(t => t.trim()).filter(t => t)
           : updateData.tags.split(',').map(t => t.trim()).filter(t => t);
       }
       
-      // Handle images
       if (updateData.images !== undefined) {
         let processedImages = [];
         
@@ -470,7 +658,7 @@ export const recognitionController = {
               name: img.name || `image_${Date.now()}`,
               uploadedAt: img.uploadedAt || new Date()
             }))
-            .slice(0, 5); // Limit to 5 images
+            .slice(0, 5);
         }
         
         update.images = processedImages;
@@ -480,7 +668,6 @@ export const recognitionController = {
         };
       }
       
-      // Handle status and schedule date
       let newStatus = existingRecognition.status;
       if (updateData.status !== undefined || updateData.scheduleDate !== undefined) {
         newStatus = updateData.status || existingRecognition.status;
@@ -499,7 +686,6 @@ export const recognitionController = {
         }
       }
       
-      // Perform update
       const result = await recognitionsCollection.updateOne(
         { _id: new ObjectId(id) },
         { $set: update }
@@ -512,12 +698,10 @@ export const recognitionController = {
         });
       }
       
-      // Get updated recognition
       const updatedRecognition = await recognitionsCollection.findOne({ 
         _id: new ObjectId(id) 
       });
       
-      // Get employee details for the response
       const currentEmployee = await usersCollection.findOne(
         { employeeId: updatedRecognition.employeeId },
         { 
@@ -551,7 +735,6 @@ export const recognitionController = {
         }
       };
       
-      // Emit socket event
       if (io) {
         if (newStatus === 'published' && existingRecognition.status !== 'published') {
           io.to('admin-room').emit('adminRecognitionPublished', recognitionWithDetails);
@@ -628,7 +811,6 @@ export const recognitionController = {
         }
       );
       
-      // Get updated recognition with employee details
       const updatedRecognition = await recognitionsCollection.findOne({ 
         _id: new ObjectId(id) 
       });
@@ -666,7 +848,6 @@ export const recognitionController = {
         }
       };
       
-      // Emit socket event
       if (io) {
         if (action === 'archive') {
           io.to('admin-room').emit('adminRecognitionArchived', { 
@@ -748,7 +929,6 @@ export const recognitionController = {
         });
       }
       
-      // Emit socket event
       if (io) {
         io.to('admin-room').emit('adminRecognitionDeleted', { 
           recognitionId: id,
@@ -836,6 +1016,144 @@ export const recognitionController = {
         success: false, 
         message: 'Error searching employees',
         error: error.message 
+      });
+    }
+  },
+
+  async generateCertificate(req, res) {
+    try {
+      const { 
+        recognitionId, 
+        employeeId, 
+        type, 
+        title, 
+        employeeName, 
+        date,
+        preview = false 
+      } = req.body;
+
+      console.log('🔵 Certificate generation request:', {
+        recognitionId,
+        employeeName,
+        title,
+        preview
+      });
+
+      // Basic validation
+      if (!recognitionId || !employeeName || !title) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing required fields for certificate generation'
+        });
+      }
+
+      // Generate certificate data
+      const certificateData = {
+        recognitionId: recognitionId,
+        employeeName: employeeName,
+        employeeId: employeeId || 'N/A',
+        title: title,
+        recognitionType: type || 'recognition',
+        date: date || new Date(),
+        issuedDate: new Date(),
+        certificateNumber: `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+        issuer: "Your Company",
+        signature: "CEO Signature",
+        seal: "Company Seal"
+      };
+
+      console.log('📄 Generating certificate with data:', certificateData);
+
+      // Generate PDF certificate
+      const pdfBuffer = await generatePDFCertificate(certificateData);
+      
+      // Set appropriate headers
+      if (preview) {
+        // For preview (view in browser)
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'inline; filename=certificate-preview.pdf');
+        console.log('👁️ Sending certificate for preview');
+      } else {
+        // For download
+        res.setHeader('Content-Type', 'application/pdf');
+        const filename = `certificate_${certificateData.employeeName.replace(/\s+/g, '_')}_${certificateData.certificateNumber}.pdf`;
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        console.log('⬇️ Sending certificate for download');
+      }
+      
+      res.send(pdfBuffer);
+
+    } catch (error) {
+      console.error('❌ Error generating certificate:', error);
+      
+      // Send error response
+      res.status(500).json({
+        success: false,
+        message: 'Error generating certificate',
+        error: error.message
+      });
+    }
+  },
+
+  async getCertificate(req, res) {
+    try {
+      const { recognitionId } = req.params;
+      
+      if (!recognitionId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Recognition ID is required'
+        });
+      }
+
+      const db = await connectDB();
+      const recognitionsCollection = db.collection('recognitions');
+      
+      let recognition;
+      try {
+        recognition = await recognitionsCollection.findOne({
+          _id: ObjectId.isValid(recognitionId) ? new ObjectId(recognitionId) : recognitionId
+        });
+      } catch (error) {
+        console.error('Error finding recognition:', error);
+        recognition = null;
+      }
+
+      if (!recognition) {
+        return res.status(404).json({
+          success: false,
+          message: 'Recognition not found'
+        });
+      }
+
+      // Generate certificate data from recognition
+      const certificateData = {
+        recognitionId: recognition._id,
+        employeeName: recognition.employeeName || 'Employee',
+        employeeId: recognition.employeeId || 'N/A',
+        title: recognition.title || 'Recognition',
+        recognitionType: recognition.recognitionType || 'recognition',
+        date: recognition.createdAt || new Date(),
+        issuedDate: new Date(),
+        certificateNumber: `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+        issuer: "Your Company",
+        signature: "CEO Signature",
+        seal: "Company Seal"
+      };
+
+      // Generate PDF
+      const pdfBuffer = await generatePDFCertificate(certificateData);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="certificate_${certificateData.employeeName.replace(/\s+/g, '_')}.pdf"`);
+      res.send(pdfBuffer);
+
+    } catch (error) {
+      console.error('Error getting certificate:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error getting certificate',
+        error: error.message
       });
     }
   }
