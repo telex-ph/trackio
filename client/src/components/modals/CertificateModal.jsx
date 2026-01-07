@@ -15,7 +15,7 @@ import {
   Copy,
   Trophy,
   Star,
-  Info // Added Info icon
+  Info
 } from "lucide-react";
 import api from "../../utils/axios";
 import { toast } from "react-hot-toast";

@@ -15,7 +15,6 @@ import {
   Video,
   Award,
   GraduationCap
-  
 } from "lucide-react";
 import api from "../../utils/axios";
 import CourseHeaderPage from "../../components/courses/CourseHeaderPage";
@@ -147,6 +146,24 @@ const CourseCard = ({ c, onViewDetails, onOpenUpload, onOpenQuizzes, onOpenCerti
   const totalQuizzes = c.lessons?.filter(lesson => lesson.quiz).length || 0;
   const isAdmin = user?.role === "admin" || user?.role === "instructor";
 
+  // Calculate if course is fully completed (for users)
+  const isCourseFullyCompleted = () => {
+    if (user.role === "instructor" || user.role === "admin") return false;
+    
+    const completedLessons = c.lessons?.filter(lesson => {
+      const hasQuiz = lesson.quiz ? true : false;
+      const passedQuiz = lesson.quiz?.attempts?.some(attempt => 
+        attempt.userId === user._id && attempt.passed
+      ) || false;
+      
+      return lesson.completed && (!hasQuiz || passedQuiz);
+    }) || [];
+    
+    return completedLessons.length === c.lessons?.length && c.lessons?.length > 0;
+  };
+
+  const certificateReady = isCourseFullyCompleted();
+
   return (
     <div className="bg-white border-white rounded-xl shadow-lg hover:shadow-xl transition duration-300 overflow-hidden cursor-pointer">
       <div className="h-32 sm:h-40 bg-white relative">
@@ -165,9 +182,9 @@ const CourseCard = ({ c, onViewDetails, onOpenUpload, onOpenQuizzes, onOpenCerti
             </span>
           </div>
         )}
-        {c.progress === 100 && user.role !== "instructor" && (
+        {certificateReady && (
           <div className="absolute top-2 right-2">
-            <span className="bg-gradient-to-r from-green-600 to-green-700 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center">
+            <span className="bg-gradient-to-r from-green-600 to-green-700 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center animate-pulse">
               <GraduationCap className="w-3 h-3 mr-1" />
               Certificate Ready
             </span>
@@ -214,8 +231,8 @@ const CourseCard = ({ c, onViewDetails, onOpenUpload, onOpenQuizzes, onOpenCerti
           </button>
           
           <div className="flex space-x-2">
-            {/* Certificate button - only for students who completed */}
-            {user.role !== "instructor" && c.progress === 100 && (
+            {/* Certificate button - for all users (including regular users) */}
+            {certificateReady && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -278,6 +295,7 @@ const CourseLessonsModal = ({
   const user = useStore((store) => store.user);
   const [userQuizAttempts, setUserQuizAttempts] = useState([]);
   const [courseDetails, setCourseDetails] = useState(course);
+  const [completionStatus, setCompletionStatus] = useState(null);
 
   useEffect(() => {
     const fetchCourseDetails = async () => {
@@ -300,8 +318,20 @@ const CourseLessonsModal = ({
       }
     };
     
+    const fetchCompletionStatus = async () => {
+      if (course?._id && user?._id) {
+        try {
+          const { data } = await api.get(`/courses/${course._id}/completion-status?userId=${user._id}`);
+          setCompletionStatus(data);
+        } catch (error) {
+          console.error("Error fetching completion status:", error);
+        }
+      }
+    };
+    
     fetchCourseDetails();
     fetchUserQuizAttempts();
+    fetchCompletionStatus();
   }, [course, user]);
 
   const lessonItem = (l, i) => {
@@ -382,22 +412,8 @@ const CourseLessonsModal = ({
     );
   };
 
-  // Calculate REAL course progress (only lessons completed with passed quiz)
-  const calculateRealProgress = () => {
-    if (!courseDetails.lessons || courseDetails.lessons.length === 0) return 0;
-    
-    const completedLessons = courseDetails.lessons.filter(lesson => {
-      const userAttempt = userQuizAttempts.find(attempt => attempt.lessonId === lesson._id);
-      const hasQuiz = lesson.quiz ? true : false;
-      const passedQuiz = userAttempt?.passed || false;
-      
-      return lesson.completed && (!hasQuiz || passedQuiz);
-    });
-    
-    return Math.round((completedLessons.length / courseDetails.lessons.length) * 100);
-  };
-
-  const realProgress = calculateRealProgress();
+  // Calculate if course is fully completed
+  const isCourseFullyCompleted = completionStatus?.fullyCompleted || false;
 
   return (
     <Modal onClose={onClose} maxWidth="max-w-4xl">
@@ -428,12 +444,7 @@ const CourseLessonsModal = ({
                 <span className="text-red-800 font-bold">
                   {(Math.floor(courseDetails.duration || 0) / 60).toFixed(1)} minutes
                 </span>{" "}
-                • Progress: <span className="text-red-800 font-bold">{realProgress}%</span>
-                {courseDetails.progress !== realProgress && (
-                  <span className="text-xs text-gray-500 ml-2">
-                    (Shows: {courseDetails.progress || 0}% - includes incomplete lessons with quizzes)
-                  </span>
-                )}
+                • Progress: <span className="text-red-800 font-bold">{completionStatus?.completionPercentage || 0}%</span>
               </p>
               <div className="flex items-center space-x-2">
                 <button
@@ -445,10 +456,10 @@ const CourseLessonsModal = ({
                 </button>
                 
                 {/* Certificate button in lessons modal */}
-                {user.role !== "instructor" && realProgress === 100 && (
+                {isCourseFullyCompleted && user.role !== "instructor" && (
                   <button
                     onClick={() => onOpenCertificate(course)}
-                    className="ml-3 px-4 py-2 text-sm bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition flex items-center"
+                    className="ml-3 px-4 py-2 text-sm bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition flex items-center animate-pulse"
                   >
                     <GraduationCap className="w-4 h-4 mr-2" />
                     Get Certificate
@@ -468,6 +479,59 @@ const CourseLessonsModal = ({
               </div>
             )}
 
+            {/* Completion Status Summary */}
+            {user.role !== "instructor" && completionStatus && (
+              <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                  <GraduationCap className="w-5 h-5 mr-2 text-blue-600" />
+                  Course Completion Status
+                </h3>
+                <div className="grid grid-cols-2 gap-4 mb-3">
+                  <div className="text-center">
+                    <div className={`text-2xl font-bold ${completionStatus.completedLessons === completionStatus.totalLessons ? 'text-green-600' : 'text-blue-600'}`}>
+                      {completionStatus.completedLessons}/{completionStatus.totalLessons}
+                    </div>
+                    <div className="text-sm text-gray-600">Lessons Completed</div>
+                  </div>
+                  <div className="text-center">
+                    <div className={`text-2xl font-bold ${completionStatus.passedQuizzes === completionStatus.totalQuizzes ? 'text-green-600' : 'text-red-600'}`}>
+                      {completionStatus.passedQuizzes}/{completionStatus.totalQuizzes}
+                    </div>
+                    <div className="text-sm text-gray-600">Quizzes Passed</div>
+                  </div>
+                </div>
+                
+                {isCourseFullyCompleted ? (
+                  <div className="p-3 bg-gradient-to-r from-green-100 to-emerald-100 rounded border border-green-300">
+                    <p className="text-sm font-bold text-green-800 flex items-center">
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      🎉 Course Fully Completed! Certificate Available
+                    </p>
+                  </div>
+                ) : completionStatus.lessonsNeedingCompletion?.length > 0 && (
+                  <div className="p-3 bg-yellow-50 rounded border border-yellow-200">
+                    <p className="text-sm font-medium text-yellow-800 mb-2">
+                      Remaining Requirements:
+                    </p>
+                    <ul className="text-xs text-yellow-700 space-y-1">
+                      {completionStatus.lessonsNeedingCompletion.slice(0, 3).map((req, idx) => (
+                        <li key={idx} className="flex items-center">
+                          <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                          {req}
+                        </li>
+                      ))}
+                      {completionStatus.lessonsNeedingCompletion.length > 3 && (
+                        <li className="text-yellow-600">
+                          + {completionStatus.lessonsNeedingCompletion.length - 3} more
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Course Quizzes Section */}
             <div className="mt-8 pt-6 border-t border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-gray-800 flex items-center">
@@ -761,7 +825,7 @@ const AllCoursesModal = ({ courses, onClose, onOpenLessons, onOpenUpload, onOpen
               c={c}
               onViewDetails={onOpenLessons}
               onOpenUpload={onOpenUpload}
-              onOpenQuizzes={onOpenQuizzes}
+              onOpenQuizzes={openQuizzes}
               onOpenCertificate={onOpenCertificate}
             />
           ))}
