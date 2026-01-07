@@ -11,33 +11,17 @@ import {
   FileText,
   TrendingUp,
   Grid3x3,
-  Upload,
   Users,
-  FileUp,
   Video,
-  Loader,
   Award,
-  BarChart,
-  Trophy,
-  Plus,
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  EyeOff,
-  Trash2,
-  Edit2,
-  AlertCircle,
-  Star,
-  Search,
-  Filter,
-  Download,
-  Share2,
-  Info
+  GraduationCap
+  
 } from "lucide-react";
 import api from "../../utils/axios";
 import CourseHeaderPage from "../../components/courses/CourseHeaderPage";
 import CourseUploadModal from "../../components/courses/modals/CourseUploadModal";
 import QuizModal from "../../components/modals/QuizModal";
+import CertificateModal from "../../components/modals/CertificateModal";
 import { useStore } from "../../store/useStore";
 import Spinner from "../../assets/loaders/Spinner";
 import Empty from "../../assets/illustrations/Empty";
@@ -152,7 +136,7 @@ const VideoItem = ({ v, i, onPlay }) => (
   </li>
 );
 
-const CourseCard = ({ c, onViewDetails, onOpenUpload, onOpenQuizzes }) => {
+const CourseCard = ({ c, onViewDetails, onOpenUpload, onOpenQuizzes, onOpenCertificate }) => {
   const user = useStore((store) => store.user);
   const lessons = c.lessons;
   const overAllDuration = lessons.reduce((acc, current) => {
@@ -181,6 +165,14 @@ const CourseCard = ({ c, onViewDetails, onOpenUpload, onOpenQuizzes }) => {
             </span>
           </div>
         )}
+        {c.progress === 100 && user.role !== "instructor" && (
+          <div className="absolute top-2 right-2">
+            <span className="bg-gradient-to-r from-green-600 to-green-700 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center">
+              <GraduationCap className="w-3 h-3 mr-1" />
+              Certificate Ready
+            </span>
+          </div>
+        )}
       </div>
       <div className="p-4">
         <h4 className="font-semibold text-lg truncate mb-1">{c.title}</h4>
@@ -198,11 +190,16 @@ const CourseCard = ({ c, onViewDetails, onOpenUpload, onOpenQuizzes }) => {
             <BookOpenText className="w-4 h-4 mr-1 text-red-600" />
             {c.lessons.length} Lessons
           </p>
-          {hasQuizzes && (
-            <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
-              {totalQuizzes} Quiz{totalQuizzes !== 1 ? 'zes' : ''}
+          <div className="flex items-center space-x-2">
+            {hasQuizzes && (
+              <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
+                {totalQuizzes} Quiz{totalQuizzes !== 1 ? 'zes' : ''}
+              </span>
+            )}
+            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+              {c.progress || 0}% Complete
             </span>
-          )}
+          </div>
         </div>
         
         <div className="flex justify-between items-center">
@@ -216,35 +213,51 @@ const CourseCard = ({ c, onViewDetails, onOpenUpload, onOpenQuizzes }) => {
             View Lessons
           </button>
           
-          {c.createdBy === user._id && (
-            <div className="flex space-x-2">
+          <div className="flex space-x-2">
+            {/* Certificate button - only for students who completed */}
+            {user.role !== "instructor" && c.progress === 100 && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onOpenQuizzes(c);
+                  onOpenCertificate(c);
                 }}
-                className={`px-3 py-1 text-sm rounded-lg transition flex items-center ${
-                  hasQuizzes
-                    ? "bg-green-100 text-green-800 hover:bg-green-200"
-                    : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                }`}
+                className="px-3 py-1 text-sm bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition flex items-center"
               >
-                <Award className="w-3 h-3 mr-1" />
-                Quizzes
+                <GraduationCap className="w-3 h-3 mr-1" />
+                Certificate
               </button>
-              
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenUpload(c);
-                }}
-                className="px-3 py-1 text-sm bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition flex items-center"
-              >
-                <Video className="w-3 h-3 mr-1" />
-                Add Lesson
-              </button>
-            </div>
-          )}
+            )}
+            
+            {c.createdBy === user._id && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenQuizzes(c);
+                  }}
+                  className={`px-3 py-1 text-sm rounded-lg transition flex items-center ${
+                    hasQuizzes
+                      ? "bg-green-100 text-green-800 hover:bg-green-200"
+                      : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                  }`}
+                >
+                  <Award className="w-3 h-3 mr-1" />
+                  Quizzes
+                </button>
+                
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenUpload(c);
+                  }}
+                  className="px-3 py-1 text-sm bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition flex items-center"
+                >
+                  <Video className="w-3 h-3 mr-1" />
+                  Add Lesson
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -256,6 +269,7 @@ const CourseLessonsModal = ({
   onClose, 
   onPlayLesson, 
   onOpenQuizzes,
+  onOpenCertificate,
   refreshCourses 
 }) => {
   if (!course) return null;
@@ -414,21 +428,33 @@ const CourseLessonsModal = ({
                 <span className="text-red-800 font-bold">
                   {(Math.floor(courseDetails.duration || 0) / 60).toFixed(1)} minutes
                 </span>{" "}
-               
-                <span className="text-red-800 font-bold">{realProgress}%</span>
+                • Progress: <span className="text-red-800 font-bold">{realProgress}%</span>
                 {courseDetails.progress !== realProgress && (
                   <span className="text-xs text-gray-500 ml-2">
                     (Shows: {courseDetails.progress || 0}% - includes incomplete lessons with quizzes)
                   </span>
                 )}
               </p>
-              <button
-                onClick={() => onOpenQuizzes(course)}
-                className="text-sm text-red-600 hover:text-red-800 font-medium flex items-center"
-              >
-                <Award className="w-4 h-4 mr-1" />
-                View Quizzes
-              </button>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => onOpenQuizzes(course)}
+                  className="text-sm text-red-600 hover:text-red-800 font-medium flex items-center"
+                >
+                  <Award className="w-4 h-4 mr-1" />
+                  View Quizzes
+                </button>
+                
+                {/* Certificate button in lessons modal */}
+                {user.role !== "instructor" && realProgress === 100 && (
+                  <button
+                    onClick={() => onOpenCertificate(course)}
+                    className="ml-3 px-4 py-2 text-sm bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition flex items-center"
+                  >
+                    <GraduationCap className="w-4 h-4 mr-2" />
+                    Get Certificate
+                  </button>
+                )}
+              </div>
             </div>
             
             {courseDetails.lessons?.length > 0 ? (
@@ -707,7 +733,7 @@ const AllVideosModal = ({ videos, onClose, onPlay }) => (
   </Modal>
 );
 
-const AllCoursesModal = ({ courses, onClose, onOpenLessons, onOpenUpload, onOpenQuizzes }) => (
+const AllCoursesModal = ({ courses, onClose, onOpenLessons, onOpenUpload, onOpenQuizzes, onOpenCertificate }) => (
   <Modal onClose={onClose} maxWidth="max-w-6xl">
     <div className="bg-white rounded-xl shadow-[0_20px_40px_-5px_rgba(0,0,0,0.3)] w-full">
       <div className="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-center">
@@ -736,6 +762,7 @@ const AllCoursesModal = ({ courses, onClose, onOpenLessons, onOpenUpload, onOpen
               onViewDetails={onOpenLessons}
               onOpenUpload={onOpenUpload}
               onOpenQuizzes={onOpenQuizzes}
+              onOpenCertificate={onOpenCertificate}
             />
           ))}
         </section>
@@ -1230,6 +1257,8 @@ const SharedCourse = ({ isWatchOnly = true }) => {
   const [showQuizzes, setShowQuizzes] = useState(false);
   const [selectedQuizCourse, setSelectedQuizCourse] = useState(null);
   const [selectedLessonId, setSelectedLessonId] = useState(null);
+  const [showCertificate, setShowCertificate] = useState(false);
+  const [selectedCertificateCourse, setSelectedCertificateCourse] = useState(null);
 
   const [uploading, setUploading] = useState(false);
 
@@ -1242,6 +1271,7 @@ const SharedCourse = ({ isWatchOnly = true }) => {
     setShowAllInstructors(false);
     setShowAllActivity(false);
     setShowQuizzes(false);
+    setShowCertificate(false);
   };
   
   const playLesson = (lesson, course) =>
@@ -1262,6 +1292,7 @@ const SharedCourse = ({ isWatchOnly = true }) => {
     setShowAllInstructors(false);
     setShowAllActivity(false);
     setShowQuizzes(false);
+    setShowCertificate(false);
   };
   
   const openUpload = (context) => {
@@ -1281,6 +1312,20 @@ const SharedCourse = ({ isWatchOnly = true }) => {
     setUploadContext(null);
     setShowAllInstructors(false);
     setShowAllActivity(false);
+    setShowCertificate(false);
+  };
+
+  const openCertificate = (course) => {
+    setSelectedCertificateCourse(course);
+    setShowCertificate(true);
+    setCurrentVideo(null);
+    setShowLessons(false);
+    setShowAllVideos(false);
+    setShowAllCourses(false);
+    setUploadContext(null);
+    setShowAllInstructors(false);
+    setShowAllActivity(false);
+    setShowQuizzes(false);
   };
 
   const handleQuizFromVideo = () => {
@@ -1366,6 +1411,7 @@ const SharedCourse = ({ isWatchOnly = true }) => {
           onClose={() => setShowLessons(false)}
           onPlayLesson={playLesson}
           onOpenQuizzes={openQuizzes}
+          onOpenCertificate={openCertificate}
           refreshCourses={fetchCourses}
         />
       )}
@@ -1391,6 +1437,7 @@ const SharedCourse = ({ isWatchOnly = true }) => {
           onOpenLessons={openLessons}
           onOpenUpload={(c) => openUpload({ type: "video", course: c })}
           onOpenQuizzes={openQuizzes}
+          onOpenCertificate={openCertificate}
         />
       )}
       {showAllInstructors && (
@@ -1425,18 +1472,25 @@ const SharedCourse = ({ isWatchOnly = true }) => {
           }}
           onQuizAdded={fetchCourses}
           onQuizUpdated={fetchCourses}
-          // ADD THIS NEW PROP FOR BACK TO LESSONS
           onBackToLessons={() => {
-            // Close quiz modal and reopen lessons modal
             setShowQuizzes(false);
             setSelectedQuizCourse(null);
             setSelectedLessonId(null);
             
-            // Re-open lessons modal if we have a selected course
             if (selectedQuizCourse) {
               setSelectedCourse(selectedQuizCourse);
               setShowLessons(true);
             }
+          }}
+        />
+      )}
+      {showCertificate && selectedCertificateCourse && (
+        <CertificateModal
+          course={selectedCertificateCourse}
+          user={user}
+          onClose={() => {
+            setShowCertificate(false);
+            setSelectedCertificateCourse(null);
           }}
         />
       )}
@@ -1487,6 +1541,7 @@ const SharedCourse = ({ isWatchOnly = true }) => {
                             openUpload({ type: "video", course })
                           }
                           onOpenQuizzes={openQuizzes}
+                          onOpenCertificate={openCertificate}
                         />
                       );
                     })}

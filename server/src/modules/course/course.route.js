@@ -25,7 +25,13 @@ import {
   checkQuizExists,
   
   // Admin analytics
-  getAdminQuizAnalytics
+  getAdminQuizAnalytics,
+  
+  // Certificate controllers
+  getCertificate,
+  generateCertificate,
+  downloadCertificate,
+  getCourseCompletionStatus
 } from "./course.controller.js";
 
 const router = express.Router();
@@ -56,5 +62,11 @@ router.get("/:courseId/quiz-stats", getCourseQuizStats);
 
 // 🎯 ADMIN ANALYTICS ROUTES
 router.get("/:courseId/admin/analytics", getAdminQuizAnalytics);
+
+// 🎯 CERTIFICATE ROUTES
+router.get("/:courseId/certificate", getCertificate);
+router.post("/:courseId/certificate/generate", generateCertificate);
+router.get("/:courseId/certificate/download", downloadCertificate);
+router.get("/:courseId/completion-status", getCourseCompletionStatus);
 
 export default router;

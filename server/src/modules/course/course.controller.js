@@ -514,3 +514,116 @@ export const getAdminQuizAnalytics = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+// 🎯 CERTIFICATE CONTROLLERS
+export const getCourseCompletionStatus = async (req, res) => {
+  const { courseId } = req.params;
+  const { userId } = req.query;
+
+  if (!courseId || !userId) {
+    return res.status(400).json({ message: "Course ID and User ID are required" });
+  }
+
+  try {
+    const completionStatus = await Course.getCourseCompletionStatus(courseId, userId);
+    res.status(200).json(completionStatus);
+  } catch (error) {
+    console.error("Error getting completion status:", error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const getCertificate = async (req, res) => {
+  const { courseId } = req.params;
+  const { userId } = req.query;
+
+  if (!courseId || !userId) {
+    return res.status(400).json({ message: "Course ID and User ID are required" });
+  }
+
+  try {
+    // Check if user has completed the course
+    const completionStatus = await Course.getCourseCompletionStatus(courseId, userId);
+    
+    if (!completionStatus.fullyCompleted) {
+      return res.status(403).json({ 
+        error: "Course not fully completed. Complete all lessons and quizzes first." 
+      });
+    }
+
+    // Check if certificate already exists
+    const certificate = await Course.getUserCertificate(courseId, userId);
+    
+    if (certificate) {
+      return res.status(200).json(certificate);
+    }
+
+    return res.status(404).json({ message: "Certificate not found. Generate one first." });
+  } catch (error) {
+    console.error("Error getting certificate:", error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const generateCertificate = async (req, res) => {
+  const { courseId } = req.params;
+  const { userId } = req.body;
+
+  if (!courseId || !userId) {
+    return res.status(400).json({ message: "Course ID and User ID are required" });
+  }
+
+  try {
+    // Check if user has completed the course
+    const completionStatus = await Course.getCourseCompletionStatus(courseId, userId);
+    
+    if (!completionStatus.fullyCompleted) {
+      return res.status(403).json({ 
+        error: "Cannot generate certificate. Course not fully completed." 
+      });
+    }
+
+    // Check if certificate already exists
+    const existingCertificate = await Course.getUserCertificate(courseId, userId);
+    
+    if (existingCertificate) {
+      return res.status(200).json(existingCertificate);
+    }
+
+    // Generate new certificate
+    const certificate = await Course.generateCertificate(courseId, userId);
+    res.status(201).json(certificate);
+  } catch (error) {
+    console.error("Error generating certificate:", error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const downloadCertificate = async (req, res) => {
+  const { courseId } = req.params;
+  const { userId } = req.query;
+
+  if (!courseId || !userId) {
+    return res.status(400).json({ message: "Course ID and User ID are required" });
+  }
+
+  try {
+    // Check if certificate exists
+    const certificate = await Course.getUserCertificate(courseId, userId);
+    
+    if (!certificate) {
+      return res.status(404).json({ error: "Certificate not found. Generate one first." });
+    }
+
+    // Generate PDF certificate
+    const pdfBuffer = await Course.generateCertificatePDF(certificate);
+    
+    // Set headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=${certificate.certificateNumber}.pdf`);
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error("Error downloading certificate:", error);
+    res.status(400).json({ error: error.message });
+  }
+};

@@ -1,9 +1,11 @@
 import { ObjectId } from "mongodb";
 import connectDB from "../../config/db.js";
 import { DateTime } from "luxon";
+import PDFDocument from 'pdfkit';
 
 class Course {
   static #collection = "courses";
+  static #certificateCollection = "certificates";
 
   // 🎯 HELPER FUNCTION: Ensure question IDs are properly formatted
   static #generateQuestionId(q) {
@@ -758,6 +760,233 @@ class Course {
       console.error("Error getting user lesson attempts:", error);
       throw error;
     }
+  }
+
+  // 🎯 CERTIFICATE METHODS
+  static async getCourseCompletionStatus(courseId, userId) {
+    const db = await connectDB();
+    const collection = await db.collection(this.#collection);
+
+    try {
+      const course = await collection.findOne({ _id: new ObjectId(courseId) });
+      
+      if (!course) {
+        throw new Error("Course not found");
+      }
+
+      const lessonsWithStatus = await Promise.all(
+        course.lessons?.map(async (lesson) => {
+          const lessonStatus = await this.getLessonStatus(courseId, userId, lesson._id);
+          
+          return {
+            lessonId: lesson._id,
+            title: lesson.title,
+            hasQuiz: !!lesson.quiz,
+            completed: lessonStatus.completed,
+            passedQuiz: lessonStatus.passedQuiz,
+            videoWatched: lessonStatus.videoWatched
+          };
+        }) || []
+      );
+
+      // A lesson is fully completed if:
+      // 1. Video is watched (90%+)
+      // 2. If lesson has quiz, quiz must be passed
+      const fullyCompletedLessons = lessonsWithStatus.filter(lesson => {
+        if (!lesson.videoWatched) return false;
+        if (lesson.hasQuiz && !lesson.passedQuiz) return false;
+        return true;
+      });
+
+      // Course is fully completed when all lessons are fully completed
+      const fullyCompleted = fullyCompletedLessons.length === lessonsWithStatus.length;
+
+      // Find lessons that still need completion
+      const lessonsNeedingCompletion = lessonsWithStatus
+        .filter(lesson => !fullyCompletedLessons.some(l => l.lessonId === lesson.lessonId))
+        .map(lesson => {
+          if (!lesson.videoWatched) return `Watch "${lesson.title}" video`;
+          if (lesson.hasQuiz && !lesson.passedQuiz) return `Pass quiz for "${lesson.title}"`;
+          return `Complete "${lesson.title}"`;
+        });
+
+      return {
+        fullyCompleted,
+        completionPercentage: Math.round((fullyCompletedLessons.length / lessonsWithStatus.length) * 100),
+        totalLessons: lessonsWithStatus.length,
+        completedLessons: lessonsWithStatus.filter(l => l.completed).length,
+        totalQuizzes: lessonsWithStatus.filter(l => l.hasQuiz).length,
+        passedQuizzes: lessonsWithStatus.filter(l => l.passedQuiz).length,
+        fullyCompletedLessons: fullyCompletedLessons.length,
+        lessonsNeedingCompletion,
+        lessons: lessonsWithStatus
+      };
+    } catch (error) {
+      console.error("Error getting completion status:", error);
+      throw error;
+    }
+  }
+
+  static async getUserCertificate(courseId, userId) {
+    const db = await connectDB();
+    const collection = await db.collection(this.#certificateCollection);
+
+    try {
+      const certificate = await collection.findOne({
+        courseId: new ObjectId(courseId),
+        userId: new ObjectId(userId)
+      });
+
+      return certificate;
+    } catch (error) {
+      console.error("Error getting user certificate:", error);
+      throw error;
+    }
+  }
+
+  static async generateCertificate(courseId, userId) {
+    const db = await connectDB();
+    const certificatesCollection = await db.collection(this.#certificateCollection);
+    const coursesCollection = await db.collection(this.#collection);
+    const usersCollection = await db.collection("users");
+
+    try {
+      // Get course and user details
+      const course = await coursesCollection.findOne({ _id: new ObjectId(courseId) });
+      const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+
+      if (!course || !user) {
+        throw new Error("Course or user not found");
+      }
+
+      // Generate certificate number
+      const certificateNumber = `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+      
+      // Calculate dates
+      const issuedAt = DateTime.utc().toJSDate();
+      const expiryDate = DateTime.utc().plus({ years: 2 }).toJSDate();
+      const completionDate = issuedAt; // Same as issued date
+
+      const certificate = {
+        _id: new ObjectId(),
+        certificateNumber,
+        courseId: new ObjectId(courseId),
+        userId: new ObjectId(userId),
+        courseTitle: course.title,
+        courseDescription: course.description,
+        courseDuration: course.duration,
+        userName: user.name || user.email,
+        userEmail: user.email,
+        instructor: course.instructor || "Learning Platform",
+        issuedAt,
+        expiryDate,
+        completionDate,
+        createdAt: DateTime.utc().toJSDate(),
+        updatedAt: DateTime.utc().toJSDate(),
+        status: "active",
+        verificationUrl: `https://example.com/verify/${certificateNumber}`,
+        metadata: {
+          totalLessons: course.lessons?.length || 0,
+          platform: "Learning Management System"
+        }
+      };
+
+      await certificatesCollection.insertOne(certificate);
+      return certificate;
+    } catch (error) {
+      console.error("Error generating certificate:", error);
+      throw error;
+    }
+  }
+
+  static async generateCertificatePDF(certificate) {
+    return new Promise((resolve, reject) => {
+      try {
+        const doc = new PDFDocument({
+          layout: 'landscape',
+          size: 'A4',
+          margin: 50
+        });
+
+        const buffers = [];
+        doc.on('data', buffers.push.bind(buffers));
+        doc.on('end', () => {
+          const pdfBuffer = Buffer.concat(buffers);
+          resolve(pdfBuffer);
+        });
+
+        // Background
+        doc.rect(0, 0, doc.page.width, doc.page.height).fill('#f8f9fa');
+        
+        // Decorative border
+        doc.lineWidth(2)
+          .strokeColor('#dc2626')
+          .rect(30, 30, doc.page.width - 60, doc.page.height - 60)
+          .stroke();
+        
+        // Header
+        doc.fillColor('#dc2626').fontSize(36).font('Helvetica-Bold').text('CERTIFICATE OF COMPLETION', {
+          align: 'center',
+          underline: true
+        });
+        
+        doc.moveDown(2);
+        doc.fillColor('#374151').fontSize(18).font('Helvetica').text('This is to certify that', { align: 'center' });
+        
+        doc.moveDown(0.5);
+        doc.fillColor('#1e293b').fontSize(32).font('Helvetica-Bold').text(certificate.userName, { align: 'center' });
+        
+        doc.moveDown();
+        doc.fillColor('#374151').fontSize(16).text('has successfully completed the course', { align: 'center' });
+        
+        doc.moveDown();
+        doc.fillColor('#dc2626').fontSize(24).font('Helvetica-Bold').text(certificate.courseTitle, { align: 'center' });
+        
+        doc.moveDown(2);
+        
+        // Course description
+        if (certificate.courseDescription) {
+          doc.fillColor('#4b5563').fontSize(12).font('Helvetica')
+            .text(certificate.courseDescription, { align: 'center', width: 500 });
+          doc.moveDown();
+        }
+        
+        // Certificate details
+        const detailsY = doc.y;
+        doc.fontSize(12).fillColor('#4b5563');
+        
+        doc.text('Certificate Number:', 100, detailsY);
+        doc.text(certificate.certificateNumber, 250, detailsY, { bold: true });
+        
+        doc.text('Issue Date:', 100, detailsY + 30);
+        doc.text(new Date(certificate.issuedAt).toLocaleDateString(), 250, detailsY + 30);
+        
+        doc.text('Expiry Date:', 100, detailsY + 60);
+        doc.text(new Date(certificate.expiryDate).toLocaleDateString(), 250, detailsY + 60);
+        
+        doc.text('Course Duration:', 100, detailsY + 90);
+        doc.text(`${Math.floor(certificate.courseDuration / 60)}h ${certificate.courseDuration % 60}m`, 250, detailsY + 90);
+        
+        // Signatures
+        const signatureY = detailsY + 150;
+        doc.text('Instructor Signature', 150, signatureY, { align: 'left' });
+        doc.text('Platform Signature', 500, signatureY, { align: 'right' });
+        
+        doc.moveTo(150, signatureY + 40).lineTo(300, signatureY + 40).stroke();
+        doc.moveTo(450, signatureY + 40).lineTo(600, signatureY + 40).stroke();
+        
+        // Footer
+        doc.fontSize(10).fillColor('#6b7280');
+        doc.text(`This certificate can be verified at: ${certificate.verificationUrl}`, 
+          0, doc.page.height - 50, { align: 'center' });
+        
+        doc.text(`Certificate ID: ${certificate.certificateNumber}`, 0, doc.page.height - 30, { align: 'center' });
+        
+        doc.end();
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
 }
 

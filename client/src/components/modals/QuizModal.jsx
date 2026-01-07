@@ -9,18 +9,15 @@ import {
   Users,
   CheckCircle,
   AlertCircle,
-  Clock,
   Trophy,
   TrendingUp,
   ChevronLeft,
   ChevronRight,
   BookOpen,
   User,
-  FileText,
   Info,
   Lock,
-  Unlock,
-  RefreshCw
+
 } from "lucide-react";
 import api from "../../utils/axios";
 import { toast } from "react-hot-toast";
