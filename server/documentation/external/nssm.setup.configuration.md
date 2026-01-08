@@ -52,7 +52,7 @@ Before installation, ensure the following are ready:
   - Startup directory: The folder where `biometrics-relay` is cloned.
   - Arguments: `package.json`
 - Click `Install Service`.
-- Start the service: `nssm start BiometricsRelay`
+- Start the service: `nssm start biometrics-relay`
 - Navigate to [Render](https://render.com/) and verify that the service is running and the script is relaying logs from the biometric devices.
 
 > **Warning!** Because of the constant connection with the biometrics and server, it is important to remember to check the connection during power outage, internet connectivity issue, ensure the print server is turned on, and that the biometrics devices correctly match the IP addresses defined in [biometricsIp.js](../../constants/biometricsIp.js) to keep the attendance system running properly.
