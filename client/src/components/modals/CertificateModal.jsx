@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import api from "../../utils/axios";
 import { toast } from "react-hot-toast";
+import { useStore } from "../../store/useStore";
 
 const Modal = ({ children, onClose, maxWidth = "max-w-5xl" }) => (
   <div
@@ -41,29 +42,41 @@ const CertificateModal = ({ course, user, onClose }) => {
   const [courseCompletionStatus, setCourseCompletionStatus] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [hasCertificateError, setHasCertificateError] = useState(false);
+  
+  // GET USER FROM GLOBAL STORE LIKE TOPBAR DOES
+  const userFromStore = useStore((state) => state.user);
 
   useEffect(() => {
-    if (course?._id && user?._id) {
-      fetchCertificate();
-      fetchCourseCompletionStatus();
+    if (course?._id) {
+      // Use user ID from props OR from store
+      const userId = user?._id || userFromStore?._id;
+      if (userId) {
+        fetchCertificate(userId);
+        fetchCourseCompletionStatus(userId);
+      }
     }
-  }, [course, user]);
+  }, [course, user, userFromStore]);
 
-  const fetchCertificate = async () => {
+  const fetchCertificate = async (userId) => {
     try {
       setLoading(true);
       setHasCertificateError(false);
-      const { data } = await api.get(`/courses/${course._id}/certificate?userId=${user._id}`);
+      const { data } = await api.get(`/courses/${course._id}/certificate?userId=${userId}`);
+      
+      // If data exists and has certificateNumber, set it
       if (data && data.certificateNumber) {
         setCertificate(data);
       } else {
+        // If data is null or empty, certificate doesn't exist yet
+        setCertificate(null);
         setHasCertificateError(true);
       }
     } catch (error) {
       console.error("Error fetching certificate:", error);
       setHasCertificateError(true);
+      
       // Only show toast for non-404 errors
-      if (error.response?.status !== 404) {
+      if (error.response?.status !== 404 && error.response?.status !== 200) {
         toast.error("Failed to load certificate");
       }
     } finally {
@@ -71,9 +84,9 @@ const CertificateModal = ({ course, user, onClose }) => {
     }
   };
 
-  const fetchCourseCompletionStatus = async () => {
+  const fetchCourseCompletionStatus = async (userId) => {
     try {
-      const { data } = await api.get(`/courses/${course._id}/completion-status?userId=${user._id}`);
+      const { data } = await api.get(`/courses/${course._id}/completion-status?userId=${userId}`);
       setCourseCompletionStatus(data);
     } catch (error) {
       console.error("Error fetching completion status:", error);
@@ -83,11 +96,12 @@ const CertificateModal = ({ course, user, onClose }) => {
   const generateCertificate = async () => {
     try {
       setGenerating(true);
-      // Send user's full name to backend
+      // Use the user ID (priority: props > store)
+      const userId = user?._id || userFromStore?._id;
       const { data } = await api.post(`/courses/${course._id}/certificate/generate`, {
-        userId: user._id,
-        userName: getUserFullName(), // This sends the proper name
-        userEmail: user.email
+        userId: userId,
+        userName: getUserFullName(),
+        userEmail: getCurrentUser()?.email
       });
       setCertificate(data);
       setHasCertificateError(false);
@@ -103,9 +117,10 @@ const CertificateModal = ({ course, user, onClose }) => {
   const downloadCertificate = async () => {
     try {
       setDownloading(true);
-      // Include user name in the download request
+      // Use the user ID (priority: props > store)
+      const userId = user?._id || userFromStore?._id;
       const { data } = await api.get(
-        `/courses/${course._id}/certificate/download?userId=${user._id}&userName=${encodeURIComponent(getUserFullName())}`,
+        `/courses/${course._id}/certificate/download?userId=${userId}&userName=${encodeURIComponent(getUserFullName())}`,
         {
           responseType: 'blob'
         }
@@ -156,23 +171,50 @@ const CertificateModal = ({ course, user, onClose }) => {
     });
   };
 
-  // Function to get user's full name - SINGLE FUNCTION
+  // Get current user object (priority: props > store)
+  const getCurrentUser = () => {
+    // Priority 1: Props
+    if (user) return user;
+    // Priority 2: Store
+    return userFromStore;
+  };
+
+  // Function to get user's full name
   const getUserFullName = () => {
-    // Priority: firstName + lastName > name > email formatting
-    if (user?.firstName && user?.lastName) {
-      return `${user.firstName} ${user.lastName}`.trim();
-    } else if (user?.name) {
-      return user.name.trim();
-    } else if (user?.email) {
-      const emailPrefix = user.email.split('@')[0];
+    const currentUser = getCurrentUser();
+    
+    if (!currentUser) return "Student";
+    
+    // Check all possible name fields in order of priority
+    if (currentUser.firstName && currentUser.lastName) {
+      return `${currentUser.firstName} ${currentUser.lastName}`.trim();
+    }
+    else if (currentUser.fullName) {
+      return currentUser.fullName.trim();
+    }
+    else if (currentUser.name) {
+      return currentUser.name.trim();
+    }
+    else if (currentUser.username) {
+      return currentUser.username.trim();
+    }
+    // If we have email but no name, format it nicely
+    else if (currentUser.email) {
+      const emailPrefix = currentUser.email.split('@')[0];
       const nameFromEmail = emailPrefix
         .replace(/[._-]/g, ' ')
         .split(' ')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join(' ');
-      return nameFromEmail || user.email;
+      return nameFromEmail;
     }
     return "Student";
+  };
+
+  // Get user email for display
+  const getUserEmail = () => {
+    const currentUser = getCurrentUser();
+    return currentUser?.email;
   };
 
   if (loading) {
@@ -277,7 +319,8 @@ const CertificateModal = ({ course, user, onClose }) => {
     );
   }
 
-  if (hasCertificateError && isCourseFullyCompleted) {
+  // If course is fully completed but no certificate exists
+  if (isCourseFullyCompleted && (!certificate || hasCertificateError)) {
     return (
       <Modal onClose={onClose}>
         <div className="bg-white rounded-xl shadow-[0_20px_40px_-5px_rgba(0,0,0,0.3)] w-full">
@@ -337,8 +380,8 @@ const CertificateModal = ({ course, user, onClose }) => {
                     <span className="text-sm font-medium text-gray-700">Certificate will be issued to:</span>
                   </div>
                   <p className="text-xl font-bold text-center">{getUserFullName()}</p>
-                  {user?.email && (
-                    <p className="text-sm text-gray-500 text-center mt-1">({user.email})</p>
+                  {getUserEmail() && (
+                    <p className="text-sm text-gray-500 text-center mt-1">({getUserEmail()})</p>
                   )}
                 </div>
                 
@@ -376,13 +419,13 @@ const CertificateModal = ({ course, user, onClose }) => {
     );
   }
 
+  // If certificate exists, show the certificate preview
   return (
-    <Modal onClose={onClose} maxWidth="max-w-4xl">
+    <Modal onClose={onClose} maxWidth="max-w-4xl">  
       <div className="bg-white rounded-xl shadow-[0_20px_40px_-5px_rgba(0,0,0,0.3)] w-full">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center">
-              {/* CHANGED FROM Seal TO Award */}
               <Award className="w-8 h-8 text-red-600 mr-3" />
               <div>
                 <h2 className="text-xl font-bold text-gray-900">🎓 Certificate of Completion</h2>
@@ -472,13 +515,13 @@ const CertificateModal = ({ course, user, onClose }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="text-center">
                     <div className="h-0.5 w-48 bg-gray-400 mx-auto mb-3"></div>
-                    <p className="text-sm text-gray-600">Course Instructor</p>
+                    <p className="text-sm text-gray-600">Issued By</p>
                     <p className="font-bold text-gray-800 text-lg">{course.instructor || "Learning Platform"}</p>
                   </div>
                   <div className="text-center">
                     <div className="h-0.5 w-48 bg-gray-400 mx-auto mb-3"></div>
                     <p className="text-sm text-gray-600">Issued By</p>
-                    <p className="font-bold text-gray-800 text-lg">Learning Management System</p>
+                    <p className="font-bold text-gray-800 text-lg">President & CEO</p>
                   </div>
                 </div>
               </div>
@@ -492,11 +535,16 @@ const CertificateModal = ({ course, user, onClose }) => {
                 <User className="w-4 h-4 text-blue-600 mr-2" />
                 <span className="text-sm font-medium text-gray-700">Certificate issued to:</span>
               </div>
-              <div className="bg-white p-3 rounded border flex items-center">
-                <span className="font-medium flex-1">{certificate?.userName || getUserFullName()}</span>
-                {user?.email && (
-                  <span className="text-sm text-gray-500 ml-2">({user.email})</span>
-                )}
+              <div className="bg-white p-3 rounded border flex items-center justify-between">
+                <div>
+                  <span className="font-medium">{certificate?.userName || getUserFullName()}</span>
+                  {getUserEmail() && (
+                    <span className="text-sm text-gray-500 ml-2">({getUserEmail()})</span>
+                  )}
+                </div>
+                <div className="text-xs text-gray-500">
+                  Full Name
+                </div>
               </div>
             </div>
             

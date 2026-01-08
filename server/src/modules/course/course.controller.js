@@ -537,28 +537,22 @@ export const getCertificate = async (req, res) => {
   const { courseId } = req.params;
   const { userId } = req.query;
 
+  console.log("Getting certificate for:", { courseId, userId });
+
   if (!courseId || !userId) {
     return res.status(400).json({ message: "Course ID and User ID are required" });
   }
 
   try {
-    // Check if user has completed the course
-    const completionStatus = await Course.getCourseCompletionStatus(courseId, userId);
-    
-    if (!completionStatus.fullyCompleted) {
-      return res.status(403).json({ 
-        error: "Course not fully completed. Complete all lessons and quizzes first." 
-      });
-    }
-
-    // Check if certificate already exists
+    // Check if certificate exists
     const certificate = await Course.getUserCertificate(courseId, userId);
     
     if (certificate) {
       return res.status(200).json(certificate);
     }
 
-    return res.status(404).json({ message: "Certificate not found. Generate one first." });
+    // If no certificate exists, return 200 with null data
+    return res.status(200).json(null);
   } catch (error) {
     console.error("Error getting certificate:", error);
     res.status(400).json({ error: error.message });

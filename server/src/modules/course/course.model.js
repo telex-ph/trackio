@@ -25,7 +25,6 @@ class Course {
       return `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     }
   }
-
   // 🎯 COURSE METHODS
   static async add(newCourse) {
     const db = await connectDB();
@@ -199,7 +198,6 @@ class Course {
     return result;
   }
 
-  // 🎯 VIDEO PROGRESS TRACKING
   static async updateVideoProgress(courseId, userId, lessonId, progress, completed = false) {
     const db = await connectDB();
     const collection = await db.collection(this.#collection);
@@ -296,7 +294,6 @@ class Course {
     return progress?.completed || false;
   }
 
-  // 🎯 GET LESSON COMPLETION STATUS WITH QUIZ CHECK
   static async getLessonStatus(courseId, userId, lessonId) {
     const db = await connectDB();
     const collection = await db.collection(this.#collection);
@@ -336,7 +333,6 @@ class Course {
     }
   }
 
-  // 🎯 QUIZ METHODS - FIXED ID COMPARISON
   static async addQuizToLesson(courseId, lessonId, quiz) {
     const db = await connectDB();
     const collection = await db.collection(this.#collection);
@@ -719,7 +715,6 @@ class Course {
     }
   }
 
-  // 🎯 CHECK IF QUIZ EXISTS
   static async checkQuizExists(courseId, lessonId) {
     const db = await connectDB();
     const collection = await db.collection(this.#collection);
@@ -734,8 +729,7 @@ class Course {
 
     return !!course;
   }
-  
-  // 🎯 GET USER'S QUIZ ATTEMPTS FOR A SPECIFIC LESSON
+
   static async getUserLessonAttempts(courseId, lessonId, userId) {
     const db = await connectDB();
     const collection = await db.collection(this.#collection);
@@ -762,7 +756,6 @@ class Course {
     }
   }
 
-  // 🎯 CERTIFICATE METHODS
   static async getCourseCompletionStatus(courseId, userId) {
     const db = await connectDB();
     const collection = await db.collection(this.#collection);
@@ -844,7 +837,6 @@ class Course {
     }
   }
 
-  // FIXED: Generate certificate with proper user name (not email)
   static async generateCertificate(courseId, userId, userName = null) {
     const db = await connectDB();
     const certificatesCollection = await db.collection(this.#certificateCollection);

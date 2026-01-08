@@ -1266,9 +1266,6 @@ const VideoPlayer = ({ media, onClose, courseId, onOpenQuiz, refreshCourses }) =
                     <h4 className="text-sm font-bold text-blue-800 mb-2">📝 Quiz Requirement:</h4>
                     <ul className="text-xs text-blue-700 space-y-1">
                       <li>• Watch at least 90% of this video</li>
-                      <li>• Pass the quiz to complete the lesson</li>
-                      <li>• Maximum 3 attempts per 24 hours</li>
-                      <li>• Lesson will be marked complete only after passing quiz</li>
                     </ul>
                   </div>
                 )}

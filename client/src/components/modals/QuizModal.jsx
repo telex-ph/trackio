@@ -194,7 +194,7 @@ const QuizCreator = ({ lesson, onSave, onClose, isEditing = false }) => {
     }
 
     // Validate all correct answers are within range
-    const invalidQuestions = quizForm.questions.filter((q, idx) => {
+    const invalidQuestions = quizForm.questions.filter((q) => {
       if (q.correctAnswer < 0 || q.correctAnswer >= q.options.length) {
         return true;
       }
@@ -1055,7 +1055,7 @@ const TakeQuiz = ({ quiz, lesson, course, onClose, onComplete, userAttempts = []
   );
 };
 
-const AdminAnalytics = ({ course, onClose }) => {
+const AdminAnalytics = ({ course}) => {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -1254,7 +1254,7 @@ const QuizModal = ({
   const [activeTab, setActiveTab] = useState("lessons");
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [setLoading] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [userAttempts, setUserAttempts] = useState([]);
   const [courseDetails, setCourseDetails] = useState(course);
