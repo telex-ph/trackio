@@ -4,11 +4,11 @@ NSSM is a service helper that can run programs or scripts in a computer. It auto
 
 # What is it for?
 
-We need to find a way for the 2 Biometrics to throw all the logs or events of every employee to the Trackio to track their time-in, breaks, and time-out. However, uppon implementation, it cannot directly connect to the Trackio's API due to TLS/SSL connections problems/issue or some sort.
+We need a way for the two biometric devices to send all logs and events of every employee to Trackio for time-in, break, and time-out tracking. However, upon implementation, the devices cannot directly connect to the Trackio API due to TLS/SSL connection issues or some sort.
 
-Because of this, a middle-man should be implemented to recieve all the logs being thrown by the Biometrics and send those logs directly to the api to solve the said issue.
+To resolve this, a middle-man is required to receive all logs from the biometric devices and forward them to the API.
 
-The **printer server will be our middle-man** in this. However, this is** not an industry-standard solution**, rather a band-aid one. The suggestion is that if we already have a dedicated server, the `biometrics-script` should be migrated to the **dedicated server**.
+The printer server currently acts as this middle-man. However, this is not an industry-standard solution, but rather a temporary band-aid solution. It is recommended that the biometrics-script be migrated to a dedicated server if one is available.
 
 To better understand the process, refer to the simple illustration below:
 
