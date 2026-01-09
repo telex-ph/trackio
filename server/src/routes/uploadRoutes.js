@@ -9,7 +9,6 @@ const router = express.Router();
 // Multer memory storage
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Supported folder types
 const folderMap = {
   evidence: "trackio/offense/evidence",
   nte: "trackio/offense/NTE",

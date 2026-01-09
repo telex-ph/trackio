@@ -797,7 +797,7 @@ const AllVideosModal = ({ videos, onClose, onPlay }) => (
   </Modal>
 );
 
-const AllCoursesModal = ({ courses, onClose, onOpenLessons, onOpenUpload, onOpenQuizzes, onOpenCertificate }) => (
+const AllCoursesModal = ({ courses, onClose, onOpenLessons, onOpenUpload, onOpenCertificate }) => (
   <Modal onClose={onClose} maxWidth="max-w-6xl">
     <div className="bg-white rounded-xl shadow-[0_20px_40px_-5px_rgba(0,0,0,0.3)] w-full">
       <div className="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-center">
@@ -1085,7 +1085,6 @@ const VideoPlayer = ({ media, onClose, courseId, onOpenQuiz, refreshCourses }) =
     }
   };
 
-  // Prevent seeking by blocking seek events
   const handleSeeked = (e) => {
     // Reset to previous time if user tries to seek
     if (videoRef.current) {

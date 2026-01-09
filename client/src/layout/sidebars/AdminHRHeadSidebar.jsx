@@ -183,6 +183,12 @@ const AdminHRHeadSidebar = ({
         label="Courses"
         isCollapsed={isCollapsed}
       />
+       <SidebarLink
+        to="/admin-hr-head/repository"
+        icon={Book}
+        label="Repository"
+        isCollapsed={isCollapsed}
+      />
       <SidebarLink
         to="/admin-hr-head/account-management"
         icon={Users2Icon}

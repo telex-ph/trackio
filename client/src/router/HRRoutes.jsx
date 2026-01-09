@@ -27,6 +27,7 @@ import HRLeaveApprovals from "../pages/hr/HRLeaveApprovals";
 import SharedCourse from "../pages/shared/SharedCourse";
 import AdminAnnouncement from "../pages/admin/AdminAnnouncement";
 import AdminDashboard from "../pages/admin/AdminDashboard";
+import HRRepository from "../pages/hr/HRRepository";
 
 const HR_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -66,6 +67,10 @@ const HR_ROUTES = [
   {
     path: "courses",
     element: <SharedCourse />,
+  },
+  {
+    path: "repository",
+    element: <HRRepository />,
   },
   {
     path: "reported-ir",

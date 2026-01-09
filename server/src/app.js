@@ -29,7 +29,7 @@ import analyticsRoutes from "./modules/analytics/analytics.routes.js";
 import announcementRoutes from "./modules/announcement/announcement.route.js";
 import auditlogsRoutes from "./modules/audit/auditlogs.route.js";
 import leaveRoutes from "./modules/leave/leave.routes.js";
-
+import repositoryRoutes from "./modules/repository/repository.routes.js";
 
 dotenv.config();
 const app = express();
@@ -78,6 +78,7 @@ app.use("/api/biometric", biometricRoute);
 app.use("/api/leave", leaveRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/auditlogs", auditlogsRoutes);
+app.use("/api/repository", repositoryRoutes);
 
 // Health check
 app.get("/", async (req, res) => {

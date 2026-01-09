@@ -159,6 +159,12 @@ const HRSidebar = ({
         isCollapsed={isCollapsed}
       />
       <SidebarLink
+        to="/human-resources/repository"
+        icon={Book}
+        label="Repository"
+        isCollapsed={isCollapsed}
+      />
+      <SidebarLink
         to="/human-resources/announcement"
         icon={Megaphone}
         label="Announcement"

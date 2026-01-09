@@ -32,6 +32,8 @@ import TeamLeaderOffenses from "../pages/team-leader/TeamLeaderOffenses";
 import SharedCreateApplyLeave from "../pages/shared/SharedCreateApplyLeave";
 import SharedCourse from "../pages/shared/SharedCourse";
 import HRLeaveApprovals from "../pages/hr/HRLeaveApprovals";
+import HRRepository from "../pages/hr/HRRepository";
+
 
 const ADMIN_HR_HEAD_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -79,6 +81,11 @@ const ADMIN_HR_HEAD_ROUTES = [
     path: "courses",
     element: <SharedCourse />,
   },
+  {
+    path: "repository",
+    element: <HRRepository />
+  },
+
   {
     path: "createoffense",
     element: <TeamLeaderCreateOffenses />,
