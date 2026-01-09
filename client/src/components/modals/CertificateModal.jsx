@@ -1,0 +1,678 @@
+import { useState, useEffect } from "react";
+import {
+  X,
+  Download,
+  Share2,
+  Printer,
+  GraduationCap,
+  Award,
+  Calendar,
+  FileText,
+  User,
+  CheckCircle,
+  Clock,
+  BookOpen,
+  Copy,
+  Trophy,
+  Star,
+  Info,
+} from "lucide-react";
+import api from "../../utils/axios";
+import { toast } from "react-hot-toast";
+import { useStore } from "../../store/useStore";
+
+const Modal = ({ children, onClose, maxWidth = "max-w-5xl" }) => (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto"
+    onClick={onClose}
+  >
+    <div
+      className={`w-full ${maxWidth} mx-auto`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {children}
+    </div>
+  </div>
+);
+
+const CertificateModal = ({ course, user, onClose }) => {
+  const [certificate, setCertificate] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
+  const [courseCompletionStatus, setCourseCompletionStatus] = useState(null);
+  const [generating, setGenerating] = useState(false);
+  const [hasCertificateError, setHasCertificateError] = useState(false);
+  
+  // GET USER FROM GLOBAL STORE LIKE TOPBAR DOES
+  const userFromStore = useStore((state) => state.user);
+
+  useEffect(() => {
+    if (course?._id) {
+      // Use user ID from props OR from store
+      const userId = user?._id || userFromStore?._id;
+      if (userId) {
+        fetchCertificate(userId);
+        fetchCourseCompletionStatus(userId);
+      }
+    }
+  }, [course, user, userFromStore]);
+
+  const fetchCertificate = async (userId) => {
+    try {
+      setLoading(true);
+      setHasCertificateError(false);
+      const { data } = await api.get(`/courses/${course._id}/certificate?userId=${userId}`);
+      
+      // If data exists and has certificateNumber, set it
+      if (data && data.certificateNumber) {
+        setCertificate(data);
+      } else {
+        // If data is null or empty, certificate doesn't exist yet
+        setCertificate(null);
+        setHasCertificateError(true);
+      }
+    } catch (error) {
+      console.error("Error fetching certificate:", error);
+      setHasCertificateError(true);
+      
+      // Only show toast for non-404 errors
+      if (error.response?.status !== 404 && error.response?.status !== 200) {
+        toast.error("Failed to load certificate");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCourseCompletionStatus = async (userId) => {
+    try {
+      const { data } = await api.get(`/courses/${course._id}/completion-status?userId=${userId}`);
+      setCourseCompletionStatus(data);
+    } catch (error) {
+      console.error("Error fetching completion status:", error);
+    }
+  };
+
+  const generateCertificate = async () => {
+    try {
+      setGenerating(true);
+      // Use the user ID (priority: props > store)
+      const userId = user?._id || userFromStore?._id;
+      const { data } = await api.post(`/courses/${course._id}/certificate/generate`, {
+        userId: userId,
+        userName: getUserFullName(),
+        userEmail: getCurrentUser()?.email
+      });
+      setCertificate(data);
+      setHasCertificateError(false);
+      toast.success("Certificate generated successfully!");
+    } catch (error) {
+      console.error("Error generating certificate:", error);
+      toast.error(error.response?.data?.error || "Failed to generate certificate");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const downloadCertificate = async () => {
+    try {
+      setDownloading(true);
+      // Use the user ID (priority: props > store)
+      const userId = user?._id || userFromStore?._id;
+      const { data } = await api.get(
+        `/courses/${course._id}/certificate/download?userId=${userId}&userName=${encodeURIComponent(getUserFullName())}`,
+        {
+          responseType: 'blob'
+        }
+      );
+      
+      const url = window.URL.createObjectURL(new Blob([data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${course.title.replace(/\s+/g, '_')}_Certificate_${getUserFullName().replace(/\s+/g, '_')}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      
+      toast.success("Certificate downloaded successfully!");
+    } catch (error) {
+      console.error("Error downloading certificate:", error);
+      toast.error("Failed to download certificate");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const shareCertificate = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `Certificate of Completion - ${course.title}`,
+          text: `${getUserFullName()} has successfully completed the ${course.title} course!`,
+          url: window.location.href,
+        });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success("Link copied to clipboard!");
+      }
+    } catch (error) {
+      console.error("Error sharing certificate:", error);
+      toast.error("Failed to share certificate");
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  // Get current user object (priority: props > store)
+  const getCurrentUser = () => {
+    // Priority 1: Props
+    if (user) return user;
+    // Priority 2: Store
+    return userFromStore;
+  };
+
+  // Function to get user's full name
+  const getUserFullName = () => {
+    const currentUser = getCurrentUser();
+    
+    if (!currentUser) return "Student";
+    
+    // Check all possible name fields in order of priority
+    if (currentUser.firstName && currentUser.lastName) {
+      return `${currentUser.firstName} ${currentUser.lastName}`.trim();
+    }
+    else if (currentUser.fullName) {
+      return currentUser.fullName.trim();
+    }
+    else if (currentUser.name) {
+      return currentUser.name.trim();
+    }
+    else if (currentUser.username) {
+      return currentUser.username.trim();
+    }
+    // If we have email but no name, format it nicely
+    else if (currentUser.email) {
+      const emailPrefix = currentUser.email.split('@')[0];
+      const nameFromEmail = emailPrefix
+        .replace(/[._-]/g, ' ')
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+      return nameFromEmail;
+    }
+    return "Student";
+  };
+
+  // Get user email for display
+  const getUserEmail = () => {
+    const currentUser = getCurrentUser();
+    return currentUser?.email;
+  };
+
+  if (loading) {
+    return (
+      <Modal onClose={onClose}>
+        <div className="bg-white rounded-xl shadow-[0_20px_40px_-5px_rgba(0,0,0,0.3)] w-full">
+          <div className="p-6 flex flex-col items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mb-4"></div>
+            <p className="text-gray-600">Loading certificate...</p>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
+  // Check if course is fully completed (all lessons + all quizzes passed)
+  const isCourseFullyCompleted = courseCompletionStatus?.fullyCompleted;
+
+  if (!isCourseFullyCompleted && hasCertificateError) {
+    return (
+      <Modal onClose={onClose}>
+        <div className="bg-white rounded-xl shadow-[0_20px_40px_-5px_rgba(0,0,0,0.3)] w-full">
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center">
+                <GraduationCap className="w-8 h-8 text-red-600 mr-3" />
+                <h2 className="text-xl font-bold text-gray-900">Course Certificate</h2>
+              </div>
+              <button
+                onClick={onClose}
+                className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="text-center py-10">
+              <div className="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Award className="w-12 h-12 text-yellow-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                Course Not Yet Completed
+              </h3>
+              <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                Complete all lessons and pass all quizzes to unlock your certificate.
+              </p>
+              
+              <div className="bg-gray-50 rounded-lg p-6 mb-6">
+                <h4 className="font-bold text-gray-700 mb-4">Completion Requirements</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Total Lessons:</span>
+                    <span className="font-bold">{courseCompletionStatus?.totalLessons || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Lessons Completed:</span>
+                    <span className={`font-bold ${courseCompletionStatus?.completedLessons === courseCompletionStatus?.totalLessons ? 'text-green-600' : 'text-red-600'}`}>
+                      {courseCompletionStatus?.completedLessons || 0} / {courseCompletionStatus?.totalLessons || 0}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Quizzes Passed:</span>
+                    <span className={`font-bold ${courseCompletionStatus?.passedQuizzes === courseCompletionStatus?.totalQuizzes ? 'text-green-600' : 'text-red-600'}`}>
+                      {courseCompletionStatus?.passedQuizzes || 0} / {courseCompletionStatus?.totalQuizzes || 0}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Overall Progress:</span>
+                    <span className="font-bold text-red-600">
+                      {courseCompletionStatus?.completionPercentage || 0}%
+                    </span>
+                  </div>
+                </div>
+                
+                {courseCompletionStatus?.lessonsNeedingCompletion?.length > 0 && (
+                  <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                    <h5 className="font-medium text-yellow-800 mb-2">Remaining Requirements:</h5>
+                    <ul className="text-sm text-yellow-700 space-y-1">
+                      {courseCompletionStatus.lessonsNeedingCompletion.map((lesson, idx) => (
+                        <li key={idx} className="flex items-center">
+                          <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                          {lesson}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex space-x-3 justify-center">
+                <button
+                  onClick={onClose}
+                  className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
+  // If course is fully completed but no certificate exists
+  if (isCourseFullyCompleted && (!certificate || hasCertificateError)) {
+    return (
+      <Modal onClose={onClose}>
+        <div className="bg-white rounded-xl shadow-[0_20px_40px_-5px_rgba(0,0,0,0.3)] w-full">
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center">
+                <GraduationCap className="w-8 h-8 text-red-600 mr-3" />
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">🎉 Course Completed!</h2>
+                  <p className="text-sm text-gray-600">You've completed all requirements</p>
+                </div>
+              </div>
+              <button
+                onClick={onClose}
+                className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="text-center py-10">
+              <div className="w-32 h-32 bg-gradient-to-r from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Trophy className="w-16 h-16 text-green-600" />
+              </div>
+              <h3 className="text-3xl font-bold text-gray-800 mb-4">
+                Congratulations! 🎓
+              </h3>
+              <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                You've successfully completed all lessons and passed all quizzes for <span className="font-bold text-red-600">{course.title}</span>.
+              </p>
+              
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 mb-6 border border-green-200">
+                <h4 className="font-bold text-gray-700 mb-4 flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                  Completion Summary
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">{courseCompletionStatus?.completedLessons || 0}</div>
+                    <div className="text-sm text-gray-600">Lessons Completed</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">{courseCompletionStatus?.passedQuizzes || 0}</div>
+                    <div className="text-sm text-gray-600">Quizzes Passed</div>
+                  </div>
+                  <div className="text-center col-span-2">
+                    <div className="text-2xl font-bold text-red-600">100%</div>
+                    <div className="text-sm text-gray-600">Overall Completion</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mb-8">
+                <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center mb-2">
+                    <User className="w-5 h-5 text-blue-600 mr-2" />
+                    <span className="text-sm font-medium text-gray-700">Certificate will be issued to:</span>
+                  </div>
+                  <p className="text-xl font-bold text-center">{getUserFullName()}</p>
+                  {getUserEmail() && (
+                    <p className="text-sm text-gray-500 text-center mt-1">({getUserEmail()})</p>
+                  )}
+                </div>
+                
+                <button
+                  onClick={generateCertificate}
+                  disabled={generating}
+                  className="px-8 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition font-medium flex items-center justify-center mx-auto shadow-lg"
+                >
+                  {generating ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Generating Certificate...
+                    </>
+                  ) : (
+                    <>
+                      <GraduationCap className="w-5 h-5 mr-2" />
+                      Generate Certificate
+                    </>
+                  )}
+                </button>
+              </div>
+              
+              <div className="flex space-x-3 justify-center">
+                <button
+                  onClick={onClose}
+                  className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
+  // If certificate exists, show the certificate preview
+  return (
+    <Modal onClose={onClose} maxWidth="max-w-4xl">  
+      <div className="bg-white rounded-xl shadow-[0_20px_40px_-5px_rgba(0,0,0,0.3)] w-full">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center">
+              <Award className="w-8 h-8 text-red-600 mr-3" />
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">🎓 Certificate of Completion</h2>
+                <p className="text-sm text-gray-600">{course.title}</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          
+          {/* Certificate Preview */}
+          <div className="bg-gradient-to-br from-red-50 to-white border-4 border-red-800 rounded-xl p-8 mb-6 relative overflow-hidden">
+            {/* Decorative elements */}
+            <div className="absolute top-0 left-0 w-32 h-32 bg-red-100 rounded-full -translate-x-16 -translate-y-16 opacity-50"></div>
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-red-100 rounded-full translate-x-16 translate-y-16 opacity-50"></div>
+            <div className="absolute top-4 right-4">
+              <Star className="w-12 h-12 text-yellow-400 opacity-30" />
+            </div>
+            <div className="absolute bottom-4 left-4">
+              <Star className="w-8 h-8 text-yellow-400 opacity-30" />
+            </div>
+            
+            <div className="text-center relative z-10">
+              {/* Certificate Header */}
+              <div className="mb-8">
+                <div className="flex items-center justify-center mb-4">
+                  <GraduationCap className="w-16 h-16 text-red-600 mr-3" />
+                  <div>
+                    <h1 className="text-4xl font-bold text-red-900 tracking-wide">CERTIFICATE OF COMPLETION</h1>
+                    <p className="text-lg text-gray-600 mt-1">This certifies that</p>
+                  </div>
+                </div>
+                <div className="h-1 w-64 bg-gradient-to-r from-red-600 to-red-800 mx-auto rounded-full"></div>
+              </div>
+              
+              {/* Student Name - Uses certificate.userName if available, otherwise getUserFullName() */}
+              <div className="mb-10">
+                <h2 className="text-5xl font-bold text-red-900 mb-3 py-2 border-b-4 border-t-4 border-red-200 px-8">
+                  {certificate?.userName || getUserFullName()}
+                </h2>
+                <p className="text-gray-600 text-lg">has successfully completed</p>
+              </div>
+              
+              {/* Course Title */}
+              <div className="mb-10">
+                <h3 className="text-3xl font-bold text-gray-800 mb-2">{course.title}</h3>
+                <p className="text-gray-600 max-w-2xl mx-auto">{course.description}</p>
+              </div>
+              
+              {/* Certificate Details */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="text-center p-4 bg-white rounded-lg shadow-sm border">
+                  <div className="flex items-center justify-center mb-2">
+                    <Calendar className="w-5 h-5 text-red-600 mr-2" />
+                    <span className="text-sm font-medium text-gray-700">Completion Date</span>
+                  </div>
+                  <p className="font-bold text-gray-800 text-lg">
+                    {certificate?.completionDate ? formatDate(certificate.completionDate) : formatDate(new Date())}
+                  </p>
+                </div>
+                <div className="text-center p-4 bg-white rounded-lg shadow-sm border">
+                  <div className="flex items-center justify-center mb-2">
+                    <Award className="w-5 h-5 text-red-600 mr-2" />
+                    <span className="text-sm font-medium text-gray-700">Certificate ID</span>
+                  </div>
+                  <p className="font-mono font-bold text-gray-800 text-lg tracking-wider">
+                    {certificate?.certificateNumber || "CERT-" + Math.random().toString(36).substr(2, 9).toUpperCase()}
+                  </p>
+                </div>
+                <div className="text-center p-4 bg-white rounded-lg shadow-sm border">
+                  <div className="flex items-center justify-center mb-2">
+                    <BookOpen className="w-5 h-5 text-red-600 mr-2" />
+                    <span className="text-sm font-medium text-gray-700">Course Duration</span>
+                  </div>
+                  <p className="font-bold text-gray-800 text-lg">
+                    {Math.floor(course.duration / 60)}h {(course.duration % 60)}m
+                  </p>
+                </div>
+              </div>
+              
+              {/* Signatures */}
+              <div className="pt-8 border-t border-gray-200 mt-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="text-center">
+                    <div className="h-0.5 w-48 bg-gray-400 mx-auto mb-3"></div>
+                    <p className="text-sm text-gray-600">Issued By</p>
+                    <p className="font-bold text-gray-800 text-lg">{course.instructor || "Learning Platform"}</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="h-0.5 w-48 bg-gray-400 mx-auto mb-3"></div>
+                    <p className="text-sm text-gray-600">Issued By</p>
+                    <p className="font-bold text-gray-800 text-lg">President & CEO</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Certificate Actions */}
+          <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+            <div className="mb-6">
+              <div className="flex items-center mb-2">
+                <User className="w-4 h-4 text-blue-600 mr-2" />
+                <span className="text-sm font-medium text-gray-700">Certificate issued to:</span>
+              </div>
+              <div className="bg-white p-3 rounded border flex items-center justify-between">
+                <div>
+                  <span className="font-medium">{certificate?.userName || getUserFullName()}</span>
+                  {getUserEmail() && (
+                    <span className="text-sm text-gray-500 ml-2">({getUserEmail()})</span>
+                  )}
+                </div>
+                <div className="text-xs text-gray-500">
+                  Full Name
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-white p-4 rounded-lg border border-gray-200">
+                <div className="flex items-center mb-2">
+                  <Calendar className="w-4 h-4 text-gray-500 mr-2" />
+                  <span className="text-sm font-medium text-gray-700">Issued On</span>
+                </div>
+                <p className="font-bold text-gray-800">
+                  {certificate?.issueDate ? formatDate(certificate.issueDate) : formatDate(new Date())}
+                </p>
+              </div>
+              <div className="bg-white p-4 rounded-lg border border-gray-200">
+                <div className="flex items-center mb-2">
+                  <Clock className="w-4 h-4 text-gray-500 mr-2" />
+                  <span className="text-sm font-medium text-gray-700">Valid Until</span>
+                </div>
+                <p className="font-bold text-gray-800">
+                  {certificate?.expiryDate ? formatDate(certificate.expiryDate) : "Lifetime"}
+                </p>
+              </div>
+              <div className="bg-white p-4 rounded-lg border border-gray-200">
+                <div className="flex items-center mb-2">
+                  <CheckCircle className="w-4 h-4 text-gray-500 mr-2" />
+                  <span className="text-sm font-medium text-gray-700">Status</span>
+                </div>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-green-100 to-green-200 text-green-800">
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  Verified & Active
+                </span>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <button
+                onClick={downloadCertificate}
+                disabled={downloading || !certificate}
+                className={`col-span-2 py-3 rounded-lg transition font-medium flex items-center justify-center shadow-md ${
+                  !certificate 
+                    ? "bg-gray-400 cursor-not-allowed" 
+                    : "bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800"
+                }`}
+              >
+                {downloading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Downloading...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-5 h-5 mr-2" />
+                    Download Certificate (PDF)
+                  </>
+                )}
+              </button>
+              
+              <div className="flex space-x-2">
+                <button
+                  onClick={shareCertificate}
+                  disabled={!certificate}
+                  className={`flex-1 py-3 rounded-lg transition font-medium flex items-center justify-center border ${
+                    !certificate 
+                      ? "bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed" 
+                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share
+                </button>
+                <button
+                  onClick={() => window.print()}
+                  disabled={!certificate}
+                  className={`flex-1 py-3 rounded-lg transition font-medium flex items-center justify-center border ${
+                    !certificate 
+                      ? "bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed" 
+                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  <Printer className="w-4 h-4 mr-2" />
+                  Print
+                </button>
+              </div>
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded p-4">
+              <div className="flex items-center mb-2">
+                <Info className="w-4 h-4 text-blue-600 mr-2" />
+                <span className="text-sm font-medium text-blue-700">Certificate Verification</span>
+              </div>
+              <p className="text-xs text-blue-600">
+                This certificate can be verified using the Certificate ID. Keep this ID secure for future verification.
+              </p>
+              <div className="flex items-center justify-between mt-3">
+                <span className="text-sm text-gray-600">Certificate ID:</span>
+                <div className="flex items-center">
+                  <code className="font-mono text-sm bg-white px-3 py-1 rounded border mr-2">
+                    {certificate?.certificateNumber || "N/A"}
+                  </code>
+                  {certificate?.certificateNumber && (
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(certificate.certificateNumber);
+                        toast.success("Certificate ID copied to clipboard!");
+                      }}
+                      className="text-blue-600 hover:text-blue-800 flex items-center text-sm"
+                    >
+                      <Copy className="w-3 h-3 mr-1" />
+                      Copy
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={onClose}
+              className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
+export default CertificateModal;
