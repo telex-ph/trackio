@@ -14,6 +14,11 @@ Before running make sure you have a copy of updated `.env`. The file is a plain 
 1. **development:** must be set on the local setup.
 2. **production:** should be set on cloud service provider ([Render](https://render.com/))
 
+**DB_NAME variable**: This key reflects to the current database being used. It has two values:
+
+1. **test:** the testing database where you will and should work.
+2. **trackio:** the production database that should be set on a cloud service platfrom such Render.
+
 ## How to run the server?
 
 Following the required steps above, below is the next steps to properly run the server:
