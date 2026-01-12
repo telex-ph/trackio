@@ -269,352 +269,589 @@ const SharedTicketAnalytics = ({ email }) => {
     <div
       className={`p-8 ${BG_TELEX_LIGHT_GREY_BG} min-h-screen space-y-10 font-sans`}
     >
-      <h1
-        className={`text-4xl font-extrabold text-gray-900 border-b-4 ${BORDER_TELEX_RED_PRIMARY} pb-4 flex items-center gap-3 tracking-tight`}
-      >
-        <TrendingUp className={TEXT_TELEX_RED_PRIMARY} size={32} />
-        Shared Ticket Analytics
-      </h1>
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold tracking-tight text-slate-800">
+            Shared Ticket Analytics
+          </h2>
+          <p className="text-slate-500 text-sm mt-1 font-normal">
+            Monitoring agent productivity and service quality metrics
+          </p>
+        </div>
 
-      {/* --- Date Range Filter --- */}
-      <div
-        className="bg-white shadow-lg rounded-xl p-5 flex flex-wrap items-end gap-4 border-l-4"
-        style={{ borderColor: TELEX_RED_PRIMARY }}
-      >
-        <Calendar size={24} className={TEXT_TELEX_RED_PRIMARY} />
-        <h2 className={`text-lg font-bold ${TEXT_TELEX_DARK_GREY}`}>
-          Filter Analytics by Date Range
-        </h2>
+{/* --- DATE FILTER CONTAINER --- */}
+<div className="relative bg-white/80 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.02)] rounded-[1.5rem] lg:rounded-[2rem] p-3 mb-12 border border-white/50">
+  <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+   
+    {/* Header Section: Icon & Title */}
+    <div className="flex items-center px-2 lg:pl-4 lg:pr-6 border-b lg:border-b-0 lg:border-r border-slate-100 pb-3 lg:pb-0">
+      <div className="w-10 h-10 lg:w-11 lg:h-11 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center text-[#800000] shadow-inner border border-slate-100 flex-shrink-0">
+        <Calendar size={18} strokeWidth={1.5} />
+      </div>
+      <div className="ml-4">
+        <p className="text-[10px] font-medium text-slate-400 uppercase tracking-[0.2em] mb-0.5">Range</p>
+        <p className="text-[14px] font-medium text-slate-800">Data Filter</p>
+      </div>
+     
+      {/* Mobile Live Sync Indicator */}
+      <div className="ml-auto lg:hidden flex flex-col items-end">
+        <div className="flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span className="text-[9px] font-medium text-emerald-600 uppercase">Live</span>
+        </div>
+      </div>
+    </div>
 
-        {/* Start Date */}
-        <div className="flex flex-col flex-grow min-w-[150px]">
-          <label
-            htmlFor="startDate"
-            className="text-xs font-medium text-gray-500 mb-1"
-          >
-            Start Date
-          </label>
+    {/* Main Controls Wrapper */}
+    <div className="flex flex-col md:flex-row flex-wrap items-center gap-4 flex-grow bg-slate-50/50 rounded-[1.5rem] p-4 lg:px-6 lg:py-2 border border-slate-100/50">
+     
+      {/* Date Inputs Group */}
+      <div className="flex items-center justify-between w-full md:w-auto gap-4 lg:gap-6">
+        <div className="flex flex-col min-w-[100px] lg:min-w-[120px]">
+          <span className="text-[9px] font-medium text-slate-400 uppercase tracking-tight mb-0.5">Start Date</span>
           <input
-            id="startDate"
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 hover:border-red-400 transition duration-150"
+            className="bg-transparent text-[13px] text-slate-700 outline-none cursor-pointer hover:text-[#800000] transition-colors font-normal w-full"
           />
         </div>
+       
+        <div className="w-6 h-[1px] bg-slate-200 flex-shrink-0"></div>
 
-        {/* End Date */}
-        <div className="flex flex-col flex-grow min-w-[150px]">
-          <label
-            htmlFor="endDate"
-            className="text-xs font-medium text-gray-500 mb-1"
-          >
-            End Date
-          </label>
+        <div className="flex flex-col min-w-[100px] lg:min-w-[120px]">
+          <span className="text-[9px] font-medium text-slate-400 uppercase tracking-tight mb-0.5">End Date</span>
           <input
-            id="endDate"
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 hover:border-red-400 transition duration-150"
+            className="bg-transparent text-[13px] text-slate-700 outline-none cursor-pointer hover:text-[#800000] transition-colors font-normal w-full"
           />
         </div>
+      </div>
 
-        <div className="flex gap-2 mt-2 flex-wrap">
-          <button
-            onClick={() => {
-              const { start, end } = getThisWeek();
-              setStartDate(start);
-              setEndDate(end);
-              fetchAnalytics(start, end);
-            }}
-            className="px-3 py-1 rounded bg-red-500 text-white hover:bg-red-600"
-          >
-            This Week
-          </button>
-          <button
-            onClick={() => {
-              const { start, end } = getThisMonth();
-              setStartDate(start);
-              setEndDate(end);
-              fetchAnalytics(start, end);
-            }}
-            className="px-3 py-1 rounded bg-red-500 text-white hover:bg-red-600"
-          >
-            This Month
-          </button>
-          <button
-            onClick={() => {
-              const { start, end } = getThisYear();
-              setStartDate(start);
-              setEndDate(end);
-              fetchAnalytics(start, end);
-            }}
-            className="px-3 py-1 rounded bg-red-500 text-white hover:bg-red-600"
-          >
-            This Year
-          </button>
-          <button
-            onClick={() => {
-              setStartDate("");
-              setEndDate("");
-              fetchAnalytics("", "");
-            }}
-            className="px-3 py-1 rounded bg-gray-300 text-gray-700 hover:bg-gray-400"
-          >
-            All Tickets
-          </button>
-        </div>
+      <div className="hidden lg:block w-[1px] h-8 bg-slate-200/60 mx-2"></div>
 
-        {/* Apply Button */}
+      {/* Quick Select Buttons - Scrollable on mobile */}
+      <div className="flex items-center gap-1 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+        {[
+          { label: "Week", fn: getThisWeek },
+          { label: "Month", fn: getThisMonth },
+          { label: "Year", fn: getThisYear },
+        ].map((btn) => {
+          const { start, end } = btn.fn();
+          const isActive = startDate === start && endDate === end;
+
+          return (
+            <button
+              key={btn.label}
+              onClick={() => {
+                setStartDate(start);
+                setEndDate(end);
+                fetchAnalytics(start, end);
+              }}
+              className={`px-4 py-2 text-[11px] font-medium rounded-xl transition-all duration-300 active:scale-95 whitespace-nowrap
+                ${isActive
+                  ? 'bg-[#800000] text-white shadow-md shadow-red-900/20'
+                  : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-100'}`}
+            >
+              {btn.label}
+            </button>
+          );
+        })}
+       
+        <div className="w-[1px] h-4 bg-slate-200 mx-1 flex-shrink-0"></div>
+       
         <button
-          onClick={handleApplyFilter}
-          style={{ backgroundColor: TELEX_RED_PRIMARY }}
-          className="px-6 py-2 min-w-[120px] rounded-lg font-semibold text-white hover:bg-red-700 hover:scale-105 transition duration-150 ease-in-out disabled:opacity-50"
-          disabled={loading}
+          onClick={() => {
+            setStartDate("");
+            setEndDate("");
+            fetchAnalytics("", "");
+          }}
+          className={`px-4 py-2 text-[11px] font-medium rounded-xl transition-all duration-300 active:scale-95 whitespace-nowrap
+            ${(startDate === "" && endDate === "")
+              ? 'bg-[#800000] text-white shadow-md shadow-red-900/20'
+              : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-100'}`}
         >
-          {loading ? "Applying..." : "Apply Filter"}
+          All Tickets
         </button>
+      </div>
+    </div>
 
-        {/* Applied Date Range Display */}
-        <div className="ml-auto text-sm text-gray-600">
-          <span className="font-bold">Data Range:</span> {appliedStartDate} to{" "}
-          {appliedEndDate}
+    {/* Desktop Status Info */}
+    <div className="px-4 hidden xl:flex flex-col items-end flex-shrink-0">
+      <div className="flex items-center gap-1.5 mb-1">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span className="text-[9px] font-medium text-emerald-600 uppercase tracking-tighter">Live Sync</span>
+      </div>
+      <p className="text-[11px] font-normal text-slate-400 truncate max-w-[120px]">
+        {appliedStartDate || 'Full'} → {appliedEndDate || 'History'}
+      </p>
+    </div>
+
+    {/* Action Button */}
+    <button
+      onClick={handleApplyFilter}
+      disabled={loading}
+      className="w-full lg:w-auto h-12 lg:h-14 px-8 bg-[#800000] text-white rounded-xl lg:rounded-[1.5rem] flex items-center justify-center gap-3 hover:bg-[#600000] transition-all duration-500 shadow-[0_10px_20px_rgba(128,0,0,0.15)] active:scale-95 disabled:opacity-30 group"
+    >
+      <span className="text-[13px] font-medium tracking-tight whitespace-nowrap">
+        {loading ? "Updating..." : "Refresh Report"}
+      </span>
+      {!loading && (
+        <div className="w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-white/10 flex items-center justify-center group-hover:rotate-180 transition-transform duration-700">
+           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+             <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+             <path d="M21 3v5h-5"/>
+           </svg>
         </div>
-      </div>
+      )}
+    </button>
+  </div>
+</div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-        <SummaryCard
-          title="Total Tickets"
-          value={data.totalTickets}
-          borderColor={TELEX_DARK_GREY}
-          icon={Layers}
-        />
-        <SummaryCard
-          title="Open Tickets"
-          value={data.openTickets}
-          borderColor={TELEX_RED_PRIMARY} // Brighter red for open
-          icon={AlertTriangle}
-        />
-        <SummaryCard
-          title="Resolved Tickets"
-          value={data.resolvedTickets}
-          borderColor={TELEX_CHART_COLORS[2]} // Green from palette
-          icon={CheckCircle}
-        />
-        <SummaryCard
-          title="Completed Tickets"
-          value={data.completedTickets}
-          borderColor={TELEX_CHART_COLORS[4]} // Purple from palette
-          icon={CheckCircle}
-        />
+{/* --- Performance Grid --- */}
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+  <div className="bg-gradient-to-br from-[#990000] via-[#800000] to-[#4a0000] rounded-[2rem] px-6 py-2 text-white shadow-2xl border border-white/10 flex flex-col justify-between h-[160px] relative overflow-hidden group">
+    <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent opacity-50"></div>
+    <div className="relative z-10 flex justify-between items-start pt-1">
+      <div className="flex gap-1">
+        <div className="w-2 h-3 bg-white rounded-sm shadow-[0_0_10px_rgba(255,255,255,0.6)]"></div>
+        <div className="w-2 h-3 bg-white/20 rounded-sm"></div>
       </div>
+      <div className="text-white opacity-100">
+        <Layers size={14} />
+      </div>
+    </div>
+    <div className="relative z-10 text-center -mt-1">
+      <h2 className="text-sm font-black tracking-tight leading-none text-white/90 mb-1.5 uppercase">TOTAL TICKETS</h2>
+      <h3 className="text-7xl font-black tracking-tighter leading-none text-white drop-shadow-md">791</h3>
+    </div>
+    <div className="relative z-10 text-center pb-1.5 pt-1 border-t border-white/20">
+      <p className="text-[8px] font-normal text-white/60 lowercase tracking-wide font-medium">overall system data logs</p>
+    </div>
+    <div className="absolute -right-8 -top-8 w-20 h-20 bg-white/5 rounded-full blur-2xl"></div>
+    <div className="absolute -left-10 -bottom-10 w-24 h-24 bg-red-500/10 rounded-full blur-3xl"></div>
+  </div>
+  <div className="bg-white rounded-[2rem] px-6 py-2 text-slate-900 shadow-xl border border-slate-100 flex flex-col justify-between h-[160px] relative overflow-hidden group">
+    <div className="relative z-10 flex justify-between items-start pt-1">
+      <div className="flex gap-1">
+        <div className="w-2 h-3 bg-[#ef4444] rounded-sm"></div>
+        <div className="w-2 h-3 bg-[#ef4444]/20 rounded-sm"></div>
+      </div>
+      <div className="text-[#ef4444] opacity-100">
+        <AlertTriangle size={14} />
+      </div>
+    </div>
+    <div className="relative z-10 text-center -mt-1">
+      <h2 className="text-sm font-black tracking-tight leading-none text-slate-800 mb-1.5 uppercase">OPEN TICKETS</h2>
+      <h3 className="text-7xl font-black tracking-tighter leading-none text-[#ef4444]">{data.openTickets}</h3>
+    </div>
 
-      {/* Average Metrics & Charts */}
+    <div className="relative z-10 text-center pb-1.5 pt-1 border-t border-slate-100">
+      <p className="text-[8px] font-normal text-slate-400 lowercase tracking-wide">active alerts requiring action</p>
+    </div>
+  </div>
+  <div className="bg-white rounded-[2rem] px-6 py-2 text-slate-900 shadow-xl border border-slate-100 flex flex-col justify-between h-[160px] relative overflow-hidden group">
+    <div className="relative z-10 flex justify-between items-start pt-1">
+      <div className="flex gap-1">
+        <div className="w-2 h-3 bg-[#10b981] rounded-sm"></div>
+        <div className="w-2 h-3 bg-[#10b981]/20 rounded-sm"></div>
+      </div>
+      <div className="text-[#10b981] opacity-100">
+        <CheckCircle size={14} />
+      </div>
+    </div>
+    <div className="relative z-10 text-center -mt-1">
+      <h2 className="text-sm font-black tracking-tight leading-none text-slate-800 mb-1.5 uppercase">RESOLVED TICKETS</h2>
+      <h3 className="text-7xl font-black tracking-tighter leading-none text-[#10b981]">{data.resolvedTickets}</h3>
+    </div>
+    <div className="relative z-10 text-center pb-1.5 pt-1 border-t border-slate-100">
+      <p className="text-[8px] font-normal text-slate-400 lowercase tracking-wide">successfully closed issues</p>
+    </div>
+  </div>
+  <div className="bg-white rounded-[2rem] px-6 py-2 text-slate-900 shadow-xl border border-slate-100 flex flex-col justify-between h-[160px] relative overflow-hidden group">
+    <div className="relative z-10 flex justify-between items-start pt-1">
+      <div className="flex gap-1">
+        <div className="w-2 h-3 bg-[#8b5cf6] rounded-sm"></div>
+        <div className="w-2 h-3 bg-[#8b5cf6]/20 rounded-sm"></div>
+      </div>
+      <div className="text-[#8b5cf6] opacity-100">
+        <CheckCircle size={14} />
+      </div>
+    </div>
+    <div className="relative z-10 text-center -mt-1">
+      <h2 className="text-sm font-black tracking-tight leading-none text-slate-800 mb-1.5 uppercase">COMPLETED</h2>
+      <h3 className="text-7xl font-black tracking-tighter leading-none text-[#8b5cf6]">{data.completedTickets}</h3>
+    </div>
+    <div className="relative z-10 text-center pb-1.5 pt-1 border-t border-slate-100">
+      <p className="text-[8px] font-normal text-slate-400 lowercase tracking-wide">finalized project milestone</p>
+    </div>
+  </div>
+</div>  
+
+    {/* Average Metrics & Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Average Response / Resolution */}
         <div className="lg:col-span-1 space-y-6">
-          <div
-            className={`bg-white shadow-xl rounded-xl p-6 border-t-4 ${BORDER_TELEX_RED_DARK_ACCENT}`}
-            style={{ borderColor: TELEX_RED_DARK_ACCENT }}
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <Clock size={24} className={TEXT_TELEX_RED_DARK_ACCENT} />
-              <p className={`text-xl font-bold ${TEXT_TELEX_DARK_GREY}`}>
-                Key Timings
+          <div className="bg-white shadow-xl rounded-2xl p-7 border border-slate-200 relative overflow-hidden">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-2 bg-red-600 text-white rounded-lg">
+                <Clock size={20} />
+              </div>
+              <p className="text-lg font-bold text-slate-900">
+                Key Performance Timings
               </p>
             </div>
-            <div className="pt-2">
-              <p className="text-sm text-gray-500 uppercase tracking-wide font-poppins">
-                Avg First Response
-              </p>
-              <p
-                className={`text-3xl font-extrabold ${TEXT_TELEX_RED_PRIMARY} mt-1`}
-              >
-                {data.avgFirstResponse}
-              </p>
+
+            <div className="space-y-10">
+              <div className="relative">
+                <div className="flex justify-between items-end mb-2">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 mb-1">
+                      Average First Response
+                    </p>
+                    <p className="text-4xl font-black text-slate-900 tracking-tight">
+                      {data.avgFirstResponse}
+                    </p>
+                  </div>
+                  <div className="pb-1">
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                      Optimal
+                    </span>
+                  </div>
+                </div>
+                <div className="w-full h-2 bg-slate-100 rounded-md overflow-hidden">
+                  <div
+                    className="h-full bg-red-600 rounded-md transition-all duration-1000"
+                    style={{ width: '70%' }}
+                  ></div>
+                </div>
+              </div>
+              <div className="relative">
+                <div className="flex justify-between items-end mb-2">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 mb-1">
+                      Average Resolution Time
+                    </p>
+                    <p className="text-4xl font-black text-slate-900 tracking-tight">
+                      {data.avgResolution}
+                    </p>
+                  </div>
+                  <div className="pb-1">
+                    <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+                      Standard
+                    </span>
+                  </div>
+                </div>
+                <div className="w-full h-2 bg-slate-100 rounded-md overflow-hidden">
+                  <div
+                    className="h-full bg-slate-800 rounded-md transition-all duration-1000"
+                    style={{ width: '55%' }}
+                  ></div>
+                </div>
+              </div>
             </div>
-            <div className="pt-4 border-t border-gray-200 mt-4">
-              <p className="text-sm text-gray-500 uppercase tracking-wide font-poppins">
-                Avg Resolution Time
-              </p>
-              <p
-                className={`text-3xl font-extrabold ${TEXT_TELEX_RED_PRIMARY} mt-1`}
-              >
-                {data.avgResolution}
-              </p>
-            </div>
+            <div className="absolute left-0 top-0 h-full w-1 bg-red-600"></div>
           </div>
 
           {/* Category Pie Chart */}
-          <div className="bg-white shadow-xl rounded-xl p-6 border">
-            <h2
-              className={`text-xl font-bold mb-4 flex items-center gap-2 ${TEXT_TELEX_DARK_GREY}`}
-            >
-              <PieChartIcon size={24} className={TEXT_TELEX_RED_DARK_ACCENT} />
-              Tickets by Category
-            </h2>
+          <div className="bg-white shadow-xl rounded-2xl p-7 border border-slate-200 relative overflow-hidden flex flex-col">
+            <div className="absolute left-0 top-0 h-full w-1 bg-[#E02424]"></div>
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <PieChartIcon size={34} className="p-2 bg-red-600 text-white rounded-lg" />
+                Tickets by Category
+              </h3>
+              <span className="text-[11px] font-bold text-slate-400 uppercase bg-slate-50 px-2 py-1 rounded border border-slate-100">
+                Distribution
+              </span>
+            </div>
+
             {categoryChartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={categoryChartData}
-                    dataKey="value"
-                    nameKey="name"
-                    outerRadius={90}
-                    fill="#8884d8"
-                    labelLine={false}
-                    label={({ percent }) => `${(percent * 100).toFixed(1)}%`}
-                  >
-                    {categoryChartData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={
-                          TELEX_CHART_COLORS[index % TELEX_CHART_COLORS.length]
-                        }
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend
-                    iconType="circle"
-                    layout="vertical"
-                    align="right"
-                    verticalAlign="middle"
-                    wrapperStyle={{
-                      paddingLeft: "20px",
-                      fontSize: "12px",
-                      fontFamily: "sans-serif",
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              <div className="relative h-[280px] w-full flex flex-col justify-center">
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style={{ paddingBottom: '50px' }}>
+                  <span className="text-4xl font-black text-slate-900 leading-none tracking-tight">
+                    {categoryChartData.reduce((acc, curr) => acc + curr.value, 0)}
+                  </span>
+                  <span className="text-[11px] font-bold text-slate-400 uppercase mt-1">Total</span>
+                </div>
+
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryChartData}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={70}
+                      outerRadius={90}
+                      paddingAngle={5}
+                      stroke="none"
+                      labelLine={false}
+                      /* Percentage labels - Bold and tight font */
+                      label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                    >
+                      {categoryChartData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={TELEX_CHART_COLORS[index % TELEX_CHART_COLORS.length]}
+                          className="hover:opacity-80 transition-opacity cursor-pointer outline-none"
+                        />
+                      ))}
+                    </Pie>
+                   
+                    <Tooltip
+                      content={typeof CustomTooltip !== 'undefined' ? <CustomTooltip /> : null}
+                      contentStyle={{
+                        borderRadius: '12px',
+                        border: 'none',
+                        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                        fontSize: '12px',
+                        fontWeight: 'bold'
+                      }}
+                    />
+
+                    <Legend
+                      iconType="circle"
+                      layout="horizontal"
+                      align="center"
+                      verticalAlign="bottom"
+                      wrapperStyle={{
+                        paddingTop: "20px",
+                        fontSize: "11px",
+                        fontWeight: "700",
+                        color: "#475569",
+                        textTransform: "uppercase"
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             ) : (
-              <div className="h-[250px] flex items-center justify-center text-gray-500">
-                No category data for this period.
+              <div className="h-[280px] flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-100 rounded-xl">
+                <PieChartIcon size={40} className="mb-2 opacity-20" />
+                <p className="text-xs font-bold uppercase">No data found</p>
               </div>
             )}
           </div>
-        </div>
+          </div>
 
-        {/* Assignee Bar Chart */}
-        <div className="lg:col-span-2 bg-white shadow-xl rounded-xl p-6 border">
-          <h2
-            className={`text-xl font-bold mb-4 flex items-center gap-2 ${TEXT_TELEX_DARK_GREY}`}
-          >
-            <BarChartIcon size={24} className={TEXT_TELEX_RED_DARK_ACCENT} />
-            Ticket Distribution by Assignee
-          </h2>
-          {assigneeChartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart
-                data={assigneeChartData}
-                margin={{ top: 10, right: 30, left: 20, bottom: 5 }}
-              >
-                <XAxis
-                  dataKey="name"
-                  stroke={TELEX_DARK_GREY}
-                  tickLine={false}
-                  axisLine={false}
-                  interval={0}
-                  angle={-25} // Slightly steeper angle for labels
-                  textAnchor="end"
-                  height={70} // Increase height for angled labels
-                  style={{ fontSize: "12px", fontFamily: "sans-serif" }}
-                />
-                <YAxis
-                  stroke={TELEX_DARK_GREY}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) => value.toFixed(0)}
-                  style={{ fontSize: "12px", fontFamily: "sans-serif" }}
-                />
-                <Tooltip
-                  cursor={{ fill: "#f3f4f6" }}
-                  formatter={(value) => [value, "Tickets"]}
-                  contentStyle={{
-                    border: "none",
-                    borderRadius: "8px",
-                    boxShadow:
-                      "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
-                    fontFamily: "sans-serif",
-                  }}
-                />
-                <Bar
-                  dataKey="tickets"
-                  fill={TELEX_RED_PRIMARY} // Use primary red color
-                  radius={[6, 6, 0, 0]}
-                  maxBarSize={40}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-500">
-              No assignee data for this period.
-            </div>
-          )}
+{/* Assignee Bar Chart */}
+<div className="lg:col-span-2 bg-white shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-2xl p-8 border border-slate-100 relative overflow-hidden group">
+ 
+  <div className="mb-8 relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h3 className={`text-lg font-bold text-slate-900 flex items-center gap-3 ${TEXT_TELEX_DARK_GREY}`}>
+        <div className="p-2 bg-red-600/10 text-red-600 rounded-lg">
+          <BarChartIcon size={20} />
         </div>
+        Ticket Distribution by Assignee
+      </h3>
+      <p className="text-[12px] font-normal text-slate-400 mt-1 ml-11">
+        Visual breakdown of workload across all active team members
+      </p>
+    </div>
+   
+    {assigneeChartData.length > 0 && (
+      <div className="px-3 py-1 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-medium text-slate-400 uppercase tracking-tight">
+        Total Agents: {assigneeChartData.length}
+      </div>
+    )}
+  </div>
+
+  {assigneeChartData.length > 0 ? (
+    <>
+      <div className="h-[320px] w-full relative z-10">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={assigneeChartData}
+            margin={{ top: 10, right: 30, left: 0, bottom: 5 }}
+          >
+            <defs>
+              <linearGradient id="maroonGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#A30000" />
+                <stop offset="100%" stopColor="#800000" />
+              </linearGradient>
+            </defs>
+
+            <XAxis
+              dataKey="name"
+              stroke="#94a3b8"
+              tickLine={false}
+              axisLine={false}
+              interval={0}
+              angle={-25}
+              textAnchor="end"
+              height={70}
+              style={{ fontSize: "11px", fontWeight: 400, fontFamily: "sans-serif" }}
+            />
+            <YAxis
+              stroke="#94a3b8"
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={(value) => value.toFixed(0)}
+              style={{ fontSize: "11px", fontWeight: 400, fontFamily: "sans-serif" }}
+            />
+            <Tooltip
+              cursor={{ fill: "#f8fafc", radius: 6 }}
+              formatter={(value) => [value, "Tickets"]}
+              contentStyle={{
+                border: "none",
+                borderRadius: "12px",
+                boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+                fontSize: "12px",
+                fontWeight: 400,
+              }}
+            />
+            <Bar
+              dataKey="tickets"
+              fill="url(#maroonGradient)"
+              radius={[6, 6, 0, 0]}
+              maxBarSize={45}
+              animationDuration={1500}
+            />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
 
-      {/* Assignee Performance Table */}
-      <div className="bg-white shadow-xl rounded-xl p-6 border">
-        <h2
-          className={`text-xl font-bold mb-6 flex items-center gap-2 ${TEXT_TELEX_DARK_GREY} border-b-2 border-gray-200 pb-3`}
-        >
-          <User size={24} className={TEXT_TELEX_RED_DARK_ACCENT} />
-          Assignee Performance Summary
-        </h2>
+      {/* --- Ticket Distribution by Assignee --- */}
+      <div className="mt-10 pt-8 border-t border-slate-50 flex flex-col lg:flex-row gap-8 relative z-10">
+        <div className="flex-1 flex gap-4">
+          <div className="flex-1 p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-white border border-slate-100 shadow-sm transition-transform hover:-translate-y-1 duration-300">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center">
+                <span className="text-[#800000] text-[12px]">🏆</span>
+              </div>
+              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-tight">Top Performer</span>
+            </div>
+            <p className="text-[15px] font-medium text-slate-800 truncate">
+              {assigneeChartData.length > 0 ? [...assigneeChartData].sort((a,b) => b.tickets - a.tickets)[0]?.name : 'N/A'}
+            </p>
+          </div>
+          <div className="flex-1 p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-white border border-slate-100 shadow-sm transition-transform hover:-translate-y-1 duration-300">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">
+                <BarChartIcon size={14} />
+              </div>
+              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-tight">Average Load</span>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <p className="text-xl font-medium text-slate-800">
+                {(assigneeChartData.reduce((acc, curr) => acc + curr.tickets, 0) / (assigneeChartData.length || 1)).toFixed(1)}
+              </p>
+              <span className="text-[11px] text-slate-400 font-normal">Tickets</span>
+            </div>
+          </div>
+        </div>
+        <div className="lg:w-1/3 flex flex-col justify-center space-y-4 px-2">
+          <span className="text-[10px] font-medium text-slate-400 uppercase tracking-tight mb-1">Dashboard Legend</span>
+         
+          <div className="space-y-3">
+            <div className="flex items-start gap-3 group/item">
+              <div className="mt-1 w-2.5 h-2.5 rounded-full bg-gradient-to-b from-[#A30000] to-[#800000] shrink-0"></div>
+              <p className="text-[11px] font-normal text-slate-500 leading-tight group-hover/item:text-slate-700 transition-colors">
+                Vertical bars represent active ticket volume per agent.
+              </p>
+            </div>
+           
+            <div className="flex items-start gap-3 group/item">
+              <div className="mt-1 w-2.5 h-2.5 rounded-full bg-slate-200 shrink-0"></div>
+              <p className="text-[11px] font-normal text-slate-500 leading-tight group-hover/item:text-slate-700 transition-colors">
+                Horizontal baseline represents neutral workload state.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  ) : (
+    <div className="h-[320px] flex items-center justify-center text-slate-400 font-light italic bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+      No assignee data available for this period.
+    </div>
+  )}
+</div>
+</div>
+
+{/* Assignee Performance*/}
+      <div className="bg-[#f8fafc] rounded-3xl p-6 border border-slate-100">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 px-2">
+          <div>
+            <h2 className="text-2xl font-semibold text-slate-800 flex items-center gap-3">
+              Assignee Performance
+            </h2>
+            <p className="text-sm text-slate-500 mt-1">
+              Monitoring agent productivity and service quality metrics
+            </p>
+          </div>
+          <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-100">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+            <span className="text-sm font-medium text-slate-600">Live Statistics</span>
+          </div>
+        </div>
 
         {assigneeChartData.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr
-                  className={`${BG_TELEX_RED_DARK_ACCENT} text-white uppercase tracking-wider font-semibold`}
-                >
-                  <th className="p-4 text-left rounded-tl-lg">Assignee</th>
-                  <th className="p-4 text-left">Tickets</th>
-                  <th className="p-4 text-left">Avg Rating</th>
-                  <th className="p-4 text-left">Avg First Response</th>
-                  <th className="p-4 text-left rounded-tr-lg">
-                    Avg Resolution Time
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {assigneeChartData.map((assignee, index) => (
-                  <tr
-                    key={assignee.name}
-                    className={`border-t border-gray-100 transition duration-150 ease-in-out ${
-                      index % 2 === 0
-                        ? "bg-white hover:bg-gray-50"
-                        : `${BG_TELEX_LIGHT_GREY_BG} hover:bg-gray-100`
-                    }`}
-                  >
-                    <td className={`p-4 font-medium ${TEXT_TELEX_DARK_GREY}`}>
-                      {assignee.name}
-                    </td>
-                    <td className={`p-4 font-bold ${TEXT_TELEX_RED_PRIMARY}`}>
-                      {assignee.tickets}
-                    </td>
-                    <td className="p-4">
+          <div className="space-y-3">
+            <div className="hidden lg:grid grid-cols-5 px-8 py-3 text-sm font-medium text-slate-400">
+              <div>Agent Name</div>
+              <div>Ticket Load</div>
+              <div>Customer Rating</div>
+              <div>First Response</div>
+              <div className="text-right">Resolution Time</div>
+            </div>
+            {assigneeChartData.map((assignee) => (
+              <div
+                key={assignee.name}
+                className="bg-white border border-slate-100 rounded-2xl p-5 lg:p-6 shadow-sm hover:shadow-md hover:border-red-100 transition-all duration-300 group"
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-5 items-center gap-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center border border-slate-100 group-hover:bg-red-50 transition-colors">
+                      <span className="text-sm font-semibold text-[#800000]">
+                        {assignee.name.substring(0, 2).toUpperCase()}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-base font-medium text-slate-800 group-hover:text-[#800000] transition-colors">
+                        {assignee.name}
+                      </p>
+                      <p className="text-xs text-slate-400">Support Representative</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between lg:justify-start lg:gap-3">
+                      <span className="text-sm font-medium text-slate-700">{assignee.tickets} Tickets</span>
+                    </div>
+                    <div className="w-full lg:w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#800000] rounded-full"
+                        style={{ width: `${Math.min((assignee.tickets / 50) * 100, 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1">
                       <StarRating rating={assignee.avgRating} />
-                    </td>
-                    <td className="p-4 text-gray-600 font-poppins">
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center">
+                      <Clock size={14} className="text-slate-400" />
+                    </div>
+                    <span className="text-sm text-slate-600 font-medium">
                       {assignee.avgFirstResponse}
-                    </td>
-                    <td className="p-4 text-gray-600 font-poppins">
+                    </span>
+                  </div>
+                  <div className="text-left lg:text-right">
+                    <span className="inline-block px-3 py-1 bg-slate-50 rounded-lg text-xs font-medium text-slate-500 border border-slate-100">
                       {assignee.avgResolution}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </span>
+                  </div>
+
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
-          <div className="p-4 text-center text-gray-500">
-            No assignee performance data for this period.
+          <div className="bg-white rounded-2xl p-20 border border-dashed border-slate-200 text-center">
+            <p className="text-slate-400 font-medium">No performance data found for this selection.</p>
           </div>
         )}
       </div>

@@ -1,4 +1,4 @@
-import { X, FileText, Plus, Clipboard } from "lucide-react";
+import { X, FileText, Plus, Clipboard, Monitor, Tag, AlignLeft, Paperclip, AlertCircle } from "lucide-react";
 import { Spinner } from "flowbite-react";
 import { useEffect, useRef } from "react";
 
@@ -14,7 +14,6 @@ const AddTicketModal = ({
 }) => {
   const pasteAreaRef = useRef(null);
 
-  // Handle paste event for screenshots
   useEffect(() => {
     if (!isOpen) return;
 
@@ -24,19 +23,14 @@ const AddTicketModal = ({
 
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
-
-        // Check if the pasted item is an image
         if (item.type.indexOf("image") !== -1) {
           e.preventDefault();
           const blob = item.getAsFile();
-
           if (blob) {
-            // Create a filename with timestamp
             const timestamp = new Date().getTime();
             const file = new File([blob], `screenshot-${timestamp}.png`, {
               type: blob.type,
             });
-
             setAttachmentFile(file);
           }
           break;
@@ -44,21 +38,17 @@ const AddTicketModal = ({
       }
     };
 
-    // Add paste event listener to the document
     document.addEventListener("paste", handlePaste);
-
     return () => {
       document.removeEventListener("paste", handlePaste);
     };
   }, [isOpen, setAttachmentFile]);
 
-  // Handle file drop
   const handleDrop = (e) => {
     e.preventDefault();
     const files = e.dataTransfer?.files;
     if (files && files.length > 0) {
       const file = files[0];
-      // Check if it's an image or PDF
       if (file.type.startsWith("image/") || file.type === "application/pdf") {
         setAttachmentFile(file);
       }
@@ -72,196 +62,178 @@ const AddTicketModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <style>
+        {`
+          .no-scrollbar::-webkit-scrollbar {
+            display: none !important;
+          }
+          .no-scrollbar {
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+          }
+        `}
+      </style>
+
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden"
-        style={{ maxHeight: "90vh" }}
+        className="bg-white shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden border-t-[6px] border-t-[#800000] border-x border-b border-slate-300"
+        style={{ maxHeight: "92vh" }}
       >
-        {/* Header - FIXED */}
-        <div className="shrink-0 bg-linear-to-r from-[#a10000] to-[#a10000] px-6 py-5 flex items-center justify-between rounded-t-2xl">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-              <Plus className="w-5 h-5 text-white" />
+        <div className="shrink-0 px-8 py-6 border-b border-slate-200 flex items-center justify-between bg-white">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-[#800000] flex items-center justify-center text-white">
+              <Plus className="w-6 h-6" strokeWidth={3} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">
+              <h2 className="text-2xl font-bold text-slate-900 leading-none">
                 Create New Ticket
               </h2>
-              <p className="text-red-100 text-sm">Fill in the details below</p>
+              <p className="text-[#800000] text-[11px] font-bold mt-1">Support & Incident Report</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+            className="w-10 h-10 bg-slate-100 hover:bg-[#800000] flex items-center justify-center transition-all text-slate-600 hover:text-white"
           >
-            <X className="w-5 h-5 text-white" />
+            <X className="w-5 h-5" />
           </button>
         </div>
-
-        {/* Form Content - SCROLLABLE */}
-        <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
-          <form onSubmit={onSubmit} className="space-y-5">
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-              <label
-                htmlFor="stationNo"
-                className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 block"
-              >
-                Station Number
-              </label>
-              <input
-                id="stationNo"
-                name="stationNo"
-                type="number"
-                min="1"
-                max="230"
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === "") {
-                    setFormData({ ...formData, stationNo: "" });
-                    return;
-                  }
-                  const numValue = Number(value);
-                  if (
-                    !isNaN(numValue) &&
-                    numValue >= 1 &&
-                    numValue <= 230 &&
-                    Number.isInteger(numValue)
-                  ) {
-                    setFormData({
-                      ...formData,
-                      stationNo: numValue,
-                    });
-                  } else if (numValue > 230) {
-                    setFormData({ ...formData, stationNo: 230 });
-                  }
-                }}
-                required
-                value={formData.stationNo || ""}
-                placeholder="Enter station number (1-230)"
-                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#a10000] focus:border-transparent placeholder-gray-400 transition-all"
-              />
-            </div>
-
-            {/* Subject */}
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-              <label
-                htmlFor="subject"
-                className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 block"
-              >
-                Subject
-              </label>
-              <input
-                id="subject"
-                name="subject"
-                type="text"
-                onChange={(e) =>
-                  setFormData({ ...formData, subject: e.target.value })
-                }
-                required
-                value={formData.subject}
-                placeholder="Enter ticket subject"
-                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#a10000] focus:border-transparent placeholder-gray-400 transition-all"
-              />
-            </div>
-
-            {/* Description */}
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-              <label
-                htmlFor="description"
-                className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 block"
-              >
-                Description
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                required
-                rows="4"
-                placeholder="Describe the issue in detail..."
-                value={formData.description}
-                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#a10000] focus:border-transparent placeholder-gray-400 resize-none transition-all"
-              />
-            </div>
-
-            {/* Attachment with Paste & Drag-Drop Support */}
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200 hidden">
-              <label
-                htmlFor="attachment"
-                className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 block"
-              >
-                Attachment (Optional)
-              </label>
-
-              {/* Info Banner */}
-              <div className="mb-3 bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
-                <Clipboard className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
-                <p className="text-xs text-blue-700">
-                  <strong>Tip:</strong> You can paste screenshots (Ctrl/Cmd+V),
-                  drag & drop files, or browse to upload
-                </p>
+        <div className="flex-1 overflow-y-auto bg-slate-50 p-8 no-scrollbar">
+          <form onSubmit={onSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-[12px] font-bold text-slate-700">
+                  <Monitor size={14} className="text-[#800000]" /> Station Number
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="230"
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "") { setFormData({ ...formData, stationNo: "" }); return; }
+                    const numValue = Number(value);
+                    if (!isNaN(numValue) && numValue >= 1 && numValue <= 230) {
+                      setFormData({ ...formData, stationNo: numValue });
+                    } else if (numValue > 230) {
+                      setFormData({ ...formData, stationNo: 230 });
+                    }
+                  }}
+                  required
+                  value={formData.stationNo || ""}
+                  placeholder="e.g. 101"
+                  className="w-full border-2 border-slate-300 rounded-none px-5 py-3.5 text-slate-900 bg-white focus:outline-none focus:ring-0 focus:border-[#800000] transition-all font-bold placeholder-slate-400"
+                />
               </div>
 
-              <div className="space-y-3">
-                {/* Show Drag & Drop Area ONLY if walang attachment */}
+              {/* category */}
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-[12px] font-bold text-slate-700">
+                  <Tag size={14} className="text-[#800000]" /> Category
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="w-full border-2 border-slate-300 rounded-none px-5 py-3.5 bg-white text-slate-900 focus:outline-none focus:ring-0 focus:border-[#800000] transition-all font-bold appearance-none cursor-pointer"
+                  required
+                >
+                  <option value="">choose category</option>
+                  <option value="NETWORK">network</option>
+                  <option value="HARDWARE">hardware</option>
+                  <option value="SOFTWARE">software</option>
+                </select>
+              </div>
+            </div>
+
+            {/* subject */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-[12px] font-bold text-slate-700">
+                <FileText size={14} className="text-[#800000]" /> Subject
+              </label>
+              <input
+                type="text"
+                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                required
+                value={formData.subject}
+                placeholder="briefly describe the concern"
+                className="w-full border-2 border-slate-300 rounded-none px-5 py-3.5 text-slate-900 bg-white focus:outline-none focus:ring-0 focus:border-[#800000] transition-all font-bold placeholder-slate-400"
+              />
+            </div>
+
+            {/* description */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-[12px] font-bold text-slate-700">
+                <AlignLeft size={14} className="text-[#800000]" /> Full Description
+              </label>
+              <textarea
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                required
+                rows="4"
+                placeholder="provide as much detail as possible..."
+                value={formData.description}
+                className="w-full border-2 border-slate-300 rounded-none px-5 py-3.5 text-slate-900 bg-white focus:outline-none focus:ring-0 focus:border-[#800000] transition-all font-bold resize-none placeholder-slate-400 no-scrollbar"
+              />
+            </div>
+
+            {/* attachment section */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-[12px] font-bold text-slate-700">
+                <Paperclip size={14} className="text-[#800000]" /> Attachment (Optional)
+              </label>
+              
+              <div className="border-2 border-dashed border-slate-300 rounded-none p-2 bg-white">
                 {!attachmentFile ? (
                   <div
                     ref={pasteAreaRef}
                     onDrop={handleDrop}
                     onDragOver={handleDragOver}
-                    className="relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#a10000] transition-colors bg-gray-50"
+                    className="relative flex flex-col items-center justify-center py-8 px-4 text-center cursor-pointer transition-all bg-slate-50 hover:bg-slate-100"
                   >
                     <input
-                      id="attachment"
-                      name="attachment"
                       type="file"
                       accept="image/*,application/pdf"
-                      onChange={(e) =>
-                        setAttachmentFile(e.target.files[0] || null)
-                      }
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      onChange={(e) => setAttachmentFile(e.target.files[0] || null)}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     />
-                    <div className="pointer-events-none">
-                      <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 font-medium">
-                        Click to browse or drag & drop
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Images and PDF files supported
-                      </p>
+                    <div className="w-12 h-12 bg-white border border-slate-200 flex items-center justify-center mb-3 text-slate-400 transition-colors">
+                      <Clipboard size={20} />
                     </div>
+                    <p className="text-sm font-bold text-slate-800">
+                      Drop files or <span className="text-[#800000] underline">Browse</span>
+                    </p>
+                    <p className="text-[10px] text-slate-500 mt-1 font-bold">
+                      Supports: png, jpg, pdf • ctrl+v to paste
+                    </p>
                   </div>
                 ) : (
-                  /* Preview Selected File - Show ONLY if may attachment */
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between bg-linear-to-r from-green-50 to-green-100 rounded-lg p-3 border-2 border-green-200">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-green-600" />
-                        <span className="text-sm text-green-800 font-medium">
-                          {attachmentFile.name}
-                        </span>
-                        <span className="text-xs text-green-600 bg-green-200 px-2 py-0.5 rounded">
-                          {(attachmentFile.size / 1024).toFixed(1)} KB
-                        </span>
+                  <div className="p-2">
+                    <div className="flex items-center justify-between bg-slate-900 rounded-none p-4 text-white">
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <FileText size={18} className="text-[#ff4d4d] shrink-0" />
+                        <div className="overflow-hidden">
+                          <p className="text-sm font-bold truncate">
+                            {attachmentFile.name}
+                          </p>
+                          <p className="text-[10px] font-bold text-slate-400">
+                            {(attachmentFile.size / 1024).toFixed(1)} kb
+                          </p>
+                        </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => setAttachmentFile(null)}
-                        className="w-6 h-6 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center transition-colors"
+                        className="w-8 h-8 bg-slate-800 hover:bg-red-600 flex items-center justify-center transition-colors"
                       >
-                        <X className="w-4 h-4 text-red-600" />
+                        <X size={16} />
                       </button>
                     </div>
 
-                    {/* Image Preview */}
                     {attachmentFile.type.startsWith("image/") && (
-                      <div className="rounded-lg overflow-hidden border-2 border-gray-200">
+                      <div className="mt-2 border border-slate-300 overflow-hidden">
                         <img
                           src={URL.createObjectURL(attachmentFile)}
-                          alt="Preview"
-                          className="w-full h-auto max-h-64 object-contain bg-gray-100"
+                          alt="preview"
+                          className="w-full h-auto max-h-48 object-cover"
                         />
                       </div>
                     )}
@@ -269,64 +241,42 @@ const AddTicketModal = ({
                 )}
               </div>
             </div>
-
-            {/* Category + Severity */}
-            <div className="w-full">
-              {/* Category */}
-              <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-                <label
-                  htmlFor="category"
-                  className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 block"
-                >
-                  Category
-                </label>
-                <select
-                  id="category"
-                  value={formData.category}
-                  onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value })
-                  }
-                  className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#a10000] focus:border-transparent transition-all"
-                  required
-                >
-                  <option value="">Select category...</option>
-                  <option value="NETWORK">Network</option>
-                  <option value="HARDWARE">Hardware</option>
-                  <option value="SOFTWARE">Software</option>
-                </select>
-              </div>
-
-              {/* Severity */}
-            </div>
-
-            {/* Actions - Fixed at Bottom */}
-            <div className="flex justify-end gap-3 pt-4 border-t-2 border-gray-200">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-5 py-2.5 bg-white border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-6 py-2.5 bg-linear-to-r from-[#a10000] to-[#a10000] text-white font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Spinner size="sm" />
-                    <span>Saving...</span>
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4" />
-                    <span>Save Ticket</span>
-                  </>
-                )}
-              </button>
-            </div>
           </form>
+        </div>
+
+        {/* footer actions */}
+        <div className="shrink-0 px-8 py-6 bg-white border-t border-slate-200 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-slate-500">
+            <AlertCircle size={14} />
+            <span className="text-[10px] font-bold">Internal Use Only</span>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-3 bg-slate-100 border border-slate-300 text-slate-800 font-bold text-[11px] rounded-none hover:bg-slate-200 transition-all active:scale-95"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              onClick={onSubmit}
+              disabled={isSubmitting}
+              className="px-8 py-3 bg-[#800000] text-white font-bold text-[11px] rounded-none hover:bg-[#600000] disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex items-center gap-2 shadow-lg"
+            >
+              {isSubmitting ? (
+                <>
+                  <Spinner size="sm" />
+                  <span>Submitting...</span>
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4" strokeWidth={3} />
+                  <span>Save Ticket</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

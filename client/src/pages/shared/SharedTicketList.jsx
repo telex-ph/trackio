@@ -696,13 +696,13 @@ const TicketsTable = () => {
             View, add, and manage your IT tickets.
           </p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors cursor-pointer"
-        >
-          <Ticket className="w-4 h-4" />
-          Add Ticket
-        </button>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="group flex items-center px-6 py-2.5 rounded-xl border border-red-900/30 bg-white text-[#800000] font-bold text-sm transition-all hover:bg-[#800000] hover:text-white active:scale-95 shadow-sm hover:shadow-[0_0_15px_rgba(128,0,0,0.2)] cursor-pointer"
+          >
+            <Ticket className="w-4 h-4 mr-2 transition-transform group-hover:rotate-12 stroke-[2.5px]" />
+            Add Ticket
+          </button>
       </div>
 
       {/* Table - Pinalitan ng TicketsGrid component */}
