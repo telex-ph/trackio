@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { DateTime } from "luxon";
+import { motion } from "framer-motion";
 import api from "../../utils/axios";
 import socket from "../../utils/socket";
 
@@ -16,7 +17,6 @@ import { fetchUserById } from "../../store/stores/getUserById";
 // Interfaces
 // --------------------------------------------------------
 
-// File structure for uploads
 interface FileUpload {
   fileName: string;
   size: number;
@@ -25,7 +25,6 @@ interface FileUpload {
   url: string;
 }
 
-// Main offense structure
 interface Offense {
   _id: string;
   agentName: string;
@@ -355,10 +354,6 @@ const HRReportedOffenses = () => {
     }
   };
 
-  // Hearing modal states
-  const [_showHearingModal, setShowHearingModal] = useState<boolean>(false);
-  const [_hearingDate, setHearingDate] = React.useState("");
-
   // Set hearing schedule
   const handleHearingDate = async (
     hearingDate: string,
@@ -391,8 +386,6 @@ const HRReportedOffenses = () => {
       showNotification("Hearing has been set.", "success");
       resetForm();
       fetchOffenses();
-      setHearingDate("");
-      setShowHearingModal(false);
     } catch (error) {
       console.error("Error setting hearing:", error);
       showNotification("Failed to set hearing date.", "error");
@@ -453,8 +446,6 @@ const HRReportedOffenses = () => {
 
       resetForm();
       setSelectedEscalateFile(null);
-      setSelectedMOMFile(null);
-      setSelectedNDAFile(null);
       fetchOffenses();
     } catch (error) {
       console.error("Error updating offense:", error);
@@ -584,10 +575,6 @@ const HRReportedOffenses = () => {
     }
   };
 
-  // Reject modal states
-  const [_showInvalidModal, setShowInvalidModal] = useState(false);
-  const [_invalidReason, setInvalidReason] = useState("");
-
   // Reject offense
   const handleInvalid = async (invalidReason: string) => {
     try {
@@ -613,8 +600,6 @@ const HRReportedOffenses = () => {
       showNotification("Case rejected.", "success");
       resetForm();
       fetchOffenses();
-      setShowInvalidModal(false);
-      setInvalidReason("");
     } catch (error) {
       console.error("Error rejecting case:", error);
       showNotification("Failed to reject.", "error");
@@ -689,13 +674,11 @@ const HRReportedOffenses = () => {
     return (!start || offenseDate >= start) && (!end || offenseDate <= end);
   });
 
-  // --------------------------------------------------------
-  // UI Rendering
-  // --------------------------------------------------------
+  // Safe Asset Resolver
+  const imagePath = new URL('../../assets/background/bg-005.png', import.meta.url).href;
 
   return (
-    <div>
-      {/* Notification popup */}
+    <div className="min-h-screen">
       {notification.isVisible && (
         <Notification
           message={notification.message}
@@ -704,18 +687,88 @@ const HRReportedOffenses = () => {
         />
       )}
 
-      {/* Page header */}
-      <section className="flex flex-col mb-2">
-        <div className="flex items-center gap-1">
-          <h2>Reported Offenses</h2>
+      {/* HEADER SECTION */}
+      <div className="w-full max-w-9xl mx-auto mb-10 px-2 sm:px-6 md:px-3">
+        <div className="flex flex-col mb-4">
+          <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">team offense management</h2>
+          <p className="text-gray-500 text-sm italic">create, view, and manage offenses for your team.</p>
         </div>
-        <p className="text-gray-600">
-          View all reported disciplinary offenses.
-        </p>
-      </section>
 
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+          
+          {/* LEFT SIDE: STATIC IMAGE */}
+          <div className="w-full lg:w-3/5">
+            <img
+              src={imagePath}
+              alt="Management Banner"
+              className="w-full h-auto object-cover rounded-3xl shadow-lg border border-gray-100"
+            />
+          </div>
+
+          {/* RIGHT SIDE: KUSANG GUMAGALAW (Maroon and White Theme) */}
+          <div className="w-full lg:w-2/5 flex flex-col gap-6">
+            
+            {/* Case Stats Tile - Floats Up & Down Automatically */}
+            <motion.div 
+              animate={{ y: [0, -15, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              className="bg-white p-6 rounded-3xl shadow-xl border-t-8 border-red-900 flex items-center justify-between relative overflow-hidden"
+            >
+              {/* Subtle Maroon Background Glow */}
+              <div className="absolute top-0 right-0 w-24 h-24 bg-red-900/5 rounded-full -mr-10 -mt-10" />
+              
+              <div className="z-10">
+                <p className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">currently active</p>
+                <h3 className="text-4xl font-black text-red-900">{filteredOffenses.length}</h3>
+                <span className="text-[11px] text-gray-500 font-medium">Pending IR Reports</span>
+              </div>
+
+              {/* Pulsing Maroon Dot */}
+              <div className="relative flex items-center justify-center w-16 h-16">
+                <motion.div 
+                   animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+                   transition={{ duration: 2, repeat: Infinity }}
+                   className="absolute w-full h-full bg-red-900 rounded-full"
+                />
+                <div className="w-4 h-4 bg-red-900 rounded-full z-10 shadow-lg shadow-red-900/50" />
+              </div>
+            </motion.div>
+
+            {/* Resolved Summary - Drifts Sideways Smoothly */}
+            <motion.div 
+              animate={{ x: [0, 10, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              className="bg-red-900 p-6 rounded-3xl shadow-2xl text-white flex flex-col gap-2 relative overflow-hidden"
+            >
+               {/* Decorative Diagonal Line Animation */}
+               <motion.div 
+                 animate={{ x: [-200, 400] }}
+                 transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                 className="absolute top-0 left-0 w-32 h-full bg-white/10 skew-x-12"
+               />
+
+              <p className="text-[10px] uppercase font-bold opacity-70 tracking-widest">successfully resolved</p>
+              <div className="flex items-baseline gap-2">
+                <h3 className="text-4xl font-black">{resolvedOffenses.length}</h3>
+                <span className="text-xs opacity-60">Items Total</span>
+              </div>
+
+              <div className="mt-2 h-1.5 w-full bg-white/20 rounded-full overflow-hidden">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: 2 }}
+                  className="h-full bg-white shadow-[0_0_10px_white]"
+                />
+              </div>
+            </motion.div>
+
+          </div>
+        </div>
+      </div>
+
+      {/* MAIN DATA GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
-        {/* Offense details */}
         <HR_OffenseDetails
           isViewMode={isViewMode}
           formData={formData as Offense}
@@ -746,7 +799,6 @@ const HRReportedOffenses = () => {
           isUploading={isUploading}
         />
 
-        {/* Cases in progress */}
         <HR_CasesInProgress
           offenses={filteredOffenses}
           searchQuery={searchQuery}
@@ -759,7 +811,6 @@ const HRReportedOffenses = () => {
         />
       </div>
 
-      {/* Case history section */}
       <HR_CaseHistory
         offenses={resolvedOffenses}
         filters={{
