@@ -221,48 +221,45 @@ const PostDetailsModal = ({ post, isOpen, onClose, onArchive }) => {
   const hasImages = post.images && post.images.length > 0;
 
 return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn font-sans text-black">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn font-sans">
       <style dangerouslySetInnerHTML={{ __html: `
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}} />
 
-      <div className="bg-white border-t-[4px] border-[#800000] w-full max-w-4xl max-h-[90vh] overflow-y-auto no-scrollbar shadow-2xl flex flex-col">
+      <div className="bg-white border-t-[4px] border-[#800000] w-full max-w-4xl max-h-[90vh] overflow-y-auto no-scrollbar shadow-2xl flex flex-col rounded-none">
         
-        {/* Header - Compact & Formal */}
-        <div className="px-6 py-4 flex justify-between items-center bg-white border-b border-zinc-200 sticky top-0 z-20">
+        <div className="px-6 py-3 flex justify-between items-center bg-white border-b border-gray-100 sticky top-0 z-20">
           <div className="flex items-center gap-3">
-            <div className="p-1.5 bg-zinc-50 border border-zinc-200 text-[#800000]">
-              <Award size={16} strokeWidth={2.5} />
+            <div className="p-1.5 bg-gray-50 border border-gray-200 text-[#800000]">
+              <Award size={14} strokeWidth={2} />
             </div>
             <div>
-              <p className="text-[#800000] text-[10px] font-black uppercase mb-0.5">
+              <p className="text-[#800000] text-[10px] font-bold uppercase tracking-wider mb-0">
                 {typeInfo.label}
               </p>
-              <h1 className="text-sm font-bold text-black leading-none">
-                Recognition details
+              <h1 className="text-xs font-semibold text-gray-500">
+                Recognition Details
               </h1>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-zinc-100 text-black transition-colors border border-zinc-200 flex items-center gap-2"
+            className="flex items-center gap-2 px-2 py-1 hover:bg-gray-50 text-gray-400 hover:text-red-700 transition-colors border border-transparent hover:border-gray-200"
           >
-            <span className="text-[10px] font-bold uppercase">Close</span>
-            <X size={16} strokeWidth={2.5} />
+            <span className="text-[10px] font-medium">Close</span>
+            <X size={16} strokeWidth={2} />
           </button>
         </div>
 
-        <div className="p-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div className="p-6 md:p-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            {/* Left Column: Media and Content */}
-            <div className="lg:col-span-7 space-y-6">
+            <div className="lg:col-span-7 space-y-5">
               
-              {/* Image Section */}
-              <div className="bg-zinc-100 border border-zinc-300 p-2">
+              <div className="bg-gray-50 border border-gray-200 p-1 rounded-none">
                 {hasImages ? (
-                  <div className="relative overflow-hidden flex items-center justify-center h-[280px] bg-white border border-zinc-200">
+                  <div className="relative overflow-hidden flex items-center justify-center h-[300px] bg-white border border-gray-100">
                     <img
                       src={post.images[currentImageIndex].url || post.images[currentImageIndex].secure_url}
                       alt={post.title}
@@ -273,47 +270,46 @@ return (
                       <div className="absolute inset-0 flex items-center justify-between px-2">
                         <button
                           onClick={prevImage}
-                          className="w-8 h-8 bg-black/80 flex items-center justify-center text-white hover:bg-[#800000] transition-all"
+                          className="w-7 h-7 bg-white/90 border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-[#800000] hover:text-white transition-all shadow-sm"
                         >
-                          <ChevronLeft size={16} strokeWidth={3} />
+                          <ChevronLeft size={14} strokeWidth={2.5} />
                         </button>
                         <button
                           onClick={nextImage}
-                          className="w-8 h-8 bg-black/80 flex items-center justify-center text-white hover:bg-[#800000] transition-all"
+                          className="w-7 h-7 bg-white/90 border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-[#800000] hover:text-white transition-all shadow-sm"
                         >
-                          <ChevronRight size={16} strokeWidth={3} />
+                          <ChevronRight size={14} strokeWidth={2.5} />
                         </button>
                       </div>
                     )}
                     
-                    <div className="absolute bottom-2 right-2 bg-black text-white px-2 py-0.5 text-[9px] font-bold">
+                    <div className="absolute bottom-2 right-2 bg-gray-900/80 text-white px-2 py-0.5 text-[9px] font-medium">
                       {currentImageIndex + 1} / {post.images.length}
                     </div>
                   </div>
                 ) : (
-                  <div className="h-[180px] flex flex-col items-center justify-center bg-white border-2 border-dashed border-zinc-300">
-                    <FileText className="text-zinc-400 mb-1" size={24} />
-                    <p className="text-black text-[10px] font-bold uppercase">No images available</p>
+                  <div className="h-[200px] flex flex-col items-center justify-center bg-white border-2 border-dashed border-gray-200">
+                    <FileText className="text-gray-300 mb-2" size={24} />
+                    <p className="text-gray-400 text-[10px] font-medium">No images available</p>
                   </div>
                 )}
               </div>
 
-              {/* Title & Description */}
-              <div className="space-y-4">
-                <h2 className="text-sm font-black text-black border-b border-zinc-200 pb-2 uppercase">
+              <div className="space-y-3">
+                <h2 className="text-lg font-bold text-gray-900 leading-tight">
                   {post.title}
                 </h2>
                 
                 <div className="prose max-w-none">
-                  <p className="text-black text-[11px] font-medium leading-relaxed whitespace-pre-line">
+                  <p className="text-gray-600 text-[12px] leading-relaxed whitespace-pre-line">
                     {post.description}
                   </p>
                 </div>
 
                 {post.tags && post.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-4">
+                  <div className="flex flex-wrap gap-2 pt-2">
                     {post.tags.map((tag, index) => (
-                      <span key={index} className="text-black text-[9px] font-bold italic">
+                      <span key={index} className="text-[#800000] bg-red-50 px-2 py-0.5 text-[10px] font-medium border border-red-100">
                         #{tag.toLowerCase()}
                       </span>
                     ))}
@@ -322,76 +318,77 @@ return (
               </div>
             </div>
 
-            {/* Right Column: Sidebar Information */}
-            <div className="lg:col-span-5 space-y-6">
+            <div className="lg:col-span-5 space-y-5">
               
-              {/* Employee Information Card */}
-              <div className="border border-zinc-300">
-                <div className="bg-zinc-100 px-4 py-2 border-b border-zinc-300">
-                  <h3 className="text-[9px] font-black text-black uppercase flex items-center gap-2">
-                    <Users size={12} strokeWidth={2.5} /> Recognized employee
+              <div className="border border-gray-200 rounded-none bg-white">
+                <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
+                  <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                    <Users size={12} /> Recognized Employee
                   </h3>
                 </div>
-                <div className="p-6 flex flex-col items-center text-center bg-white">
-                  <div className="w-14 h-14 bg-[#800000] text-white flex items-center justify-center font-bold text-xl mb-3 shadow-md">
+                <div className="p-5 flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gray-100 border border-gray-200 text-[#800000] flex items-center justify-center font-bold text-lg shadow-inner">
                     {avatarInitials}
                   </div>
-                  <h4 className="text-sm font-black text-black">
-                    {employeeName}
-                  </h4>
-                  <p className="text-[#800000] text-[10px] font-black mt-0.5 uppercase">
-                    {employeePosition || "Employee"}
-                  </p>
+                  <div>
+                    <h4 className="text-sm font-bold text-gray-900">
+                      {employeeName}
+                    </h4>
+                    <p className="text-[#800000] text-[11px] font-medium">
+                      {employeePosition || "Staff Member"}
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              {/* Recognition Metadata Table */}
-              <div className="border border-zinc-300 p-4 space-y-4 bg-white shadow-sm">
-                <h3 className="text-[9px] font-black text-black uppercase flex items-center gap-2 border-b border-zinc-100 pb-2">
-                  <BarChart3 size={12} strokeWidth={2.5} /> Recognition details
+              <div className="border border-gray-200 p-4 space-y-3 bg-white">
+                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-50 pb-2 flex items-center gap-2">
+                  <BarChart3 size={12} /> Data Summary
                 </h3>
                 
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] text-zinc-600 font-bold uppercase">Type</span>
-                    <span className="text-[10px] font-black text-black uppercase">{typeInfo.label}</span>
+                    <span className="text-[11px] text-gray-500">Recognition Type</span>
+                    <span className="text-[11px] font-semibold text-gray-800">{typeInfo.label}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] text-zinc-600 font-bold uppercase">Status</span>
-                    <span className="text-[10px] font-black text-black capitalize">{post.status}</span>
+                    <span className="text-[11px] text-gray-500">Current Status</span>
+                    <span className={`text-[11px] font-semibold px-2 py-0.5 border ${
+                      post.status === 'active' ? 'text-green-700 bg-green-50 border-green-100' : 'text-gray-600 bg-gray-50 border-gray-100'
+                    }`}>
+                      {post.status}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] text-zinc-600 font-bold uppercase">Published</span>
-                    <span className="text-[10px] font-black text-black">
+                    <span className="text-[11px] text-gray-500">Date Logged</span>
+                    <span className="text-[11px] font-semibold text-gray-800">
                       {new Date(post.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric"
+                        month: "short", day: "numeric", year: "numeric"
                       })}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Action Button Section */}
-              <div className="space-y-3">
+              <div className="pt-2 space-y-3">
                 <button
                   onClick={() => onArchive(post._id, post.status === "archived" ? "restore" : "archive")}
-                  className={`w-full py-3 px-4 text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2 border-2 ${
+                  className={`w-full py-2.5 text-xs font-bold transition-all flex items-center justify-center gap-2 border ${
                     post.status === "archived"
-                      ? "bg-emerald-800 text-white border-emerald-900 hover:bg-emerald-900"
-                      : "bg-[#800000] text-white border-[#600000] hover:bg-black"
+                      ? "bg-green-700 text-white border-green-800 hover:bg-green-800"
+                      : "bg-[#800000] text-white border-red-900 hover:bg-black"
                   }`}
                 >
                   {post.status === "archived" ? (
-                    <><ArchiveRestore size={14} strokeWidth={2.5} /> Restore post</>
+                    <><ArchiveRestore size={14} /> Restore Post</>
                   ) : (
-                    <><Archive size={14} strokeWidth={2.5} /> Archive post</>
+                    <><Archive size={14} /> Archive Post</>
                   )}
                 </button>
-                <div className="text-[9px] text-zinc-800 font-bold text-center leading-tight">
-                  <p className="italic uppercase">Official digital record</p>
-                  <p className="text-zinc-400 mt-1">ID: {post._id}</p>
+                
+                <div className="text-[10px] text-gray-400 text-center">
+                  <p className="font-medium italic border-t border-gray-100 pt-3">Digital Audit Record</p>
+                  <p className="font-mono mt-1 opacity-60">REF: {post._id}</p>
                 </div>
               </div>
 

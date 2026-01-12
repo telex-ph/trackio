@@ -35,9 +35,36 @@ const CertificateModal = ({ course, user, onClose }) => {
   const [downloading, setDownloading] = useState(false);
   const userFromStore = useStore((state) => state.user);
 
+  // Siguraduhing tama ang path ng logo mo sa iyong project structure
+  const logoPath = "/src/assets/logos/telexlogo.png"; 
+
+  const certId = "CERT-1767779871582-INTRHD";
+
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
     toast.success("certificate id copied!");
+  };
+
+  const shareCertificate = async () => {
+    const shareData = {
+      title: 'Course Certificate',
+      text: `Check out my certificate for completing ${course?.title}!`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        toast.success("Shared successfully!");
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        toast.success("Link copied to clipboard for sharing!");
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        toast.error("Could not share");
+      }
+    }
   };
 
   const downloadCertificate = async () => {
@@ -134,28 +161,40 @@ const CertificateModal = ({ course, user, onClose }) => {
                 </div>
               </div>
 
+              {/* FOOTER SECTION WITH UPDATED LOGO SIZE */}
               <div className="w-full flex justify-between items-end px-10">
                 <div className="w-44 text-center">
                    <div className="h-[1.5px] bg-[#4a0000] w-full mb-1"></div>
                    <p className="text-[10px] font-black text-black uppercase">Compliance Head</p>
                 </div>
-                <div className="relative">
-                   <div className="w-20 h-20 rounded-full border-[5px] border-[#800000] bg-white flex items-center justify-center shadow-lg">
-                      <Award className="w-10 h-10 text-[#800000]" />
+
+                <div className="relative group flex flex-col items-center">
+                   <div className="w-50 h-32 rounded-full bg-white flex items-center justify-center overflow-hidden p-3 transition-all duration-300 hover:scale-110">
+                      <img 
+                        src={logoPath} 
+                        alt="Telex Logo" 
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          if(e.target.nextSibling) e.target.nextSibling.style.display = 'block';
+                        }}
+                      />
+                      <Award className="w-14 h-14 text-[#800000] hidden" />
                    </div>
-                   <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#800000] text-white text-[8px] px-2.5 py-0.5 rounded-full font-black uppercase whitespace-nowrap">
+                   <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-[#800000] text-white text-[9px] px-3 py-1 rounded-full font-black uppercase whitespace-nowrap shadow-xl z-30">
                       Verified & Active
                    </div>
                 </div>
+
                 <div className="w-44 text-center">
                    <div className="h-[1.5px] bg-[#4a0000] w-full mb-1"></div>
                    <p className="text-[10px] font-black text-black uppercase">President & CEO</p>
                 </div>
               </div>
 
-              <div className="w-full flex justify-center pt-6 border-t border-zinc-50">
+              <div className="w-full flex justify-center pt-8 border-t border-zinc-50">
                  <p className="text-[10px] font-bold text-zinc-400 uppercase">
-                   Certificate ID: <span className="text-[#800000] font-mono">CERT-1767779871582-INTRHD</span>
+                   Certificate ID: <span className="text-[#800000] font-mono">{certId}</span>
                  </p>
               </div>
             </div>
@@ -175,7 +214,6 @@ const CertificateModal = ({ course, user, onClose }) => {
           </div>
 
           <div className="space-y-6 flex-1">
-            {/* User Profile Card */}
             <div className="p-5 bg-zinc-50 rounded-[2rem] border border-zinc-100 relative overflow-hidden">
               <p className="text-[10px] font-black text-[#800000] uppercase mb-3">Certificate issued to:</p>
               <h5 className="text-xl font-black text-zinc-900 uppercase leading-none mb-1">Maybelle Cabalar</h5>
@@ -185,7 +223,6 @@ const CertificateModal = ({ course, user, onClose }) => {
               </div>
             </div>
 
-            {/* Timeline & Status */}
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-4 bg-white rounded-2xl border border-zinc-100 shadow-sm">
@@ -207,16 +244,19 @@ const CertificateModal = ({ course, user, onClose }) => {
               </div>
             </div>
 
-            {/* Main Actions */}
             <div className="space-y-3 pt-2">
               <button 
                 onClick={downloadCertificate}
-                className="w-full py-4 bg-[#800000] text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-3 shadow-lg shadow-maroon-100 hover:brightness-110 active:scale-95 transition-all"
+                disabled={downloading}
+                className={`w-full py-4 bg-[#800000] text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-3 shadow-lg shadow-maroon-100 hover:brightness-110 active:scale-95 transition-all ${downloading ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
-                <Download className="w-4 h-4" /> Download Certificate (PDF)
+                <Download className="w-4 h-4" /> {downloading ? 'Downloading...' : 'Download Certificate (PDF)'}
               </button>
               <div className="grid grid-cols-2 gap-3">
-                 <button className="py-3 bg-white border border-zinc-200 text-zinc-600 rounded-2xl font-bold text-xs uppercase flex items-center justify-center gap-2 hover:bg-zinc-50 transition-colors">
+                 <button 
+                   onClick={shareCertificate}
+                   className="py-3 bg-white border border-zinc-200 text-zinc-600 rounded-2xl font-bold text-xs uppercase flex items-center justify-center gap-2 hover:bg-zinc-50 transition-colors"
+                 >
                    <Share2 className="w-4 h-4" /> Share
                  </button>
                  <button onClick={() => window.print()} className="py-3 bg-white border border-zinc-200 text-zinc-600 rounded-2xl font-bold text-xs uppercase flex items-center justify-center gap-2 hover:bg-zinc-50 transition-colors">
@@ -225,7 +265,6 @@ const CertificateModal = ({ course, user, onClose }) => {
               </div>
             </div>
 
-            {/* VERIFICATION SECTION (WHITE BG CARD) */}
             <div className="pt-6 border-t border-zinc-100 mt-auto">
                <div className="flex items-center gap-2 mb-3">
                  <ShieldCheck className="w-4 h-4 text-zinc-300" />
@@ -233,10 +272,10 @@ const CertificateModal = ({ course, user, onClose }) => {
                </div>
                <div className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-zinc-200 shadow-sm group">
                   <code className="text-[11px] font-mono font-bold text-[#800000] flex-1 break-all leading-relaxed">
-                    CERT-1767779871582-INTRHD
+                    {certId}
                   </code>
                   <button 
-                    onClick={() => copyToClipboard("CERT-1767779871582-INTRHD")}
+                    onClick={() => copyToClipboard(certId)}
                     className="p-2 bg-zinc-50 text-zinc-400 hover:text-[#800000] hover:bg-maroon-50 rounded-xl transition-all border border-zinc-100"
                   >
                     <Copy className="w-4 h-4" />
