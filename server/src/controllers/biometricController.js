@@ -14,14 +14,15 @@ import { IP } from "../../constants/biometricsIp.js";
 export const getEvents = async (req, res) => {
   try {
     let data = req.body;
-
+    console.log('This is the Bio Log: ', data);
+    
     const jsonStart = data.indexOf("{");
     const jsonEnd = data.lastIndexOf("}");
 
     if (jsonStart !== -1 && jsonEnd !== -1) {
       const jsonStr = data.substring(jsonStart, jsonEnd + 1);
       const event = JSON.parse(jsonStr);
-
+      
       if (event.AccessControllerEvent) {
         const ac = event.AccessControllerEvent;
 
