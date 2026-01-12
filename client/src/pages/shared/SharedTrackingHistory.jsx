@@ -119,15 +119,19 @@ const SharedTrackingHistory = () => {
             />
           </div>
         </section>
-        <section>
-          <button
-            className="px-4 py-3 flex items-center gap-2 rounded-md cursor-pointer bg-blue-700 text-white"
-            onClick={handleDownloadClick}
-          >
-            <FileDown className="w-4 h-4" />
-            <span>Export</span>
-          </button>
-        </section>
+    <section>
+      <button
+        onClick={handleDownloadClick}
+        className="group flex items-center px-6 py-2.5 rounded-xl border border-[#800000]/30 bg-white text-[#800000] font-bold text-sm transition-all hover:bg-[#800000] hover:text-white active:scale-95 shadow-sm hover:shadow-[0_0_20px_rgba(128,0,0,0.15)] cursor-pointer"
+      >
+        <FileDown className="w-4 h-4 mr-2 transition-all duration-300 group-hover:-translate-y-1 group-active:translate-y-0.5 stroke-[2.5px]" />
+        
+        <span className="relative">
+          Export
+          <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-full opacity-30"></span>
+        </span>
+      </button>
+    </section>
       </section>
       <Table data={attendancesByStatus} columns={columns} tableRef={tableRef} />
 

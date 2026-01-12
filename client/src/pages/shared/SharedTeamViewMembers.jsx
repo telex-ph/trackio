@@ -7,6 +7,7 @@ import { Pen, Trash2 } from "lucide-react";
 import TeamModal from "../../components/modals/TeamModal";
 import AddMemberModal from "../../components/modals/AddMemberModal";
 import DeleteTeamMemberModal from "../../components/modals/DeleteTeamMemberModal";
+import { Ticket } from "lucide-react";
 
 const SharedTeamViewMembers = () => {
   const user = useStore((state) => state.user);
@@ -135,8 +136,9 @@ const SharedTeamViewMembers = () => {
 
         <button
           onClick={handleAddMember}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors cursor-pointer"
+          className="group flex items-center px-6 py-2.5 rounded-xl border border-red-900/30 bg-white text-[#800000] font-bold text-sm transition-all hover:bg-[#800000] hover:text-white active:scale-95 shadow-sm hover:shadow-[0_0_15px_rgba(128,0,0,0.2)] cursor-pointer"
         >
+          < Ticket className="w-4 h-4 mr-2 transition-transform group-hover:rotate-12 stroke-[2.5px]" />
           Add Member
         </button>
       </div>
@@ -186,3 +188,4 @@ const SharedTeamViewMembers = () => {
 };
 
 export default SharedTeamViewMembers;
+

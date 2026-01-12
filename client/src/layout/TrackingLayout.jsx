@@ -18,82 +18,65 @@ const TrackingLayout = ({ role }) => {
   const trackPage = useStore((state) => state.trackPage);
   const setTrackPage = useStore((state) => state.setTrackPage);
 
+  const navItems = [
+    { id: TRACKING_PAGES.TIMEIN, label: "Time In", icon: AlarmClockCheck },
+    { id: TRACKING_PAGES.TIMEOUT, label: "Time Out", icon: Clock },
+    { id: TRACKING_PAGES.LATE, label: "Late", icon: AlertTriangle },
+    { id: TRACKING_PAGES.UNDERTIME, label: "Undertime", icon: Coffee },
+    { id: TRACKING_PAGES.ABSENTEES, label: "Absentees", icon: UserCheck },
+  ];
+
   return (
-    <div>
+    <div className="w-full overflow-hidden">
       {/* Page Header */}
       <section className="flex flex-col gap-2 items-start lg:flex-row lg:items-center lg:justify-between mb-2">
         <div className="basis-2/5">
           <div className="flex items-center gap-1">
-            <h2>{page.charAt(0).toUpperCase() + page.slice(1)}</h2>{" "}
+            <h2 className="text-lg font-bold">{page.charAt(0).toUpperCase() + page.slice(1)}</h2>{" "}
             {page == "list" && (
               <>
-                <ChevronRight className="w-6 h-6" />
-                <h2>{formatPathName(trackPage) || ""}</h2>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+                <h2 className="text-lg font-bold text-[#800000]">{formatPathName(trackPage) || ""}</h2>
               </>
             )}
           </div>
-          <p className="text-light">
+          <p className="text-[11px] text-gray-500">
             View employee attendance for the selected date range.
           </p>
         </div>
 
-        {/* Only show in listing page  */}
+        {/* Navigation Section - Compact & No Scrollbar */}
         {page == "list" && (
-          <nav className="flex gap-2 justify-end flex-1">
-            <div
-              className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
-                trackPage === TRACKING_PAGES.TIMEIN && "underline"
-              }`}
-              onClick={() => setTrackPage(TRACKING_PAGES.TIMEIN)}
-            >
-              <AlarmClockCheck className="h-4 w-4" />
-              <span className="hidden sm:inline">Time In</span>
-            </div>
-
-            <div
-              className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
-                trackPage === TRACKING_PAGES.TIMEOUT && "underline"
-              }`}
-              onClick={() => setTrackPage(TRACKING_PAGES.TIMEOUT)}
-            >
-              <Clock className="h-4 w-4" />
-              <span className="hidden sm:inline">Time Out</span>
-            </div>
-
-            <div
-              className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
-                trackPage === TRACKING_PAGES.LATE && "underline"
-              }`}
-              onClick={() => setTrackPage(TRACKING_PAGES.LATE)}
-            >
-              <AlertTriangle className="h-4 w-4" />
-              <span className="hidden sm:inline">Late</span>
-            </div>
-
-            <div
-              className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
-                trackPage === TRACKING_PAGES.UNDERTIME && "underline"
-              }`}
-              onClick={() => setTrackPage(TRACKING_PAGES.UNDERTIME)}
-            >
-              <Coffee className="h-4 w-4" />
-              <span className="hidden sm:inline">Undertime</span>
-            </div>
-
-            <div
-              className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
-                trackPage === TRACKING_PAGES.ABSENTEES && "underline"
-              }`}
-              onClick={() => setTrackPage(TRACKING_PAGES.ABSENTEES)}
-            >
-              <UserCheck className="h-4 w-4" />
-              <span className="hidden sm:inline">Absentees</span>
+          <nav className="flex items-center bg-[#F8F9FA] p-0.5 rounded-lg border border-gray-200 shadow-sm flex-wrap lg:flex-nowrap justify-end">
+            <div className="flex items-center gap-0.5">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = trackPage === item.id;
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => setTrackPage(item.id)}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-md transition-all duration-300 font-bold text-[9px] uppercase tracking-wider cursor-pointer whitespace-nowrap ${
+                      isActive
+                        ? "bg-[#800000] text-white shadow-sm scale-105 z-10"
+                        : "text-[#547594] hover:text-[#800000] hover:bg-white"
+                    }`}
+                  >
+                    <Icon
+                      className={`w-3 h-3 transition-colors ${
+                        isActive ? "text-white" : "text-gray-400"
+                      }`}
+                    />
+                    <span className="hidden sm:inline">{item.label}</span>
+                  </div>
+                );
+              })}
             </div>
           </nav>
         )}
       </section>
 
-      <main>
+      <main className="w-full">
         <Outlet />
       </main>
     </div>

@@ -116,9 +116,13 @@ const AdminAccountManagement = () => {
             Manage all user accounts, roles, and related information.
           </p>
         </div>
-        <Button onClick={handleAddClick} color="blue">
-          <Plus className="w-4 h-4 mr-2" /> Add User
-        </Button>
+        <button
+          onClick={handleAddClick}
+          className="group flex items-center px-6 py-2.5 rounded-xl border border-red-900/30 bg-white text-[#800000] font-bold text-sm transition-all hover:bg-[#800000] hover:text-white active:scale-95 shadow-sm hover:shadow-maroon"
+        >
+          <Plus className="w-4 h-4 mr-2 transition-transform group-hover:rotate-90 stroke-[2.5px]" />
+          Add User
+        </button>
       </div>
 
       {loading ? (
