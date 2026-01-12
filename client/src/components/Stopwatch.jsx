@@ -4,6 +4,9 @@ import api from "../utils/axios";
 import Spinner from "../assets/loaders/Spinner";
 import { STATUS } from "../constants/status";
 import { DateTime, Duration } from "luxon";
+import {
+  Clock,
+} from "lucide-react";
 
 export default function Stopwatch({ attendance, fetchUserAttendance }) {
   const [time, setTime] = useState(0);
@@ -149,7 +152,7 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
     }
   };
 
-  // 📊 Progress display
+  // Progress display
   const maxTime = 90 * 60 * 1000; // 1 hour 30 mins
   const progress = Math.min((time / maxTime) * 100, 100);
 
@@ -164,55 +167,84 @@ export default function Stopwatch({ attendance, fetchUserAttendance }) {
     return `${hours}h ${minutes}m ${seconds}s`;
   };
 
-  return (
-    <section className="container-light border-light rounded-md p-5 w-full">
-      {/* Header */}
-      <div className="mb-3">
-        <div className="flex items-center gap-2">
-          <h3 className="text-black">
-            Break Time:{" "}
-            <span className="text-light font-light">
-              (max 1 hour 30 minutes)
-            </span>
+return (
+  <section className="bg-white border-t-4 border-t-[#800000] border-x border-b border-slate-300 shadow-sm w-full h-full flex flex-col overflow-hidden rounded-sm">
+    
+    {/* Header - Balanced Bold Weight */}
+    <div className="flex items-center justify-between px-6 py-5 bg-white border-b border-slate-200">
+      <div className="flex flex-col">
+        <h3 className="text-sm font-bold text-slate-900 uppercase leading-none mb-1">
+          Break Time Monitoring
+        </h3>
+        <p className="text-[11px] font-semibold text-slate-500 uppercase leading-none">
+          Max Limit: 01:30:00
+        </p>
+      </div>
+      <div className="text-[#800000]">
+        <Clock size={22} strokeWidth={2} />
+      </div>
+    </div>
+
+    <div className="p-8 flex flex-col flex-1 justify-center gap-10">
+      {attendance?.status === STATUS.OOF ? (
+        /* End of Shift View - Darker but not extra bold */
+        <div className="py-8 flex flex-col items-center justify-center border border-slate-200 rounded-sm bg-slate-50">
+          <span className="text-xs font-bold text-slate-500 uppercase mb-3">Total Break Consumed</span>
+          <h3 className="text-5xl font-bold text-slate-900 tabular-nums leading-none">
+            {formatDuration(attendance.totalBreak || 0)}
           </h3>
         </div>
-      </div>
-
-      {attendance?.status === STATUS.OOF ? (
-        <h3 className="text-black text-center p-7">
-          Overall Break Duration: {formatDuration(attendance.totalBreak || 0)}
-        </h3>
       ) : (
-        <>
-          {/* Progress bar */}
-          <div className="mb-4">
-            <div className="w-full bg-white rounded-md h-3 overflow-hidden border-light">
+        <div className="space-y-10">
+          {/* Main Timer Display - Bold & Clear */}
+          <div className="flex flex-col items-center justify-center">
+            <span className="text-xs font-bold text-slate-900 uppercase mb-6">Current Session Timer</span>
+            
+            {loading ? (
+              <div className="h-12 flex items-center justify-center"><Spinner /></div>
+            ) : (
+              <div className="flex items-center gap-6">
+                {/* Hours */}
+                <div className="flex flex-col items-center">
+                  <span className="text-5xl font-bold text-slate-900 tabular-nums leading-none">{hours}</span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase mt-2">Hours</span>
+                </div>
+                
+                <span className="text-3xl font-bold text-slate-300 -mt-6">:</span>
+                
+                {/* Minutes */}
+                <div className="flex flex-col items-center">
+                  <span className="text-5xl font-bold text-slate-900 tabular-nums leading-none">{minutes}</span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase mt-2">Minutes</span>
+                </div>
+                
+                <span className="text-3xl font-bold text-slate-300 -mt-6">:</span>
+                
+                {/* Seconds */}
+                <div className="flex flex-col items-center">
+                  <span className="text-5xl font-bold text-[#800000] tabular-nums leading-none">{seconds}</span>
+                  <span className="text-[10px] font-bold text-[#800000] uppercase mt-2">Seconds</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Progress Section - Formal Style */}
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-bold text-slate-900 uppercase">Usage Progress</span>
+              <span className="text-sm font-bold text-[#800000]">{progress.toFixed(1)}%</span>
+            </div>
+            <div className="w-full bg-slate-100 h-5 border border-slate-200 rounded-sm overflow-hidden">
               <div
-                className="bg-(--primary-color) h-full rounded-full transition-all duration-100"
+                className="bg-[#800000] h-full transition-all duration-500 ease-out"
                 style={{ width: `${progress}%` }}
               ></div>
             </div>
-            <div className="text-center mt-2 text-sm text-gray-500">
-              {progress.toFixed(1)}% of 1:30:00
-            </div>
           </div>
-
-          {loading ? (
-            <Spinner />
-          ) : (
-            <>
-              {/* Timer display */}
-              <div className="flex items-center justify-center gap-4 mb-8">
-                <h3 className="font-bold">{hours}</h3>
-                <h3 className="font-bold">:</h3>
-                <h3 className="font-bold">{minutes}</h3>
-                <h3 className="font-bold">:</h3>
-                <h3 className="font-bold">{seconds}</h3>
-              </div>
-            </>
-          )}
-        </>
+        </div>
       )}
-    </section>
-  );
+    </div>
+  </section>
+);
 }
