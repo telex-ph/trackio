@@ -24,15 +24,10 @@ import socket from "../../utils/socket";
 import FileViewModal from "../../components/modals/FileViewModal";
 
 const getUniqueViewers = (announcement) => {
-  if (!announcement.views || !Array.isArray(announcement.views)) {
-    return [];
-  }
+  if (!announcement.views || !Array.isArray(announcement.views)) return [];
 
-  const uniqueViewers = announcement.views
-    .filter(
-      (view) =>
-        view && view.userId && view.userId.trim() !== "" && view.viewedAt
-    )
+  return announcement.views
+    .filter((view) => view && view.userId && view.userId.trim() !== "" && view.viewedAt)
     .reduce((acc, view) => {
       if (!acc.find((v) => v.userId === view.userId)) {
         acc.push({
@@ -44,38 +39,25 @@ const getUniqueViewers = (announcement) => {
       }
       return acc;
     }, []);
-
-  return uniqueViewers;
 };
 
 const getUniqueAcknowledgements = (announcement) => {
-  if (
-    !announcement.acknowledgements ||
-    !Array.isArray(announcement.acknowledgements)
-  ) {
+  if (!announcement.acknowledgements || !Array.isArray(announcement.acknowledgements))
     return [];
-  }
 
-  const uniqueAcknowledgements = announcement.acknowledgements
-    .filter(
-      (ack) =>
-        ack && ack.userId && ack.userId.trim() !== "" && ack.acknowledgedAt
-    )
+  return announcement.acknowledgements
+    .filter((ack) => ack && ack.userId && ack.userId.trim() !== "" && ack.acknowledgedAt)
     .reduce((acc, ack) => {
       if (!acc.find((a) => a.userId === ack.userId)) {
         acc.push({
           userId: ack.userId,
           userName: ack.userName || "Unknown User",
           acknowledgedAt: ack.acknowledgedAt,
-          acknowledgedAtFormatted: new Date(
-            ack.acknowledgedAt
-          ).toLocaleDateString(),
+          acknowledgedAtFormatted: new Date(ack.acknowledgedAt).toLocaleDateString(),
         });
       }
       return acc;
     }, []);
-
-  return uniqueAcknowledgements;
 };
 
 const processAnnouncementData = (announcement) => {
@@ -83,11 +65,9 @@ const processAnnouncementData = (announcement) => {
 
   const uniqueViewers = getUniqueViewers(announcement);
   const uniqueAcknowledgements = getUniqueAcknowledgements(announcement);
-
-  // ✅ ADDED: Check if announcement is expired (SAME AS AGENT DASHBOARD)
   const now = DateTime.local();
   const expiresAt = announcement.expiresAt ? DateTime.fromISO(announcement.expiresAt) : null;
-  const isExpired = expiresAt && expiresAt <= now;
+  const isExpired = expiresAt ? expiresAt <= now : false;
 
   return {
     ...announcement,
@@ -97,9 +77,7 @@ const processAnnouncementData = (announcement) => {
     totalAcknowledgements: uniqueAcknowledgements.length,
     formattedDateTime: new Date(announcement.dateTime).toLocaleDateString(),
     realTimeFormatted: DateTime.fromISO(announcement.dateTime).toLocaleString(DateTime.DATETIME_MED),
-    timeAgo: "",
-    // ✅ ADDED: Expiry status (SAME AS AGENT)
-    isExpired: isExpired,
+    isExpired,
     expiresAtFormatted: expiresAt ? expiresAt.toLocaleString(DateTime.DATETIME_MED) : null,
   };
 };
@@ -108,16 +86,16 @@ const getRealTimeAgo = (isoDateStr) => {
   if (!isoDateStr) return "";
   const announcementTime = DateTime.fromISO(isoDateStr);
   if (!announcementTime.isValid) return "";
-  
+
   const now = DateTime.local();
   const diff = now.diff(announcementTime, ["years", "months", "days", "hours", "minutes", "seconds"]);
 
-  if (diff.years > 0) return `${Math.floor(diff.years)} year${Math.floor(diff.years) > 1 ? "s" : ""} ago`;
-  if (diff.months > 0) return `${Math.floor(diff.months)} month${Math.floor(diff.months) > 1 ? "s" : ""} ago`;
-  if (diff.days > 0) return `${Math.floor(diff.days)} day${Math.floor(diff.days) > 1 ? "s" : ""} ago`;
-  if (diff.hours > 0) return `${Math.floor(diff.hours)} hour${Math.floor(diff.hours) > 1 ? "s" : ""} ago`;
-  if (diff.minutes > 0) return `${Math.floor(diff.minutes)} minute${Math.floor(diff.minutes) > 1 ? "s" : ""} ago`;
-  
+  if (diff.years > 0) return `${Math.floor(diff.years)} year${diff.years > 1 ? "s" : ""} ago`;
+  if (diff.months > 0) return `${Math.floor(diff.months)} month${diff.months > 1 ? "s" : ""} ago`;
+  if (diff.days > 0) return `${Math.floor(diff.days)} day${diff.days > 1 ? "s" : ""} ago`;
+  if (diff.hours > 0) return `${Math.floor(diff.hours)} hour${diff.hours > 1 ? "s" : ""} ago`;
+  if (diff.minutes > 0) return `${Math.floor(diff.minutes)} minute${diff.minutes > 1 ? "s" : ""} ago`;
+
   const seconds = Math.floor(diff.seconds);
   return seconds <= 1 ? "just now" : `${seconds} seconds ago`;
 };
@@ -131,10 +109,7 @@ const AdminDashboard = () => {
     isOpen: false,
     announcement: null,
   });
-  const [fileViewModal, setFileViewModal] = useState({
-    isOpen: false,
-    file: null,
-  });
+  const [fileViewModal, setFileViewModal] = useState({ isOpen: false, file: null });
   const [searchTerm, setSearchTerm] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
   const [showPinLimitToast, setShowPinLimitToast] = useState(false);
@@ -147,20 +122,18 @@ const AdminDashboard = () => {
   const MAX_PINNED_PER_DEPARTMENT = 3;
   const PINNED_ANNOUNCEMENTS_KEY = "pinned_announcements_admin";
 
-  const { 
-    hasLiked, 
-    trackView, 
-    handleLike, 
-    getViewCount, 
-    getLikeCount 
+  const {
+    hasLiked,
+    trackView,
+    handleLike,
+    getViewCount,
+    getLikeCount,
   } = useAnnouncementInteractions(announcements, setAnnouncements, currentUser?._id);
 
-  // Initialize admin user
   useEffect(() => {
     const initializeAdminUser = () => {
       try {
         const storedUser = localStorage.getItem("admin_user");
-        
         if (storedUser) {
           const adminData = JSON.parse(storedUser);
           setCurrentUser({
@@ -168,7 +141,7 @@ const AdminDashboard = () => {
             name: adminData.name || "Administrator",
             employeeId: adminData.employeeId || "admin001",
             department: adminData.department || "Administration",
-            role: "admin"
+            role: "admin",
           });
         } else {
           setCurrentUser({
@@ -176,7 +149,7 @@ const AdminDashboard = () => {
             name: "Administrator",
             employeeId: "admin001",
             department: "Administration",
-            role: "admin"
+            role: "admin",
           });
         }
       } catch (error) {
@@ -186,114 +159,89 @@ const AdminDashboard = () => {
           name: "Administrator",
           employeeId: "admin001",
           department: "Administration",
-          role: "admin"
+          role: "admin",
         });
       }
     };
-
     initializeAdminUser();
   }, []);
 
   // Time intervals
   useEffect(() => {
     const t = setInterval(() => setCurrentTime(new Date()), 60000);
-    const realTimeInterval = setInterval(() => {
-      setCurrentRealTime(DateTime.local());
-    }, 1000);
-    
+    const realTimeInterval = setInterval(() => setCurrentRealTime(DateTime.local()), 1000);
+
     return () => {
       clearInterval(t);
       clearInterval(realTimeInterval);
     };
   }, []);
 
-  // ✅ UPDATED: Real-time expiry checking
+  // Real-time expiry & time ago update
   useEffect(() => {
-    if (announcements.length > 0) {
-      const updatedAnnouncements = announcements.map(announcement => {
-        // ✅ Check expiry status in real-time (SAME AS AGENT)
-        const isExpired = announcement.expiresAt ? 
-          DateTime.fromISO(announcement.expiresAt) <= currentRealTime : false;
-        
-        return {
-          ...announcement,
-          timeAgo: getRealTimeAgo(announcement.dateTime),
-          realTimeFormatted: DateTime.fromISO(announcement.dateTime).toLocaleString(DateTime.DATETIME_MED),
-          isExpired: isExpired,
-        };
-      });
-      
-      // ✅ Filter out expired announcements (SAME AS AGENT)
-      const filteredAnnouncements = updatedAnnouncements.filter(announcement => 
-        !announcement.isExpired && 
-        announcement.status === "Active" && 
-        announcement.approvalStatus === "Approved"
-      );
-      
-      setAnnouncements(prev => {
-        const hasChanges = prev.some((ann, index) => 
-          ann.timeAgo !== filteredAnnouncements[index]?.timeAgo ||
-          ann.isExpired !== filteredAnnouncements[index]?.isExpired ||
-          prev.length !== filteredAnnouncements.length
-        );
-        return hasChanges ? filteredAnnouncements : prev;
-      });
-    }
-  }, [currentRealTime]);
+    if (announcements.length === 0) return;
 
-  // Pinning functionality
+    const updated = announcements.map((ann) => {
+      const isExpired = ann.expiresAt
+        ? DateTime.fromISO(ann.expiresAt) <= currentRealTime
+        : false;
+
+      return {
+        ...ann,
+        timeAgo: getRealTimeAgo(ann.dateTime),
+        realTimeFormatted: DateTime.fromISO(ann.dateTime).toLocaleString(DateTime.DATETIME_MED),
+        isExpired,
+      };
+    });
+
+    const filtered = updated.filter(
+      (ann) => !ann.isExpired && ann.status === "Active" && ann.approvalStatus === "Approved"
+    );
+
+    setAnnouncements((prev) => {
+      const hasChanges =
+        prev.length !== filtered.length ||
+        prev.some((p, i) => p.timeAgo !== filtered[i]?.timeAgo || p.isExpired !== filtered[i]?.isExpired);
+      return hasChanges ? filtered : prev;
+    });
+  }, [currentRealTime, announcements.length]);
+
+  // Pinning helpers
   const getPinnedAnnouncementsFromStorage = () => {
     try {
       const pinned = localStorage.getItem(PINNED_ANNOUNCEMENTS_KEY);
       return pinned ? JSON.parse(pinned) : {};
-    } catch (error) {
-      console.error("Error reading pinned announcements:", error);
+    } catch {
       return {};
     }
   };
 
-  const removePinnedAnnouncementFromStorage = (announcementId) => {
+  const savePinnedAnnouncementToStorage = (id, isPinned) => {
     try {
-      const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
-      if (pinnedAnnouncements[announcementId]) {
-        delete pinnedAnnouncements[announcementId];
-        localStorage.setItem(
-          PINNED_ANNOUNCEMENTS_KEY,
-          JSON.stringify(pinnedAnnouncements)
-        );
-      }
-    } catch (error) {
-      console.error("Error removing pinned announcement:", error);
+      const pinned = getPinnedAnnouncementsFromStorage();
+      if (isPinned) pinned[id] = true;
+      else delete pinned[id];
+      localStorage.setItem(PINNED_ANNOUNCEMENTS_KEY, JSON.stringify(pinned));
+    } catch (e) {
+      console.error("Error saving pinned:", e);
     }
   };
 
-  const savePinnedAnnouncementToStorage = (announcementId, isPinned) => {
+  const removePinnedAnnouncementFromStorage = (id) => {
     try {
-      const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
-      if (isPinned) {
-        pinnedAnnouncements[announcementId] = true;
-      } else {
-        delete pinnedAnnouncements[announcementId];
-      }
-      localStorage.setItem(
-        PINNED_ANNOUNCEMENTS_KEY,
-        JSON.stringify(pinnedAnnouncements)
-      );
-    } catch (error) {
-      console.error("Error saving pinned announcement:", error);
+      const pinned = getPinnedAnnouncementsFromStorage();
+      delete pinned[id];
+      localStorage.setItem(PINNED_ANNOUNCEMENTS_KEY, JSON.stringify(pinned));
+    } catch (e) {
+      console.error("Error removing pinned:", e);
     }
   };
 
-  const getPinnedCountByDepartment = (departmentAnnouncements) => {
-    return departmentAnnouncements.filter((a) => a.isPinned).length;
-  };
+  const getPinnedCountByDepartment = (deptAnns) =>
+    deptAnns.filter((a) => a.isPinned).length;
 
-  const canPinMoreInDepartment = (departmentAnnouncements) => {
-    return (
-      getPinnedCountByDepartment(departmentAnnouncements) <
-      MAX_PINNED_PER_DEPARTMENT
-    );
-  };
+  const canPinMoreInDepartment = (deptAnns) =>
+    getPinnedCountByDepartment(deptAnns) < MAX_PINNED_PER_DEPARTMENT;
 
   const showPinLimitMessage = () => {
     setShowPinLimitToast(true);
@@ -303,80 +251,47 @@ const AdminDashboard = () => {
   const handleTogglePin = async (announcement) => {
     try {
       const newPinnedStatus = !announcement.isPinned;
+      const department = getAnnouncementDepartment(announcement.postedBy, announcement.title);
+      const { accounting, compliance, technical, hr } = categorizeAnnouncements(announcements);
 
-      const department = getAnnouncementDepartment(
-        announcement.postedBy,
-        announcement.title
-      );
-      const { accounting, compliance, technical, hr } =
-        categorizeAnnouncements(announcements);
-
-      let departmentAnnouncements = [];
+      let deptAnns = [];
       switch (department) {
-        case "Accounting":
-          departmentAnnouncements = accounting;
-          break;
-        case "Compliance":
-          departmentAnnouncements = compliance;
-          break;
-        case "Technical":
-          departmentAnnouncements = technical;
-          break;
-        case "HR & Admin":
-          departmentAnnouncements = hr;
-          break;
-        default:
-          departmentAnnouncements = hr;
+        case "Accounting": deptAnns = accounting; break;
+        case "Compliance": deptAnns = compliance; break;
+        case "Technical": deptAnns = technical; break;
+        case "HR & Admin": deptAnns = hr; break;
+        default: deptAnns = hr;
       }
 
-      if (newPinnedStatus && !canPinMoreInDepartment(departmentAnnouncements)) {
+      if (newPinnedStatus && !canPinMoreInDepartment(deptAnns)) {
         showPinLimitMessage();
         return;
       }
 
       savePinnedAnnouncementToStorage(announcement._id, newPinnedStatus);
 
-      const updatedAnnouncement = {
-        ...announcement,
-        isPinned: newPinnedStatus,
-        timeAgo: announcement.timeAgo || getRealTimeAgo(announcement.dateTime),
-        realTimeFormatted: announcement.realTimeFormatted || DateTime.fromISO(announcement.dateTime).toLocaleString(DateTime.DATETIME_MED)
-      };
-
       const updatedAnnouncements = announcements.map((a) =>
-        a._id === announcement._id ? updatedAnnouncement : a
+        a._id === announcement._id ? { ...a, isPinned: newPinnedStatus } : a
       );
 
-      const sortedAnnouncements = updatedAnnouncements.sort((a, b) => {
+      const sorted = updatedAnnouncements.sort((a, b) => {
         if (a.isPinned && !b.isPinned) return -1;
         if (!a.isPinned && b.isPinned) return 1;
-
         const priorityOrder = { High: 3, Medium: 2, Low: 1 };
-        const priorityA = priorityOrder[a.priority] || 0;
-        const priorityB = priorityOrder[b.priority] || 0;
-
-        if (priorityB !== priorityA) {
-            return priorityB - priorityA;
-        }
-
+        const diff = (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
+        if (diff !== 0) return diff;
         return new Date(b.dateTime) - new Date(a.dateTime);
       });
 
-      setAnnouncements(sortedAnnouncements);
+      setAnnouncements(sorted);
 
       try {
-        await api.patch(`/announcements/${announcement._id}`, {
-          isPinned: newPinnedStatus,
-        });
-      } catch (patchError) {
-        console.warn("PATCH failed, falling back to PUT:", patchError.message);
-        await api.put(`/announcements/${announcement._id}`, {
-          ...announcement,
-          isPinned: newPinnedStatus,
-        });
+        await api.patch(`/announcements/${announcement._id}`, { isPinned: newPinnedStatus });
+      } catch {
+        await api.put(`/announcements/${announcement._id}`, { ...announcement, isPinned: newPinnedStatus });
       }
     } catch (error) {
-      console.error("❌ Error toggling pin:", error);
+      console.error("Error toggling pin:", error);
     }
   };
 
@@ -390,7 +305,6 @@ const AdminDashboard = () => {
       }
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: file.type });
-
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -400,508 +314,222 @@ const AdminDashboard = () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("❌ Error downloading file:", error);
+      console.error("Error downloading file:", error);
     }
   };
 
-  const handleFileView = (file) => {
-    setFileViewModal({ isOpen: true, file });
-  };
+  const handleFileView = (file) => setFileViewModal({ isOpen: true, file });
+  const closeFileView = () => setFileViewModal({ isOpen: false, file: null });
 
-  const closeFileView = () => {
-    setFileViewModal({ isOpen: false, file: null });
-  };
-
-  // ✅ UPDATED: Fetch announcements with expiry check
   const fetchAnnouncements = async () => {
     try {
       setIsLoadingAnnouncements(true);
       const response = await api.get("/announcements");
+      const pinned = getPinnedAnnouncementsFromStorage();
+      const now = DateTime.local();
 
-      const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
-      const now = DateTime.local(); // ✅ ADDED: Current time for expiry check
-
-      const processedAnnouncements = response.data
+      const processed = response.data
         .filter((ann) => {
-          // ✅ UPDATED: Must be Active, Approved, and Not Expired (SAME AS AGENT)
-          if (!ann || !ann._id) return false;
-          if (ann.status !== 'Active') return false;
-          if (ann.approvalStatus !== 'Approved') return false;
-          
-          // ✅ Expiry Check (SAME AS AGENT)
+          if (!ann?._id || ann.status !== "Active" || ann.approvalStatus !== "Approved") return false;
           if (ann.expiresAt && DateTime.fromISO(ann.expiresAt) <= now) return false;
-          
           return true;
         })
-        .map((announcement) => ({
-          ...announcement,
-          isPinned:
-            pinnedAnnouncements[announcement._id] ||
-            announcement.isPinned ||
-            false,
-          views: Array.isArray(announcement.views) ? announcement.views : [],
-          acknowledgements: Array.isArray(announcement.acknowledgements)
-            ? announcement.acknowledgements
-            : [],
+        .map((ann) => ({
+          ...ann,
+          isPinned: pinned[ann._id] || ann.isPinned || false,
+          views: Array.isArray(ann.views) ? ann.views : [],
+          acknowledgements: Array.isArray(ann.acknowledgements) ? ann.acknowledgements : [],
         }))
         .map(processAnnouncementData)
-        .map(announcement => ({
-          ...announcement,
-          timeAgo: getRealTimeAgo(announcement.dateTime),
-          realTimeFormatted: DateTime.fromISO(announcement.dateTime).toLocaleString(DateTime.DATETIME_MED)
+        .map((ann) => ({
+          ...ann,
+          timeAgo: getRealTimeAgo(ann.dateTime),
+          realTimeFormatted: DateTime.fromISO(ann.dateTime).toLocaleString(DateTime.DATETIME_MED),
         }))
         .sort((a, b) => {
           if (a.isPinned && !b.isPinned) return -1;
           if (!a.isPinned && b.isPinned) return 1;
-
-          const priorityOrder = { High: 3, Medium: 2, Low: 1 };
-          const priorityA = priorityOrder[a.priority] || 0;
-          const priorityB = priorityOrder[b.priority] || 0;
-
-          if (priorityB !== priorityA) {
-            return priorityB - priorityA;
-          }
-
+          const pA = { High: 3, Medium: 2, Low: 1 }[a.priority] || 0;
+          const pB = { High: 3, Medium: 2, Low: 1 }[b.priority] || 0;
+          if (pB !== pA) return pB - pA;
           return new Date(b.dateTime) - new Date(a.dateTime);
         });
 
-      setAnnouncements(processedAnnouncements);
-      setIsLoadingAnnouncements(false);
+      setAnnouncements(processed);
     } catch (error) {
-      console.error("❌ Error fetching announcements:", error);
+      console.error("Error fetching announcements:", error);
+    } finally {
       setIsLoadingAnnouncements(false);
     }
   };
 
-  const categorizeAnnouncements = (announcements) => {
-    const accounting = [];
-    const compliance = [];
-    const hr = [];
-    const technical = [];
-
-    announcements.forEach((announcement) => {
-      const department = getAnnouncementDepartment(
-        announcement.postedBy,
-        announcement.title
-      );
-
-      switch (department) {
-        case "Accounting":
-          accounting.push(announcement);
-          break;
-        case "Compliance":
-          compliance.push(announcement);
-          break;
-        case "Technical":
-          technical.push(announcement);
-          break;
-        case "HR & Admin":
-          hr.push(announcement);
-          break;
-        default:
-          hr.push(announcement);
+  const categorizeAnnouncements = (anns) => {
+    const accounting = [], compliance = [], hr = [], technical = [];
+    anns.forEach((ann) => {
+      const dept = getAnnouncementDepartment(ann.postedBy, ann.title);
+      switch (dept) {
+        case "Accounting": accounting.push(ann); break;
+        case "Compliance": compliance.push(ann); break;
+        case "Technical": technical.push(ann); break;
+        case "HR & Admin": hr.push(ann); break;
+        default: hr.push(ann);
       }
     });
-
     return { accounting, compliance, technical, hr };
   };
 
-  const { accounting, compliance, technical, hr } =
-    categorizeAnnouncements(announcements);
+  const { accounting, compliance, technical, hr } = categorizeAnnouncements(announcements);
 
-  const getFilteredAnnouncements = () => {
-    if (!searchTerm) return announcements;
+  const filteredAnnouncements = searchTerm
+    ? announcements.filter((ann) =>
+        [ann.title, ann.agenda, ann.postedBy, ann.content]
+          .some((field) => field?.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+    : announcements;
 
-    return announcements.filter(announcement => 
-      announcement.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      announcement.agenda?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      announcement.postedBy?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      announcement.content?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+  const getFilteredByDept = (dept) => {
+    const map = {
+      technical: technical,
+      compliance: compliance,
+      accounting: accounting,
+      hr: hr,
+    };
+    return filteredAnnouncements.filter((ann) => map[dept]?.some((a) => a._id === ann._id));
   };
 
-  const filteredAnnouncements = getFilteredAnnouncements();
-
-  const getFilteredAnnouncementsByDepartment = (department) => {
-    const { accounting: filteredAccounting, compliance: filteredCompliance, technical: filteredTechnical, hr: filteredHr } = 
-      categorizeAnnouncements(filteredAnnouncements);
-
-    switch (department) {
-      case "technical":
-        return filteredTechnical;
-      case "compliance":
-        return filteredCompliance;
-      case "accounting":
-        return filteredAccounting;
-      case "hr":
-        return filteredHr;
-      default:
-        return [];
-    }
-  };
-
-  const hasFilteredAnnouncements = 
-    getFilteredAnnouncementsByDepartment("technical").length > 0 ||
-    getFilteredAnnouncementsByDepartment("compliance").length > 0 ||
-    getFilteredAnnouncementsByDepartment("accounting").length > 0 ||
-    getFilteredAnnouncementsByDepartment("hr").length > 0;
+  const hasFilteredAnnouncements =
+    getFilteredByDept("technical").length > 0 ||
+    getFilteredByDept("compliance").length > 0 ||
+    getFilteredByDept("accounting").length > 0 ||
+    getFilteredByDept("hr").length > 0;
 
   const handleReadMore = async (announcement) => {
-    if (currentUser?._id) {
-      await trackView(announcement._id, currentUser._id);
-    }
+    if (currentUser?._id) await trackView(announcement._id, currentUser._id);
     setAnnouncementDetailModal({ isOpen: true, announcement });
   };
 
-  const closeAnnouncementDetail = () => {
-    setAnnouncementDetailModal({ isOpen: false, announcement: null });
-  };
+  const closeAnnouncementDetail = () => setAnnouncementDetailModal({ isOpen: false, announcement: null });
+  const handleModalOnClose = () => setIsEmployeeClicked(false);
 
-  const handleModalOnClose = () => {
-    setIsEmployeeClicked(false);
-  };
-
-  // ✅ UPDATED: Socket listeners with expiry check
+  // Socket listeners
   useEffect(() => {
+    if (!currentUser?._id) return;
 
-    if (!socket) {
-      console.log("❌ Socket not available for admin");
-      fetchAnnouncements();
-      return;
-    }
+    console.log("Setting up socket listeners for admin...");
 
-    if (!socket.connected) {
-      console.log("❌ Socket not connected for admin, attempting connection...");
-      socket.connect();
-    }
-
-    let dataLoaded = false;
-
-    const handleInitialData = (socketAnnouncements) => {
-      console.log("📥 Received initial admin data via socket:", socketAnnouncements?.length);
-      
-      if (Array.isArray(socketAnnouncements) && socketAnnouncements.length > 0) {
-        const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
-        const now = DateTime.local(); // ✅ ADDED: Current time for expiry check
-        
-        const processedAnnouncements = socketAnnouncements
-          .filter((ann) => {
-            // ✅ UPDATED: Must be Active, Approved, and Not Expired (SAME AS AGENT)
-            if (!ann || !ann._id) return false;
-            if (ann.status !== 'Active') return false;
-            if (ann.approvalStatus !== 'Approved') return false;
-            
-            // ✅ Expiry Check (SAME AS AGENT)
-            if (ann.expiresAt && DateTime.fromISO(ann.expiresAt) <= now) return false;
-            
-            return true;
-          })
-          .map((announcement) => ({
-            ...announcement,
-            isPinned: pinnedAnnouncements[announcement._id] || announcement.isPinned || false,
-            views: Array.isArray(announcement.views) ? announcement.views : [],
-            acknowledgements: Array.isArray(announcement.acknowledgements) 
-              ? announcement.acknowledgements 
-              : [],
-          }))
-          .map(processAnnouncementData)
-          .map(announcement => ({
-            ...announcement,
-            timeAgo: getRealTimeAgo(announcement.dateTime),
-            realTimeFormatted: DateTime.fromISO(announcement.dateTime).toLocaleString(DateTime.DATETIME_MED)
-          }))
-          .sort((a, b) => {
-            if (a.isPinned && !b.isPinned) return -1;
-            if (!a.isPinned && b.isPinned) return 1;
-
-            const priorityOrder = { High: 3, Medium: 2, Low: 1 };
-            const priorityA = priorityOrder[a.priority] || 0;
-            const priorityB = priorityOrder[b.priority] || 0;
-
-            if (priorityB !== priorityA) {
-              return priorityB - priorityA;
-            }
-
-            return new Date(b.dateTime) - new Date(a.dateTime);
-          });
-
-        setAnnouncements(processedAnnouncements);
-        setIsLoadingAnnouncements(false);
-        dataLoaded = true;
-        console.log("✅ Socket data loaded successfully for admin");
-      }
-    };
-
-    const handleAgentUpdate = (updateData) => {
-      console.log("📊 Real-time admin update:", updateData);
-      
-      setAnnouncements(prev => prev.map(ann => {
-        if (ann._id === updateData.announcementId) {
-          return {
-            ...ann,
-            totalViews: updateData.views,
-            totalAcknowledgements: updateData.likes,
-            timeAgo: ann.timeAgo || getRealTimeAgo(ann.dateTime),
-            realTimeFormatted: ann.realTimeFormatted || DateTime.fromISO(ann.dateTime).toLocaleString(DateTime.DATETIME_MED)
-          };
-        }
-        return ann;
-      }));
-    };
-
-    // ✅ UPDATED: UNIFIED ANNOUNCEMENT HANDLER WITH EXPIRY CHECK
-    const handleUnifiedAnnouncement = (announcementData, source) => {
-      console.log(`📥 ${source}:`, announcementData._id, announcementData.title);
-      
-      // ✅ CHECK IF ANNOUNCEMENT IS ACTIVE AND APPROVED (SAME AS AGENT)
-      if (announcementData.status !== "Active" || announcementData.approvalStatus !== "Approved") {
-        console.log("❌ Ignoring inactive or unapproved announcement from", source);
-        return;
-      }
-
-      // ✅ CHECK IF ANNOUNCEMENT IS EXPIRED (SAME AS AGENT)
+    const handleInitialData = (data) => {
+      // same processing as fetchAnnouncements
+      const pinned = getPinnedAnnouncementsFromStorage();
       const now = DateTime.local();
-      if (announcementData.expiresAt && DateTime.fromISO(announcementData.expiresAt) <= now) {
-        console.log("❌ Ignoring expired announcement from", source);
-        setAnnouncements(prev => prev.filter(a => a._id !== announcementData._id));
-        removePinnedAnnouncementFromStorage(announcementData._id);
+      const processed = (Array.isArray(data) ? data : [])
+        .filter((ann) => ann?._id && ann.status === "Active" && ann.approvalStatus === "Approved" && !(ann.expiresAt && DateTime.fromISO(ann.expiresAt) <= now))
+        .map((ann) => ({
+          ...ann,
+          isPinned: pinned[ann._id] || ann.isPinned || false,
+          views: Array.isArray(ann.views) ? ann.views : [],
+          acknowledgements: Array.isArray(ann.acknowledgements) ? ann.acknowledgements : [],
+        }))
+        .map(processAnnouncementData)
+        .map((ann) => ({
+          ...ann,
+          timeAgo: getRealTimeAgo(ann.dateTime),
+          realTimeFormatted: DateTime.fromISO(ann.dateTime).toLocaleString(DateTime.DATETIME_MED),
+        }))
+        .sort((a, b) => {
+          if (a.isPinned && !b.isPinned) return -1;
+          if (!a.isPinned && b.isPinned) return 1;
+          const pA = { High: 3, Medium: 2, Low: 1 }[a.priority] || 0;
+          const pB = { High: 3, Medium: 2, Low: 1 }[b.priority] || 0;
+          if (pB !== pA) return pB - pA;
+          return new Date(b.dateTime) - new Date(a.dateTime);
+        });
+      setAnnouncements(processed);
+      setIsLoadingAnnouncements(false);
+    };
+
+    const handleUnifiedAnnouncement = (ann, source) => {
+      const now = DateTime.local();
+      if (ann.status !== "Active" || ann.approvalStatus !== "Approved") return;
+      if (ann.expiresAt && DateTime.fromISO(ann.expiresAt) <= now) {
+        setAnnouncements((prev) => prev.filter((a) => a._id !== ann._id));
+        removePinnedAnnouncementFromStorage(ann._id);
         return;
       }
 
-      const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
-      const processedAnnouncement = processAnnouncementData({
-        ...announcementData,
-        isPinned: pinnedAnnouncements[announcementData._id] || false,
-        views: Array.isArray(announcementData.views) ? announcementData.views : [],
-        acknowledgements: Array.isArray(announcementData.acknowledgements) 
-          ? announcementData.acknowledgements 
-          : [],
+      const processed = processAnnouncementData({
+        ...ann,
+        isPinned: getPinnedAnnouncementsFromStorage()[ann._id] || false,
+        views: Array.isArray(ann.views) ? ann.views : [],
+        acknowledgements: Array.isArray(ann.acknowledgements) ? ann.acknowledgements : [],
       });
 
-      if (!processedAnnouncement) {
-        console.log("❌ Failed to process announcement from", source);
-        return;
-      }
+      if (!processed) return;
 
-      const announcementWithRealTime = {
-        ...processedAnnouncement,
-        timeAgo: getRealTimeAgo(processedAnnouncement.dateTime),
-        realTimeFormatted: DateTime.fromISO(processedAnnouncement.dateTime).toLocaleString(DateTime.DATETIME_MED)
+      const withTime = {
+        ...processed,
+        timeAgo: getRealTimeAgo(processed.dateTime),
+        realTimeFormatted: DateTime.fromISO(processed.dateTime).toLocaleString(DateTime.DATETIME_MED),
       };
 
-      setAnnouncements(prev => {
-        const filtered = prev.filter(a => a._id !== announcementWithRealTime._id);
-        const updated = [announcementWithRealTime, ...filtered];
-        
+      setAnnouncements((prev) => {
+        const filtered = prev.filter((a) => a._id !== withTime._id);
+        const updated = [withTime, ...filtered];
         return updated.sort((a, b) => {
           if (a.isPinned && !b.isPinned) return -1;
           if (!a.isPinned && b.isPinned) return 1;
-
-          const priorityOrder = { High: 3, Medium: 2, Low: 1 };
-          const priorityA = priorityOrder[a.priority] || 0;
-          const priorityB = priorityOrder[b.priority] || 0;
-
-          if (priorityB !== priorityA) {
-            return priorityB - priorityA;
-          }
-
+          const pA = { High: 3, Medium: 2, Low: 1 }[a.priority] || 0;
+          const pB = { High: 3, Medium: 2, Low: 1 }[b.priority] || 0;
+          if (pB !== pA) return pB - pA;
           return new Date(b.dateTime) - new Date(a.dateTime);
         });
       });
-    };
-
-    const handleNewAnnouncement = (newAnnouncement) => {
-      handleUnifiedAnnouncement(newAnnouncement, "NEW ANNOUNCEMENT");
-    };
-
-    const handleAnnouncementReposted = (repostedAnnouncement) => {
-      handleUnifiedAnnouncement(repostedAnnouncement, "REPOST");
     };
 
     const handleAnnouncementCancelled = (data) => {
-      console.log("🔴 Real-time: Announcement cancellation received", data);
-      
-      const announcementId = data?.announcementId || data?._id || data?.id;
-      
-      if (!announcementId) {
-        console.error("❌ No announcement ID found in cancellation data:", data);
-        return;
+      const id = data?.announcementId || data?._id;
+      if (id) {
+        setAnnouncements((prev) => prev.filter((a) => a._id !== id));
+        removePinnedAnnouncementFromStorage(id);
       }
-
-      console.log("🗑️ Removing cancelled announcement from admin view:", announcementId);
-      
-      setAnnouncements(prev => {
-        const updated = prev.filter(ann => ann._id !== announcementId);
-        console.log(`✅ Removed cancelled announcement. Before: ${prev.length}, After: ${updated.length}`);
-        return updated;
-      });
-
-      removePinnedAnnouncementFromStorage(announcementId);
     };
 
-    // ✅ UPDATED: ANNOUNCEMENT UPDATED HANDLER WITH EXPIRY CHECK
-    const handleAnnouncementUpdated = (updatedAnnouncement) => {
-      console.log("📝 Real-time: Announcement updated", updatedAnnouncement._id, updatedAnnouncement.title);
-      
-      // ✅ CHECK IF ANNOUNCEMENT IS ACTIVE AND APPROVED (SAME AS AGENT)
-      if (updatedAnnouncement.status !== "Active" || updatedAnnouncement.approvalStatus !== "Approved") {
-        setAnnouncements(prev => prev.filter(ann => ann._id !== updatedAnnouncement._id));
-        removePinnedAnnouncementFromStorage(updatedAnnouncement._id);
-        return;
-      }
-
-      // ✅ CHECK IF ANNOUNCEMENT IS EXPIRED (SAME AS AGENT)
-      const now = DateTime.local();
-      if (updatedAnnouncement.expiresAt && DateTime.fromISO(updatedAnnouncement.expiresAt) <= now) {
-        console.log("❌ Updated announcement is expired, removing it");
-        setAnnouncements(prev => prev.filter(ann => ann._id !== updatedAnnouncement._id));
-        removePinnedAnnouncementFromStorage(updatedAnnouncement._id);
-        return;
-      }
-
-      const pinnedAnnouncements = getPinnedAnnouncementsFromStorage();
-      const processedAnnouncement = processAnnouncementData({
-        ...updatedAnnouncement,
-        isPinned: pinnedAnnouncements[updatedAnnouncement._id] || false,
-        views: Array.isArray(updatedAnnouncement.views) ? updatedAnnouncement.views : [],
-        acknowledgements: Array.isArray(updatedAnnouncement.acknowledgements) 
-          ? updatedAnnouncement.acknowledgements 
-          : [],
-      });
-
-      if (!processedAnnouncement) {
-        console.log("❌ Failed to process updated announcement");
-        return;
-      }
-
-      const announcementWithRealTime = {
-        ...processedAnnouncement,
-        timeAgo: getRealTimeAgo(processedAnnouncement.dateTime),
-        realTimeFormatted: DateTime.fromISO(processedAnnouncement.dateTime).toLocaleString(DateTime.DATETIME_MED)
-      };
-
-      setAnnouncements(prev => {
-        const filtered = prev.filter(a => a._id !== announcementWithRealTime._id);
-        const updated = [announcementWithRealTime, ...filtered];
-        
-        return updated.sort((a, b) => {
-          if (a.isPinned && !b.isPinned) return -1;
-          if (!a.isPinned && b.isPinned) return 1;
-
-          const priorityOrder = { High: 3, Medium: 2, Low: 1 };
-          const priorityA = priorityOrder[a.priority] || 0;
-          const priorityB = priorityOrder[b.priority] || 0;
-
-          if (priorityB !== priorityA) {
-            return priorityB - priorityA;
-          }
-
-          return new Date(b.dateTime) - new Date(a.dateTime);
-        });
-      });
-    };
-
-    // Register socket listeners
     socket.on("initialAgentData", handleInitialData);
-    socket.on("agentAnnouncementUpdate", handleAgentUpdate);
-    socket.on("newAnnouncement", handleNewAnnouncement);
+    socket.on("newAnnouncement", (ann) => handleUnifiedAnnouncement(ann, "NEW"));
+    socket.on("announcementReposted", (ann) => handleUnifiedAnnouncement(ann, "REPOST"));
+    socket.on("announcementUpdated", (ann) => handleUnifiedAnnouncement(ann, "UPDATE"));
     socket.on("announcementCancelled", handleAnnouncementCancelled);
     socket.on("announcementCanceled", handleAnnouncementCancelled);
     socket.on("cancelledAnnouncement", handleAnnouncementCancelled);
     socket.on("announcementDeleted", handleAnnouncementCancelled);
-    socket.on("announcementReposted", handleAnnouncementReposted);
-    socket.on("announcementUpdated", handleAnnouncementUpdated);
-    socket.on("updatedAnnouncement", handleAnnouncementUpdated);
 
     socket.emit("getAgentData");
 
-    const fallbackTimeout = setTimeout(() => {
-      if (!dataLoaded) {
-        fetchAnnouncements();
-      }
+    const timeout = setTimeout(() => {
+      if (isLoadingAnnouncements) fetchAnnouncements();
     }, 3000);
 
     return () => {
-      clearTimeout(fallbackTimeout);
-      
+      clearTimeout(timeout);
       socket.off("initialAgentData", handleInitialData);
-      socket.off("agentAnnouncementUpdate", handleAgentUpdate);
-      socket.off("newAnnouncement", handleNewAnnouncement);
-      socket.off("announcementCancelled", handleAnnouncementCancelled);
-      socket.off("announcementCanceled", handleAnnouncementCancelled);
-      socket.off("cancelledAnnouncement", handleAnnouncementCancelled);
-      socket.off("announcementDeleted", handleAnnouncementCancelled);
-      socket.off("announcementReposted", handleAnnouncementReposted);
-      socket.off("announcementUpdated", handleAnnouncementUpdated);
-      socket.off("updatedAnnouncement", handleAnnouncementUpdated);
+      socket.off("newAnnouncement");
+      socket.off("announcementReposted");
+      socket.off("announcementUpdated");
+      socket.off("announcementCancelled");
+      socket.off("announcementCanceled");
+      socket.off("cancelledAnnouncement");
+      socket.off("announcementDeleted");
     };
   }, [currentUser?._id]);
 
   const stats = [
-    {
-      key: "totalEmployees",
-      title: "Total Employees",
-      subTitle: "Company-wide",
-      icon: (
-        <Users className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-slate-600 bg-slate-100 border-slate-400 border" />
-      ),
-    },
-    {
-      key: "present",
-      title: "Present",
-      subTitle: "Currently Working",
-      icon: (
-        <UserCheck className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-emerald-600 bg-emerald-100 border-emerald-400 border" />
-      ),
-    },
-    {
-      key: "absent",
-      title: "Absentees",
-      subTitle: "Not Present",
-      icon: (
-        <UserX className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-red-500 bg-red-100 border-red-400 border" />
-      ),
-    },
-    {
-      key: "late",
-      title: "Late Arrivals",
-      subTitle: "Late Today",
-      icon: (
-        <Clock className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-amber-600 bg-amber-100 border-amber-400 border" />
-      ),
-    },
-    {
-      key: "onBreak",
-      title: "On Break",
-      subTitle: "Currently",
-      icon: (
-        <Coffee className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-blue-600 bg-blue-100 border-blue-400 border" />
-      ),
-    },
-    {
-      key: "onLunch",
-      title: "On Lunch",
-      subTitle: "Lunch Break",
-      icon: (
-        <Utensils className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-orange-600 bg-orange-100 border-orange-400 border" />
-      ),
-    },
-    {
-      key: "overtime",
-      title: "Overtime",
-      subTitle: "Extra Hours",
-      icon: (
-        <TrendingUp className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-violet-600 bg-violet-100 border-violet-400 border" />
-      ),
-    },
-    {
-      key: "undertime",
-      title: "Undertime",
-      subTitle: "Short Hours",
-      icon: (
-        <TrendingDown className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-pink-600 bg-pink-100 border-pink-400 border" />
-      ),
-    },
+    { key: "totalEmployees", title: "Total Employees", subTitle: "Company-wide", icon: <Users className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-slate-600 bg-slate-100 border-slate-400 border" /> },
+    { key: "present", title: "Present", subTitle: "Currently Working", icon: <UserCheck className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-emerald-600 bg-emerald-100 border-emerald-400 border" /> },
+    { key: "absent", title: "Absentees", subTitle: "Not Present", icon: <UserX className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-red-500 bg-red-100 border-red-400 border" /> },
+    { key: "late", title: "Late Arrivals", subTitle: "Late Today", icon: <Clock className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-amber-600 bg-amber-100 border-amber-400 border" /> },
+    { key: "onBreak", title: "On Break", subTitle: "Currently", icon: <Coffee className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-blue-600 bg-blue-100 border-blue-400 border" /> },
+    { key: "onLunch", title: "On Lunch", subTitle: "Lunch Break", icon: <Utensils className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-orange-600 bg-orange-100 border-orange-400 border" /> },
+    { key: "overtime", title: "Overtime", subTitle: "Extra Hours", icon: <TrendingUp className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-violet-600 bg-violet-100 border-violet-400 border" /> },
+    { key: "undertime", title: "Undertime", subTitle: "Short Hours", icon: <TrendingDown className="w-8 h-8 sm:w-9 sm:h-9 p-2 rounded-full text-pink-600 bg-pink-100 border-pink-400 border" /> },
   ];
 
   if (!currentUser) {
@@ -919,28 +547,17 @@ const AdminDashboard = () => {
     <div className="min-h-screen p-4 sm:p-6 bg-gray-50">
       {showPinLimitToast && (
         <div className="fixed top-4 left-2 right-2 sm:left-4 sm:right-auto z-[10000] bg-yellow-500 text-white p-3 sm:p-4 rounded-xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-top duration-300 max-w-sm mx-auto sm:mx-0">
-          <svg className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path
-              fillRule="evenodd"
-              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-              clipRule="evenodd"
-            />
+          <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm sm:text-base">Pin Limit Reached</p>
-            <p className="text-xs sm:text-sm opacity-90">
-              Max {MAX_PINNED_PER_DEPARTMENT} pins per department
-            </p>
+          <div>
+            <p className="font-semibold">Pin Limit Reached</p>
+            <p className="text-xs opacity-90">Max {MAX_PINNED_PER_DEPARTMENT} pins per department</p>
           </div>
         </div>
       )}
 
-      <FileViewModal
-        isOpen={fileViewModal.isOpen}
-        onClose={closeFileView}
-        file={fileViewModal.file}
-      />
-      
+      <FileViewModal isOpen={fileViewModal.isOpen} onClose={closeFileView} file={fileViewModal.file} />
       <AnnouncementDetailModal
         isOpen={announcementDetailModal.isOpen}
         onClose={closeAnnouncementDetail}
@@ -953,18 +570,14 @@ const AdminDashboard = () => {
         currentUser={currentUser}
       />
 
+      {/* Header */}
       <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
-            Admin Monitoring Dashboard
-          </h2>
-          <p className="text-gray-600 mt-1">
-            Real-time attendance and work hours monitoring
-          </p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Admin Monitoring Dashboard</h2>
+          <p className="text-gray-600 mt-1">Real-time attendance and work hours monitoring</p>
           <div className="flex flex-wrap items-center gap-2 mt-2">
             <p className="text-sm text-gray-500">
-              Last updated: {currentTime.toLocaleTimeString()} | Today:{" "}
-              {currentTime.toLocaleDateString()}
+              Last updated: {currentTime.toLocaleTimeString()} | Today: {currentTime.toLocaleDateString()}
             </p>
             <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium flex items-center gap-1">
               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
@@ -972,298 +585,198 @@ const AdminDashboard = () => {
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm font-medium flex items-center gap-1.5">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-            </svg>
-            <span>{currentUser.name}</span>
-          </div>
+        <div className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm font-medium flex items-center gap-1.5">
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+          </svg>
+          <span>{currentUser.name}</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {stats.map((stat) => (
-          <div key={stat.key} className="bg-white rounded-xl p-4 shadow border border-gray-200">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <p className="text-sm text-gray-600 font-medium">{stat.title}</p>
-                <p className="text-xs text-gray-500">{stat.subTitle}</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 h-80">
+        <div className="relative md:col-span-2 overflow-hidden rounded-2xl shadow-xl group">
+          <img src="https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?q=80&w=2069&auto=format&fit=crop" alt="call center" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+          <div className="absolute inset-0 opacity-60 mix-blend-multiply"></div>
+        </div>
+        <div className="relative hidden md:block overflow-hidden rounded-2xl shadow-xl group">
+          <img src="https://images.unsplash.com/photo-1549923746-c502d488b3ea?q=80&w=2071&auto=format&fit=crop" alt="team" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+          <div className="absolute inset-0 opacity-65 mix-blend-multiply"></div>
+        </div>
+      </div>
+
+      <h2 className="text-3xl font-extrabold text-gray-900 mb-6 tracking-tight">Employee Performance Overview</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        {stats.map((stat) => {
+          const isTotal = stat.key === "totalEmployees";
+          const cardStyle = isTotal ? "bg-[#800000] border-none shadow-[#800000]/30" : "border-[#800000]/10 shadow-gray-200/50";
+          const titleColor = isTotal ? "text-white" : "text-gray-900";
+          const subTitleColor = isTotal ? "text-red-200" : "text-[#800000]";
+          const valueColor = isTotal ? "text-white" : "text-gray-900";
+          const iconStyle = isTotal ? "bg-white/20 text-white" : "bg-gradient-to-br from-[#800000] to-[#5a0000] text-white shadow-red-900/40";
+          const footerStyle = isTotal ? "bg-white/10 text-white border-white/20" : "bg-white/60 text-[#800000] border-[#800000]/20";
+          const pulseWave = isTotal ? "bg-red-400" : "bg-[#800000]";
+
+          return (
+            <div key={stat.key} className={`relative ${cardStyle} rounded-3xl p-0 shadow-xl overflow-hidden transition-all duration-700 group hover:shadow-2xl hover:scale-[1.02] border`}>
+              <div className="p-5 relative z-10">
+                <div className={`absolute top-0 right-0 w-32 h-32 rounded-full opacity-20 z-0 transform scale-0 transition duration-700 ease-out origin-top-right group-hover:scale-[6] group-hover:opacity-0 ${pulseWave}`}></div>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex flex-col min-w-0 flex-1 pr-4">
+                    <p className={`text-xs font-bold ${subTitleColor} uppercase tracking-widest opacity-80`}>{stat.subTitle}</p>
+                    <p className={`text-xl font-black ${titleColor} truncate mt-0.5`}>{stat.title}</p>
+                  </div>
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${iconStyle} shadow-lg`}>
+                    {stat.icon}
+                  </div>
+                </div>
+                <div className="py-2">
+                  <span className={`text-6xl font-black ${valueColor} leading-none tracking-tighter`}>--</span>
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <span className={`text-[10px] font-bold px-3 py-1 ${footerStyle} rounded-lg backdrop-blur-md shadow-sm border uppercase tracking-tighter`}>Live Update</span>
+                </div>
               </div>
-              {stat.icon}
             </div>
-            <div className="flex items-center">
-              <span className="text-lg font-bold text-gray-800">--</span>
-              <span className="ml-2 text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
-                COMING SOON
-              </span>
+          );
+        })}
+      </div>
+
+      <h2 className="text-3xl font-extrabold text-gray-900 mb-6 tracking-tight mt-12">Real-Time Analytics & Trends</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+        {["Attendance Trend", "Employee Metrics", "Activity Monitor"].map((title) => (
+          <div key={title} className="w-full h-64 bg-white rounded-xl shadow-2xl border border-gray-100 transition-all duration-300 hover:scale-[1.02] flex flex-col mt-8">
+            <div className="bg-red-900 p-4 rounded-xl shadow-lg flex justify-between items-start flex-shrink-0 mx-4 mt-[-20px]">
+              <h3 className="text-lg font-bold text-white uppercase tracking-wider">{title}</h3>
+              <span className="text-xs font-semibold px-3 py-1 bg-white/20 text-white rounded-full">COMING SOON</span>
+            </div>
+            <div className="flex-grow p-6 pt-8 flex flex-col justify-between">
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="p-3 rounded-md bg-red-100 border border-red-200">
+                  <svg className="w-6 h-6 text-red-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <p className="text-xl font-medium text-gray-700">{title}</p>
+              </div>
+              <div className="border-t border-gray-100 pt-3">
+                <p className="text-sm font-medium text-gray-500 uppercase">Current Development Stage</p>
+                <p className="text-lg font-extrabold text-gray-900">In Progress</p>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-        {/* Weekly Attendance Trend */}
-        <div className="bg-white rounded-xl p-6 shadow border border-gray-200">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Weekly Attendance Trend</h3>
-            <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded">COMING SOON</span>
-          </div>
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-            <div className="w-32 h-32 sm:w-40 sm:h-40 flex-shrink-0 relative">
-              <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-4 border-white shadow-inner flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 bg-gradient-to-r from-blue-700 to-blue-500 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                  </div>
-                  <span className="text-xs font-semibold text-gray-600">COMING SOON</span>
-                </div>
-              </div>
+      <div className="lg:col-span-3 bg-white rounded-xl p-6 shadow-lg border border-gray-200">
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+            <div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Department Announcements</h3>
+              <p className="text-gray-600">Latest updates from different departments - Real-time</p>
             </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow border border-gray-200">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Employee Distribution by Department</h3>
-            <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded">COMING SOON</span>
-          </div>
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-            <div className="w-32 h-32 sm:w-40 sm:h-40 flex-shrink-0 relative">
-              <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-4 border-white shadow-inner flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 bg-gradient-to-r from-green-700 to-green-500 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                  </div>
-                  <span className="text-xs font-semibold text-gray-600">COMING SOON</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow border border-gray-200">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Activity Monitor</h3>
-            <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded">COMING SOON</span>
-          </div>
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-            <div className="w-32 h-32 sm:w-40 sm:h-40 flex-shrink-0 relative">
-              <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-4 border-white shadow-inner flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 bg-gradient-to-r from-purple-700 to-purple-500 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                  </div>
-                  <span className="text-xs font-semibold text-gray-600">COMING SOON</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-3 bg-white rounded-xl p-6 shadow-lg border border-gray-200">
-          <div className="mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-              <div>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">Department Announcements</h3>
-                <p className="text-gray-600">Latest updates from different departments - Real-time</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm font-medium flex items-center gap-1.5 whitespace-nowrap">
-                  <Pin className="w-4 h-4" />
-                  Max {MAX_PINNED_PER_DEPARTMENT} pins
-                </span>
-                <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium flex items-center gap-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  Live
-                </span>
-              </div>
-            </div>
-            
-            <div className="mt-4 max-w-md">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search announcements..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                  <Search className="w-4 h-4" />
-                </div>
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm("")}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm font-medium flex items-center gap-1.5">
+                <Pin className="w-4 h-4" />
+                Max {MAX_PINNED_PER_DEPARTMENT} pins
+              </span>
+              <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                Live
+              </span>
             </div>
           </div>
 
-          {isLoadingAnnouncements ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
-              <span className="text-gray-600">Loading announcements...</span>
-            </div>
-          ) : hasFilteredAnnouncements ? (
-            <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-              {/* Technical Announcements */}
-              {getFilteredAnnouncementsByDepartment("technical").length > 0 && (
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <DepartmentAnnouncementSection
-                    title="Technical Announcements"
-                    announcements={getFilteredAnnouncementsByDepartment("technical")}
-                    onReadMore={handleReadMore}
-                    onFileDownload={handleFileDownload}
-                    onFileView={handleFileView}
-                    onTogglePin={handleTogglePin}
-                    canPinMore={canPinMoreInDepartment(technical)}
-                    showPinnedOnly={technicalPinned}
-                    onTogglePinnedView={() => setTechnicalPinned(!technicalPinned)}
-                    pinnedCount={getFilteredAnnouncementsByDepartment("technical").filter((a) => a.isPinned).length}
-                    maxPinnedLimit={MAX_PINNED_PER_DEPARTMENT}
-                    onLike={handleLike}
-                    hasLiked={hasLiked}
-                    currentUserId={currentUser?._id}
-                    getViewCount={getViewCount}
-                    getLikeCount={getLikeCount}
-                    compactView={true}
-                  />
-                </div>
-              )}
-
-              {/* HR Announcements */}
-              {getFilteredAnnouncementsByDepartment("hr").length > 0 && (
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <DepartmentAnnouncementSection
-                    title="HR & Admin Announcements"
-                    announcements={getFilteredAnnouncementsByDepartment("hr")}
-                    onReadMore={handleReadMore}
-                    onFileDownload={handleFileDownload}
-                    onFileView={handleFileView}
-                    onTogglePin={handleTogglePin}
-                    canPinMore={canPinMoreInDepartment(hr)}
-                    showPinnedOnly={hrPinned}
-                    onTogglePinnedView={() => setHrPinned(!hrPinned)}
-                    pinnedCount={getFilteredAnnouncementsByDepartment("hr").filter((a) => a.isPinned).length}
-                    maxPinnedLimit={MAX_PINNED_PER_DEPARTMENT}
-                    onLike={handleLike}
-                    hasLiked={hasLiked}
-                    currentUserId={currentUser?._id}
-                    getViewCount={getViewCount}
-                    getLikeCount={getLikeCount}
-                    compactView={true}
-                  />
-                </div>
-              )}
-
-              {/* Compliance Announcements */}
-              {getFilteredAnnouncementsByDepartment("compliance").length > 0 && (
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <DepartmentAnnouncementSection
-                    title="Compliance Announcements"
-                    announcements={getFilteredAnnouncementsByDepartment("compliance")}
-                    onReadMore={handleReadMore}
-                    onFileDownload={handleFileDownload}
-                    onFileView={handleFileView}
-                    onTogglePin={handleTogglePin}
-                    canPinMore={canPinMoreInDepartment(compliance)}
-                    showPinnedOnly={compliancePinned}
-                    onTogglePinnedView={() => setCompliancePinned(!compliancePinned)}
-                    pinnedCount={getFilteredAnnouncementsByDepartment("compliance").filter((a) => a.isPinned).length}
-                    maxPinnedLimit={MAX_PINNED_PER_DEPARTMENT}
-                    onLike={handleLike}
-                    hasLiked={hasLiked}
-                    currentUserId={currentUser?._id}
-                    getViewCount={getViewCount}
-                    getLikeCount={getLikeCount}
-                    compactView={true}
-                  />
-                </div>
-              )}
-
-              {/* Accounting Announcements */}
-              {getFilteredAnnouncementsByDepartment("accounting").length > 0 && (
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <DepartmentAnnouncementSection
-                    title="Accounting Announcements"
-                    announcements={getFilteredAnnouncementsByDepartment("accounting")}
-                    onReadMore={handleReadMore}
-                    onFileDownload={handleFileDownload}
-                    onFileView={handleFileView}
-                    onTogglePin={handleTogglePin}
-                    canPinMore={canPinMoreInDepartment(accounting)}
-                    showPinnedOnly={accountingPinned}
-                    onTogglePinnedView={() => setAccountingPinned(!accountingPinned)}
-                    pinnedCount={getFilteredAnnouncementsByDepartment("accounting").filter((a) => a.isPinned).length}
-                    maxPinnedLimit={MAX_PINNED_PER_DEPARTMENT}
-                    onLike={handleLike}
-                    hasLiked={hasLiked}
-                    currentUserId={currentUser?._id}
-                    getViewCount={getViewCount}
-                    getLikeCount={getLikeCount}
-                    compactView={true}
-                  />
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                <Bell className="w-8 h-8 text-gray-400" />
-              </div>
-              <h4 className="text-lg font-semibold text-gray-600 mb-2">
-                {searchTerm ? "No Matching Announcements" : "No Announcements Found"}
-              </h4>
-              <p className="text-gray-500 max-w-md mx-auto">
-                {searchTerm
-                  ? "No announcements match your search criteria."
-                  : "There are no active announcements at the moment."
-                }
-              </p>
+          <div className="mt-4 max-w-md">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search announcements..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm("")}
-                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                >
-                  Clear Search
+                <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <X className="w-4 h-4" />
                 </button>
               )}
             </div>
-          )}
-
-          <div className="mt-6 pt-4 border-t border-gray-200">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="font-medium">Real-time updates enabled</span>
-                <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                  Total: {filteredAnnouncements.length}
-                </span>
-              </div>
-              <div className="text-sm text-gray-500">
-                Max {MAX_PINNED_PER_DEPARTMENT} pins per department
-              </div>
-            </div>
           </div>
+        </div>
+
+        {isLoadingAnnouncements ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+            <span className="text-gray-600">Loading announcements...</span>
+          </div>
+        ) : hasFilteredAnnouncements ? (
+          <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin">
+            {["technical", "hr", "compliance", "accounting"].map((dept) => {
+              const anns = getFilteredByDept(dept);
+              if (anns.length === 0) return null;
+              const titleMap = {
+                technical: "Technical Announcements",
+                hr: "HR & Admin Announcements",
+                compliance: "Compliance Announcements",
+                accounting: "Accounting Announcements",
+              };
+              const deptAnns = dept === "technical" ? technical : dept === "hr" ? hr : dept === "compliance" ? compliance : accounting;
+              const pinnedState = dept === "technical" ? technicalPinned : dept === "hr" ? hrPinned : dept === "compliance" ? compliancePinned : accountingPinned;
+              const setPinnedState = dept === "technical" ? setTechnicalPinned : dept === "hr" ? setHrPinned : dept === "compliance" ? setCompliancePinned : setAccountingPinned;
+
+              return (
+                <div key={dept} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <DepartmentAnnouncementSection
+                    title={titleMap[dept]}
+                    announcements={anns}
+                    onReadMore={handleReadMore}
+                    onFileDownload={handleFileDownload}
+                    onFileView={handleFileView}
+                    onTogglePin={handleTogglePin}
+                    canPinMore={canPinMoreInDepartment(deptAnns)}
+                    showPinnedOnly={pinnedState}
+                    onTogglePinnedView={() => setPinnedState(!pinnedState)}
+                    pinnedCount={anns.filter((a) => a.isPinned).length}
+                    maxPinnedLimit={MAX_PINNED_PER_DEPARTMENT}
+                    onLike={handleLike}
+                    hasLiked={hasLiked}
+                    currentUserId={currentUser?._id}
+                    getViewCount={getViewCount}
+                    getLikeCount={getLikeCount}
+                    compactView={true}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <Bell className="w-8 h-8 text-gray-400" />
+            </div>
+            <h4 className="text-lg font-semibold text-gray-600 mb-2">
+              {searchTerm ? "No Matching Announcements" : "No Announcements Found"}
+            </h4>
+            <p className="text-gray-500">
+              {searchTerm ? "Try different keywords." : "There are no active announcements at the moment."}
+            </p>
+          </div>
+        )}
+
+        <div className="mt-6 pt-4 border-t border-gray-200 flex justify-between items-center text-sm text-gray-500">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <span>Real-time updates enabled</span>
+            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+              Total: {filteredAnnouncements.length}
+            </span>
+          </div>
+          <div>Max {MAX_PINNED_PER_DEPARTMENT} pins per department</div>
         </div>
       </div>
 
-      {isEmployeeClicked && (
-        <EmployeeModal
-          onClose={handleModalOnClose}
-        />
-      )}
+      {isEmployeeClicked && <EmployeeModal onClose={handleModalOnClose} />}
     </div>
   );
 };
