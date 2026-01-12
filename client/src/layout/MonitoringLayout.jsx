@@ -1,10 +1,11 @@
+import React from "react";
 import {
   ChevronRight,
   UserCheck,
   Coffee,
-  Sun,
   Moon,
   Video,
+  ArrowUpRight,
 } from "lucide-react";
 import { useStore } from "../store/useStore";
 import SharedMonitoring from "../pages/shared/SharedMonitoring";
@@ -16,84 +17,75 @@ const MonitoringLayout = () => {
   const monitorPage = useStore((state) => state.monitorPage);
   const setMonitorPage = useStore((state) => state.setMonitorPage);
 
+  const navItems = [
+    { id: MONITORING_PAGES.STATUS, label: "Status", icon: UserCheck },
+    { id: MONITORING_PAGES.ONBREAK, label: "On Break", icon: Coffee },
+    { id: MONITORING_PAGES.BIOBREAK, label: "Bio Break", icon: Moon },
+    { id: MONITORING_PAGES.MEETING, label: "Meeting", icon: Video },
+  ];
+
   return (
-    <div>
-      {/* monitorPage Header */}
-      <section className="flex flex-col gap-2 items-start lg:flex-row lg:items-center lg:justify-between mb-2">
+    <div className="w-full overflow-hidden">
+      {/* Page Header */}
+      <section className="flex flex-col gap-2 items-start lg:flex-row lg:items-center lg:justify-between mb-2 p-1 lg:p-4">
         <div className="basis-2/5">
           <div className="flex items-center gap-1">
-            <h2>Monitoring</h2> <ChevronRight className="w-6 h-6" />
-            <h2>{formatPathName(monitorPage) || ""}</h2>
+            <h2 className="text-lg font-bold text-black uppercase tracking-tight">Monitoring</h2>
+            <ChevronRight className="w-5 h-5 text-gray-400" />
+            <h2 className="text-lg font-bold text-[#800000] uppercase tracking-tight">
+              {formatPathName(monitorPage) || ""}
+            </h2>
           </div>
-          <p className="text-light">
+          <p className="text-[11px] text-gray-500 font-medium mt-1 leading-none">
             Monitor employee within the selected date range.
           </p>
         </div>
 
-        <nav className="flex gap-2 justify-end items-center flex-1">
-          <div>
-            <img
-              src={live}
-              alt="Live"
-              className="w-auto h-16 mr-3 cursor-pointer"
-              onClick={() => {
-                window.open("/live-monitoring", "_blank");
-              }}
-            />
-          </div>
-          <div
-            className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
-              monitorPage === MONITORING_PAGES.STATUS && "underline"
-            }`}
-            onClick={() => setMonitorPage(MONITORING_PAGES.STATUS)}
-          >
-            <UserCheck className="h-4 w-4" />
-            <span className="hidden sm:inline">Status</span>
-          </div>
+        {/* Navigation Section - Exactly same as Time In / Time Out Layout */}
+        <div className="flex items-center gap-2">
+          <nav className="flex items-center bg-[#F8F9FA] p-0.5 rounded-lg border border-gray-200 shadow-sm flex-wrap lg:flex-nowrap justify-end">
+            <div className="flex items-center gap-0.5">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = monitorPage === item.id;
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => setMonitorPage(item.id)}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-md transition-all duration-300 font-bold text-[9px] uppercase tracking-wider cursor-pointer whitespace-nowrap ${
+                      isActive
+                        ? "bg-[#800000] text-white shadow-sm scale-105 z-10"
+                        : "text-[#547594] hover:text-[#800000] hover:bg-white"
+                    }`}
+                  >
+                    <Icon
+                      className={`w-3 h-3 transition-colors ${
+                        isActive ? "text-white" : "text-gray-400"
+                      }`}
+                    />
+                    <span className="hidden sm:inline">{item.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </nav>
 
+          {/* Live Button style kept consistent with the compact height */}
           <div
-            className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
-              monitorPage === MONITORING_PAGES.ONBREAK && "underline"
-            }`}
-            onClick={() => setMonitorPage(MONITORING_PAGES.ONBREAK)}
+            onClick={() => window.open("/live-monitoring", "_blank")}
+            className="group flex items-center gap-2 bg-white border border-gray-200 py-0.5 pl-1 pr-3 rounded-lg hover:border-[#800000] transition-all duration-300 shadow-sm cursor-pointer"
           >
-            <Coffee className="h-4 w-4" />
-            <span className="hidden sm:inline">On Break</span>
+            <div className="bg-gray-50 rounded-md p-0.5">
+              <img src={live} alt="Live" className="h-6 w-auto object-contain" />
+            </div>
+            <div className="hidden md:flex flex-col justify-center border-l border-gray-100 pl-2 h-6">
+               <span className="text-[8px] font-black text-gray-900 uppercase">Live View</span>
+            </div>
           </div>
-
-          {/* <div
-            className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
-              monitorPage === MONITORING_PAGES.ONLUNCH && "underline"
-            }`}
-            onClick={() => setMonitorPage(MONITORING_PAGES.ONLUNCH)}
-          >
-            <Sun className="h-4 w-4" />
-            <span className="hidden sm:inline">On Lunch</span>
-          </div> */}
-
-          <div
-            className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
-              monitorPage === MONITORING_PAGES.BIOBREAK && "underline"
-            }`}
-            onClick={() => setMonitorPage(MONITORING_PAGES.BIOBREAK)}
-          >
-            <Moon className="h-4 w-4" />
-            <span className="hidden sm:inline">Bio Break</span>
-          </div>
-
-          <div
-            className={`flex px-4 py-2 rounded-md items-center text-black gap-2 bg-white border-light cursor-pointer ${
-              monitorPage === MONITORING_PAGES.MEETING && "underline"
-            }`}
-            onClick={() => setMonitorPage(MONITORING_PAGES.MEETING)}
-          >
-            <Video className="h-4 w-4" />
-            <span className="hidden sm:inline">Meeting</span>
-          </div>
-        </nav>
+        </div>
       </section>
 
-      <main>
+      <main className="w-full bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <SharedMonitoring />
       </main>
     </div>
