@@ -18,6 +18,7 @@ import {
   CheckCircle,
   Shield,
   AlertCircle,
+  XCircle,
   ThumbsUp,
   ThumbsDown,
   Info,
@@ -29,6 +30,8 @@ import {
   ChevronDown,
   ChevronUp,
   Download,
+  PieChart,
+  Zap,
   RefreshCw,
 } from "lucide-react";
 import { DateTime } from "luxon";
@@ -212,10 +215,15 @@ const AdminAnnouncement = () => {
     setIsLoading(true);
     setError(null);
     try {
+      console.log("🔄 Fetching announcements from database...");
       const response = await api.get("/announcements");
 
       if (response.data && Array.isArray(response.data)) {
- 
+        console.log(
+          "✅ Successfully loaded",
+          response.data.length,
+          "announcements"
+        );
 
         const now = DateTime.local();
         const processedAnnouncements = response.data.map((announcement) => {
@@ -276,7 +284,14 @@ const AdminAnnouncement = () => {
         });
 
         setAnnouncements(sortedAll);
-     
+        console.log("📊 Announcements loaded:", {
+          total: sortedAll.length,
+          pending: sortedAll.filter((a) => a.actualStatus === "Pending").length,
+          active: sortedAll.filter((a) => a.actualStatus === "Active").length,
+          expired: sortedAll.filter((a) => a.actualStatus === "Expired").length,
+          inactive: sortedAll.filter((a) => a.actualStatus === "Inactive")
+            .length,
+        });
       } else {
         console.warn("⚠️ No data received from API");
         setAnnouncements([]);
@@ -302,6 +317,8 @@ const AdminAnnouncement = () => {
       fetchAnnouncements();
       return;
     }
+
+    console.log("🔄 Setting up socket listeners for admin...");
 
     let dataLoaded = false;
 
@@ -652,6 +669,7 @@ const AdminAnnouncement = () => {
     // Fallback to API if socket doesn't respond in 3 seconds
     const fallbackTimeout = setTimeout(() => {
       if (!dataLoaded) {
+        console.log("⏰ Socket timeout, falling back to API...");
         fetchAnnouncements();
       }
     }, 3000);
@@ -2081,7 +2099,13 @@ const AdminAnnouncement = () => {
   };
 
   useEffect(() => {
-
+    console.log("📊 Current Tab:", activeTab);
+    console.log("✏️ Is edit mode:", isEditMode);
+    console.log("🔄 Is currently editing:", isCurrentlyEditing);
+    console.log("⏸️ Should stay on pending:", shouldStayOnPending);
+    console.log("🛡️ Can auto-post:", canAutoPost);
+    console.log("👑 Can approve:", canCurrentUserApprove);
+    console.log("📝 Last edited ID:", lastEditedId);
   }, [
     activeTab,
     isEditMode,
@@ -2213,249 +2237,172 @@ const AdminAnnouncement = () => {
         announcementTitle={selectedAnnouncementTitle}
       />
 
-      {/* VIEW DETAILS MODAL */}
-      {isViewDetailsModalOpen && viewDetailsAnnouncement && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Info className="w-6 h-6 text-red-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-800">
-                      Announcement Details
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      Complete information about this announcement
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsViewDetailsModalOpen(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-500" />
-                </button>
+{/* VIEW DETAILS MODAL */}
+{isViewDetailsModalOpen && viewDetailsAnnouncement && (
+  <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
+    <div className="bg-white rounded-none border-t-[6px] border-[#800000] shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+     
+      {/* HEADER SECTION */}
+      <div className="p-6 border-b border-slate-100 bg-white">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-red-50 rounded-xl border border-red-100">
+              <Info className="w-6 h-6 text-[#800000]" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 tracking-tight">
+                Announcement Details
+              </h3>
+              <p className="text-xs text-slate-500 font-medium">
+                Complete communication log and metadata
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsViewDetailsModalOpen(false)}
+            className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-400"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* CONTENT AREA */}
+      <div className="p-6 overflow-y-auto bg-white flex-grow">
+        <div className="space-y-8">
+         
+          {/* STATUS & PRIORITY SECTION */}
+          <div className="flex flex-wrap gap-3">
+            <div className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${getStatusColor(viewDetailsAnnouncement.actualStatus)}`}>
+              Status: {viewDetailsAnnouncement.actualStatus === "Pending" ? "Pending Approval" : viewDetailsAnnouncement.actualStatus}
+            </div>
+            <div className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${getPriorityColor(viewDetailsAnnouncement.priority)}`}>
+              Priority: {viewDetailsAnnouncement.priority}
+            </div>
+          </div>
+
+          {/* MAIN INFORMATION GRID */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Title Section */}
+            <div className="md:col-span-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-tight block mb-2">Subject Title</label>
+              <div className="p-4 bg-slate-50 border-l-4 border-[#800000] rounded-r-lg">
+                <p className="text-lg font-bold text-slate-900">
+                  {viewDetailsAnnouncement.title}
+                </p>
               </div>
             </div>
 
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
-              <div className="space-y-6">
-                {/* Basic Information */}
-                <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                    <Bell className="w-5 h-5" />
-                    Basic Information
-                  </h4>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">
-                        Title
-                      </label>
-                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <p className="text-gray-800 font-medium">
-                          {viewDetailsAnnouncement.title}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">
-                        Status
-                      </label>
-                      <div
-                        className={`px-3 py-2 rounded-lg font-medium text-center ${getStatusColor(
-                          viewDetailsAnnouncement.actualStatus
-                        )}`}
-                      >
-                        {viewDetailsAnnouncement.actualStatus === "Pending"
-                          ? "Pending Approval"
-                          : viewDetailsAnnouncement.actualStatus}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">
-                        Priority
-                      </label>
-                      <div
-                        className={`px-3 py-2 rounded-lg font-medium text-center border ${getPriorityColor(
-                          viewDetailsAnnouncement.priority
-                        )}`}
-                      >
-                        {viewDetailsAnnouncement.priority}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2"></div>
-                  </div>
-                </div>
-
-                {/* Timing Information */}
-                <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                    <Clock className="w-5 h-5" />
-                    Timing Information
-                  </h4>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">
-                        Posted Date & Time
-                      </label>
-                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <p className="text-gray-800">
-                          {formatDateTime(viewDetailsAnnouncement.dateTime)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">
-                        Duration
-                      </label>
-                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <p className="text-gray-800">
-                          {viewDetailsAnnouncement.duration || "1 Week"}
-                        </p>
-                      </div>
-                    </div>
-
-                    {viewDetailsAnnouncement.expiresAt && (
-                      <div className="space-y-2 md:col-span-2">
-                        <label className="text-sm font-medium text-gray-700">
-                          Expires At
-                        </label>
-                        <div
-                          className={`p-3 rounded-lg border ${
-                            viewDetailsAnnouncement.isExpired
-                              ? "bg-pink-50 border-pink-200 text-pink-800"
-                              : "bg-gray-50 border-gray-200 text-gray-800"
-                          }`}
-                        >
-                          <p className="font-medium">
-                            {formatDateTime(viewDetailsAnnouncement.expiresAt)}
-                            {viewDetailsAnnouncement.isExpired && (
-                              <span className="ml-2 text-pink-600 font-bold">
-                                (Expired)
-                              </span>
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* User Information */}
-                <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                    <Users className="w-5 h-5" />
-                    User Information
-                  </h4>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">
-                        Posted By
-                      </label>
-                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 flex items-center gap-2">
-                        <User className="w-4 h-4 text-gray-500" />
-                        <p className="text-gray-800 font-medium">
-                          {viewDetailsAnnouncement.postedBy}
-                        </p>
-                      </div>
-                    </div>
-
-                    {viewDetailsAnnouncement.approvedBy && (
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">
-                          Approved By
-                        </label>
-                        <div className="p-3 bg-green-50 rounded-lg border border-green-200 flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                          <p className="text-green-800 font-medium">
-                            {viewDetailsAnnouncement.approvedBy}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {viewDetailsAnnouncement.cancelledBy && (
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">
-                          Cancelled By
-                        </label>
-                        <div className="p-3 bg-red-50 rounded-lg border border-red-200 flex items-center gap-2">
-                          <X className="w-4 h-4 text-red-500" />
-                          <p className="text-red-800 font-medium">
-                            {viewDetailsAnnouncement.cancelledBy}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Agenda */}
-                <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-gray-800">
-                    Agenda
-                  </h4>
-                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-gray-700 whitespace-pre-wrap">
-                      {viewDetailsAnnouncement.agenda}
+            {/* Timing column */}
+            <div className="space-y-6">
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-tight block mb-2 flex items-center gap-2">
+                  <Clock size={14} className="text-[#800000]" /> Timing Info
+                </label>
+                <div className="space-y-2">
+                  <p className="text-sm text-slate-600">
+                    <span className="font-bold text-slate-800">Posted:</span> {formatDateTime(viewDetailsAnnouncement.dateTime)}
+                  </p>
+                  <p className="text-sm text-slate-600">
+                    <span className="font-bold text-slate-800">Duration:</span> {viewDetailsAnnouncement.duration || "1 Week"}
+                  </p>
+                  {viewDetailsAnnouncement.expiresAt && (
+                    <p className={`text-sm font-medium ${viewDetailsAnnouncement.isExpired ? "text-red-600" : "text-slate-600"}`}>
+                      <span className="font-bold text-slate-800">Expires:</span> {formatDateTime(viewDetailsAnnouncement.expiresAt)}
+                      {viewDetailsAnnouncement.isExpired && " (Expired)"}
                     </p>
-                  </div>
+                  )}
                 </div>
-
-                {/* Attachment */}
-                {viewDetailsAnnouncement.attachment && (
-                  <div className="space-y-4">
-                    <h4 className="text-lg font-semibold text-gray-800">
-                      Attachment
-                    </h4>
-                    <FileAttachment
-                      file={viewDetailsAnnouncement.attachment}
-                      onDownload={handleFileDownload}
-                      onView={handleFileView}
-                    />
-                  </div>
-                )}
               </div>
             </div>
 
-            <div className="p-6 border-t border-gray-200 bg-gray-50">
-              <div className="flex justify-between items-center">
-                <div className="text-sm text-gray-600"></div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setIsViewDetailsModalOpen(false)}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    Close
-                  </button>
-                  {viewDetailsAnnouncement.actualStatus === "Active" && (
-                    <button
-                      onClick={() => {
-                        setIsViewDetailsModalOpen(false);
-                        handleEdit(viewDetailsAnnouncement);
-                      }}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
-                    >
-                      <Edit className="w-4 h-4" />
-                      Edit Announcement
-                    </button>
+            {/* Personnel column */}
+            <div className="space-y-6">
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-tight block mb-2 flex items-center gap-2">
+                  <User size={14} className="text-[#800000]" /> Personnel Involved
+                </label>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600">
+                      {viewDetailsAnnouncement.postedBy?.charAt(0)}
+                    </div>
+                    <p className="text-sm text-slate-600">
+                      <span className="font-bold text-slate-800">Posted by:</span> {viewDetailsAnnouncement.postedBy}
+                    </p>
+                  </div>
+                  {viewDetailsAnnouncement.approvedBy && (
+                    <div className="flex items-center gap-2">
+                      <CheckCircle size={14} className="text-emerald-500" />
+                      <p className="text-sm text-slate-600">
+                        <span className="font-bold text-slate-800">Approved by:</span> {viewDetailsAnnouncement.approvedBy}
+                      </p>
+                    </div>
+                  )}
+                  {viewDetailsAnnouncement.cancelledBy && (
+                    <div className="flex items-center gap-2 text-red-600">
+                      <XCircle size={14} />
+                      <p className="text-sm">
+                        <span className="font-bold">Cancelled by:</span> {viewDetailsAnnouncement.cancelledBy}
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
             </div>
           </div>
+
+          {/* AGENDA SECTION */}
+          <div className="pt-6 border-t border-slate-100">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-tight block mb-3">Announcement Content / Agenda</label>
+            <div className="p-5 bg-slate-50 rounded-xl border border-slate-200">
+              <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap font-medium">
+                {viewDetailsAnnouncement.agenda}
+              </p>
+            </div>
+          </div>
+
+          {/* ATTACHMENT SECTION */}
+          {viewDetailsAnnouncement.attachment && (
+            <div className="pt-6 border-t border-slate-100">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-tight block mb-3">Associated Attachment</label>
+              <div className="bg-white rounded-xl border border-slate-200 p-1">
+                <FileAttachment
+                  file={viewDetailsAnnouncement.attachment}
+                  onDownload={handleFileDownload}
+                  onView={handleFileView}
+                />
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
+
+      {/* FOOTER ACTIONS */}
+      <div className="p-6 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+        <button
+          onClick={() => setIsViewDetailsModalOpen(false)}
+          className="px-6 py-2.5 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors uppercase tracking-widest"
+        >
+          Dismiss
+        </button>
+       
+        {viewDetailsAnnouncement.actualStatus === "Active" && (
+          <button
+            onClick={() => {
+              setIsViewDetailsModalOpen(false);
+              handleEdit(viewDetailsAnnouncement);
+            }}
+            className="px-6 py-2.5 bg-[#800000] text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-[#600000] shadow-lg shadow-[#800000]/10 transition-all flex items-center gap-2 active:scale-95"
+          >
+            <Edit className="w-4 h-4" />
+            Edit Announcement
+          </button>
+        )}
+      </div>
+    </div>
+  </div>
+)}
 
       {/* VISUAL INDICATOR FOR PENDING EDITS */}
       {activeTab === "pending" && shouldStayOnPending && (
@@ -2501,7 +2448,7 @@ const AdminAnnouncement = () => {
         </p>
       </section>
 
-      {/* ANALYTICS SECTION */}
+{/* ANALYTICS SECTION */}
       {showAnalytics && (
         <div className="mb-6 px-2 animate-fade-in">
           <div className="bg-gradient-to-br from-white to-purple-50/30 backdrop-blur-lg rounded-2xl shadow-xl p-4 sm:p-6 border border-purple-100">
@@ -2580,443 +2527,442 @@ const AdminAnnouncement = () => {
               </div>
             ) : analyticsData ? (
               <>
-                {/* SUMMARY CARDS */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                  <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-gray-600">
-                          Total Announcements
-                        </p>
-                        <p className="text-2xl font-bold text-gray-800">
-                          {analyticsData.totalAnnouncements}
-                        </p>
-                      </div>
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <FileText className="w-5 h-5 text-blue-600" />
-                      </div>
-                    </div>
-                    <div className="mt-2 text-xs text-gray-500">
-                      Filtered:{" "}
-                      {analyticsFilter.timeRange !== "all"
-                        ? analyticsFilter.timeRange
-                        : "All time"}
-                    </div>
-                  </div>
+<div className="w-full p-6 bg-gray-50">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-[#800000] p-6 rounded-[2rem] shadow-xl flex flex-col justify-between min-h-[160px] relative overflow-hidden transition-all hover:bg-[#6b0000]">
+          <div>
+            <p className="text-sm font-bold tracking-widest text-white/80 uppercase mb-1">Total Announcements</p>
+            <p className="text-4xl font-black text-white leading-tight">{analyticsData.totalAnnouncements}</p>
+          </div>
+          <div className="flex items-center gap-3 mt-4 text-sm font-bold text-white uppercase">
+            <div className="p-2 bg-white/10 rounded-xl">
+              <FileText className="w-6 h-6 text-white" />
+            </div>
+            <span>Filtered: {analyticsFilter.timeRange !== "all" ? analyticsFilter.timeRange : "All time"}</span>
+          </div>
+          <div className="absolute right-6 top-10 flex items-end gap-1 h-12 opacity-30">
+            <div className="w-2 h-4 bg-white/20 rounded-full"></div>
+            <div className="w-2 h-6 bg-white/20 rounded-full"></div>
+            <div className="w-2 h-8 bg-white/40 rounded-full"></div>
+            <div className="w-2 h-12 bg-white rounded-full"></div>
+            <div className="w-2 h-5 bg-white/20 rounded-full"></div>
+          </div>
+        </div>
 
-                  <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-gray-600">Average Views</p>
-                        <p className="text-2xl font-bold text-gray-800">
-                          {analyticsData.averageViews.toFixed(1)}
-                        </p>
-                      </div>
-                      <div className="p-2 bg-green-100 rounded-lg">
-                        <Eye className="w-5 h-5 text-green-600" />
-                      </div>
-                    </div>
-                    <div className="mt-2 text-xs text-gray-500">
-                      Total: {analyticsData.totalViews} views
-                    </div>
-                  </div>
+        {/* AVERAGE VIEWS */}
+        <div className="bg-[#800000] p-6 rounded-[2rem] shadow-xl flex flex-col justify-between min-h-[160px] relative overflow-hidden transition-all hover:bg-[#6b0000]">
+          <div>
+            <p className="text-sm font-bold tracking-widest text-white/80 uppercase mb-1">Average Views</p>
+            <div className="flex items-center gap-3">
+              <p className="text-4xl font-black text-white leading-tight">{analyticsData.averageViews.toFixed(1)}</p>
+              <span className="text-sm font-extrabold text-white bg-white/20 px-2 py-0.5 rounded-lg">
+                +{((analyticsData.totalViews / (analyticsData.totalAnnouncements || 1)) * 0.1).toFixed(1)}%
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 mt-4 text-sm font-bold text-white uppercase">
+            <div className="p-2 bg-white/10 rounded-xl">
+              <Eye className="w-6 h-6 text-white" />
+            </div>
+            <span>Total: {analyticsData.totalViews} views</span>
+          </div>
+          <div className="absolute right-6 top-10 opacity-40">
+            <svg width="70" height="40" viewBox="0 0 60 30" fill="none" className="text-white">
+              <path d="M2 25C10 25 15 5 25 15C35 25 45 5 58 5" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+            </svg>
+          </div>
+        </div>
 
-                  <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-gray-600">Average Likes</p>
-                        <p className="text-2xl font-bold text-gray-800">
-                          {analyticsData.averageLikes.toFixed(1)}
-                        </p>
-                      </div>
-                      <div className="p-2 bg-red-100 rounded-lg">
-                        <Heart
-                          className="w-5 h-5 text-red-600"
-                          fill="currentColor"
-                        />
-                      </div>
-                    </div>
-                    <div className="mt-2 text-xs text-gray-500">
-                      Total: {analyticsData.totalLikes} likes
-                    </div>
-                  </div>
+        {/* AVERAGE LIKES */}
+        <div className="bg-[#800000] p-6 rounded-[2rem] shadow-xl flex flex-col justify-between min-h-[160px] relative overflow-hidden transition-all hover:bg-[#6b0000]">
+          <div>
+            <p className="text-sm font-bold tracking-widest text-white/80 uppercase mb-1">Average Likes</p>
+            <div className="flex items-center gap-3">
+              <p className="text-4xl font-black text-white leading-tight">{analyticsData.averageLikes.toFixed(1)}</p>
+              <span className="text-sm font-extrabold text-white bg-white/20 px-2 py-0.5 rounded-lg">
+                {(analyticsData.averageLikes / 10).toFixed(1)}%
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 mt-4 text-sm font-bold text-white uppercase">
+            <div className="p-2 bg-white/10 rounded-xl">
+              <Heart className="w-6 h-6 text-white" fill="white" />
+            </div>
+            <span>Total: {analyticsData.totalLikes} likes</span>
+          </div>
+          <div className="absolute right-6 top-10 opacity-20">
+            <div className="flex flex-col items-end">
+              <div className="w-10 h-3 border-r-4 border-t-4 border-white"></div>
+              <div className="w-14 h-3 border-r-4 border-t-4 border-white"></div>
+              <div className="w-20 h-3 border-r-4 border-t-4 border-white"></div>
+            </div>
+          </div>
+        </div>
 
-                  <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-gray-600">Engagement Rate</p>
-                        <p className="text-2xl font-bold text-gray-800">
-                          {analyticsData.averageEngagement.toFixed(1)}%
-                        </p>
-                      </div>
-                      <div className="p-2 bg-purple-100 rounded-lg">
-                        <Activity className="w-5 h-5 text-purple-600" />
-                      </div>
+        {/* ENGAGEMENT RATE */}
+        <div className="bg-[#800000] p-6 rounded-[2rem] shadow-xl flex flex-col justify-between min-h-[160px] relative overflow-hidden transition-all hover:bg-[#6b0000]">
+          <div>
+            <p className="text-sm font-bold tracking-widest text-white uppercase mb-1">Engagement Rate</p>
+            <div className="flex items-center gap-2">
+              <p className="text-4xl font-black text-white leading-tight">{analyticsData.averageEngagement.toFixed(1)}%</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 mt-4 text-sm font-bold text-white uppercase">
+            <div className="p-2 bg-white/10 rounded-xl">
+              <Activity className="w-6 h-6 text-white" />
+            </div>
+            <span>Views to Likes ratio</span>
+          </div>
+          <div className="absolute right-6 top-10 opacity-60">
+            <svg width="70" height="40" viewBox="0 0 60 30" fill="none" className="text-white">
+              <path d="M2 20C10 20 15 5 25 25C35 45 45 5 58 15" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+              <circle cx="58" cy="15" r="3" fill="white" />
+            </svg>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+{/* PERFORMANCE BREAKDOWN */}
+<div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 px-4">
+ 
+  {/* HIGHEST PERFORMING - HIGH CONTRAST SURROUND SHADOW */}
+  <div className="bg-white rounded-[2.5rem] shadow-[0_0_35px_rgba(0,0,0,0.12)] hover:shadow-[0_0_50px_rgba(128,0,0,0.2)] transition-all duration-500 flex items-center overflow-hidden h-36 hover:-translate-y-2 cursor-default border border-slate-100 relative group">
+   
+    <div className="flex-1 px-8 flex items-center justify-between relative z-10">
+      {/* LEFT SIDE: INFO */}
+      <div className="max-w-[55%]">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="p-2 bg-[#800000]/10 rounded-xl shadow-sm">
+            <TrendingUp className="w-5 h-5 text-[#800000]" />
+          </div>
+          <span className="text-[10px] font-black text-[#800000] uppercase tracking-[0.2em]">Highest Performing</span>
+        </div>
+        {analyticsData.highestPerforming ? (
+          <>
+            <h5 className="text-sm font-bold text-slate-800 truncate leading-tight group-hover:text-[#800000] transition-colors">
+              {analyticsData.highestPerforming.announcement.title}
+            </h5>
+            <p className="text-[10px] font-medium text-slate-400 mt-1">
+              Published {formatTimeAgo(analyticsData.highestPerforming.announcement.dateTime)}
+            </p>
+          </>
+        ) : (
+          <p className="text-xs text-slate-400 italic">No data record</p>
+        )}
+      </div>
+
+      {/* RIGHT SIDE: PRIORITY & STATS */}
+      <div className="flex flex-col items-end gap-1 pl-6">
+        {analyticsData.highestPerforming && (
+          <span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border shadow-sm mb-3 ${getPriorityColor(analyticsData.highestPerforming.announcement.priority)}`}>
+            {analyticsData.highestPerforming.announcement.priority}
+          </span>
+        )}
+        <div className="flex items-center gap-8">
+          <div className="text-right">
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Views</p>
+            <p className="text-4xl font-black text-slate-900 tracking-tighter leading-none">
+              {analyticsData.highestPerforming?.views || 0}
+            </p>
+          </div>
+          <div className="text-right border-l-2 border-slate-100 pl-6">
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Likes</p>
+            <div className="flex items-center gap-1.5 justify-end">
+              <p className="text-4xl font-black text-slate-900 tracking-tighter leading-none">
+                {analyticsData.highestPerforming?.likes || 0}
+              </p>
+              <Heart className="w-4 h-4 text-[#800000]" fill="currentColor" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {/* NEEDS REVIEW - HIGH CONTRAST SURROUND SHADOW */}
+  <div className="bg-white rounded-[2.5rem] shadow-[0_0_35px_rgba(0,0,0,0.12)] hover:shadow-[0_0_50px_rgba(0,0,0,0.15)] transition-all duration-500 flex items-center overflow-hidden h-36 hover:-translate-y-2 cursor-default border border-slate-100 relative group">
+    <div className="flex-1 px-8 flex items-center justify-between relative z-10">
+      {/* LEFT SIDE: INFO */}
+      <div className="max-w-[55%]">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="p-2 bg-slate-100 rounded-xl shadow-sm">
+            <Target className="w-5 h-5 text-slate-600" />
+          </div>
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Needs Review</span>
+        </div>
+        {analyticsData.lowestPerforming ? (
+          <>
+            <h5 className="text-sm font-bold text-slate-800 truncate leading-tight group-hover:text-slate-600 transition-colors">
+              {analyticsData.lowestPerforming.announcement.title}
+            </h5>
+            <p className="text-[10px] font-medium text-slate-400 mt-1">
+              Published {formatTimeAgo(analyticsData.lowestPerforming.announcement.dateTime)}
+            </p>
+          </>
+        ) : (
+          <p className="text-xs text-slate-400 italic">No data record</p>
+        )}
+      </div>
+
+      {/* RIGHT SIDE: PRIORITY & STATS */}
+      <div className="flex flex-col items-end gap-1 pl-6">
+        {analyticsData.lowestPerforming && (
+          <span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border shadow-sm mb-3 ${getPriorityColor(analyticsData.lowestPerforming.announcement.priority)}`}>
+            {analyticsData.lowestPerforming.announcement.priority}
+          </span>
+        )}
+        <div className="flex items-center gap-8">
+          <div className="text-right">
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Views</p>
+            <p className="text-4xl font-black text-slate-900 tracking-tighter leading-none">
+              {analyticsData.lowestPerforming?.views || 0}
+            </p>
+          </div>
+          <div className="text-right border-l-2 border-slate-100 pl-6">
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Likes</p>
+            <div className="flex items-center gap-1.5 justify-end">
+              <p className="text-4xl font-black text-slate-900 tracking-tighter leading-none">
+                {analyticsData.lowestPerforming?.likes || 0}
+              </p>
+              <Heart className="w-4 h-4 text-slate-400" fill="currentColor" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{/* SORTABLE TABLE & Announcement Performance */}
+<div className="bg-white rounded-[2rem] border-t-4 border-t-[#800000] border-x border-b border-slate-100 shadow-xl overflow-hidden transition-all duration-500">
+  <div className="p-5 bg-white relative overflow-hidden">
+    {/* HIGHLIGHT GRADIENT AT THE TOP RIGHT */}
+    <div className="absolute top-0 right-0 w-48 h-48 bg-[#800000]/10 rounded-full blur-[50px] -mr-20 -mt-20" />
+   
+    <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-4">
+     
+      {/* LEFT SIDE: TITLE & SUBTITLE */}
+      <div className="flex flex-col px-2">
+        <h2 className="text-lg font-bold text-gray-800 tracking-tight leading-tight">
+          Executive Performance Analytics
+        </h2>
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className="text-[10px] font-medium text-gray-400 italic">
+            Performance metrics and strategic insights overview
+          </span>
+          <div className="h-px w-6 bg-[#800000]/30"></div>
+        </div>
+      </div>
+
+      {/* RIGHT SIDE: FILTERS (COMPACT) */}
+      <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-slate-100">
+        <select
+          value={analyticsFilter.sortBy}
+          onChange={(e) =>
+            setAnalyticsFilter((prev) => ({
+              ...prev,
+              sortBy: e.target.value,
+            }))
+          }
+          className="bg-transparent pl-3 pr-6 py-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500 focus:outline-none cursor-pointer"
+        >
+          <option value="views">By Views</option>
+          <option value="likes">By Likes</option>
+          <option value="engagement">By Engagement</option>
+          <option value="date">By Date</option>
+        </select>
+       
+        <button
+          onClick={() =>
+            setAnalyticsFilter((prev) => ({
+              ...prev,
+              sortOrder: prev.sortOrder === "desc" ? "asc" : "desc",
+            }))
+          }
+          className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-lg shadow-sm hover:border-[#800000] hover:text-[#800000] transition-all"
+        >
+          {analyticsFilter.sortOrder === "desc" ? (
+            <ChevronDown className="w-3.5 h-3.5" />
+          ) : (
+            <ChevronUp className="w-3.5 h-3.5" />
+          )}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {/* MODERN BORDERLESS TABLE (COMPACT HEIGHT) */}
+  <div className="overflow-x-auto px-6 pb-6">
+    <table className="w-full border-separate border-spacing-y-1">
+      <thead>
+        <tr>
+          {/* HEADERS CHANGED TO MAROON */}
+          <th className="px-4 py-2 text-left text-[9px] font-black text-[#800000] uppercase tracking-[0.2em]">The Announcement</th>
+          <th className="px-4 py-2 text-left text-[9px] font-black text-[#800000] uppercase tracking-[0.2em]">Category</th>
+          <th className="px-4 py-2 text-left text-[9px] font-black text-[#800000] uppercase tracking-[0.2em]">Reach</th>
+          <th className="px-4 py-2 text-left text-[9px] font-black text-[#800000] uppercase tracking-[0.2em]">Growth</th>
+          <th className="px-4 py-2 text-center text-[9px] font-black text-[#800000] uppercase tracking-[0.2em]">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {analyticsData.announcementsWithStats
+          .slice(0, 10)
+          .map((announcement, index) => (
+            <tr key={announcement._id} className="group hover:bg-slate-50/80 transition-all duration-200">
+              <td className="px-4 py-2.5 first:rounded-l-2xl border-y border-l border-transparent group-hover:border-slate-100">
+                <div className="flex flex-col">
+                  <span className="text-[13px] font-bold text-slate-700 group-hover:text-[#800000] transition-colors line-clamp-1">
+                    {announcement.title}
+                  </span>
+                  <span className="text-[9px] font-medium text-slate-400">
+                    {announcement.postedBy}
+                  </span>
+                </div>
+              </td>
+              <td className="px-4 py-2.5 border-y border-transparent group-hover:border-slate-100">
+                <span className="text-[9px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md uppercase">
+                  {announcement.category}
+                </span>
+              </td>
+              <td className="px-4 py-2.5 border-y border-transparent group-hover:border-slate-100">
+                <div className="flex items-center gap-4">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-slate-800 leading-none">{announcement.views.toLocaleString()}</span>
+                    <span className="text-[8px] font-medium text-slate-400 uppercase mt-0.5">Views</span>
+                  </div>
+                  <div className="flex flex-col border-l border-slate-100 pl-3">
+                    <div className="flex items-center gap-1 leading-none">
+                      <span className="text-sm font-bold text-slate-800">{announcement.likes.toLocaleString()}</span>
+                      <Heart className="w-2 h-2 text-[#800000]" fill="currentColor" />
                     </div>
-                    <div className="mt-2 text-xs text-gray-500">
-                      Views to Likes ratio
-                    </div>
+                    <span className="text-[8px] font-medium text-slate-400 uppercase mt-0.5">Likes</span>
                   </div>
                 </div>
-
-                {/* PERFORMANCE BREAKDOWN */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                  {/* TOP PERFORMING */}
-                  <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                    <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-green-600" />
-                      Highest Performing Announcement
-                    </h4>
-                    {analyticsData.highestPerforming && (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium text-gray-800 truncate">
-                            {analyticsData.highestPerforming.announcement.title}
-                          </p>
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs ${getPriorityColor(
-                              analyticsData.highestPerforming.announcement
-                                .priority
-                            )}`}
-                          >
-                            {
-                              analyticsData.highestPerforming.announcement
-                                .priority
-                            }
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-4">
-                            <span className="flex items-center gap-1 text-gray-600">
-                              <Eye className="w-4 h-4" />
-                              {analyticsData.highestPerforming.views}
-                            </span>
-                            <span className="flex items-center gap-1 text-gray-600">
-                              <Heart
-                                className="w-4 h-4 text-red-500"
-                                fill="currentColor"
-                              />
-                              {analyticsData.highestPerforming.likes}
-                            </span>
-                          </div>
-                          <span className="text-xs text-gray-500">
-                            {formatTimeAgo(
-                              analyticsData.highestPerforming.announcement
-                                .dateTime
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* LOWEST PERFORMING */}
-                  <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                    <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                      <Target className="w-4 h-4 text-orange-600" />
-                      Needs Improvement
-                    </h4>
-                    {analyticsData.lowestPerforming && (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium text-gray-800 truncate">
-                            {analyticsData.lowestPerforming.announcement.title}
-                          </p>
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs ${getPriorityColor(
-                              analyticsData.lowestPerforming.announcement
-                                .priority
-                            )}`}
-                          >
-                            {
-                              analyticsData.lowestPerforming.announcement
-                                .priority
-                            }
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-4">
-                            <span className="flex items-center gap-1 text-gray-600">
-                              <Eye className="w-4 h-4" />
-                              {analyticsData.lowestPerforming.views}
-                            </span>
-                            <span className="flex items-center gap-1 text-gray-600">
-                              <Heart
-                                className="w-4 h-4 text-red-500"
-                                fill="currentColor"
-                              />
-                              {analyticsData.lowestPerforming.likes}
-                            </span>
-                          </div>
-                          <span className="text-xs text-gray-500">
-                            {formatTimeAgo(
-                              analyticsData.lowestPerforming.announcement
-                                .dateTime
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                    )}
+              </td>
+              <td className="px-4 py-2.5 border-y border-transparent group-hover:border-slate-100">
+                <div className="flex flex-col gap-1 w-24">
+                  <span className="text-[10px] font-bold text-emerald-600">
+                    {announcement.calculatedEngagement.toFixed(1)}%
+                  </span>
+                  <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
+                      style={{ width: `${Math.min(announcement.calculatedEngagement, 100)}%` }}
+                    />
                   </div>
                 </div>
+              </td>
+              <td className="px-4 py-2.5 last:rounded-r-2xl border-y border-r border-transparent group-hover:border-slate-100 text-center">
+                <span className={`px-3 py-1 rounded-lg text-[8px] font-bold uppercase tracking-wider border shadow-sm ${getStatusColor(announcement.actualStatus)}`}>
+                  {announcement.actualStatus}
+                </span>
+              </td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
+  </div>
+</div>
 
-                {/* SORTABLE TABLE */}
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                  <div className="p-4 border-b border-gray-200">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                      <h4 className="font-bold text-gray-800">
-                        Announcement Performance
-                      </h4>
-                      <div className="flex gap-2">
-                        <select
-                          value={analyticsFilter.sortBy}
-                          onChange={(e) =>
-                            setAnalyticsFilter((prev) => ({
-                              ...prev,
-                              sortBy: e.target.value,
-                            }))
-                          }
-                          className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-purple-500"
-                        >
-                          <option value="views">Sort by Views</option>
-                          <option value="likes">Sort by Likes</option>
-                          <option value="engagement">Sort by Engagement</option>
-                          <option value="date">Sort by Date</option>
-                        </select>
-                        <button
-                          onClick={() =>
-                            setAnalyticsFilter((prev) => ({
-                              ...prev,
-                              sortOrder:
-                                prev.sortOrder === "desc" ? "asc" : "desc",
-                            }))
-                          }
-                          className="px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                          {analyticsFilter.sortOrder === "desc" ? (
-                            <ChevronDown className="w-4 h-4" />
-                          ) : (
-                            <ChevronUp className="w-4 h-4" />
-                          )}
-                        </button>
+{/* EXECUTIVE SUMMARY CARDS (High Visibility Icons) */}
+                <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                 
+                  {/* DISTRIBUTION ANALYSIS */}
+                  <div className="relative group bg-white rounded-[2.5rem] p-6 shadow-[0_0_40px_rgba(0,0,0,0.08)] border border-slate-50 transition-all duration-500 overflow-hidden hover:shadow-[0_0_50px_rgba(0,0,0,0.12)] hover:-translate-y-1">
+                    {/* High Visibility Background Icon */}
+                    <div className="absolute top-1/2 right-[-2%] -translate-y-1/2 opacity-[0.08] group-hover:opacity-[0.15] group-hover:scale-110 transition-all duration-700 pointer-events-none">
+                      <PieChart className="w-44 h-44 text-[#800000]" strokeWidth={1.5} />
+                    </div>
+                   
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-2 mb-6">
+                        <div className="w-[2px] h-3.5 bg-[#800000] rounded-full" />
+                        <h4 className="text-[11px] font-black text-[#800000] uppercase tracking-normal">
+                          Distribution Analysis
+                        </h4>
                       </div>
-                    </div>
-                  </div>
 
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Title
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Category
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Views
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Likes
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Engagement
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Status
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {analyticsData.announcementsWithStats
-                          .slice(0, 10)
-                          .map((announcement, index) => (
-                            <tr
-                              key={announcement._id}
-                              className="hover:bg-gray-50"
-                            >
-                              <td className="px-4 py-3">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium text-gray-900 truncate max-w-xs">
-                                    {announcement.title}
-                                  </span>
-                                  {index === 0 &&
-                                    analyticsFilter.sortBy === "views" && (
-                                      <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full">
-                                        Top
-                                      </span>
-                                    )}
-                                </div>
-                                <p className="text-xs text-gray-500 truncate">
-                                  {announcement.postedBy}
-                                </p>
-                              </td>
-                              <td className="px-4 py-3">
-                                <span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
-                                  {announcement.category}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="flex items-center gap-2">
-                                  <Eye className="w-4 h-4 text-blue-500" />
-                                  <span className="font-medium">
-                                    {announcement.views}
-                                  </span>
-                                  {announcement.views >
-                                    analyticsData.averageViews && (
-                                    <span className="text-xs text-green-600">
-                                      ↑
-                                    </span>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="flex items-center gap-2">
-                                  <Heart
-                                    className="w-4 h-4 text-red-500"
-                                    fill="currentColor"
-                                  />
-                                  <span className="font-medium">
-                                    {announcement.likes}
-                                  </span>
-                                  {announcement.likes >
-                                    analyticsData.averageLikes && (
-                                    <span className="text-xs text-green-600">
-                                      ↑
-                                    </span>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="w-full bg-gray-200 rounded-full h-2">
-                                  <div
-                                    className="bg-gradient-to-r from-green-400 to-green-500 h-2 rounded-full"
-                                    style={{
-                                      width: `${Math.min(
-                                        announcement.calculatedEngagement,
-                                        100
-                                      )}%`,
-                                    }}
-                                  ></div>
-                                </div>
-                                <span className="text-xs text-gray-600 mt-1">
-                                  {announcement.calculatedEngagement.toFixed(1)}
-                                  %
-                                </span>
-                              </td>
-                              <td className="px-4 py-3">
-                                <span
-                                  className={`px-2 py-1 rounded-full text-xs ${getStatusColor(
-                                    announcement.actualStatus
-                                  )}`}
-                                >
-                                  {announcement.actualStatus}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {analyticsData.announcementsWithStats.length > 10 && (
-                    <div className="p-4 border-t border-gray-200 text-center">
-                      <p className="text-sm text-gray-600">
-                        Showing 10 of{" "}
-                        {analyticsData.announcementsWithStats.length}{" "}
-                        announcements
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* CATEGORY BREAKDOWN */}
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                    <h4 className="font-bold text-gray-800 mb-3">
-                      Category Distribution
-                    </h4>
-                    <div className="space-y-3">
-                      {Object.entries(analyticsData.categoryBreakdown).map(
-                        ([category, count]) => {
-                          const percentage =
-                            (count / analyticsData.totalAnnouncements) * 100;
+                      <div className="space-y-4">
+                        {Object.entries(analyticsData.categoryBreakdown).map(([category, count]) => {
+                          const percentage = (count / analyticsData.totalAnnouncements) * 100;
                           return (
-                            <div key={category} className="space-y-1">
-                              <div className="flex justify-between text-sm">
-                                <span className="font-medium">{category}</span>
-                                <span className="text-gray-600">
-                                  {count} ({percentage.toFixed(1)}%)
-                                </span>
+                            <div key={category} className="relative">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{category}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-black text-black">{count}</span>
+                                  <span className="text-[9px] font-bold text-[#800000] bg-[#800000]/10 px-1.5 py-0.5 rounded-md">
+                                    {percentage.toFixed(0)}%
+                                  </span>
+                                </div>
                               </div>
-                              <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div className="h-[3.5px] w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100/50">
                                 <div
-                                  className="bg-gradient-to-r from-blue-400 to-blue-500 h-2 rounded-full"
+                                  className="h-full bg-[#800000] transition-all duration-1000 ease-out"
                                   style={{ width: `${percentage}%` }}
-                                ></div>
+                                />
                               </div>
                             </div>
                           );
-                        }
-                      )}
+                        })}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                    <h4 className="font-bold text-gray-800 mb-3">
-                      Priority Distribution
-                    </h4>
-                    <div className="space-y-3">
-                      {Object.entries(analyticsData.priorityBreakdown).map(
-                        ([priority, count]) => {
-                          const percentage =
-                            (count / analyticsData.totalAnnouncements) * 100;
-                          const colorClass =
-                            priority === "High"
-                              ? "from-red-400 to-red-500"
-                              : priority === "Medium"
-                              ? "from-yellow-400 to-yellow-500"
-                              : "from-green-400 to-green-500";
+                  {/* PRIORITY STRATIFICATION */}
+                  <div className="relative group bg-white rounded-[2.5rem] p-6 shadow-[0_0_40px_rgba(0,0,0,0.08)] border border-slate-50 transition-all duration-500 overflow-hidden hover:shadow-[0_0_50px_rgba(0,0,0,0.12)] hover:-translate-y-1">
+                    {/* High Visibility Background Icon */}
+                    <div className="absolute top-1/2 right-[0%] -translate-y-1/2 opacity-[0.08] group-hover:opacity-[0.15] group-hover:scale-110 transition-all duration-700 pointer-events-none">
+                      <Zap className="w-44 h-44 text-slate-900" strokeWidth={1.5} />
+                    </div>
 
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-2 mb-6">
+                        <div className="w-[2px] h-3.5 bg-black rounded-full" />
+                        <h4 className="text-[11px] font-black text-black uppercase tracking-normal">
+                          Priority Stratification
+                        </h4>
+                      </div>
+
+                      <div className="space-y-4">
+                        {Object.entries(analyticsData.priorityBreakdown).map(([priority, count]) => {
+                          const percentage = (count / analyticsData.totalAnnouncements) * 100;
+                         
+                          let barColor = "bg-slate-300";
+                          if (priority === "High") barColor = "bg-[#800000]";
+                          if (priority === "Medium") barColor = "bg-yellow-400";
+                          if (priority === "Low") barColor = "bg-green-500";
+                         
                           return (
-                            <div key={priority} className="space-y-1">
-                              <div className="flex justify-between text-sm">
-                                <span
-                                  className={`font-medium ${
-                                    priority === "High"
-                                      ? "text-red-600"
-                                      : priority === "Medium"
-                                      ? "text-yellow-600"
-                                      : "text-green-600"
-                                  }`}
-                                >
-                                  {priority}
-                                </span>
-                                <span className="text-gray-600">
-                                  {count} ({percentage.toFixed(1)}%)
-                                </span>
+                            <div key={priority} className="relative">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{priority}</span>
+                                <span className="text-xs font-black text-black">{percentage.toFixed(0)}%</span>
                               </div>
-                              <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div className="h-[3.5px] w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100/50">
                                 <div
-                                  className={`h-2 rounded-full bg-gradient-to-r ${colorClass}`}
+                                  className={`h-full ${barColor} transition-all duration-1000 ease-out`}
                                   style={{ width: `${percentage}%` }}
-                                ></div>
+                                />
                               </div>
                             </div>
                           );
-                        }
-                      )}
+                        })}
+                      </div>
                     </div>
                   </div>
                 </div>
               </>
             ) : (
-              <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-                <BarChart3 className="w-12 h-12 text-gray-400 mb-3" />
-                <p>No analytics data available for the selected filters.</p>
-                <p className="text-sm text-gray-400 mt-1">
-                  Try adjusting your filter criteria.
-                </p>
+              <div className="flex flex-col items-center justify-center py-24 bg-white rounded-[3rem] border border-dashed border-slate-200 shadow-sm">
+                <div className="p-5 bg-slate-50 rounded-full mb-4 group hover:bg-purple-50 transition-colors duration-500">
+                  <BarChart3 className="w-12 h-12 text-slate-200 group-hover:text-purple-200 transition-colors" />
+                </div>
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-tighter">System Idle</h3>
+                <p className="text-[10px] text-slate-300 mt-2 uppercase font-bold tracking-tighter">Waiting for data stream input</p>
               </div>
             )}
           </div>
@@ -3024,39 +2970,41 @@ const AdminAnnouncement = () => {
       )}
 
       <div className="grid grid-cols-1 xl:grid-cols-2 px-2 gap-4 mb-8">
-        {/* LEFT COLUMN - CREATE ANNOUNCEMENT FORM */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl p-4 sm:p-6 border border-white/20">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div
-                className={`p-2 ${
-                  isEditMode ? "bg-red-100" : "bg-indigo-100"
-                } rounded-lg`}
-              >
-                {isEditMode ? (
-                  <Edit className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
-                ) : (
-                  <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
-                )}
+      {/*CREATE ANNOUNCEMENT FORM */}
+        <div className="bg-white rounded-none border-t-[6px] border-[#800000] shadow-xl overflow-hidden">
+          <div className="p-4 sm:p-6 border-b border-gray-100">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`p-2 ${
+                    isEditMode ? "bg-red-50" : "bg-red-50"
+                  } rounded-none border border-red-100`}
+                >
+                  {isEditMode ? (
+                    <Edit className="w-4 h-4 sm:w-5 sm:h-5 text-[#800000]" />
+                  ) : (
+                    <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-[#800000]" />
+                  )}
+                </div>
+                <h3 className="text-lg sm:text-xl font-bold text-gray-800">
+                  {isEditMode ? "Edit Announcement" : "Create New Announcement"}
+                </h3>
               </div>
-              <h3 className="text-lg sm:text-xl font-bold text-gray-800">
-                {isEditMode ? "Edit Announcement" : "Create New Announcement"}
-              </h3>
-            </div>
 
-            {isEditMode && (
-              <button
-                onClick={resetForm}
-                className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
+              {isEditMode && (
+                <button
+                  onClick={resetForm}
+                  className="p-1 text-red-700 hover:text-red-900 hover:bg-red-50 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="p-4 sm:p-6 space-y-5">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+              <label className="text-xs font-semibold text-[#800000] uppercase tracking-wide">
                 Title *
               </label>
               <input
@@ -3064,12 +3012,11 @@ const AdminAnnouncement = () => {
                 value={formData.title}
                 onChange={(e) => handleInputChange("title", e.target.value)}
                 placeholder="Enter announcement title"
-                className="w-full p-3 bg-gray-50/50 border-2 border-gray-100 rounded-xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 text-sm"
+                className="w-full p-3 bg-white border border-gray-300 rounded-none focus:border-[#800000] focus:ring-1 focus:ring-[#800000] transition-all text-gray-800 placeholder-gray-400 text-sm"
               />
             </div>
 
-            {/* Category and Duration Selectors */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
                   Category (SOON)
@@ -3079,7 +3026,7 @@ const AdminAnnouncement = () => {
                   onChange={(e) =>
                     handleInputChange("category", e.target.value)
                   }
-                  className="w-full p-3 bg-gray-50/50 border-2 border-gray-100 rounded-xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm"
+                  className="w-full p-3 bg-white border border-gray-300 rounded-none focus:border-[#800000] text-gray-800 text-sm outline-none"
                 >
                   <option value="Department"></option>
                   <option value="General"></option>
@@ -3094,7 +3041,7 @@ const AdminAnnouncement = () => {
                   onChange={(e) =>
                     handleInputChange("duration", e.target.value)
                   }
-                  className="w-full p-3 bg-gray-50/50 border-2 border-gray-100 rounded-xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm"
+                  className="w-full p-3 bg-white border border-gray-300 rounded-none focus:border-[#800000] text-gray-800 text-sm outline-none"
                 >
                   <option value="24h">24 Hours</option>
                   <option value="3d">3 Days</option>
@@ -3105,13 +3052,13 @@ const AdminAnnouncement = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
                   Date *
                 </label>
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-red-500 z-10" />
+                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#800000] z-10" />
                   <input
                     type="date"
                     value={formData.dateInput}
@@ -3119,7 +3066,7 @@ const AdminAnnouncement = () => {
                     onChange={(e) =>
                       handleInputChange("dateInput", e.target.value)
                     }
-                    className="w-full pl-10 pr-3 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm"
+                    className="w-full pl-10 pr-3 py-3 bg-white border border-gray-300 rounded-none focus:border-[#800000] text-gray-800 text-sm outline-none"
                   />
                 </div>
               </div>
@@ -3128,40 +3075,38 @@ const AdminAnnouncement = () => {
                   Time *
                 </label>
                 <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-red-500 z-10" />
+                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#800000] z-10" />
                   <input
                     type="time"
                     value={formData.timeInput}
                     onChange={(e) =>
                       handleInputChange("timeInput", e.target.value)
                     }
-                    className="w-full pl-10 pr-3 py-3 bg-gray-50/50 border-2 border-gray-100 rounded-xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm"
+                    className="w-full pl-10 pr-3 py-3 bg-white border border-gray-300 rounded-none focus:border-[#800000] text-gray-800 text-sm outline-none"
                   />
                 </div>
-                {/* REAL-TIME TIME INDICATOR */}
                 <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
-                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                  <div className="w-1.5 h-1.5 bg-green-600 rounded-full animate-pulse"></div>
                   <span>Current time: {getCurrentDateTime().displayTime}</span>
                 </div>
               </div>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
                   Posted By *
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-red-500" />
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="text"
                     value={formData.postedBy}
                     readOnly
-                    className="w-full pl-10 pr-3 py-3 bg-gray-100 border-2 border-gray-200 rounded-xl text-gray-600 cursor-not-allowed text-sm"
+                    className="w-full pl-10 pr-3 py-3 bg-gray-50 border border-gray-200 rounded-none text-gray-500 cursor-not-allowed text-sm font-medium"
                     title="This field is automatically set to your name"
                   />
                 </div>
-                <p className="text-xs text-gray-500 italic">
+                <p className="text-[10px] text-gray-400 italic">
                   Automatically set to your name
                 </p>
               </div>
@@ -3174,7 +3119,7 @@ const AdminAnnouncement = () => {
                   onChange={(e) =>
                     handleInputChange("priority", e.target.value)
                   }
-                  className="w-full p-3 bg-gray-50/50 border-2 border-gray-100 rounded-xl focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 text-sm"
+                  className="w-full p-3 bg-white border border-gray-300 rounded-none focus:border-[#800000] text-gray-800 text-sm outline-none"
                 >
                   <option value="Low">Low</option>
                   <option value="Medium">Medium</option>
@@ -3182,18 +3127,17 @@ const AdminAnnouncement = () => {
                 </select>
               </div>
             </div>
-
             <div className="space-y-1">
               <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
                 Attachment
               </label>
               <div
-                className={`relative border-2 border-dashed rounded-xl p-3 transition-all duration-300 ${
+                className={`relative border border-dashed rounded-none p-4 transition-all duration-300 ${
                   isDragOver
-                    ? "border-red-400 bg-red-50"
+                    ? "border-[#800000] bg-red-50"
                     : selectedFile
-                    ? "border-green-400 bg-green-50"
-                    : "border-gray-300 bg-gray-50/30"
+                    ? "border-green-600 bg-green-50"
+                    : "border-gray-300 bg-gray-50/50 hover:bg-white"
                 }`}
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
@@ -3207,9 +3151,9 @@ const AdminAnnouncement = () => {
                 <div className="text-center">
                   {selectedFile ? (
                     <div className="flex items-center justify-center gap-2">
-                      <FileText className="w-4 h-4 text-green-500" />
+                      <FileText className="w-4 h-4 text-green-600" />
                       <div>
-                        <p className="font-medium text-green-700 text-xs">
+                        <p className="font-semibold text-green-700 text-xs">
                           {selectedFile.name ||
                             selectedFile.originalName ||
                             "Uploaded file"}
@@ -3219,20 +3163,19 @@ const AdminAnnouncement = () => {
                             e.stopPropagation();
                             setSelectedFile(null);
                           }}
-                          className="text-red-500 hover:text-red-700 text-xs"
+                          className="text-[#800000] hover:underline text-[10px] font-bold"
                         >
-                          Remove
+                          REMOVE
                         </button>
                       </div>
                     </div>
                   ) : (
                     <div>
                       <Upload className="w-5 h-5 text-gray-400 mx-auto mb-1" />
-                      <p className="text-gray-600 font-medium text-xs">
-                        Drop file or{" "}
-                        <span className="text-red-600">browse</span>
+                      <p className="text-gray-600 text-xs">
+                        Drop file or <span className="text-[#800000] font-bold">browse</span>
                       </p>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-[10px] text-gray-400 mt-1">
                         Max 10MB (Will be uploaded to Cloudinary)
                       </p>
                     </div>
@@ -3248,504 +3191,376 @@ const AdminAnnouncement = () => {
                 value={formData.agenda}
                 onChange={(e) => handleInputChange("agenda", e.target.value)}
                 placeholder="Describe the announcement details..."
-                className="w-full p-3 bg-gray-50/50 border-2 border-gray-100 rounded-xl h-20 focus:border-red-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-400 resize-none text-sm"
+                className="w-full p-3 bg-white border border-gray-300 rounded-none h-24 focus:border-[#800000] transition-all text-gray-800 placeholder-gray-400 resize-none text-sm outline-none"
               ></textarea>
             </div>
-            <button
-              onClick={handlePreview}
-              disabled={isSubmitting || isApproving || isCancellingApproval}
-              className={`w-full bg-gradient-to-r from-red-600 to-red-700 text-white p-3 rounded-xl hover:from-red-700 hover:to-red-800 transition-all duration-300 font-semibold text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${
-                isSubmitting || isApproving || isCancellingApproval
-                  ? "opacity-50 cursor-not-allowed"
-                  : ""
-              }`}
-            >
-              {isSubmitting ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Processing...
-                </span>
-              ) : isEditMode ? (
-                `Update Announcement ${
-                  !canAutoPost ? "(Requires Re-approval)" : ""
-                }`
-              ) : canAutoPost ? (
-                "Preview & Auto-Post"
-              ) : (
-                "Preview & Submit for Approval"
-              )}
-            </button>
-            {!isEditMode && !canAutoPost && (
-              <p className="text-xs text-center text-orange-600 mt-1">
-                ⚠️ Your post requires approval from Admin&HR Head or Compliance
-                Head before going live.
-              </p>
-            )}
-            {!isEditMode && canAutoPost && (
-              <p className="text-xs text-center text-green-600 mt-1">
-                ✅ As a Department Head, your posts are automatically approved.
-              </p>
-            )}
-            {isEditMode && !canAutoPost && (
-              <p className="text-xs text-center text-orange-600 mt-1">
-                ⚠️ Your edited announcement will require re-approval from
-                Department Head.
-              </p>
-            )}
+            <div className="pt-2">
+              <button
+                onClick={handlePreview}
+                disabled={isSubmitting || isApproving || isCancellingApproval}
+                className={`w-full bg-[#800000] text-white p-3.5 rounded-none hover:bg-[#5c0000] transition-all duration-300 font-bold text-sm shadow-md ${
+                  isSubmitting || isApproving || isCancellingApproval
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Processing...
+                  </span>
+                ) : isEditMode ? (
+                  `Update Announcement ${
+                    !canAutoPost ? "(Requires Re-approval)" : ""
+                  }`
+                ) : canAutoPost ? (
+                  "Preview & Auto-Post"
+                ) : (
+                  "Preview & Submit for Approval"
+                )}
+              </button>
+              <div className="mt-4 space-y-2">
+                {!isEditMode && !canAutoPost && (
+                  <p className="text-[11px] text-center text-amber-700 font-medium py-2 bg-amber-50 border border-amber-100">
+                    ⚠️ Your post requires approval from Admin&HR Head or Compliance
+                    Head before going live.
+                  </p>
+                )}
+                {!isEditMode && canAutoPost && (
+                  <p className="text-[11px] text-center text-green-700 font-medium py-2 bg-green-50 border border-green-100">
+                    ✅ As a Department Head, your posts are automatically approved.
+                  </p>
+                )}
+                {isEditMode && !canAutoPost && (
+                  <p className="text-[11px] text-center text-amber-700 font-medium py-2 bg-amber-50 border border-amber-100">
+                    ⚠️ Your edited announcement will require re-approval from
+                    Department Head.
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* RIGHT COLUMN - ANNOUNCEMENTS MANAGEMENT WITH TABS */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl p-4 sm:p-6 border border-white/20">
-          {/* IMPROVED HEADER LAYOUT */}
-          <div className="flex flex-col gap-3 mb-4">
-            {/* TITLE SECTION */}
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+        {/* RIGHT COLUMN - ANNOUNCEMENTS MANAGEMENT */}
+        <div className="bg-white rounded-none border-t-[6px] border-[#800000] shadow-xl overflow-hidden">
+          <div className="bg-white p-6 border-b border-slate-200">
+            <div className="flex flex-col gap-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-red-50 rounded-lg border border-red-100">
+                    <FileText className="w-5 h-5 text-[#800000]" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900 tracking-tight">
+                      Announcements Management
+                    </h3>
+                    <p className="text-xs text-slate-500 font-medium">
+                      Oversee and moderate organization-wide communications
+                    </p>
+                  </div>
+                </div>
               </div>
-              <h3 className="text-lg sm:text-xl font-bold text-gray-800">
-                Announcements Management
-              </h3>
-            </div>
 
-            {/* SEARCH AND TABS SECTION */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
-              {/* SEARCH SECTION */}
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <div className="relative flex-1 sm:flex-none">
-                  <Search className="w-4 h-4 text-gray-400 absolute left-2 top-1/2 transform -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Search announcements..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white sm:w-48"
-                  />
+              <div className="flex flex-col lg:flex-row gap-4 justify-between items-center">
+                <div className="flex bg-slate-100 p-1 rounded-xl w-full lg:w-auto">
+                  <button
+                    onClick={() => {
+                      setActiveTab("pending");
+                      setShouldStayOnPending(false);
+                    }}
+                    className={`flex-1 lg:flex-none px-5 py-2 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 ${
+                      activeTab === "pending"
+                        ? "bg-white text-[#800000] shadow-sm ring-1 ring-slate-200"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    Approvals
+                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === 'pending' ? 'bg-red-100 text-red-700' : 'bg-slate-200 text-slate-600'}`}>
+                      {pendingCount}
+                    </span>
+                  </button>
+                 
+                  <button
+                    onClick={() => {
+                      setActiveTab("active");
+                      setShouldStayOnPending(false);
+                    }}
+                    className={`flex-1 lg:flex-none px-5 py-2 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 ${
+                      activeTab === "active"
+                        ? "bg-white text-blue-700 shadow-sm ring-1 ring-slate-200"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    Active
+                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === 'active' ? 'bg-blue-100 text-blue-700' : 'bg-slate-200 text-slate-600'}`}>
+                      {activeCount}
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setActiveTab("inactive");
+                      setShouldStayOnPending(false);
+                    }}
+                    className={`flex-1 lg:flex-none px-5 py-2 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 ${
+                      activeTab === "inactive"
+                        ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    History
+                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === 'inactive' ? 'bg-slate-300 text-slate-800' : 'bg-slate-200 text-slate-600'}`}>
+                      {inactiveCount}
+                    </span>
+                  </button>
                 </div>
 
-                {searchTerm !== "" && (
-                  <button
-                    onClick={clearFilters}
-                    className="px-2 py-1.5 text-xs text-gray-600 hover:text-gray-800 transition-colors flex items-center gap-1 whitespace-nowrap"
-                  >
-                    <X className="w-3 h-3" />
-                    Clear
-                  </button>
-                )}
-              </div>
-
-              {/* TABS */}
-              <div className="flex bg-gray-100 rounded-lg p-0.5 w-full sm:w-auto">
-                <button
-                  onClick={() => {
-                    setActiveTab("pending");
-                    setShouldStayOnPending(false);
-                  }}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex-1 sm:flex-none ${
-                    activeTab === "pending"
-                      ? "bg-white text-orange-600 shadow-sm"
-                      : "text-gray-600 hover:text-gray-800"
-                  }`}
-                >
-                  Approvals ({pendingCount})
-                </button>
-                <button
-                  onClick={() => {
-                    setActiveTab("active");
-                    setShouldStayOnPending(false);
-                  }}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex-1 sm:flex-none ${
-                    activeTab === "active"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-600 hover:text-gray-800"
-                  }`}
-                >
-                  Active ({activeCount})
-                </button>
-                <button
-                  onClick={() => {
-                    setActiveTab("inactive");
-                    setShouldStayOnPending(false);
-                  }}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex-1 sm:flex-none ${
-                    activeTab === "inactive"
-                      ? "bg-white text-red-600 shadow-sm"
-                      : "text-gray-600 hover:text-gray-800"
-                  }`}
-                >
-                  History ({inactiveCount})
-                </button>
+                <div className="relative w-full lg:w-64">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Filter by title..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#800000]/20 focus:border-[#800000] outline-none transition-all"
+                  />
+                  {searchTerm && (
+                    <button onClick={clearFilters} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
 
-          {isLoading ? (
-            <div className="flex items-center justify-center py-6 text-gray-500 italic text-sm">
-              Loading announcements...
-            </div>
-          ) : error ? (
-            <div className="flex items-center justify-center py-6 text-red-500 italic text-sm">
-              {error}
-            </div>
-          ) : filteredAnnouncements.length > 0 ? (
-            <div className="space-y-3 overflow-y-auto max-h-[60vh] pr-1">
-              {filteredAnnouncements.map((a) => (
-                <div
-                  key={a._id}
-                  className={`group p-3 rounded-xl shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 ${
-                    a.actualStatus === "Inactive" ||
-                    a.actualStatus === "Pending"
-                      ? "bg-gray-100 border border-gray-300 opacity-90"
-                      : "bg-gradient-to-br from-white to-gray-50 border border-gray-100"
-                  } ${a._id === lastEditedId ? "ring-2 ring-orange-400" : ""}`}
-                >
-                  {/* CATEGORY & EXPIRY BADGE */}
-                  <div className="flex items-center gap-2 mb-2">
-                    {a.category === "General" && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200 flex items-center gap-1">
-                        <Shield className="w-3 h-3" />
-                      </span>
-                    )}
-                    {a.expiresAt && (
-                      <span
-                        className={`text-[10px] border border-gray-200 px-1 rounded font-medium ${
-                          a.isExpired
-                            ? "bg-pink-100 text-pink-700"
-                            : "text-gray-500 bg-gray-50"
-                        }`}
-                      >
-                        {a.isExpired
-                          ? "EXPIRED"
-                          : `Expires: ${DateTime.fromISO(
-                              a.expiresAt
-                            ).toRelative()}`}
-                      </span>
-                    )}
-                    {a.wasEdited && a.actualStatus === "Pending" && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700 border border-orange-200 flex items-center gap-1">
-                        <Edit className="w-3 h-3" /> EDITED
-                      </span>
-                    )}
-                  </div>
+          <div
+            className="flex-1 overflow-y-auto p-6 bg-[#f8fafc] scrollbar-hide"
+            style={{
+              maxHeight: "600px",
+              msOverflowStyle: 'none',
+              scrollbarWidth: 'none'
+            }}
+          >
+            <style dangerouslySetInnerHTML={{ __html: `
+              .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+              }
+            `}} />
 
-                  <div className="flex flex-col sm:flex-row justify-between items-start mb-2">
-                    <div className="flex items-start gap-2 w-full">
-                      <div
-                        className={`p-1 rounded-lg mt-1 ${
-                          a.actualStatus === "Inactive"
-                            ? "bg-gray-300"
-                            : "bg-indigo-100"
-                        }`}
-                      >
-                        <Bell
-                          className={`w-3 h-3 ${
-                            a.actualStatus === "Inactive"
-                              ? "text-gray-600"
-                              : "text-indigo-600"
-                          }`}
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4
-                          className={`text-sm font-bold mb-1 group-hover:text-indigo-600 transition-colors truncate ${
-                            a.actualStatus === "Inactive"
-                              ? "text-gray-600"
-                              : "text-gray-800"
-                          }`}
-                        >
-                          {a.title}
-                        </h4>
-                        <div className="flex flex-wrap items-center gap-1 mb-2">
-                          <span
-                            className={`px-1.5 py-0.5 rounded-full text-xs font-medium border ${getPriorityColor(
-                              a.priority
-                            )}`}
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center h-48 space-y-3">
+                <div className="w-8 h-8 border-4 border-[#800000]/20 border-t-[#800000] rounded-full animate-spin"></div>
+                <p className="text-sm font-medium text-slate-500">Syncing announcements...</p>
+              </div>
+            ) : error ? (
+              <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-center">
+                <p className="text-sm text-red-600 font-medium">{error}</p>
+              </div>
+            ) : filteredAnnouncements.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4">
+                {filteredAnnouncements.map((a) => (
+                  <div
+                    key={a._id}
+                    className={`group bg-white border rounded-xl transition-all duration-200 hover:border-slate-300 hover:shadow-md overflow-hidden ${
+                      a._id === lastEditedId ? "ring-2 ring-[#800000]" : "border-slate-200"
+                    }`}
+                  >
+                    <div className="flex">
+                      <div className={`w-1.5 ${
+                        a.actualStatus === 'Active' ? 'bg-emerald-500' :
+                        a.actualStatus === 'Pending' ? 'bg-amber-500' : 'bg-slate-300'
+                      }`} />
+
+                      <div className="flex-1 p-5">
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                          <div className="flex items-center gap-2">
+                            <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase ${
+                              a.priority === 'High' ? 'bg-red-50 text-red-700 border border-red-100' :
+                              'bg-slate-50 text-slate-600 border border-slate-200'
+                            }`}>
+                              <div className={`w-1.5 h-1.5 rounded-full ${a.priority === 'High' ? 'bg-red-500' : 'bg-slate-400'}`} />
+                              {a.priority} Priority
+                            </span>
+                           
+                            {a.category === "General" && (
+                              <span className="px-2.5 py-1 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase">
+                                {a.category}
+                              </span>
+                            )}
+                          </div>
+
+                          {a.expiresAt && (
+                            <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
+                              <Clock className="w-3.5 h-3.5" />
+                              {a.isExpired ? (
+                                <span className="text-red-600 font-bold uppercase">Expired</span>
+                              ) : (
+                                <span>Exp: {DateTime.fromISO(a.expiresAt).toRelative()}</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="mb-4">
+                          <h4 className="text-base font-bold text-slate-900 mb-1 group-hover:text-[#800000] transition-colors">
+                            {a.title}
+                          </h4>
+                          <div className="bg-slate-50 border-l-2 border-slate-300 p-3 rounded-r-lg">
+                            <p className="text-sm text-slate-600 leading-relaxed line-clamp-2">
+                              <span className="font-bold text-slate-700 text-xs uppercase mr-2">Agenda:</span>
+                              {a.agenda}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-slate-100">
+                          <div className="flex flex-wrap gap-x-6 gap-y-2">
+                            <div className="flex items-center gap-2 text-xs text-slate-500">
+                              <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center font-bold text-[10px] text-slate-600">
+                                {a.postedBy.charAt(0)}
+                              </div>
+                              <span>By <span className="font-semibold text-slate-700">{a.postedBy}</span></span>
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                              <button
+                                onClick={() => handleViewDetails(a)}
+                                disabled={a.actualStatus === "Pending" || a.isLoadingViews}
+                                className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-blue-600 transition-colors disabled:opacity-50"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                {Array.isArray(a.views) ? a.views.length : 0}
+                              </button>
+                              <button
+                                onClick={() => handleLikeDetails(a)}
+                                disabled={a.actualStatus === "Pending" || a.isLoadingLikes}
+                                className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-red-600 transition-colors disabled:opacity-50"
+                              >
+                                <Heart className={`w-3.5 h-3.5 ${a.actualStatus !== "Pending" ? "text-red-500" : ""}`} />
+                                {Array.isArray(a.acknowledgements) ? a.acknowledgements.length : 0}
+                              </button>
+                            </div>
+                          </div>
+
+                          {a.attachment && (
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-lg">
+                              <Paperclip className="w-3 h-3 text-blue-600" />
+                              <span className="text-[11px] font-semibold text-blue-700 max-w-[100px] truncate">Document</span>
+                              <div className="flex gap-1 border-l border-blue-200 ml-1 pl-2">
+                                <button onClick={() => handleFileView(a.attachment)} className="text-[10px] text-blue-600 hover:underline">View</button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {(a.approvedBy || a.cancelledBy || a.wasEdited) && (
+                          <div className="mt-3 flex flex-wrap gap-3">
+                            {a.approvedBy && a.approvalStatus === "Approved" && (
+                              <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-600">
+                                <CheckCircle className="w-3 h-3" /> Approved by {a.approvedBy}
+                              </span>
+                            )}
+                            {a.cancelledBy && a.approvalStatus === "Cancelled" && (
+                              <span className="flex items-center gap-1 text-[10px] font-medium text-red-600">
+                                <XCircle className="w-3 h-3" /> Cancelled by {a.cancelledBy}
+                              </span>
+                            )}
+                            {a.wasEdited && (
+                              <span className="flex items-center gap-1 text-[10px] font-medium text-amber-600">
+                                <Edit className="w-3 h-3" /> Edited by {a.editedBy || "User"}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="mt-5 grid grid-cols-2 lg:grid-cols-4 gap-2">
+                          <button
+                            onClick={() => handleViewDetailsModal(a)}
+                            className="flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-all shadow-sm"
                           >
-                            {a.priority}
-                          </span>
-                          <span
-                            className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                              a.actualStatus
-                            )}`}
-                          >
-                            {a.actualStatus === "Pending"
-                              ? "Pending Approval"
-                              : a.actualStatus}
-                          </span>
-                          <span
-                            className={`text-xs ${
-                              a.actualStatus === "Pending"
-                                ? "text-orange-600 font-medium"
-                                : "text-gray-500"
-                            }`}
-                          >
-                            {getSmartTimeAgo(a)}
-                          </span>
+                            <Info className="w-3.5 h-3.5" /> Details
+                          </button>
+
+                          {activeTab === "pending" && a.actualStatus === "Pending" && (
+                            canCurrentUserApprove ? (
+                              <>
+                                <button
+                                  onClick={() => handleCancelApproval(a)}
+                                  disabled={isCancellingApproval}
+                                  className="flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition-all shadow-sm"
+                                >
+                                  <ThumbsDown className="w-3.5 h-3.5" /> Reject
+                                </button>
+                                <button
+                                  onClick={() => handleApprove(a)}
+                                  disabled={isApproving}
+                                  className="flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold text-white bg-[#800000] rounded-lg hover:bg-[#600000] transition-all shadow-md"
+                                >
+                                  <ThumbsUp className="w-3.5 h-3.5" /> Approve
+                                </button>
+                              </>
+                            ) : (
+                              <div className="col-span-3 flex items-center justify-center px-3 py-2 text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-100 rounded-lg">
+                                <Clock className="w-3.5 h-3.5 mr-2" /> Pending Department Head Review
+                              </div>
+                            )
+                          )}
+
+                          {activeTab === "active" && a.actualStatus === "Active" && (
+                            <>
+                              <button
+                                onClick={() => handleCancelClick(a._id)}
+                                disabled={isSubmitting}
+                                className="flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition-all shadow-sm"
+                              >
+                                Cancel Post
+                              </button>
+                              <button
+                                onClick={() => handleEdit(a)}
+                                disabled={isSubmitting}
+                                className="flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold text-white bg-slate-900 rounded-lg hover:bg-black transition-all shadow-md"
+                              >
+                                <Edit className="w-3.5 h-3.5" /> Update
+                              </button>
+                            </>
+                          )}
+
+                          {activeTab === "inactive" && (a.actualStatus === "Inactive" || a.actualStatus === "Expired") && (
+                            <button
+                              onClick={() => handleRepostClick(a._id)}
+                              disabled={isSubmitting}
+                              className="col-span-3 flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-all shadow-md"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" /> Repost Announcement
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
                   </div>
-
-                  <div className="space-y-2 mb-3">
-                    <p className="text-xs text-gray-600 flex items-center gap-1">
-                      <User className="w-3 h-3" />
-                      Posted by:{" "}
-                      <span className="font-medium truncate">{a.postedBy}</span>
-                    </p>
-
-                    {/* APPROVED BY SECTION */}
-                    {a.approvalStatus === "Approved" && a.approvedBy && (
-                      <p className="text-xs text-gray-600 flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3 text-green-500" />
-                        Approved by:{" "}
-                        <span className="font-medium text-green-700">
-                          {a.approvedBy}
-                        </span>
-                      </p>
-                    )}
-
-                    {/* CANCELLED BY SECTION */}
-                    {a.approvalStatus === "Cancelled" && a.cancelledBy && (
-                      <p className="text-xs text-gray-600 flex items-center gap-1">
-                        <ThumbsDown className="w-3 h-3 text-red-500" />
-                        Cancelled by:{" "}
-                        <span className="font-medium text-red-700">
-                          {a.cancelledBy}
-                        </span>
-                      </p>
-                    )}
-
-                    {/* EDITED BY SECTION */}
-                    {a.wasEdited && a.editedBy && (
-                      <p className="text-xs text-gray-600 flex items-center gap-1">
-                        <Edit className="w-3 h-3 text-orange-500" />
-                        Edited by:{" "}
-                        <span className="font-medium text-orange-700">
-                          {a.editedBy}
-                        </span>
-                      </p>
-                    )}
-
-                    <div className="bg-gray-50 rounded-lg p-2 border-l-2 border-red-500">
-                      <p className="text-xs text-gray-700 line-clamp-2">
-                        <span className="font-semibold text-gray-800">
-                          Agenda:
-                        </span>{" "}
-                        {a.agenda}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-3 text-xs text-gray-500">
-                      <button
-                        onClick={() => handleViewDetails(a)}
-                        disabled={
-                          a.actualStatus === "Pending" || a.isLoadingViews
-                        }
-                        className={`flex items-center gap-1 transition-colors ${
-                          a.actualStatus === "Pending"
-                            ? "text-gray-400 cursor-not-allowed"
-                            : "hover:text-blue-600"
-                        }`}
-                        title={
-                          a.actualStatus === "Pending"
-                            ? "Views will start after approval"
-                            : "View who viewed this"
-                        }
-                      >
-                        <Eye className="w-3 h-3" />
-                        <span>
-                          {Array.isArray(a.views) ? a.views.length : 0} views
-                        </span>
-                        {a.actualStatus === "Pending" && (
-                          <span className="text-[10px] text-gray-400">
-                            (locked)
-                          </span>
-                        )}
-                        {a.isLoadingViews && (
-                          <div className="ml-1 w-2 h-2 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                        )}
-                      </button>
-                      <button
-                        onClick={() => handleLikeDetails(a)}
-                        disabled={
-                          a.actualStatus === "Pending" || a.isLoadingLikes
-                        }
-                        className={`flex items-center gap-1 transition-colors ${
-                          a.actualStatus === "Pending"
-                            ? "text-gray-400 cursor-not-allowed"
-                            : "hover:text-red-600"
-                        }`}
-                        title={
-                          a.actualStatus === "Pending"
-                            ? "Likes will start after approval"
-                            : "View who liked this"
-                        }
-                      >
-                        <Heart
-                          className="w-3 h-3 text-red-500"
-                          fill={
-                            a.actualStatus === "Pending"
-                              ? "none"
-                              : "currentColor"
-                          }
-                        />
-                        <span>
-                          {Array.isArray(a.acknowledgements)
-                            ? a.acknowledgements.length
-                            : 0}{" "}
-                          Likes
-                        </span>
-                        {a.actualStatus === "Pending" && (
-                          <span className="text-[10px] text-gray-400">
-                            (locked)
-                          </span>
-                        )}
-                        {a.isLoadingLikes && (
-                          <div className="ml-1 w-2 h-2 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                        )}
-                      </button>
-                    </div>
-
-                    {a.attachment && (
-                      <div className="mt-2">
-                        <p className="text-xs font-semibold text-gray-700 mb-1 flex items-center gap-1">
-                          <Paperclip className="w-3 h-3" />
-                          Attached File:
-                        </p>
-                        <FileAttachment
-                          file={a.attachment}
-                          onDownload={handleFileDownload}
-                          onView={handleFileView}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* ACTION BUTTONS */}
-                  <div className="flex gap-2">
-                    {/* VIEW DETAILS BUTTON */}
-                    <button
-                      onClick={() => handleViewDetailsModal(a)}
-                      className="flex-1 bg-white border border-blue-500 text-blue-600 p-1.5 rounded-lg hover:bg-blue-50 transition-all font-medium text-xs shadow-sm hover:shadow flex items-center justify-center gap-1"
-                      title="View complete details"
-                    >
-                      <Info className="w-3 h-3" />
-                      Details
-                    </button>
-
-                    {/* PENDING TAB BUTTONS */}
-                    {activeTab === "pending" &&
-                      a.actualStatus === "Pending" &&
-                      canCurrentUserApprove && (
-                        <>
-                          <button
-                            onClick={() => handleCancelApproval(a)}
-                            disabled={isCancellingApproval}
-                            className="flex-1 bg-white border border-red-500 text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-all font-medium text-xs shadow-sm hover:shadow flex items-center justify-center gap-1"
-                          >
-                            <ThumbsDown className="w-3 h-3" />
-                            {isCancellingApproval ? "..." : "Cancel"}
-                          </button>
-                          <button
-                            onClick={() => handleApprove(a)}
-                            disabled={isApproving}
-                            className="flex-1 bg-green-500 text-white p-1.5 rounded-lg hover:bg-green-600 transition-all font-medium text-xs shadow-sm flex items-center justify-center gap-1"
-                          >
-                            <ThumbsUp className="w-3 h-3" />
-                            {isApproving ? "..." : "Approve"}
-                          </button>
-                        </>
-                      )}
-
-                    {activeTab === "pending" &&
-                      a.actualStatus === "Pending" &&
-                      !canCurrentUserApprove && (
-                        <span className="flex-1 text-center text-xs text-orange-600 bg-orange-50 p-1.5 rounded-lg border border-orange-200 font-medium">
-                          ⏸️ Waiting for Head's approval
-                        </span>
-                      )}
-
-                    {/* ACTIVE TAB BUTTONS */}
-                    {activeTab === "active" && a.actualStatus === "Active" && (
-                      <>
-                        <button
-                          onClick={() => handleCancelClick(a._id)}
-                          disabled={isSubmitting}
-                          className="flex-1 bg-white border border-red-500 text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-all font-medium text-xs shadow-sm hover:shadow"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() => handleEdit(a)}
-                          disabled={isSubmitting}
-                          className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white p-1.5 rounded-lg hover:from-red-600 hover:to-red-700 transition-all font-medium text-xs shadow-sm hover:shadow"
-                        >
-                          Edit {!canAutoPost && "(Requires Re-approval)"}
-                        </button>
-                      </>
-                    )}
-
-                    {/* INACTIVE TAB BUTTONS */}
-                    {activeTab === "inactive" &&
-                      (a.actualStatus === "Inactive" ||
-                        a.actualStatus === "Expired") && (
-                        <button
-                          onClick={() => handleRepostClick(a._id)}
-                          disabled={isSubmitting}
-                          className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white p-1.5 rounded-lg hover:from-green-600 hover:to-green-700 transition-all font-medium text-xs shadow-sm hover:shadow flex items-center justify-center gap-1"
-                        >
-                          <RotateCcw className="w-3 h-3" />
-                          Repost
-                        </button>
-                      )}
-                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-64 text-center">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                  <Bell className="w-8 h-8 text-slate-300" />
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-6 text-gray-500 italic text-sm">
-              {searchTerm !== "" ? (
-                <>
-                  <Filter className="w-8 h-8 text-gray-400 mb-2" />
-                  <p className="text-center">
-                    No announcements match your search.
-                  </p>
-                  <button
-                    onClick={clearFilters}
-                    className="mt-2 px-3 py-1 text-xs text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
-                  >
-                    Clear search
+                <h4 className="text-sm font-bold text-slate-900">No announcements found</h4>
+                <p className="text-xs text-slate-500 max-w-[200px] mt-1 mx-auto">
+                  {searchTerm !== ""
+                    ? "Try adjusting your search filters to find what you're looking for."
+                    : "This list is currently empty. New posts will appear here."}
+                </p>
+                {searchTerm !== "" && (
+                  <button onClick={clearFilters} className="mt-4 text-xs font-bold text-[#800000] hover:underline">
+                    Clear all filters
                   </button>
-                </>
-              ) : activeTab === "active" ? (
-                <>
-                  <CheckCircle className="w-8 h-8 text-green-400 mx-auto mb-2" />
-                  <p>No active announcements found.</p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Create a new announcement or check pending approvals.
-                  </p>
-                </>
-              ) : activeTab === "pending" ? (
-                <>
-                  <Bell className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p>No announcements pending approval.</p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    All announcements have been approved or there are no new
-                    submissions.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p>No inactive announcements found.</p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    No announcements have been cancelled or expired yet.
-                  </p>
-                </>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
