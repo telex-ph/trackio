@@ -11,6 +11,9 @@ import {
   Users as Group,
   BarChart3,
   Download,
+  Info,
+  UserCheck,
+  ShieldCheck,
   FileText,
   History,
   Calendar,
@@ -35,7 +38,7 @@ import TopPerformersCard from "../../components/cards/TopPerformersCard";
 import HighlightsCard from "../../components/cards/HighlightsCard";
 import QuickActionsCard from "../../components/cards/QuickActionsCard";
 import MyAchievementsModal from "../../components/modals/MyAchievementsModal";
-import EmployeeHistoryModal from "../../components/modals/EmployeeHistoryModal"; 
+import EmployeeHistoryModal from "../../components/modals/EmployeeHistoryModal";
 
 // Toast Component
 const Toast = ({ message, type = "success", onClose }) => {
@@ -76,21 +79,21 @@ const LoadingSpinner = () => (
 );
 
 // PostDetailsModal Component - UPDATED WITH PERMISSION CHECK
-const PostDetailsModal = ({ 
-  post, 
-  isOpen, 
-  onClose, 
+const PostDetailsModal = ({
+  post,
+  isOpen,
+  onClose,
   onViewEmployeeHistory,
   currentUser // ADDED: Pass currentUser to check permissions
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [downloading, setDownloading] = useState(false);
-  
+ 
   if (!isOpen || !post) return null;
 
   // CHECK IF CURRENT USER IS THE OWNER OF THE RECOGNITION
-  const isOwner = currentUser && post.employee && 
-    (post.employee.employeeId === currentUser.employeeId || 
+  const isOwner = currentUser && post.employee &&
+    (post.employee.employeeId === currentUser.employeeId ||
      post.employee._id === currentUser._id);
 
   const getRecognitionTypeInfo = (type) => {
@@ -165,14 +168,14 @@ const PostDetailsModal = ({
         ? "bg-gradient-to-r from-green-500 to-green-600"
         : "bg-gradient-to-r from-red-500 to-red-600"
     } text-white px-4 py-2 rounded-lg flex items-center gap-2`;
-    
+   
     toast.innerHTML = `
       ${type === "success" ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' : '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'}
       <span class="text-sm font-medium">${message}</span>
     `;
-    
+   
     document.body.appendChild(toast);
-    
+   
     setTimeout(() => {
       toast.classList.add('animate-fadeOut');
       setTimeout(() => {
@@ -191,12 +194,12 @@ const PostDetailsModal = ({
 
     try {
       setDownloading(true);
-      
+     
       if (post.certificateUrl) {
         window.open(post.certificateUrl, '_blank');
         return;
       }
-      
+     
       const response = await api.post('/recognition/generate-certificate', {
         recognitionId: post._id,
         employeeId: post.employee?._id || post.employee?.employeeId,
@@ -217,18 +220,18 @@ const PostDetailsModal = ({
       link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
-      
+     
       setTimeout(() => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
       }, 100);
-      
+     
       showCustomToast("Certificate downloaded successfully!", "success");
-      
+     
     } catch (error) {
       console.error("Error downloading certificate:", error);
       showCustomToast(
-        error.response?.data?.message || "Failed to download certificate. Please try again.", 
+        error.response?.data?.message || "Failed to download certificate. Please try again.",
         "error"
       );
     } finally {
@@ -246,12 +249,12 @@ const PostDetailsModal = ({
 
     try {
       setDownloading(true);
-      
+     
       if (post.certificateUrl) {
         window.open(post.certificateUrl, '_blank');
         return;
       }
-      
+     
       const response = await api.post('/recognition/generate-certificate', {
         recognitionId: post._id,
         employeeId: post.employee?._id || post.employee?.employeeId,
@@ -263,15 +266,15 @@ const PostDetailsModal = ({
       }, {
         responseType: 'blob'
       });
-      
+     
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       window.open(url, '_blank');
-      
+     
     } catch (error) {
       console.error("Error viewing certificate:", error);
       showCustomToast(
-        error.response?.data?.message || "Failed to view certificate. Please try again.", 
+        error.response?.data?.message || "Failed to view certificate. Please try again.",
         "error"
       );
     } finally {
@@ -307,274 +310,200 @@ const PostDetailsModal = ({
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
-      <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="p-6">
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div className={`p-2 ${typeInfo.bgColor} rounded-lg`}>
-                  {typeInfo.icon}
-                </div>
-                <span className={`text-sm font-medium ${typeInfo.color}`}>
-                  {typeInfo.label}
-                </span>
+return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Main Modal Card */}
+      <div className="relative bg-white w-full max-w-5xl max-h-[85vh] overflow-hidden rounded-xl shadow-2xl flex flex-col md:flex-row border border-slate-200">
+       
+        {/* Left Section: Visuals and Narrative (Main Content) - ITO LANG ANG SCROLLABLE */}
+        <div className="flex-1 flex flex-col min-w-0 bg-white overflow-y-auto">
+          {/* Internal Header for Mobile */}
+          <div className="p-5 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-10">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${typeInfo.bgColor}`}>
+                {React.cloneElement(typeInfo.icon, { size: 18, className: typeInfo.color })}
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-xl font-bold text-slate-800 leading-tight truncate">
                 {post.title}
               </h2>
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <X size={24} className="text-gray-500" />
+            <button onClick={onClose} className="md:hidden p-2 hover:bg-slate-100 rounded-full">
+              <X size={20} />
             </button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <div className="lg:col-span-2 space-y-6">
+          <div className="p-6 space-y-6">
+            {/* Image Viewport */}
+            <div className="relative bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
               {hasImages ? (
-                <div className="relative rounded-2xl overflow-hidden">
+                <div className="relative w-full h-[320px] flex items-center justify-center bg-slate-100">
                   <img
                     src={post.images[currentImageIndex]?.url || post.images[currentImageIndex]}
-                    alt={`${post.title} - Image ${currentImageIndex + 1}`}
-                    className="w-full h-64 object-cover"
+                    alt={post.title}
+                    className="max-w-full max-h-full w-auto h-auto object-contain shadow-sm"
                   />
 
                   {post.images.length > 1 && (
-                    <>
+                    <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-4 pointer-events-none">
                       <button
                         onClick={prevImage}
-                        className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all"
+                        className="p-2 bg-white/90 shadow-md rounded-full pointer-events-auto hover:bg-white text-slate-700 transition-all"
                       >
                         <ChevronLeft size={20} />
                       </button>
-
                       <button
                         onClick={nextImage}
-                        className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all"
+                        className="p-2 bg-white/90 shadow-md rounded-full pointer-events-auto hover:bg-white text-slate-700 transition-all"
                       >
-                        <ChevronRightIcon size={20} />
+                        <ChevronRight size={20} />
                       </button>
-
-                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-medium">
-                        {currentImageIndex + 1} / {post.images.length}
-                      </div>
-                    </>
-                  )}
-
-                  <div className="absolute top-3 left-3">
-                    <div
-                      className={`px-3 py-1.5 rounded-full text-sm font-medium ${
-                        typeInfo.bgColor
-                      } ${
-                        typeInfo.color
-                      } backdrop-blur-sm border ${typeInfo.color.replace(
-                        "text",
-                        "border"
-                      )} border-opacity-30`}
-                    >
-                      {typeInfo.label}
                     </div>
+                  )}
+                 
+                  <div className="absolute bottom-3 right-3 bg-slate-900/70 text-white px-3 py-1 rounded-md text-[11px] font-medium">
+                    {currentImageIndex + 1} / {post.images.length}
                   </div>
                 </div>
               ) : (
-                <div className="rounded-2xl overflow-hidden bg-gradient-to-r from-gray-100 to-gray-200 h-64 flex items-center justify-center">
-                  <div className="text-center p-4">
-                    <div
-                      className={`w-16 h-16 rounded-full bg-gradient-to-r ${typeInfo.gradient} flex items-center justify-center mb-3 shadow-lg mx-auto`}
-                    >
-                      {React.cloneElement(typeInfo.icon, {
-                        className: "w-8 h-8 text-white",
-                      })}
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-800">
-                      {typeInfo.label}
-                    </h3>
-                    <p className="text-gray-600 text-sm mt-1">
-                      No images available
-                    </p>
-                  </div>
+                <div className="h-[240px] flex flex-col items-center justify-center text-slate-400 gap-2">
+                  <Award size={40} className="opacity-20" />
+                  <span className="text-sm">No media attached</span>
                 </div>
               )}
+            </div>
 
-              {post.tags && post.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {post.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="text-gray-600 italic text-sm bg-gray-100 px-2 py-1 rounded-lg"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              <div className="prose max-w-none pt-2">
-                <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+            {/* Narrative Content */}
+            <div className="space-y-3 pb-8">
+              <div className="flex items-center gap-2 text-slate-500">
+                <Info size={16} />
+                <span className="text-xs font-semibold">Recognition Details</span>
+              </div>
+              <div className="bg-slate-50/50 p-5 rounded-xl border border-slate-100">
+                <p className="text-slate-700 leading-relaxed text-sm">
                   {post.description}
                 </p>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-5 border border-gray-200">
-                <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Group size={15} />
-                  Recognized Employee
-                </h3>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-14 h-14 bg-gradient-to-r from-red-600 to-red-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">
-                    {post.employee?.name
-                      ? post.employee.name.charAt(0).toUpperCase()
-                      : "E"}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-bold text-gray-900 text-lg">
-                          {post.employee?.name || "Employee"}
-                        </h4>
-                        <div className="text-sm text-gray-600">
-                          {post.employee?.position && (
-                            <div className="text-gray-500">
-                              {post.employee.position}
-                            </div>
-                          )}
-                          {post.employee?.department && (
-                            <div className="text-gray-500">
-                              {post.employee.department}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      {/* OWNER BADGE */}
-                      {isOwner && (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
-                          You
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    className={`flex items-center justify-center gap-2 p-2.5 rounded-xl text-sm font-medium border transition-all ${
-                      isOwner
-                        ? "bg-white border-red-200 text-red-600 hover:bg-red-50 cursor-pointer"
-                        : "bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed"
-                    }`}
-                    onClick={handleViewCertificate}
-                    disabled={!isOwner}
-                    title={isOwner ? "View Certificate" : "Only the recognized employee can view this certificate"}
-                  >
-                    <FileText size={14} />
-                    View Certificate
-                    {!isOwner && (
-                      <span className="text-xs text-gray-400 ml-1"></span>
-                    )}
-                  </button>
-                  <button
-                    className={`flex items-center justify-center gap-2 p-2.5 rounded-xl text-sm font-medium border transition-all ${
-                      isOwner
-                        ? "bg-white border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                        : "bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed"
-                    }`}
-                    onClick={handleViewEmployeeHistory}
-                    disabled={!isOwner}
-                    title={isOwner ? "View Recognition History" : "Only the recognized employee can view recognition history"}
-                  >
-                    <History size={14} />
-                    History
-                  </button>
-                </div>
-              </div>
-
-              <div className="bg-white border border-light rounded-2xl p-5">
-                <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <BarChart3 size={18} />
-                  Recognition Details
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Type</span>
-                    <span className="font-bold text-gray-900">
-                      {typeInfo.label}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Published</span>
-                    <span className="font-medium text-gray-900">
-                      {new Date(post.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </span>
-                  </div>
-                  {post.certificateId && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Certificate ID</span>
-                      <span className="font-mono text-sm text-gray-900 bg-gray-100 px-2 py-1 rounded">
-                        {post.certificateId.substring(0, 8).toUpperCase()}
+               
+                {post.tags && post.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-5">
+                    {post.tags.map((tag, index) => (
+                      <span key={index} className="text-[11px] text-[#800000] font-medium px-2 py-0.5 bg-red-50 rounded-md">
+                        #{tag}
                       </span>
-                    </div>
-                  )}
-                  {/* OWNERSHIP STATUS */}
-                  <div className="flex justify-between items-center pt-2 border-t">
-                    <span className="text-gray-600">Certificate Access</span>
-                    <span className={`text-sm font-medium ${isOwner ? 'text-green-600' : 'text-gray-500'}`}>
-                      {isOwner ? 'You own this certificate' : 'Restricted to owner'}
-                    </span>
+                    ))}
                   </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Section: Sidebar (Metadata & Actions) - FIXED / NOT SCROLLABLE */}
+        <div className="w-full md:w-[320px] bg-slate-50 border-l border-slate-200 flex flex-col shrink-0">
+          <div className="hidden md:flex p-5 justify-end">
+            <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="p-6 space-y-6 flex-1">
+            {/* Personnel Info Card */}
+            <div className="space-y-4">
+              <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">Recipients</h3>
+              <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                <div className="w-10 h-10 bg-[#800000] rounded-lg flex items-center justify-center text-white font-bold shrink-0">
+                  {post.employee?.name ? post.employee.name.charAt(0) : "E"}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-slate-800 truncate">{post.employee?.name || "Employee"}</p>
+                  <p className="text-[11px] text-slate-500 truncate">{post.employee?.position || "Staff"}</p>
+                </div>
+              </div>
+             
+              {/* Agent Information Block */}
+              <div className="pt-2">
+                <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-tight mb-2">Issued By</h3>
+                <div className="flex items-center gap-2 px-1">
+                  <div className="p-1.5 bg-slate-200 rounded-full">
+                    <UserCheck size={12} className="text-slate-600" />
+                  </div>
+                  <p className="text-xs font-semibold text-slate-700">
+                    {post.agent?.name || "John Joshua Julio"}
+                  </p>
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
                 <button
-                  className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-all ${
-                    isOwner
-                      ? `bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 cursor-pointer ${downloading ? 'opacity-70 cursor-not-allowed' : ''}`
-                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  }`}
-                  onClick={handleDownloadCertificate}
-                  disabled={!isOwner || downloading}
-                  title={isOwner ? "Download Certificate" : "Only the recognized employee can download this certificate"}
-                >
-                  {downloading ? (
-                    <>
-                      <Loader size={18} className="animate-spin" />
-                      Downloading...
-                    </>
-                  ) : (
-                    <>
-                      <Download size={18} />
-                      Download Certificate
-                      {!isOwner && (
-                        <span className="text-xs ml-1"></span>
-                      )}
-                    </>
-                  )}
-                </button>
-                <button 
-                  className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-all ${
-                    isOwner
-                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200 cursor-pointer"
-                      : "bg-gray-200 text-gray-500 cursor-not-allowed"
-                  }`}
-                  onClick={handleViewAllHistory}
+                  onClick={handleViewCertificate}
                   disabled={!isOwner}
-                  title={isOwner ? "View Recognition History" : "Only the recognized employee can view recognition history"}
+                  className={`flex items-center justify-center gap-2 py-2 rounded-lg text-[11px] font-bold border transition-all ${
+                    isOwner ? "bg-white border-slate-200 text-slate-600 hover:border-slate-400" : "opacity-50 grayscale cursor-not-allowed"
+                  }`}
                 >
-                  <History size={18} />
-                  View Recognition History
+                  <FileText size={14} /> View Cert
+                </button>
+                <button
+                  onClick={handleViewEmployeeHistory}
+                  disabled={!isOwner}
+                  className={`flex items-center justify-center gap-2 py-2 rounded-lg text-[11px] font-bold border transition-all ${
+                    isOwner ? "bg-white border-slate-200 text-slate-600 hover:border-slate-400" : "opacity-50 grayscale cursor-not-allowed"
+                  }`}
+                >
+                  <History size={14} /> History
                 </button>
               </div>
             </div>
+
+            {/* Verification Metadata */}
+            <div className="space-y-4">
+              <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">Verification</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-500">Record Type</span>
+                  <span className="font-semibold text-slate-700">{typeInfo.label}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-500">Issue Date</span>
+                  <span className="font-semibold text-slate-700">
+                    {new Date(post.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Group */}
+            <div className="pt-4 space-y-3">
+              <button
+                onClick={handleDownloadCertificate}
+                disabled={!isOwner || downloading}
+                className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${
+                  isOwner ? "bg-[#800000] text-white hover:bg-[#600000]" : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                }`}
+              >
+                {downloading ? <Loader size={16} className="animate-spin" /> : <Download size={16} />}
+                {downloading ? "Processing..." : "Download Certificate"}
+              </button>
+             
+              <button
+                onClick={handleViewAllHistory}
+                disabled={!isOwner}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-all shadow-sm"
+              >
+                <BarChart3 size={16} /> View logs
+              </button>
+            </div>
+          </div>
+
+          <div className="p-4 bg-slate-100/50 border-t border-slate-200 mt-auto">
+             <p className="text-[10px] text-slate-400 flex items-center justify-center gap-2 italic">
+               <ShieldCheck size={12} /> Verified System Record
+             </p>
           </div>
         </div>
       </div>
@@ -618,7 +547,7 @@ const AgentRecognition = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [userAchievements, setUserAchievements] = useState([]);
   const [achievementCount, setAchievementCount] = useState(0);
-  
+ 
   // Get user from Zustand store
   const storeUser = useStore((state) => state.user);
 
@@ -626,7 +555,7 @@ const AgentRecognition = () => {
   useEffect(() => {
     if (storeUser) {
       console.log("User from Zustand store:", storeUser);
-      
+     
       // Format user data for consistency
       const formattedUser = {
         _id: storeUser._id || storeUser.id,
@@ -639,7 +568,7 @@ const AgentRecognition = () => {
         department: storeUser.department,
         role: storeUser.role,
       };
-      
+     
       setCurrentUser(formattedUser);
       localStorage.setItem('currentUser', JSON.stringify(formattedUser));
     }
@@ -656,14 +585,14 @@ const AgentRecognition = () => {
   const fetchUserAchievements = async (user) => {
     try {
       console.log("Fetching achievements for user:", user);
-      
+     
       if (!user || !user.employeeId) {
         console.log("No employee ID available for fetching achievements");
         setUserAchievements([]);
         setAchievementCount(0);
         return;
       }
-      
+     
       // Use allPosts if already fetched, otherwise fetch all
       let allUserPosts = [];
       if (allPosts.length > 0) {
@@ -680,7 +609,7 @@ const AgentRecognition = () => {
             sortOrder: "desc"
           }
         });
-        
+       
         if (response.data.success) {
           const fetchedPosts = response.data.data || [];
           allUserPosts = fetchedPosts.filter(post => {
@@ -688,10 +617,10 @@ const AgentRecognition = () => {
           });
         }
       }
-      
+     
       setUserAchievements(allUserPosts);
       setAchievementCount(allUserPosts.length);
-      
+     
     } catch (error) {
       console.error("Error fetching user achievements:", error);
       setUserAchievements([]);
@@ -755,13 +684,13 @@ const AgentRecognition = () => {
       setPosts(data);
       setAllPosts(data); // Store ALL posts for history
       setLoading(false);
-      
+     
       // Update user achievements from socket data
       if (currentUser) {
-        const userPosts = data.filter(post => 
+        const userPosts = data.filter(post =>
           post.employee?.employeeId === currentUser.employeeId
         );
-        
+       
         if (userPosts.length > 0) {
           setUserAchievements(prev => {
             const merged = [...prev];
@@ -779,7 +708,7 @@ const AgentRecognition = () => {
 
     socket.on("newRecognition", (newPost) => {
       console.log("🆕 New recognition from socket:", newPost.title);
-      
+     
       // Update posts
       setPosts(prev => {
         const exists = prev.some(post => post._id === newPost._id);
@@ -788,7 +717,7 @@ const AgentRecognition = () => {
         }
         return [newPost, ...prev];
       });
-      
+     
       setAllPosts(prev => {
         const exists = prev.some(post => post._id === newPost._id);
         if (exists) {
@@ -796,7 +725,7 @@ const AgentRecognition = () => {
         }
         return [newPost, ...prev];
       });
-      
+     
       // Check if this belongs to current user
       if (currentUser && newPost.employee?.employeeId === currentUser.employeeId) {
         setUserAchievements(prev => {
@@ -808,7 +737,7 @@ const AgentRecognition = () => {
         });
         setAchievementCount(prev => prev + 1);
       }
-      
+     
       showCustomToast("New recognition added", "success");
     });
 
@@ -817,11 +746,11 @@ const AgentRecognition = () => {
       setPosts((prev) =>
         prev.map((post) => (post._id === updatedPost._id ? updatedPost : post))
       );
-      
+     
       setAllPosts((prev) =>
         prev.map((post) => (post._id === updatedPost._id ? updatedPost : post))
       );
-      
+     
       // Check if this updated post belongs to current user
       if (currentUser && updatedPost.employee?.employeeId === currentUser.employeeId) {
         setUserAchievements(prev =>
@@ -835,11 +764,11 @@ const AgentRecognition = () => {
       setPosts((prev) =>
         prev.filter((post) => post._id !== data.recognitionId)
       );
-      
+     
       setAllPosts((prev) =>
         prev.filter((post) => post._id !== data.recognitionId)
       );
-      
+     
       // Check if this archived post belonged to current user
       if (currentUser) {
         setUserAchievements(prev =>
@@ -847,7 +776,7 @@ const AgentRecognition = () => {
         );
         setAchievementCount(prev => Math.max(0, prev - 1));
       }
-      
+     
       showCustomToast("Recognition archived", "success");
     });
 
@@ -944,10 +873,10 @@ const AgentRecognition = () => {
         // If we don't have all posts yet, fetch them for history modal
         if (allPosts.length === 0) {
           const allPostsData = await fetchAllPostsForHistory();
-          
+         
           // Update user achievements with all posts
           if (currentUser) {
-            const userPosts = allPostsData.filter(post => 
+            const userPosts = allPostsData.filter(post =>
               post.employee?.employeeId === currentUser.employeeId
             );
             setUserAchievements(userPosts);
@@ -1065,8 +994,8 @@ const AgentRecognition = () => {
                 <History size={20} className="text-white" />
                 <span className="font-semibold">My History</span>
               </button>
-              
-              <EmployeeBadges 
+             
+              <EmployeeBadges
                 currentUser={currentUser}
                 onOpenAchievements={handleOpenAchievements}
               />
@@ -1183,8 +1112,8 @@ const AgentRecognition = () => {
           <div className="space-y-6">
             <TopPerformersCard posts={posts} />
             <HighlightsCard posts={posts} />
-            <QuickActionsCard 
-              posts={posts} 
+            <QuickActionsCard
+              posts={posts}
               onViewPost={handleViewPost}
               onRefresh={handleRefresh}
             />
