@@ -48,12 +48,12 @@ const HRRepository = () => {
   const normalizedRole = userRole?.replace(/-/g, '_');
   const categories = ['Policies', 'Contracts', 'NTE', 'COE', 'Clearance', 'Other'];
 
-  const getAuthenticatedApi = () => {
+  const getAuthenticatedApi = useCallback(() => {
     if (!user) return api;
     
     const authenticatedApi = api.create({
       baseURL: import.meta.env.VITE_API_BASE_URL,
-      timeout: 30000,
+      timeout: 120000, // Increased timeout for large file uploads
       withCredentials: true,
       headers: {
         'Content-Type': 'application/json',
@@ -62,8 +62,8 @@ const HRRepository = () => {
     
     authenticatedApi.interceptors.request.use(
       (config) => {
-        config.headers['x-user-id'] = userId;
-        config.headers['x-user-role'] = userRole;
+        if (userId) config.headers['x-user-id'] = userId;
+        if (userRole) config.headers['x-user-role'] = userRole;
         return config;
       },
       (error) => {
@@ -111,7 +111,7 @@ const HRRepository = () => {
     );
     
     return authenticatedApi;
-  };
+  }, [user, userId, userRole]);
 
   const fetchFolders = useCallback(async () => {
     try {
@@ -120,6 +120,7 @@ const HRRepository = () => {
       const response = await authApi.get('/repository/folders');
       
       if (response.data && Array.isArray(response.data)) {
+        console.log('📁 Folders fetched:', response.data);
         setFolders(response.data);
       } else {
         setFolders([]);
@@ -131,7 +132,7 @@ const HRRepository = () => {
       }
       setFolders([]);
     }
-  }, [user]);
+  }, [getAuthenticatedApi]);
 
   const fetchDocuments = useCallback(async () => {
     try {
@@ -145,19 +146,19 @@ const HRRepository = () => {
         params.category = selectedCategory;
       }
       
-      if (selectedFolder && selectedFolder !== 'null') {
-        params.folderId = selectedFolder;
-      } else if (selectedFolder === 'null') {
-        params.folderId = 'null';
+      if (selectedFolder !== null && selectedFolder !== undefined) {
+        params.folderId = selectedFolder === 'null' ? 'null' : selectedFolder;
       }
       
       if (searchQuery) {
         params.search = searchQuery;
       }
       
+      console.log('📄 Fetching documents with params:', params);
       const response = await authApi.get('/repository/documents', { params });
       
       if (response.data && Array.isArray(response.data)) {
+        console.log(`📄 ${response.data.length} documents fetched`);
         setDocuments(response.data);
       } else {
         setDocuments([]);
@@ -171,7 +172,7 @@ const HRRepository = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedCategory, selectedFolder, searchQuery, user]);
+  }, [selectedCategory, selectedFolder, searchQuery, getAuthenticatedApi]);
 
   const fetchArchivedDocuments = useCallback(async () => {
     try {
@@ -201,7 +202,7 @@ const HRRepository = () => {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, user]);
+  }, [searchQuery, getAuthenticatedApi]);
 
   useEffect(() => {
     if (user) {
@@ -279,6 +280,7 @@ const HRRepository = () => {
         setSelectedFolder(null);
       }
       fetchFolders();
+      fetchDocuments(); // Refresh documents to show moved ones
     } catch (error) {
       console.error('Delete folder error:', error);
       alert('Failed to delete folder: ' + (error.response?.data?.error || error.message || 'Unknown error'));
@@ -291,7 +293,9 @@ const HRRepository = () => {
         const reader = new FileReader();
         
         reader.onload = (event) => {
-          resolve(event.target.result);
+          const base64String = event.target.result;
+          console.log('File converted to base64, size:', base64String.length, 'chars');
+          resolve(base64String);
         };
         
         reader.onerror = (error) => {
@@ -332,22 +336,33 @@ const HRRepository = () => {
       setUploading(true);
       setError(null);
       
+      console.log('Starting file conversion to base64...');
       const fileData = await fileToBase64(newDocument.file);
+      console.log('File conversion completed');
       
+      // Use correct folderId - send as string
       const uploadData = {
         title: newDocument.title.trim() || newDocument.file.name.replace(/\.[^/.]+$/, ""),
         description: newDocument.description.trim(),
         category: newDocument.category,
-        folderId: newDocument.folderId || '',
+        folderId: newDocument.folderId || null, // Send null for no folder
         accessRoles: JSON.stringify(newDocument.accessRoles),
         fileData: fileData,
         fileName: newDocument.file.name,
         fileType: newDocument.file.type
       };
 
-      const authApi = getAuthenticatedApi();
-      await authApi.post('/repository/upload', uploadData);
+      console.log('Uploading document...', {
+        title: uploadData.title,
+        fileName: uploadData.fileName,
+        folderId: uploadData.folderId,
+        fileSize: fileData.length
+      });
 
+      const authApi = getAuthenticatedApi();
+      const response = await authApi.post('/repository/upload', uploadData);
+
+      console.log('Upload successful:', response.data);
       alert('✅ Document uploaded successfully!');
       
       setShowUploadModal(false);
@@ -362,6 +377,7 @@ const HRRepository = () => {
         fileType: ''
       });
       
+      // Refresh documents list
       if (viewArchived) {
         fetchArchivedDocuments();
       } else {
@@ -370,6 +386,12 @@ const HRRepository = () => {
 
     } catch (error) {
       console.error('Upload Error:', error);
+      console.error('Upload Error details:', {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data,
+        config: error.config
+      });
       
       let errorMessage = 'Upload failed: ';
       if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
@@ -392,22 +414,35 @@ const HRRepository = () => {
   const handleEdit = async (e) => {
     e.preventDefault();
     
-    if (!selectedDocument) return;
+    if (!selectedDocument) {
+      alert('No document selected for editing');
+      return;
+    }
+    
+    console.log('Editing document:', {
+      documentId: selectedDocument._id,
+      editData: editDocument
+    });
     
     try {
       const authApi = getAuthenticatedApi();
       
+      // Ensure folderId is handled correctly
       const updateData = {
         ...editDocument,
-        folderId: editDocument.folderId || ''
+        folderId: editDocument.folderId || null // Send null for root folder
       };
       
-      await authApi.put(`/repository/documents/${selectedDocument._id}`, updateData);
+      console.log('Sending update for document:', selectedDocument._id, 'with data:', updateData);
       
+      const response = await authApi.put(`/repository/documents/${selectedDocument._id}`, updateData);
+      
+      console.log('Update successful:', response.data);
       alert('Document updated successfully!');
       
       setShowEditModal(false);
       
+      // Refresh documents list
       if (viewArchived) {
         fetchArchivedDocuments();
       } else {
@@ -415,6 +450,7 @@ const HRRepository = () => {
       }
     } catch (error) {
       console.error('Edit error:', error);
+      console.error('Edit error response:', error.response?.data);
       alert('Update failed: ' + (error.response?.data?.error || error.message || 'Unknown error'));
     }
   };
@@ -495,6 +531,13 @@ const HRRepository = () => {
 
   const openEditModal = (doc) => {
     if (!doc) return;
+    
+    console.log('Opening edit modal for document:', {
+      id: doc._id,
+      title: doc.title,
+      folderId: doc.folderId,
+      status: doc.status
+    });
     
     setSelectedDocument(doc);
     setEditDocument({
@@ -643,8 +686,10 @@ const HRRepository = () => {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
             </svg>
-            <span>All Files</span>
-            <span className="text-xs bg-gray-200 px-2 py-1 rounded-full">{documents.filter(d => !d.folderId).length}</span>
+            <span>Root (All Files)</span>
+            <span className="text-xs bg-gray-200 px-2 py-1 rounded-full">
+              {documents.filter(d => !d.folderId || d.folderId === 'null').length}
+            </span>
           </button>
           
           {folders.map(folder => (
@@ -779,9 +824,9 @@ const HRRepository = () => {
                 {viewArchived 
                   ? `🗄️ Archived Documents (${archivedDocuments.length})` 
                   : selectedFolder 
-                    ? `📂 ${getFolderName(selectedFolder)} (${documents.length})`
+                    ? `📂 ${getFolderName(selectedFolder)} (${documents.filter(d => d.folderId === selectedFolder).length})`
                     : selectedCategory 
-                      ? `${selectedCategory} (${documents.length})`
+                      ? `${selectedCategory} (${documents.filter(d => d.category === selectedCategory).length})`
                       : `📁 All Documents (${documents.length})`}
               </h2>
               <p className="text-sm text-gray-500 mt-1">

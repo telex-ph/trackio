@@ -26,17 +26,6 @@ class Repository {
         ];
       }
       
-      // Properly handle ObjectId fields
-      if (findQuery.folderId && findQuery.folderId !== 'null') {
-        try {
-          findQuery.folderId = new ObjectId(findQuery.folderId);
-        } catch (err) {
-          console.log('Invalid folderId in query, treating as string:', findQuery.folderId);
-        }
-      } else if (findQuery.folderId === 'null') {
-        findQuery.folderId = null;
-      }
-      
       console.log('📄 Database query:', JSON.stringify(findQuery, null, 2));
       
       const documents = await collection.find(findQuery).sort({ createdAt: -1 }).toArray();
@@ -49,7 +38,7 @@ class Repository {
     }
   }
 
-  // Create a new document
+  // Create a new document - FIXED
   static async create(documentData) {
     try {
       const db = await connectDB();
@@ -72,7 +61,10 @@ class Repository {
       };
 
       const result = await collection.insertOne(documentWithDefaults);
-      const insertedDoc = { _id: result.insertedId, ...documentWithDefaults };
+      const insertedDoc = { 
+        _id: result.insertedId.toString(), // Convert to string
+        ...documentWithDefaults 
+      };
       
       console.log('✅ Document created with ID:', result.insertedId);
       return insertedDoc;
@@ -82,42 +74,76 @@ class Repository {
     }
   }
 
-  // Update an existing document
+  // Update an existing document - FIXED
   static async update(id, updatedData) {
     try {
       const db = await connectDB();
       const collection = await db.collection(this.#collection);
 
-      console.log('📄 Updating document:', id, 'with data:', updatedData);
+      console.log('📄 Updating document with ID:', id, 'Type:', typeof id);
+      console.log('📄 Update data:', updatedData);
+
+      let queryId;
+      try {
+        // Try to convert to ObjectId
+        if (typeof id === 'string' && ObjectId.isValid(id)) {
+          queryId = new ObjectId(id);
+        } else {
+          queryId = id;
+        }
+      } catch (err) {
+        queryId = id;
+      }
 
       const result = await collection.findOneAndUpdate(
-        { _id: new ObjectId(id) },
+        { _id: queryId },
         {
           $set: {
             ...updatedData,
             updatedAt: new Date(),
           },
         },
-        { returnDocument: "after" }
+        { 
+          returnDocument: "after"
+        }
       );
 
-      console.log('✅ Document updated:', result.value?._id);
-      return result.value;
+      if (result.value) {
+        console.log('✅ Document updated successfully:', result.value._id);
+        // Ensure _id is string
+        return { ...result.value, _id: result.value._id.toString() };
+      } else {
+        console.log('❌ No document found to update with ID:', id);
+        return null;
+      }
     } catch (error) {
       console.error('❌ Error in update:', error);
       throw error;
     }
   }
 
-  // Delete a document
+  // Delete a document - FIXED
   static async delete(id) {
     try {
       const db = await connectDB();
       const collection = await db.collection(this.#collection);
-      console.log('🗑️ Deleting document:', id);
       
-      const result = await collection.deleteOne({ _id: new ObjectId(id) });
-      console.log('✅ Deleted count:', result.deletedCount);
+      console.log('🗑️ Deleting document with ID:', id, 'Type:', typeof id);
+      
+      let queryId;
+      try {
+        if (typeof id === 'string' && ObjectId.isValid(id)) {
+          queryId = new ObjectId(id);
+        } else {
+          queryId = id;
+        }
+      } catch (err) {
+        queryId = id;
+      }
+      
+      const result = await collection.deleteOne({ _id: queryId });
+      
+      console.log('✅ Deleted count:', result.deletedCount, 'for ID:', id);
       
       return result;
     } catch (error) {
@@ -126,21 +152,35 @@ class Repository {
     }
   }
 
-  // Get document by ID
+  // Get document by ID - FIXED
   static async getById(id) {
     try {
       const db = await connectDB();
       const collection = await db.collection(this.#collection);
       
-      let query;
+      console.log('🔍 Getting document by ID:', id, 'Type:', typeof id);
+      
+      let queryId;
       try {
-        query = { _id: new ObjectId(id) };
+        if (typeof id === 'string' && ObjectId.isValid(id)) {
+          queryId = new ObjectId(id);
+        } else {
+          queryId = id;
+        }
       } catch (err) {
-        query = { _id: id };
+        queryId = id;
       }
       
-      const document = await collection.findOne(query);
-      return document;
+      const document = await collection.findOne({ _id: queryId });
+      
+      if (document) {
+        console.log('✅ Found document:', document.title);
+        // Ensure _id is string
+        return { ...document, _id: document._id.toString() };
+      } else {
+        console.log('❌ Document not found with ID:', id);
+        return null;
+      }
     } catch (error) {
       console.error('❌ Error in getById:', error);
       throw error;
@@ -149,7 +189,7 @@ class Repository {
 
   // ========== FOLDER METHODS ==========
 
-  // Create a new folder
+  // Create a new folder - FIXED
   static async createFolder(folderData) {
     try {
       const db = await connectDB();
@@ -165,7 +205,10 @@ class Repository {
       };
 
       const result = await collection.insertOne(folderWithDefaults);
-      const insertedFolder = { _id: result.insertedId, ...folderWithDefaults };
+      const insertedFolder = { 
+        _id: result.insertedId.toString(), // Convert to string
+        ...folderWithDefaults 
+      };
       
       console.log('✅ Folder created with ID:', result.insertedId);
       return insertedFolder;
@@ -175,7 +218,7 @@ class Repository {
     }
   }
 
-  // Get all folders
+  // Get all folders - FIXED
   static async getFolders(query = {}) {
     try {
       const db = await connectDB();
@@ -185,43 +228,60 @@ class Repository {
       console.log('📁 Fetching folders with query:', folderQuery);
       
       const folders = await collection.find(folderQuery).sort({ name: 1 }).toArray();
-      console.log(`✅ Found ${folders.length} folders`);
       
-      return folders;
+      // Convert _id to string for all folders
+      const foldersWithStringIds = folders.map(folder => ({
+        ...folder,
+        _id: folder._id.toString()
+      }));
+      
+      console.log(`✅ Found ${foldersWithStringIds.length} folders`);
+      
+      return foldersWithStringIds;
     } catch (error) {
       console.error('❌ Error in getFolders:', error);
       throw error;
     }
   }
 
-  // Get folder by ID
+  // Get folder by ID - FIXED
   static async getFolderById(id) {
     try {
       const db = await connectDB();
       const collection = await db.collection(this.#collection);
       
-      let query;
+      console.log('🔍 Getting folder by ID:', id);
+      
+      let queryId;
       try {
-        query = { 
-          _id: new ObjectId(id), 
-          type: 'folder' 
-        };
+        if (typeof id === 'string' && ObjectId.isValid(id)) {
+          queryId = new ObjectId(id);
+        } else {
+          queryId = id;
+        }
       } catch (err) {
-        query = { 
-          _id: id, 
-          type: 'folder' 
-        };
+        queryId = id;
       }
       
-      const folder = await collection.findOne(query);
-      return folder;
+      const folder = await collection.findOne({ 
+        _id: queryId, 
+        type: 'folder' 
+      });
+      
+      if (folder) {
+        // Ensure _id is string
+        return { ...folder, _id: folder._id.toString() };
+      } else {
+        console.log('❌ Folder not found with ID:', id);
+        return null;
+      }
     } catch (error) {
       console.error('❌ Error in getFolderById:', error);
       throw error;
     }
   }
 
-  // Delete folder
+  // Delete folder - FIXED
   static async deleteFolder(id) {
     try {
       const db = await connectDB();
@@ -242,8 +302,19 @@ class Repository {
       );
       
       // Delete the folder
+      let queryId;
+      try {
+        if (typeof id === 'string' && ObjectId.isValid(id)) {
+          queryId = new ObjectId(id);
+        } else {
+          queryId = id;
+        }
+      } catch (err) {
+        queryId = id;
+      }
+      
       const result = await collection.deleteOne({ 
-        _id: new ObjectId(id), 
+        _id: queryId, 
         type: 'folder' 
       });
       
@@ -257,7 +328,7 @@ class Repository {
 
   // ========== VERSION METHODS ==========
 
-  // Get document versions
+  // Get document versions - FIXED
   static async getVersions(documentId) {
     try {
       const db = await connectDB();
@@ -280,7 +351,10 @@ class Repository {
       
       allVersions = [...allVersions, ...linkedVersions];
       
-      return allVersions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      // Convert _id to string for all versions
+      return allVersions
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .map(version => ({ ...version, _id: version._id.toString() }));
     } catch (error) {
       console.error('❌ Error in getVersions:', error);
       throw error;
