@@ -14,7 +14,6 @@ import { IP } from "../../constants/biometricsIp.js";
 export const getEvents = async (req, res) => {
   try {
     let data = req.body;
-    console.log('This is the Bio Log: ', data);
     
     const jsonStart = data.indexOf("{");
     const jsonEnd = data.lastIndexOf("}");
