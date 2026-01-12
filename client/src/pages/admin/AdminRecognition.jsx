@@ -220,211 +220,181 @@ const PostDetailsModal = ({ post, isOpen, onClose, onArchive }) => {
   const avatarInitials = getAvatarInitials(employeeName);
   const hasImages = post.images && post.images.length > 0;
 
-  return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
-      <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex justify-between items-start mb-6">
+return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn font-sans text-black">
+      <style dangerouslySetInnerHTML={{ __html: `
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}} />
+
+      <div className="bg-white border-t-[4px] border-[#800000] w-full max-w-4xl max-h-[90vh] overflow-y-auto no-scrollbar shadow-2xl flex flex-col">
+        
+        {/* Header - Compact & Formal */}
+        <div className="px-6 py-4 flex justify-between items-center bg-white border-b border-zinc-200 sticky top-0 z-20">
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 bg-zinc-50 border border-zinc-200 text-[#800000]">
+              <Award size={16} strokeWidth={2.5} />
+            </div>
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div className={`p-2 ${typeInfo.bgColor} rounded-lg`}>
-                  {typeInfo.icon}
-                </div>
-                <span className={`text-sm font-medium ${typeInfo.color}`}>
-                  {typeInfo.label}
-                </span>
-              </div>
+              <p className="text-[#800000] text-[10px] font-black uppercase mb-0.5">
+                {typeInfo.label}
+              </p>
+              <h1 className="text-sm font-bold text-black leading-none">
+                Recognition details
+              </h1>
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <X size={24} className="text-gray-500" />
-            </button>
           </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 hover:bg-zinc-100 text-black transition-colors border border-zinc-200 flex items-center gap-2"
+          >
+            <span className="text-[10px] font-bold uppercase">Close</span>
+            <X size={16} strokeWidth={2.5} />
+          </button>
+        </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <div className="lg:col-span-2 space-y-6">
-              {hasImages ? (
-                <div className="relative rounded-xl overflow-hidden">
-                  <img
-                    src={
-                      post.images[currentImageIndex].url ||
-                      post.images[currentImageIndex].secure_url
-                    }
-                    alt={`${post.title} - Image ${currentImageIndex + 1}`}
-                    className="w-full h-64 object-cover"
-                  />
+        <div className="p-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            
+            {/* Left Column: Media and Content */}
+            <div className="lg:col-span-7 space-y-6">
+              
+              {/* Image Section */}
+              <div className="bg-zinc-100 border border-zinc-300 p-2">
+                {hasImages ? (
+                  <div className="relative overflow-hidden flex items-center justify-center h-[280px] bg-white border border-zinc-200">
+                    <img
+                      src={post.images[currentImageIndex].url || post.images[currentImageIndex].secure_url}
+                      alt={post.title}
+                      className="max-w-full max-h-full object-contain"
+                    />
 
-                  {post.images.length > 1 && (
-                    <>
-                      <button
-                        onClick={prevImage}
-                        className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all group"
-                      >
-                        <ChevronLeft
-                          size={20}
-                          className="group-hover:-translate-x-0.5 transition-transform"
-                        />
-                      </button>
-                      <button
-                        onClick={nextImage}
-                        className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all group"
-                      >
-                        <ChevronRight
-                          size={20}
-                          className="group-hover:translate-x-0.5 transition-transform"
-                        />
-                      </button>
-                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm">
-                        {currentImageIndex + 1} / {post.images.length}
+                    {post.images.length > 1 && (
+                      <div className="absolute inset-0 flex items-center justify-between px-2">
+                        <button
+                          onClick={prevImage}
+                          className="w-8 h-8 bg-black/80 flex items-center justify-center text-white hover:bg-[#800000] transition-all"
+                        >
+                          <ChevronLeft size={16} strokeWidth={3} />
+                        </button>
+                        <button
+                          onClick={nextImage}
+                          className="w-8 h-8 bg-black/80 flex items-center justify-center text-white hover:bg-[#800000] transition-all"
+                        >
+                          <ChevronRight size={16} strokeWidth={3} />
+                        </button>
                       </div>
-                    </>
-                  )}
-
-                  <div className="absolute top-3 left-3">
-                    <div
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${typeInfo.bgColor} ${typeInfo.color} backdrop-blur-sm`}
-                    >
-                      {typeInfo.label}
+                    )}
+                    
+                    <div className="absolute bottom-2 right-2 bg-black text-white px-2 py-0.5 text-[9px] font-bold">
+                      {currentImageIndex + 1} / {post.images.length}
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="rounded-xl overflow-hidden bg-gradient-to-r from-gray-100 to-gray-200 h-64 flex items-center justify-center">
-                  <div className="text-center p-4">
-                    <div
-                      className={`w-16 h-16 rounded-full bg-gradient-to-r ${typeInfo.gradient} flex items-center justify-center mb-3 mx-auto`}
-                    >
-                      {React.cloneElement(typeInfo.icon, {
-                        className: "w-8 h-8 text-white",
-                      })}
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-800">
-                      {typeInfo.label}
-                    </h3>
-                    <p className="text-gray-600 text-sm mt-1">
-                      No images available
-                    </p>
+                ) : (
+                  <div className="h-[180px] flex flex-col items-center justify-center bg-white border-2 border-dashed border-zinc-300">
+                    <FileText className="text-zinc-400 mb-1" size={24} />
+                    <p className="text-black text-[10px] font-bold uppercase">No images available</p>
                   </div>
+                )}
+              </div>
+
+              {/* Title & Description */}
+              <div className="space-y-4">
+                <h2 className="text-sm font-black text-black border-b border-zinc-200 pb-2 uppercase">
+                  {post.title}
+                </h2>
+                
+                <div className="prose max-w-none">
+                  <p className="text-black text-[11px] font-medium leading-relaxed whitespace-pre-line">
+                    {post.description}
+                  </p>
                 </div>
-              )}
 
-              <h2 className="text-2xl font-bold text-gray-900">{post.title}</h2>
-
-              {post.tags && post.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {post.tags.map((tag, index) => (
-                    <span key={index} className="text-gray-600 italic text-sm">
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              <div className="prose max-w-none pt-2">
-                <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                  {post.description}
-                </p>
+                {post.tags && post.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-4">
+                    {post.tags.map((tag, index) => (
+                      <span key={index} className="text-black text-[9px] font-bold italic">
+                        #{tag.toLowerCase()}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-5">
-                <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Users size={18} />
-                  Recognized Employee
-                </h3>
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-14 h-14 bg-gradient-to-r ${typeInfo.gradient} rounded-full flex items-center justify-center text-white font-bold text-lg`}
-                  >
+            {/* Right Column: Sidebar Information */}
+            <div className="lg:col-span-5 space-y-6">
+              
+              {/* Employee Information Card */}
+              <div className="border border-zinc-300">
+                <div className="bg-zinc-100 px-4 py-2 border-b border-zinc-300">
+                  <h3 className="text-[9px] font-black text-black uppercase flex items-center gap-2">
+                    <Users size={12} strokeWidth={2.5} /> Recognized employee
+                  </h3>
+                </div>
+                <div className="p-6 flex flex-col items-center text-center bg-white">
+                  <div className="w-14 h-14 bg-[#800000] text-white flex items-center justify-center font-bold text-xl mb-3 shadow-md">
                     {avatarInitials}
                   </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-bold text-gray-900 text-lg">
-                          {employeeName}
-                        </h4>
-                        <div className="text-sm text-gray-600">
-                          {employeePosition && (
-                            <div className="text-gray-500">
-                              {employeePosition}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-medium text-gray-900">
-                          {formatTime(post.createdAt)}
-                        </div>
-                        <div className="text-xs text-gray-500 mt-0.5">
-                          {formatDate(post.createdAt)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <h4 className="text-sm font-black text-black">
+                    {employeeName}
+                  </h4>
+                  <p className="text-[#800000] text-[10px] font-black mt-0.5 uppercase">
+                    {employeePosition || "Employee"}
+                  </p>
                 </div>
               </div>
 
-              <div className="bg-white border border-light rounded-xl p-5">
-                <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <BarChart3 size={18} />
-                  Recognition Details
+              {/* Recognition Metadata Table */}
+              <div className="border border-zinc-300 p-4 space-y-4 bg-white shadow-sm">
+                <h3 className="text-[9px] font-black text-black uppercase flex items-center gap-2 border-b border-zinc-100 pb-2">
+                  <BarChart3 size={12} strokeWidth={2.5} /> Recognition details
                 </h3>
-                <div className="space-y-3">
+                
+                <div className="space-y-2.5">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Type</span>
-                    <span className="font-bold text-gray-900">
-                      {typeInfo.label}
-                    </span>
+                    <span className="text-[10px] text-zinc-600 font-bold uppercase">Type</span>
+                    <span className="text-[10px] font-black text-black uppercase">{typeInfo.label}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Status</span>
-                    <span className="font-bold text-gray-900 capitalize">
-                      {post.status}
-                    </span>
+                    <span className="text-[10px] text-zinc-600 font-bold uppercase">Status</span>
+                    <span className="text-[10px] font-black text-black capitalize">{post.status}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Published</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-[10px] text-zinc-600 font-bold uppercase">Published</span>
+                    <span className="text-[10px] font-black text-black">
                       {new Date(post.createdAt).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
+                        year: "numeric"
                       })}
                     </span>
                   </div>
                 </div>
               </div>
 
+              {/* Action Button Section */}
               <div className="space-y-3">
                 <button
-                  onClick={() =>
-                    onArchive(
-                      post._id,
-                      post.status === "archived" ? "restore" : "archive"
-                    )
-                  }
-                  className={`w-full flex items-center justify-center gap-2 py-3 rounded-lg font-medium transition-colors ${
+                  onClick={() => onArchive(post._id, post.status === "archived" ? "restore" : "archive")}
+                  className={`w-full py-3 px-4 text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2 border-2 ${
                     post.status === "archived"
-                      ? "bg-green-100 text-green-600 hover:bg-green-200"
-                      : "bg-yellow-100 text-yellow-600 hover:bg-yellow-200"
+                      ? "bg-emerald-800 text-white border-emerald-900 hover:bg-emerald-900"
+                      : "bg-[#800000] text-white border-[#600000] hover:bg-black"
                   }`}
                 >
                   {post.status === "archived" ? (
-                    <>
-                      <ArchiveRestore size={18} />
-                      Restore Post
-                    </>
+                    <><ArchiveRestore size={14} strokeWidth={2.5} /> Restore post</>
                   ) : (
-                    <>
-                      <Archive size={18} />
-                      Archive Post
-                    </>
+                    <><Archive size={14} strokeWidth={2.5} /> Archive post</>
                   )}
                 </button>
+                <div className="text-[9px] text-zinc-800 font-bold text-center leading-tight">
+                  <p className="italic uppercase">Official digital record</p>
+                  <p className="text-zinc-400 mt-1">ID: {post._id}</p>
+                </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -813,8 +783,14 @@ const CreatePostModal = ({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+return (
+    <div className="fixed inset-0 bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      {/* CSS to hide scrollbars globally for these elements */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}} />
+
       {showToast && (
         <Toast
           message={toastMessage}
@@ -822,34 +798,37 @@ const CreatePostModal = ({
           onClose={() => setShowToast(false)}
         />
       )}
-      <div className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto animate-slideUp">
-        <div className="p-5">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">
-                {editingPost
-                  ? "Edit Recognition Post"
-                  : "Create Recognition Post"}
-              </h2>
-              <p className="text-gray-600 text-sm mt-1">
-                Celebrate employee achievements
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                resetForm();
-                onClose();
-              }}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <X size={20} className="text-gray-500" />
-            </button>
-          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <div className="space-y-4">
+      <div className="bg-white border-t-[6px] border-[#800000] w-full max-w-4xl max-h-[90vh] overflow-y-auto no-scrollbar rounded-none shadow-2xl flex flex-col">
+        {/* Header Section */}
+        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 tracking-normal">
+              {editingPost
+                ? "Edit Recognition Post"
+                : "Create Recognition Post"}
+            </h2>
+            <p className="text-slate-500 text-sm mt-1 tracking-normal">
+              Celebrate employee achievements
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              resetForm();
+              onClose();
+            }}
+            className="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors border border-transparent hover:border-slate-200"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="p-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            {/* Left Column: Form Inputs */}
+            <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-normal">
                   Post Title *
                 </label>
                 <input
@@ -858,43 +837,43 @@ const CreatePostModal = ({
                   value={postForm.title}
                   onChange={handleInputChange}
                   placeholder="e.g., Employee of the Month - November 2023"
-                  className={`w-full px-3 py-2.5 bg-white border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm ${
-                    errors.title ? "border-red-500" : "border-gray-300"
+                  className={`w-full px-3 py-2.5 bg-white border rounded-none focus:ring-1 focus:ring-[#800000] focus:border-[#800000] text-sm transition-all tracking-normal outline-none ${
+                    errors.title ? "border-red-500" : "border-slate-300"
                   }`}
                 />
                 {errors.title && (
-                  <p className="mt-1 text-xs text-red-600">{errors.title}</p>
+                  <p className="mt-1 text-[11px] text-red-600 font-medium">{errors.title}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-normal">
                   Recognition Description *
                 </label>
                 <textarea
                   name="description"
                   value={postForm.description}
                   onChange={handleInputChange}
-                  rows="4"
+                  rows="6"
                   placeholder="Describe the achievement..."
-                  className={`w-full px-3 py-2.5 bg-white border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm resize-none ${
-                    errors.description ? "border-red-500" : "border-gray-300"
+                  className={`w-full px-3 py-2.5 bg-white border rounded-none focus:ring-1 focus:ring-[#800000] focus:border-[#800000] text-sm resize-none transition-all tracking-normal outline-none ${
+                    errors.description ? "border-red-500" : "border-slate-300"
                   }`}
                 />
                 {errors.description && (
-                  <p className="mt-1 text-xs text-red-600">
+                  <p className="mt-1 text-[11px] text-red-600 font-medium">
                     {errors.description}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-normal">
                   Select Employee *
                 </label>
-                <div className="relative mb-2">
+                <div className="relative mb-3">
                   <Search
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
                     size={16}
                   />
                   <input
@@ -902,8 +881,8 @@ const CreatePostModal = ({
                     placeholder="Search employees by name, ID, or department..."
                     value={searchQuery}
                     onChange={handleSearchChange}
-                    className={`w-full pl-9 pr-8 py-2.5 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm ${
-                      errors.employee ? "border-red-500" : "border-gray-300"
+                    className={`w-full pl-9 pr-8 py-2.5 border rounded-none focus:ring-1 focus:ring-[#800000] focus:border-[#800000] text-sm transition-all tracking-normal outline-none ${
+                      errors.employee ? "border-red-500" : "border-slate-300"
                     }`}
                   />
                   {loadingEmployees && (
@@ -914,61 +893,55 @@ const CreatePostModal = ({
                 </div>
 
                 {selectedEmployee && (
-                  <div className="mb-2 p-3 border border-green-500 bg-green-50 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-gradient-to-r from-green-600 to-green-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                          {selectedEmployee.name?.charAt(0) || "E"}
-                        </div>
-                        <div>
-                          <h4 className="font-medium text-gray-900 text-sm">
-                            {selectedEmployee.name}
-                          </h4>
-                          <p className="text-xs text-gray-600">
-                            {selectedEmployee.department} • ID:{" "}
-                            {selectedEmployee.employeeId}
-                          </p>
-                        </div>
+                  <div className="mb-3 p-4 border border-[#800000] bg-slate-50 relative">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-[#800000] text-white flex items-center justify-center font-bold text-sm">
+                        {selectedEmployee.name?.charAt(0) || "E"}
                       </div>
-                      <button
-                        onClick={() => {
-                          setSelectedEmployee(null);
-                          setPostForm((prev) => ({
-                            ...prev,
-                            employeeId: "",
-                            department: "",
-                          }));
-                        }}
-                        className="text-gray-500 hover:text-red-600 p-1"
-                      >
-                        <X size={16} />
-                      </button>
+                      <div>
+                        <h4 className="font-bold text-slate-900 text-sm tracking-normal">
+                          {selectedEmployee.name}
+                        </h4>
+                        <p className="text-[11px] text-slate-500 font-medium">
+                          {selectedEmployee.department} • ID: {selectedEmployee.employeeId}
+                        </p>
+                      </div>
                     </div>
+                    <button
+                      onClick={() => {
+                        setSelectedEmployee(null);
+                        setPostForm((prev) => ({
+                          ...prev,
+                          employeeId: "",
+                          department: "",
+                        }));
+                      }}
+                      className="absolute top-2 right-2 text-slate-400 hover:text-red-600 transition-colors"
+                    >
+                      <X size={16} />
+                    </button>
                   </div>
                 )}
 
                 {employeeSearchResults.length > 0 && (
-                  <div className="space-y-1 max-h-48 overflow-y-auto border border-light rounded-lg p-1">
+                  <div className="border border-slate-200 bg-white max-h-48 overflow-y-auto no-scrollbar shadow-lg mt-1">
                     {employeeSearchResults.map((employee) => (
                       <div
                         key={employee.employeeId}
                         onClick={() => handleEmployeeSelect(employee)}
-                        className="p-2 border rounded cursor-pointer transition-colors hover:bg-red-50 hover:border-red-200"
+                        className="p-3 border-b border-slate-50 cursor-pointer transition-colors hover:bg-[#800000] hover:text-white group"
                       >
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-gradient-to-r from-red-600 to-red-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-slate-100 text-slate-600 group-hover:bg-[#600000] group-hover:text-white flex items-center justify-center font-bold text-xs">
                             {employee.name?.charAt(0) || "E"}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-gray-900 text-sm truncate">
+                            <h4 className="font-bold text-sm truncate tracking-normal">
                               {employee.name}
                             </h4>
-                            <div className="flex items-center gap-2 text-xs text-gray-600">
-                              <span className="truncate">
-                                {employee.department}
-                              </span>
-                              <span>ID: {employee.employeeId}</span>
-                            </div>
+                            <p className="text-[10px] opacity-70 truncate tracking-normal font-medium">
+                              {employee.department} • ID: {employee.employeeId}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -976,47 +949,41 @@ const CreatePostModal = ({
                   </div>
                 )}
                 {errors.employee && (
-                  <p className="mt-1 text-xs text-red-600">{errors.employee}</p>
+                  <p className="mt-1 text-[11px] text-red-600 font-medium">{errors.employee}</p>
                 )}
               </div>
             </div>
 
-            <div className="space-y-4">
+            {/* Right Column: Settings & Media */}
+            <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-xs font-bold text-slate-700 mb-3 uppercase tracking-normal border-b border-slate-100 pb-2">
                   Upload Images (Max 5)
                 </label>
                 {imagePreviews.length > 0 && (
-                  <div className="grid grid-cols-3 gap-2 mb-3">
+                  <div className="grid grid-cols-3 gap-3 mb-4">
                     {imagePreviews.map((preview) => (
                       <div
                         key={preview.id}
-                        className="relative rounded-lg overflow-hidden border border-light group"
+                        className="relative aspect-square border border-slate-200 bg-slate-50 group"
                       >
                         <img
                           src={preview.url}
                           alt="Preview"
-                          className="w-full h-20 object-cover"
+                          className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
                         />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           <button
                             type="button"
                             onClick={() => removeImage(preview.id)}
-                            className="p-1.5 bg-red-600 text-white rounded-full hover:bg-red-700 transform hover:scale-110 transition-transform"
+                            className="p-1.5 bg-red-600 text-white hover:bg-red-700 transition-colors shadow-lg"
                           >
-                            <X size={12} />
+                            <X size={14} />
                           </button>
                         </div>
                         {preview.isUploading && (
-                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          </div>
-                        )}
-                        {preview.isExisting && !preview.isUploading && (
-                          <div className="absolute top-1 left-1">
-                            <span className="px-1 py-0.5 bg-blue-600 text-white text-xs rounded">
-                              Uploaded
-                            </span>
+                          <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                            <div className="w-5 h-5 border-2 border-[#800000] border-t-transparent rounded-full animate-spin"></div>
                           </div>
                         )}
                       </div>
@@ -1024,125 +991,103 @@ const CreatePostModal = ({
                   </div>
                 )}
 
-                <div>
-                  <input
-                    type="file"
-                    id="image-upload"
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageSelect}
-                    className="hidden"
-                    disabled={
-                      imagePreviews.length >= 5 || uploadingImages.length > 0
-                    }
-                  />
-                  <label
-                    htmlFor="image-upload"
-                    className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-4 cursor-pointer transition-colors ${
-                      imagePreviews.length >= 5 || uploadingImages.length > 0
-                        ? "border-light bg-gray-50 cursor-not-allowed"
-                        : "border-gray-300 hover:border-red-400 hover:bg-red-50"
-                    }`}
-                  >
-                    <Upload
-                      size={20}
-                      className={`mb-1 ${
-                        imagePreviews.length >= 5
-                          ? "text-gray-400"
-                          : "text-gray-500"
-                      }`}
-                    />
-                    <span
-                      className={`text-sm ${
-                        imagePreviews.length >= 5
-                          ? "text-gray-400"
-                          : "text-gray-900"
-                      }`}
-                    >
-                      {imagePreviews.length >= 5
-                        ? "Maximum 5 images reached"
-                        : "Click to upload images"}
-                    </span>
-                    <span className="text-xs text-gray-500 mt-1">
-                      PNG, JPG, GIF up to 5MB each
-                    </span>
-                    {uploadingImages.length > 0 && (
-                      <span className="text-xs text-yellow-600 mt-1">
-                        {uploadingImages.length} image(s) uploading...
-                      </span>
-                    )}
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Recognition Type
-                </label>
-                <select
-                  name="recognitionType"
-                  value={postForm.recognitionType}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                <input
+                  type="file"
+                  id="image-upload"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                  disabled={imagePreviews.length >= 5 || uploadingImages.length > 0}
+                />
+                <label
+                  htmlFor="image-upload"
+                  className={`flex flex-col items-center justify-center border-2 border-dashed p-6 cursor-pointer transition-all ${
+                    imagePreviews.length >= 5 || uploadingImages.length > 0
+                      ? "border-slate-100 bg-slate-50 cursor-not-allowed text-slate-400"
+                      : "border-slate-300 hover:border-[#800000] hover:bg-slate-50 text-slate-500 hover:text-[#800000]"
+                  }`}
                 >
-                  <option value="employee_of_month">
-                    🏆 Employee of the Month
-                  </option>
-                  <option value="excellence_award">⭐ Excellence Award</option>
-                  <option value="innovation">💡 Innovation Award</option>
-                  <option value="team_player">🤝 Team Player Award</option>
-                  <option value="other">🎖️ Other Recognition</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Tags
+                  <Upload size={20} className="mb-2" />
+                  <span className="text-xs font-bold uppercase tracking-normal">
+                    {imagePreviews.length >= 5
+                      ? "Maximum images reached"
+                      : "Click to upload images"}
+                  </span>
+                  <span className="text-[10px] mt-1 font-medium italic text-slate-400">
+                    PNG, JPG up to 5MB each
+                  </span>
                 </label>
-                <div className="flex gap-2 mb-2">
-                  <input
-                    type="text"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    placeholder="Enter tag and press Add"
-                    className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        handleAddTag();
-                        e.preventDefault();
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddTag}
-                    className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition-colors"
-                  >
-                    Add
-                  </button>
-                </div>
-                {postForm.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {postForm.tags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="bg-red-100 text-red-800 px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 group"
-                      >
-                        <Tag size={10} /> {tag}
-                        <button
-                          onClick={() => handleRemoveTag(tag)}
-                          className="hover:text-red-900 transition-colors"
-                        >
-                          <X size={10} />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
 
-              <div className="pt-3 border-t">
-                <div className="flex items-center gap-2 mb-3">
+              <div className="grid grid-cols-1 gap-6">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-normal">
+                    Recognition Type
+                  </label>
+                  <select
+                    name="recognitionType"
+                    value={postForm.recognitionType}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-none focus:ring-1 focus:ring-[#800000] focus:border-[#800000] outline-none text-sm font-bold tracking-normal transition-all"
+                  >
+                    <option value="employee_of_month">🏆 Employee of the Month</option>
+                    <option value="excellence_award">⭐ Excellence Award</option>
+                    <option value="innovation">💡 Innovation Award</option>
+                    <option value="team_player">🤝 Team Player Award</option>
+                    <option value="other">🎖️ Other Recognition</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-normal">
+                    Tags
+                  </label>
+                  <div className="flex gap-2 mb-3">
+                    <input
+                      type="text"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      placeholder="Enter tag and press Add"
+                      className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-none focus:ring-1 focus:ring-[#800000] focus:border-[#800000] outline-none text-sm tracking-normal"
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") {
+                          handleAddTag();
+                          e.preventDefault();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddTag}
+                      className="px-4 py-2 bg-slate-100 hover:bg-[#800000] hover:text-white text-slate-900 border border-slate-300 text-xs font-bold uppercase transition-all tracking-normal"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  {postForm.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {postForm.tags.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="bg-slate-100 text-[#800000] border border-slate-200 px-3 py-1 text-[10px] font-bold flex items-center gap-2 uppercase tracking-normal"
+                        >
+                          <Tag size={10} /> {tag}
+                          <button
+                            onClick={() => handleRemoveTag(tag)}
+                            className="hover:text-red-600 transition-colors"
+                          >
+                            <X size={10} />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-slate-100">
+                <div className="flex items-center gap-3 mb-4">
                   <input
                     type="checkbox"
                     id="scheduleForLater"
@@ -1153,110 +1098,88 @@ const CreatePostModal = ({
                         scheduleForLater: e.target.checked,
                       }))
                     }
-                    className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                    className="w-4 h-4 focus:ring-[#800000] border-slate-300 rounded-none accent-[#800000]"
                   />
                   <label
                     htmlFor="scheduleForLater"
-                    className="font-medium text-gray-900 text-sm flex items-center gap-1.5"
+                    className="font-bold text-[#800000] text-xs uppercase flex items-center gap-2 cursor-pointer tracking-normal"
                   >
-                    <Clock size={14} />
+                    <Clock size={16} />
                     Schedule for later
                   </label>
                 </div>
 
                 {postForm.scheduleForLater && (
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
-                        Date *
-                      </label>
+                  <div className="grid grid-cols-2 gap-4 animate-fadeIn">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Date *</label>
                       <input
                         type="date"
                         name="publishDate"
                         value={postForm.publishDate}
                         onChange={handleInputChange}
                         min={new Date().toISOString().split("T")[0]}
-                        className={`w-full px-3 py-2 bg-white border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm ${
-                          errors.publishDate
-                            ? "border-red-500"
-                            : "border-gray-300"
+                        className={`w-full px-3 py-2 border rounded-none focus:ring-1 focus:ring-[#800000] focus:border-[#800000] outline-none text-sm tracking-normal ${
+                          errors.publishDate ? "border-red-500" : "border-slate-300"
                         }`}
                       />
-                      {errors.publishDate && (
-                        <p className="mt-1 text-xs text-red-600">
-                          {errors.publishDate}
-                        </p>
-                      )}
                     </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
-                        Time *
-                      </label>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Time *</label>
                       <input
                         type="time"
                         name="publishTime"
                         value={postForm.publishTime}
                         onChange={handleInputChange}
-                        className={`w-full px-3 py-2 bg-white border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm ${
-                          errors.publishTime
-                            ? "border-red-500"
-                            : "border-gray-300"
+                        className={`w-full px-3 py-2 border rounded-none focus:ring-1 focus:ring-[#800000] focus:border-[#800000] outline-none text-sm tracking-normal ${
+                          errors.publishTime ? "border-red-500" : "border-slate-300"
                         }`}
                       />
-                      {errors.publishTime && (
-                        <p className="mt-1 text-xs text-red-600">
-                          {errors.publishTime}
-                        </p>
-                      )}
                     </div>
                   </div>
                 )}
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="flex gap-3 pt-6 mt-6 border-t">
-            <button
-              onClick={() => handleSubmit("draft")}
-              disabled={uploading || uploadingImages.length > 0}
-              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-            >
-              {uploading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin"></div>
-                  <span>Saving...</span>
-                </div>
-              ) : (
-                <>
-                  <Save size={16} />
-                  <span>{editingPost ? "Update Draft" : "Save as Draft"}</span>
-                </>
-              )}
-            </button>
-            <button
-              onClick={() => handleSubmit("publish")}
-              disabled={uploading || uploadingImages.length > 0}
-              className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-medium py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-            >
-              {uploading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Processing...</span>
-                </div>
-              ) : (
-                <>
-                  <Megaphone size={16} />
-                  <span>
-                    {editingPost
-                      ? "Update Post"
-                      : postForm.scheduleForLater
-                      ? "Schedule Post"
-                      : "Publish Now"}
-                  </span>
-                </>
-              )}
-            </button>
-          </div>
+        {/* Footer Actions */}
+        <div className="flex gap-4 p-8 border-t border-slate-100 bg-slate-50 sticky bottom-0 z-10">
+          <button
+            onClick={() => handleSubmit("draft")}
+            disabled={uploading || uploadingImages.length > 0}
+            className="flex-1 bg-white border-2 border-[#800000] text-[#800000] font-bold py-3 px-4 rounded-none transition-all flex items-center justify-center gap-2 disabled:opacity-50 text-xs uppercase tracking-normal hover:bg-[#800000] hover:text-white"
+          >
+            {uploading ? (
+              <div className="w-4 h-4 border-2 border-slate-200 border-t-[#800000] rounded-full animate-spin"></div>
+            ) : (
+              <>
+                <Save size={16} />
+                <span>{editingPost ? "Update Draft" : "Save as Draft"}</span>
+              </>
+            )}
+          </button>
+          
+          <button
+            onClick={() => handleSubmit("publish")}
+            disabled={uploading || uploadingImages.length > 0}
+            className="flex-1 bg-[#800000] hover:bg-[#600000] text-white font-bold py-3 px-4 rounded-none transition-all flex items-center justify-center gap-2 disabled:opacity-50 text-xs uppercase tracking-normal shadow-md"
+          >
+            {uploading ? (
+              <div className="w-4 h-4 border-2 border-slate-400 border-t-white rounded-full animate-spin"></div>
+            ) : (
+              <>
+                <Megaphone size={16} />
+                <span>
+                  {editingPost
+                    ? "Update Post"
+                    : postForm.scheduleForLater
+                    ? "Schedule Post"
+                    : "Publish Now"}
+                </span>
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>
@@ -1397,49 +1320,42 @@ const RecognitionCard = ({ post, onArchive, onView, onEdit, activeTab }) => {
 
   const statusBadge = getStatusBadge(post.status);
 
-  return (
-    <div className="group bg-white rounded-xl border border-light transition-all duration-300 overflow-hidden h-full flex flex-col transform hover:-translate-y-1">
+return (
+    <div className="group bg-white border border-zinc-200 transition-all duration-300 overflow-hidden h-full flex flex-col hover:shadow-md">
+      
+      {/* Media Section - Optimized for Full Image Visibility */}
       {post.images && post.images.length > 0 ? (
-        <div className="relative h-48 overflow-hidden">
+        <div className="relative h-48 overflow-hidden border-b border-zinc-100 shrink-0 bg-zinc-50 flex items-center justify-center p-2">
           <img
             src={post.images[0].url || post.images[0].secure_url}
             alt={post.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            /* Pinaka-importante: object-contain para buong image ang makita */
+            className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
-          <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
-            <div
-              className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadge.color} flex items-center gap-1.5 backdrop-blur-sm`}
-            >
+          
+          <div className="absolute top-2 left-2 right-2 flex justify-between items-start pointer-events-none">
+            <div className={`px-2 py-0.5 rounded text-[10px] font-bold ${statusBadge.color} flex items-center gap-1 shadow-sm`}>
               <span>{statusBadge.icon}</span>
               <span>{statusBadge.label}</span>
             </div>
-            <div
-              className={`px-3 py-1 rounded-full text-xs font-semibold ${typeInfo.bgColor} ${typeInfo.textColor} flex items-center gap-1.5 backdrop-blur-sm`}
-            >
+            <div className={`px-2 py-0.5 rounded text-[10px] font-bold ${typeInfo.bgColor} ${typeInfo.textColor || 'text-black'} flex items-center gap-1 shadow-sm`}>
               {typeInfo.icon}
               <span>{typeInfo.label}</span>
             </div>
           </div>
         </div>
       ) : (
-        <div className={`relative h-48 ${typeInfo.bgColor}`}>
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-            <div
-              className={`w-16 h-16 rounded-full bg-gradient-to-r ${typeInfo.color} flex items-center justify-center mb-3`}
-            >
-              {React.cloneElement(typeInfo.icon, {
-                className: "w-8 h-8 text-white",
-              })}
-            </div>
-            <h3 className="text-lg font-bold text-gray-800 text-center">
-              {typeInfo.label}
-            </h3>
+        <div className={`relative h-48 ${typeInfo.bgColor} border-b border-zinc-100 flex flex-col items-center justify-center p-4 shrink-0`}>
+          <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${typeInfo.color} flex items-center justify-center mb-2 shadow-sm`}>
+            {React.cloneElement(typeInfo.icon, {
+              className: "w-6 h-6 text-white",
+            })}
           </div>
-          <div className="absolute top-3 left-3 right-3 flex justify-between">
-            <div
-              className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadge.color} flex items-center gap-1.5`}
-            >
+          <h3 className="text-xs font-bold text-gray-800 text-center uppercase tracking-tight">
+            {typeInfo.label}
+          </h3>
+          <div className="absolute top-2 left-2">
+            <div className={`px-2 py-0.5 rounded text-[10px] font-bold ${statusBadge.color} flex items-center gap-1`}>
               <span>{statusBadge.icon}</span>
               <span>{statusBadge.label}</span>
             </div>
@@ -1447,52 +1363,47 @@ const RecognitionCard = ({ post, onArchive, onView, onEdit, activeTab }) => {
         </div>
       )}
 
+      {/* Content Section - Displaying Full Text */}
       <div className="flex-1 p-4 flex flex-col">
         <div className="mb-3">
-          <h3 className="font-bold text-gray-900 text-base leading-snug line-clamp-2 mb-2 group-hover:text-red-600 transition-colors">
+          <h3 className="font-bold text-black text-[13px] leading-snug mb-2 group-hover:text-[#800000] transition-colors">
             {post.title}
           </h3>
           {post.tags && post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-2">
-              {post.tags.slice(0, 2).map((tag, index) => (
-                <span key={index} className="text-gray-600 italic text-xs">
-                  #{tag}
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {post.tags.map((tag, index) => (
+                <span key={index} className="text-zinc-600 italic text-[10px] font-medium">
+                  #{tag.toLowerCase()}
                 </span>
               ))}
-              {post.tags.length > 2 && (
-                <span className="text-gray-500 text-xs italic">
-                  +{post.tags.length - 2} more
-                </span>
-              )}
             </div>
           )}
         </div>
 
-        <p className="text-sm text-gray-600 leading-relaxed line-clamp-3 mb-4 flex-1">
+        <p className="text-[11px] text-zinc-900 font-medium leading-relaxed mb-5 flex-1 whitespace-pre-line">
           {post.description}
         </p>
 
-        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-3 group-hover:bg-gray-100 transition-colors">
-          <div
-            className={`w-10 h-10 bg-gradient-to-r ${typeInfo.color} rounded-full flex items-center justify-center text-white font-bold text-sm`}
-          >
+        {/* User Info Section */}
+        <div className="flex items-center gap-2.5 p-2.5 bg-zinc-50 border border-zinc-100 mb-4">
+          <div className={`w-9 h-9 bg-gradient-to-r ${typeInfo.color} shrink-0 flex items-center justify-center text-white font-bold text-xs`}>
             {getAvatarInitials(employeeName)}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex justify-between items-center w-full">
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-900 text-sm truncate">
+            <div className="flex justify-between items-start w-full">
+              <div className="flex-1 min-w-0 pr-2">
+                <h4 className="font-bold text-black text-[11px] uppercase tracking-tight break-words">
                   {employeeName}
                 </h4>
-                <p className="text-xs text-gray-600 truncate">
-                  {employeePosition && ` ${employeePosition}`}
+                <p className="text-[10px] text-zinc-600 font-bold uppercase break-words">
+                  {employeePosition || "Staff member"}
                 </p>
               </div>
-              <div className="text-right ml-4 whitespace-nowrap">
-                <div className="text-sm font-medium text-gray-900">
+              <div className="text-right shrink-0">
+                <div className="text-[10px] font-bold text-black leading-none">
                   {getTimeAgo(post.createdAt)}
                 </div>
-                <div className="text-xs text-gray-500 mt-0.5">
+                <div className="text-[9px] text-zinc-500 font-bold mt-1">
                   {formatDate(post.createdAt)}
                 </div>
               </div>
@@ -1500,42 +1411,43 @@ const RecognitionCard = ({ post, onArchive, onView, onEdit, activeTab }) => {
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-          <div className="flex items-center gap-4"></div>
-          <div className="flex items-center gap-1 round-full">
+        {/* Footer Actions */}
+        <div className="flex items-center justify-between pt-3 border-t border-zinc-100 mt-auto">
+          <div className="flex items-center gap-1">
             {activeTab !== "archived" && post.status !== "archived" && (
               <button
                 onClick={handleArchive}
-                className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors group/archive"
+                className="p-1.5 text-zinc-500 hover:text-black hover:bg-zinc-100 transition-colors"
                 title="Archive"
               >
-                <Archive className="w-4 h-4 group-hover/archive:text-yellow-600" />
+                <Archive className="w-4 h-4" />
               </button>
             )}
             {activeTab === "archived" && post.status === "archived" && (
               <button
                 onClick={handleArchive}
-                className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors group/archive"
+                className="p-1.5 text-zinc-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
                 title="Restore"
               >
-                <ArchiveRestore className="w-4 h-4 group-hover/archive:text-green-600" />
+                <ArchiveRestore className="w-4 h-4" />
               </button>
             )}
             <button
               onClick={handleEdit}
-              className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors group/edit"
+              className="p-1.5 text-zinc-500 hover:text-blue-700 hover:bg-blue-50 transition-colors"
               title="Edit"
             >
-              <Edit className="w-4 h-4 group-hover/edit:scale-110 transition-transform" />
-            </button>
-            <button
-              onClick={handleView}
-              className="bg-gradient-to-r from-red-600 to-red-700 text-white px-3 py-1.5 rounded-full text-xs font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-300 flex items-center gap-1.5 group/view"
-            >
-              <span>View Details</span>
-              <ArrowUpRight className="w-4 h-4 group-hover/readmore:translate-x-0.5 group-hover/readmore:-translate-y-0.5 transition-transform" />
+              <Edit className="w-4 h-4" />
             </button>
           </div>
+
+          <button
+            onClick={handleView}
+            className="bg-[#800000] text-white px-3 py-1.5 text-[10px] font-bold uppercase hover:bg-black transition-all flex items-center gap-1.5 shadow-sm shrink-0"
+          >
+            <span>View Details</span>
+            <ArrowUpRight className="w-3.5 h-3.5 stroke-[3]" />
+          </button>
         </div>
       </div>
     </div>
