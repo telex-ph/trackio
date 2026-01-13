@@ -14,6 +14,9 @@ import {
   AlertTriangle,
   PlusCircle,
   FileText,
+  FileCheck,
+  CalendarPlus,
+  CalendarClock,
 } from "lucide-react";
 import SidebarLink from "./SidebarLink";
 import CustomCollapse from "./CustomCollapse";
@@ -131,6 +134,29 @@ const BackOfficeHeadSidebar = ({
           label="My Offenses"
           isCollapsed={isCollapsed}
           badge={!isCollapsed ? totalUnreadMyOffense : 0}
+        />
+      </CustomCollapse>
+            <CustomCollapse
+        icon={<CalendarClock className="w-5 h-5" />}
+        label="Leave"
+        isCollapsed={isCollapsed}
+        open={activeDropdown === "leave"}
+        onToggle={() =>
+          setActiveDropdown(activeDropdown === "leave" ? null : "leave")
+        }
+        badge={totalUnread}
+      >
+        <SidebarLink
+          to="/back-office-head/apply-leave"
+          icon={CalendarPlus}
+          label="Apply Leave"
+          isCollapsed={isCollapsed}
+        />
+        <SidebarLink
+          to={`/back-office-head/my-team-requests`}
+          icon={FileCheck}
+          label="Team Requests"
+          isCollapsed={isCollapsed}
         />
       </CustomCollapse>
     </div>
