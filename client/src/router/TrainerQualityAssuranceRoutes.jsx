@@ -9,6 +9,8 @@ import SharedSettings from "../pages/shared/SharedSettings";
 import SharedTicket from "../pages/shared/SharedTicket";
 import { Navigate } from "react-router-dom";
 import SharedCourse from "../pages/shared/SharedCourse";
+import SharedCreateApplyLeave from "../pages/shared/SharedCreateApplyLeave";
+import SharedMyTeamLeave from "../pages/shared/SharedMyTeamLeave";
 
 const TRAINER_QUALITY_ASSURANCE_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -26,6 +28,15 @@ const TRAINER_QUALITY_ASSURANCE_ROUTES = [
   { path: "account-settings", element: <SharedSettings /> },
 
   { path: "createoffense", element: <AgentCreateOffenses /> },
+
+    {
+    path: "apply-leave",
+    element: <SharedCreateApplyLeave />,
+  },
+  {
+    path: "my-team-requests",
+    element: <SharedMyTeamLeave />,
+  },
 ];
 
 export default TRAINER_QUALITY_ASSURANCE_ROUTES;

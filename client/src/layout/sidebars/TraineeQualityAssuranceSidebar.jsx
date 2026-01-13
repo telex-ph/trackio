@@ -11,6 +11,9 @@ import {
   AlertTriangle,
   PlusCircle,
   FileText,
+  CalendarPlus,
+  FileCheck,
+  CalendarClock,
 } from "lucide-react";
 import SidebarLink from "./SidebarLink";
 import CustomCollapse from "./CustomCollapse";
@@ -73,6 +76,29 @@ const TraineeQualityAssuranceSidebar = ({
           label="My Offenses"
           isCollapsed={isCollapsed}
           badge={!isCollapsed ? totalUnreadMyOffense : 0}
+        />
+      </CustomCollapse>
+      <CustomCollapse
+        icon={<CalendarClock className="w-5 h-5" />}
+        label="Leave"
+        isCollapsed={isCollapsed}
+        open={activeDropdown === "leave"}
+        onToggle={() =>
+          setActiveDropdown(activeDropdown === "leave" ? null : "leave")
+        }
+        badge={totalUnread}
+      >
+        <SidebarLink
+          to="/trainer-quality-assurance/apply-leave"
+          icon={CalendarPlus}
+          label="Apply Leave"
+          isCollapsed={isCollapsed}
+        />
+        <SidebarLink
+          to={`/trainer-quality-assurance/my-team-requests`}
+          icon={FileCheck}
+          label="Team Requests"
+          isCollapsed={isCollapsed}
         />
       </CustomCollapse>
       <SidebarLink
