@@ -7,7 +7,6 @@ import { ObjectId } from 'mongodb';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Siguraduhin na may uploads directory
 const ensureUploadsDir = () => {
   const uploadsDir = path.join(process.cwd(), 'uploads');
   
@@ -20,7 +19,6 @@ const ensureUploadsDir = () => {
 
 // ========== FOLDER CONTROLLERS ==========
 
-// Get all folders
 export const getFolders = async (req, res) => {
   try {
     console.log('📁 GET folders request');
@@ -35,7 +33,6 @@ export const getFolders = async (req, res) => {
   }
 };
 
-// Create folder
 export const createFolder = async (req, res) => {
   try {
     const userId = req.headers['x-user-id'];
@@ -68,7 +65,6 @@ export const createFolder = async (req, res) => {
   }
 };
 
-// Delete folder
 export const deleteFolder = async (req, res) => {
   try {
     const { id } = req.params;
@@ -101,7 +97,6 @@ export const deleteFolder = async (req, res) => {
 
 // ========== DOCUMENT CONTROLLERS ==========
 
-// Get all documents
 export const getDocuments = async (req, res) => {
   try {
     const { category, folderId, search } = req.query;
@@ -120,13 +115,11 @@ export const getDocuments = async (req, res) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
     
-    // Build query
     let query = { 
       type: 'document',
       status: { $ne: 'Archived' }
     };
     
-    // Role-based access control
     const normalizedRole = userRole?.replace(/-/g, '_');
     const hrAdminRoles = ['admin_hr_head', 'admin', 'hr_admin'];
     
@@ -142,7 +135,6 @@ export const getDocuments = async (req, res) => {
       query.category = category;
     }
     
-    // Handle folderId query - FIXED
     if (folderId && folderId !== 'null' && folderId !== '') {
       query.folderId = folderId;
     } else if (folderId === 'null' || folderId === '') {
@@ -162,7 +154,6 @@ export const getDocuments = async (req, res) => {
   }
 };
 
-// Get archived documents
 export const getArchivedDocuments = async (req, res) => {
   try {
     const { search } = req.query;
@@ -192,7 +183,6 @@ export const getArchivedDocuments = async (req, res) => {
   }
 };
 
-// Get document versions
 export const getDocumentVersions = async (req, res) => {
   try {
     const { id } = req.params;
@@ -215,7 +205,6 @@ export const getDocumentVersions = async (req, res) => {
   }
 };
 
-// Get categories
 export const getCategories = async (req, res) => {
   try {
     console.log('📋 GET categories request');
@@ -230,7 +219,6 @@ export const getCategories = async (req, res) => {
   }
 };
 
-// Upload new document - FIXED
 export const uploadDocument = async (req, res) => {
   let uniqueFileName = null;
   const uploadsDir = ensureUploadsDir();
@@ -250,7 +238,6 @@ export const uploadDocument = async (req, res) => {
       hasFileData: !!fileData
     });
     
-    // 1. Validation Checks
     if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
@@ -259,7 +246,6 @@ export const uploadDocument = async (req, res) => {
       return res.status(400).json({ error: 'File data is required' });
     }
 
-    // 2. Parse Access Roles
     let parsedAccessRoles = ['hr_admin', 'team_lead', 'employee'];
     if (accessRoles) {
       try {
@@ -273,16 +259,14 @@ export const uploadDocument = async (req, res) => {
       }
     }
     
-    // 3. Handle Folder ID - FIXED
     let finalFolderId = null;
     console.log('📁 Processing folderId:', folderId);
     
     if (folderId && folderId !== '' && folderId !== 'null') {
       try {
-        // Check if folder exists
         const folder = await Repository.getFolderById(folderId);
         if (folder) {
-          finalFolderId = folderId; // Store as string
+          finalFolderId = folderId;
           console.log('📁 Using folder:', folder.name);
         } else {
           console.warn('📁 Folder not found, using null');
@@ -296,7 +280,6 @@ export const uploadDocument = async (req, res) => {
     
     console.log('📁 Final folderId to save:', finalFolderId);
     
-    // 4. File Path Configuration
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 8);
     const safeFileName = (fileName || 'unnamed')
@@ -306,17 +289,14 @@ export const uploadDocument = async (req, res) => {
     
     const filePath = path.join(uploadsDir, uniqueFileName);
     
-    // 5. Save File to Storage from Base64
-    let fileBuffer;
     try {
       if (!fileData.includes('base64,')) {
         return res.status(400).json({ error: 'Invalid file data format' });
       }
       
       const base64Data = fileData.replace(/^data:[^;]+;base64,/, '');
-      fileBuffer = Buffer.from(base64Data, 'base64');
+      const fileBuffer = Buffer.from(base64Data, 'base64');
       
-      // Check file size (20MB limit)
       const fileSizeMB = fileBuffer.length / (1024 * 1024);
       if (fileSizeMB > 20) {
         return res.status(400).json({ error: `File size (${fileSizeMB.toFixed(2)}MB) exceeds 20MB limit` });
@@ -324,44 +304,43 @@ export const uploadDocument = async (req, res) => {
       
       fs.writeFileSync(filePath, fileBuffer);
       console.log(`✅ File saved: ${uniqueFileName} (${fileSizeMB.toFixed(2)}MB)`);
+      
+      const documentData = {
+        title: (title || fileName || 'Untitled Document').trim(),
+        description: (description || '').trim(),
+        category: category || 'Policies',
+        folderId: finalFolderId,
+        fileName: fileName || 'unknown',
+        fileType: fileType || 'application/octet-stream',
+        fileSize: fileBuffer.length,
+        fileUrl: `/api/repository/download/${uniqueFileName}`,
+        accessRoles: parsedAccessRoles,
+        uploadedBy: userId,
+        version: 1,
+        status: 'Draft',
+        type: 'document',
+      };
+      
+      console.log('📄 Saving document to database:', {
+        title: documentData.title,
+        folderId: documentData.folderId,
+        fileName: documentData.fileName
+      });
+      
+      const document = await Repository.create(documentData);
+      
+      console.log("✅ UPLOAD SUCCESS - Document ID:", document._id);
+      return res.status(201).json(document);
+      
     } catch (fileError) {
       console.error('❌ File processing error:', fileError);
       return res.status(500).json({ error: 'Failed to process file: ' + fileError.message });
     }
     
-    // 6. Create document in database - FIXED folderId storage
-    const documentData = {
-      title: (title || fileName || 'Untitled Document').trim(),
-      description: (description || '').trim(),
-      category: category || 'Policies',
-      folderId: finalFolderId, // Store as string or null
-      fileName: fileName || 'unknown',
-      fileType: fileType || 'application/octet-stream',
-      fileSize: fileBuffer.length,
-      fileUrl: `/api/repository/download/${uniqueFileName}`,
-      accessRoles: parsedAccessRoles,
-      uploadedBy: userId,
-      version: 1,
-      status: 'Draft',
-      type: 'document',
-    };
-    
-    console.log('📄 Saving document to database:', {
-      title: documentData.title,
-      folderId: documentData.folderId,
-      fileName: documentData.fileName
-    });
-    
-    const document = await Repository.create(documentData);
-    
-    console.log("✅ UPLOAD SUCCESS - Document ID:", document._id);
-    return res.status(201).json(document);
-    
   } catch (error) {
     console.error("❌ UPLOAD ERROR:", error.message);
     console.error(error.stack);
     
-    // Clean up file if it was created
     if (uniqueFileName && fs.existsSync(path.join(uploadsDir, uniqueFileName))) {
       try {
         fs.unlinkSync(path.join(uploadsDir, uniqueFileName));
@@ -378,7 +357,6 @@ export const uploadDocument = async (req, res) => {
   }
 };
 
-// Update document - FIXED
 export const updateDocument = async (req, res) => {
   try {
     const { id } = req.params;
@@ -387,13 +365,11 @@ export const updateDocument = async (req, res) => {
     
     console.log('✏️ UPDATE document request for ID:', id);
     console.log('✏️ Update data:', updateData);
-    console.log('✏️ User ID:', userId);
     
     if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
     
-    // Get the document first
     let document = await Repository.getById(id);
     
     if (!document) {
@@ -406,7 +382,6 @@ export const updateDocument = async (req, res) => {
     
     console.log('📄 Found document to update:', document.title, 'ID:', document._id);
     
-    // Prepare update data
     const dataToUpdate = {
       title: updateData.title || document.title,
       description: updateData.description || document.description,
@@ -415,7 +390,6 @@ export const updateDocument = async (req, res) => {
       updatedAt: new Date(),
     };
     
-    // Handle folderId - FIXED
     if (updateData.folderId !== undefined) {
       if (updateData.folderId === '' || updateData.folderId === 'null') {
         dataToUpdate.folderId = null;
@@ -441,8 +415,7 @@ export const updateDocument = async (req, res) => {
     
     console.log('✏️ Final update data to save:', dataToUpdate);
     
-    // Update the document using its _id
-    const updatedDocument = await Repository.update(document._id.toString(), dataToUpdate);
+    const updatedDocument = await Repository.update(id, dataToUpdate);
     
     if (!updatedDocument) {
       return res.status(500).json({ 
@@ -461,12 +434,10 @@ export const updateDocument = async (req, res) => {
     return res.status(500).json({
       message: "Failed to update document",
       error: error.message,
-      details: error.stack
     });
   }
 };
 
-// Update document status
 export const updateStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -480,46 +451,71 @@ export const updateStatus = async (req, res) => {
     }
     
     if (!['Draft', 'Approved', 'Archived'].includes(status)) {
-      return res.status(400).json({ error: 'Invalid status' });
+      return res.status(400).json({ 
+        error: 'Invalid status',
+        validStatuses: ['Draft', 'Approved', 'Archived']
+      });
     }
     
-    // Get the document first
+    console.log('🔍 Getting document by ID:', id);
     let document = await Repository.getById(id);
     
     if (!document) {
+      console.error('❌ Document not found with ID:', id);
       return res.status(404).json({ 
         error: 'Document not found',
         details: `Document with ID ${id} does not exist`
       });
     }
     
+    console.log('📄 Found document to update status:', {
+      id: document._id,
+      title: document.title,
+      currentStatus: document.status,
+      newStatus: status
+    });
+    
     const updateData = { 
-      status,
+      status: status,
       updatedAt: new Date()
     };
     
-    const updatedDocument = await Repository.update(document._id.toString(), updateData);
+    console.log('🔄 Updating document with data:', updateData);
+    
+    // FIXED: Use the document's string _id for update
+    const updatedDocument = await Repository.update(document._id, updateData);
     
     if (!updatedDocument) {
+      console.error('❌ Update returned null');
       return res.status(500).json({ 
         error: 'Status update failed',
-        details: 'Could not update document status'
+        details: 'Could not update document status in database'
       });
     }
     
-    console.log('✅ Status updated successfully');
-    return res.status(200).json(updatedDocument);
+    console.log('✅ Status updated successfully:', {
+      documentId: updatedDocument._id,
+      newStatus: updatedDocument.status,
+      updatedAt: updatedDocument.updatedAt
+    });
+    
+    return res.status(200).json({
+      message: 'Status updated successfully',
+      document: updatedDocument
+    });
     
   } catch (error) {
     console.error("❌ Error updating document status:", error);
+    console.error("❌ Error stack:", error.stack);
+    
     return res.status(500).json({
       message: "Failed to update document status",
       error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
 
-// Restore version
 export const restoreVersion = async (req, res) => {
   try {
     const { id } = req.params;
@@ -581,11 +577,11 @@ export const restoreVersion = async (req, res) => {
   }
 };
 
-// Delete document
 export const deleteDocument = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.headers['x-user-id'];
+    const userRole = req.headers['x-user-role'];
     
     console.log('🗑️ DELETE document request:', id, 'by user:', userId);
     
@@ -593,7 +589,6 @@ export const deleteDocument = async (req, res) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
     
-    // Get the document first
     let document = await Repository.getById(id);
     
     if (!document) {
@@ -603,7 +598,13 @@ export const deleteDocument = async (req, res) => {
       });
     }
     
-    // Delete associated file
+    const normalizedRole = userRole?.replace(/-/g, '_');
+    const hrAdminRoles = ['admin_hr_head', 'admin', 'hr_admin'];
+    
+    if (!hrAdminRoles.includes(normalizedRole)) {
+      return res.status(403).json({ error: 'Unauthorized - HR Admin access required' });
+    }
+    
     if (document.fileUrl) {
       try {
         const fileName = document.fileUrl.split('/').pop();
@@ -619,8 +620,7 @@ export const deleteDocument = async (req, res) => {
       }
     }
     
-    // Delete from database
-    const result = await Repository.delete(document._id.toString());
+    const result = await Repository.delete(id);
     
     console.log('✅ Document deleted successfully');
     return res.status(200).json({ 
@@ -637,7 +637,6 @@ export const deleteDocument = async (req, res) => {
   }
 };
 
-// Download document
 export const downloadDocument = async (req, res) => {
   try {
     const { filename } = req.params;
@@ -660,7 +659,6 @@ export const downloadDocument = async (req, res) => {
       });
     }
     
-    // Set proper headers
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-Type', 'application/octet-stream');
     

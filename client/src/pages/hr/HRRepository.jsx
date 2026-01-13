@@ -53,7 +53,7 @@ const HRRepository = () => {
     
     const authenticatedApi = api.create({
       baseURL: import.meta.env.VITE_API_BASE_URL,
-      timeout: 120000, // Increased timeout for large file uploads
+      timeout: 180000, // Increased timeout for large file uploads
       withCredentials: true,
       headers: {
         'Content-Type': 'application/json',
@@ -280,7 +280,7 @@ const HRRepository = () => {
         setSelectedFolder(null);
       }
       fetchFolders();
-      fetchDocuments(); // Refresh documents to show moved ones
+      fetchDocuments();
     } catch (error) {
       console.error('Delete folder error:', error);
       alert('Failed to delete folder: ' + (error.response?.data?.error || error.message || 'Unknown error'));
@@ -299,6 +299,7 @@ const HRRepository = () => {
         };
         
         reader.onerror = (error) => {
+          console.log(error)
           reject(new Error('Failed to convert file to base64'));
         };
         
@@ -340,12 +341,11 @@ const HRRepository = () => {
       const fileData = await fileToBase64(newDocument.file);
       console.log('File conversion completed');
       
-      // Use correct folderId - send as string
       const uploadData = {
         title: newDocument.title.trim() || newDocument.file.name.replace(/\.[^/.]+$/, ""),
         description: newDocument.description.trim(),
         category: newDocument.category,
-        folderId: newDocument.folderId || null, // Send null for no folder
+        folderId: newDocument.folderId || null,
         accessRoles: JSON.stringify(newDocument.accessRoles),
         fileData: fileData,
         fileName: newDocument.file.name,
@@ -355,12 +355,13 @@ const HRRepository = () => {
       console.log('Uploading document...', {
         title: uploadData.title,
         fileName: uploadData.fileName,
-        folderId: uploadData.folderId,
-        fileSize: fileData.length
+        folderId: uploadData.folderId
       });
 
       const authApi = getAuthenticatedApi();
-      const response = await authApi.post('/repository/upload', uploadData);
+      const response = await authApi.post('/repository/upload', uploadData, {
+        timeout: 180000
+      });
 
       console.log('Upload successful:', response.data);
       alert('✅ Document uploaded successfully!');
@@ -377,7 +378,6 @@ const HRRepository = () => {
         fileType: ''
       });
       
-      // Refresh documents list
       if (viewArchived) {
         fetchArchivedDocuments();
       } else {
@@ -386,12 +386,6 @@ const HRRepository = () => {
 
     } catch (error) {
       console.error('Upload Error:', error);
-      console.error('Upload Error details:', {
-        message: error.message,
-        code: error.code,
-        response: error.response?.data,
-        config: error.config
-      });
       
       let errorMessage = 'Upload failed: ';
       if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
@@ -427,10 +421,9 @@ const HRRepository = () => {
     try {
       const authApi = getAuthenticatedApi();
       
-      // Ensure folderId is handled correctly
       const updateData = {
         ...editDocument,
-        folderId: editDocument.folderId || null // Send null for root folder
+        folderId: editDocument.folderId || null
       };
       
       console.log('Sending update for document:', selectedDocument._id, 'with data:', updateData);
@@ -442,7 +435,6 @@ const HRRepository = () => {
       
       setShowEditModal(false);
       
-      // Refresh documents list
       if (viewArchived) {
         fetchArchivedDocuments();
       } else {
@@ -456,26 +448,48 @@ const HRRepository = () => {
   };
 
   const handleStatusChange = async (docId, newStatus) => {
-    if (!docId) return;
+  if (!docId) return;
+  
+  const action = newStatus === 'Archived' ? 'archive' : 'change status';
+  if (!confirm(`Are you sure you want to ${action} to "${newStatus}"?`)) return;
+  
+  try {
+    setLoading(true);
+    const authApi = getAuthenticatedApi();
     
-    if (!confirm(`Are you sure you want to change status to "${newStatus}"?`)) return;
+    console.log('🔄 Changing status for document:', docId, 'to:', newStatus);
     
-    try {
-      const authApi = getAuthenticatedApi();
-      await authApi.patch(`/repository/documents/${docId}/status`, { status: newStatus });
-      
-      alert('Status updated successfully!');
-      
-      if (viewArchived) {
-        fetchArchivedDocuments();
-      } else {
-        fetchDocuments();
-      }
-    } catch (error) {
-      console.error('Status change error:', error);
-      alert('Status update failed: ' + (error.response?.data?.error || error.message || 'Unknown error'));
+    const response = await authApi.patch(`/repository/documents/${docId}/status`, { 
+      status: newStatus 
+    });
+    
+    console.log('✅ Status change response:', response.data);
+    alert('Status updated successfully!');
+    
+    // Refresh documents list
+    if (viewArchived) {
+      fetchArchivedDocuments();
+    } else {
+      fetchDocuments();
     }
-  };
+  } catch (error) {
+    console.error('Status change error:', error);
+    console.error('Error response:', error.response?.data);
+    
+    let errorMessage = 'Status update failed: ';
+    if (error.response?.data?.error) {
+      errorMessage = error.response.data.error;
+    } else if (error.message) {
+      errorMessage += error.message;
+    } else {
+      errorMessage = 'Unknown error occurred during status update.';
+    }
+    
+    alert(errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleDelete = async () => {
     if (!selectedDocument) return;
@@ -879,7 +893,7 @@ const HRRepository = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
             {displayDocuments.map(doc => (
-              <div key={doc._id} className="rounded-lg p-4 hover:bg-gray-50">
+              <div key={doc._id} className="rounded-lg border p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <div className={`w-3 h-3 rounded-full ${
@@ -988,7 +1002,7 @@ const HRRepository = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-2 pt-3">
+                <div className="flex gap-2 pt-3 border-t">
                   <button
                     onClick={() => handleDownload(doc.fileUrl)}
                     className="flex-1 px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 flex items-center justify-center gap-1"
