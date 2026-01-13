@@ -20,6 +20,8 @@ import SharedCourse from "../pages/shared/SharedCourse";
 // Others
 import { Navigate } from "react-router-dom";
 import Roles from "../constants/roles";
+import SharedCreateApplyLeave from "../pages/shared/SharedCreateApplyLeave";
+import SharedMyTeamLeave from "../pages/shared/SharedMyTeamLeave";
 
 const OM_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -50,6 +52,14 @@ const OM_ROUTES = [
   {
     path: "createoffense",
     element: <TeamLeaderCreateOffenses />,
+  },
+    {
+    path: "apply-leave",
+    element: <SharedCreateApplyLeave />,
+  },
+  {
+    path: "my-team-requests",
+    element: <SharedMyTeamLeave />,
   },
   {
     path: "courses",

@@ -17,6 +17,9 @@ import {
   TrendingUp,
   FileText,
   Eye,
+  CalendarClock,
+  CalendarPlus,
+  FileCheck,
 } from "lucide-react";
 import SidebarLink from "./SidebarLink";
 import CustomCollapse from "./CustomCollapse";
@@ -31,7 +34,9 @@ const ComplianceSidebar = ({
   unreadMyCoaching,
 }) => {
   const totalUnread =
-    +(unreadMyOffenses || 0) + (unreadEscalation || 0) + (unreadMyCoaching || 0);
+    +(unreadMyOffenses || 0) +
+    (unreadEscalation || 0) +
+    (unreadMyCoaching || 0);
   const totalUnreadMyOffense =
     (unreadMyOffenses || 0) + (unreadMyCoaching || 0);
 
@@ -154,6 +159,29 @@ const ComplianceSidebar = ({
           to={`/compliance/offenses-monitoring`}
           icon={Eye}
           label="Offense Monitoring"
+          isCollapsed={isCollapsed}
+        />
+      </CustomCollapse>
+      <CustomCollapse
+        icon={<CalendarClock className="w-5 h-5" />}
+        label="Leave"
+        isCollapsed={isCollapsed}
+        open={activeDropdown === "leave"}
+        onToggle={() =>
+          setActiveDropdown(activeDropdown === "leave" ? null : "leave")
+        }
+        badge={totalUnread}
+      >
+        <SidebarLink
+          to="/compliance/apply-leave"
+          icon={CalendarPlus}
+          label="Apply Leave"
+          isCollapsed={isCollapsed}
+        />
+        <SidebarLink
+          to={`/compliance/my-team-requests`}
+          icon={FileCheck}
+          label="Team Requests"
           isCollapsed={isCollapsed}
         />
       </CustomCollapse>

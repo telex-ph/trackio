@@ -29,7 +29,7 @@ const TRAINER_QUALITY_ASSURANCE_ROUTES = [
 
   { path: "createoffense", element: <AgentCreateOffenses /> },
 
-    {
+  {
     path: "apply-leave",
     element: <SharedCreateApplyLeave />,
   },

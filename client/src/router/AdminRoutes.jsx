@@ -26,6 +26,8 @@ import TeamLeaderOffenses from "../pages/team-leader/TeamLeaderOffenses";
 import TeamLeaderCreateOffenses from "../pages/team-leader/TeamLeaderCreateOffense";
 import SharedCourse from "../pages/shared/SharedCourse";
 import SharedAnalytics from "../pages/shared/SharedAnalytics";
+import SharedCreateApplyLeave from "../pages/shared/SharedCreateApplyLeave";
+import SharedMyTeamLeave from "../pages/shared/SharedMyTeamLeave";
 
 const ADMIN_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -73,6 +75,14 @@ const ADMIN_ROUTES = [
   {
     path: "createoffense",
     element: <TeamLeaderCreateOffenses />,
+  },
+  {
+    path: "apply-leave",
+    element: <SharedCreateApplyLeave />,
+  },
+  {
+    path: "my-team-requests",
+    element: <SharedMyTeamLeave />,
   },
 ];
 export default ADMIN_ROUTES;

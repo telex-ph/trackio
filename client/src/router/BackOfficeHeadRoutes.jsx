@@ -23,6 +23,8 @@ import SharedSettings from "../pages/shared/SharedSettings";
 import SharedTeamViewMembers from "../pages/shared/SharedTeamViewMembers";
 import SharedTicket from "../pages/shared/SharedTicket";
 import SharedCourse from "../pages/shared/SharedCourse";
+import SharedCreateApplyLeave from "../pages/shared/SharedCreateApplyLeave";
+import SharedMyTeamLeave from "../pages/shared/SharedMyTeamLeave";
 
 const BACK_OFFICE_HEAD_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -72,6 +74,14 @@ const BACK_OFFICE_HEAD_ROUTES = [
   {
     path: "createoffense",
     element: <TeamLeaderCreateOffense />,
+  },
+  {
+    path: "apply-leave",
+    element: <SharedCreateApplyLeave />,
+  },
+  {
+    path: "my-team-requests",
+    element: <SharedMyTeamLeave />,
   },
 ];
 
