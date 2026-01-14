@@ -568,7 +568,7 @@ const HR_OffenseDetails = ({
 
           <div className="space-y-3 pt-4">
             <div className="flex flex-col sm:flex-row gap-3">
-              {formData.status === "Respondant Explained" && (
+              {["Respondant Explained", "NTE"].includes(formData.status) && (
                 <button
                   onClick={() => setShowHearingModal(true)}
                   className="flex-1 bg-linear-to-r from-red-600 to-red-700 text-white p-3 sm:p-4 rounded-2xl hover:from-red-700 hover:to-red-800 transition-all font-semibold text-base sm:text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
