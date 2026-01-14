@@ -406,9 +406,7 @@ const OffenseDetails = ({
               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-gray-900">
-                    Send File
-                  </h2>
+                  <h2 className="text-lg font-bold text-gray-900">Send File</h2>
                   <button
                     onClick={() => setShowFindingsModal(false)}
                     className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -478,7 +476,7 @@ const OffenseDetails = ({
                   </button>
                   <button
                     onClick={handleFindings}
-                    disabled={isUploading || !selectedFile}
+                    disabled={isUploading}
                     className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                   >
                     {isUploading ? (
@@ -486,8 +484,10 @@ const OffenseDetails = ({
                         <span className="loader border-white border-2 border-t-transparent rounded-full w-4 h-4 animate-spin"></span>
                         Uploading...
                       </>
-                    ) : (
+                    ) : selectedFile ? (
                       "Send File"
+                    ) : (
+                      "Continue w/o upload"
                     )}
                   </button>
                 </div>
