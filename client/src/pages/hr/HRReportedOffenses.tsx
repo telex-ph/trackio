@@ -636,26 +636,32 @@ const HRReportedOffenses = () => {
   };
 
   // Filter active cases
-  const filteredOffenses = offenses.filter(
-    (off) =>
-      !["Invalid", "Acknowledged"].includes(off.status) &&
-      off.respondantId !== loggedUser._id &&
-      off.type === "IR" &&
-      [
-        off.agentName,
-        off.offenseType,
-        off.offenseCategory,
-        off.offenseLevel || "",
-        off.status,
-        off.actionTaken,
-        off.remarks || "",
-        formatDisplayDate(off.dateOfOffense),
-        off.reportedByName || "",
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase())
-  );
+  const filteredOffenses = offenses
+    .filter(
+      (off) =>
+        !["Invalid", "Acknowledged"].includes(off.status) &&
+        off.respondantId !== loggedUser._id &&
+        off.type === "IR" &&
+        [
+          off.agentName,
+          off.offenseType,
+          off.offenseCategory,
+          off.offenseLevel || "",
+          off.status,
+          off.actionTaken,
+          off.remarks || "",
+          formatDisplayDate(off.dateOfOffense),
+          off.reportedByName || "",
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA; // DESC: newest first
+    });
 
   // Filter resolved cases (history)
   const resolvedOffenses = offenses.filter((off) => {
