@@ -117,17 +117,27 @@ export const getUsersByRoleScope = async (req, res) => {
 export const getUsersByAccount = async (req, res) => {
   const id = req.params.id;
 
+  // sanity check: id must be string or number
+  if (!id || (typeof id !== 'string' && typeof id !== 'number')) {
+    console.error("Invalid userId received:", id);
+    return res.status(400).json({
+      message: "Invalid userId provided",
+      error: `Expected string or number but received ${typeof id}`,
+    });
+  }
+
   try {
     const users = await User.getUserAccountsById(id);
     res.status(200).json(users);
   } catch (error) {
-    console.error("Error fetching users base on account scope: ", error);
+    console.error("Error fetching users based on account scope:", error);
     res.status(500).json({
       message: "Failed to fetch list of users by account scope",
       error: error.message,
     });
   }
 };
+
 
 export const deleteUser = async (req, res) => {
   const id = req.params.id;
