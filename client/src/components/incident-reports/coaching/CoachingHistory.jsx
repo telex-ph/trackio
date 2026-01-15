@@ -73,7 +73,6 @@ const CoachingHistory = ({
           </button>
         </div>
       </div>
-
       {offenses.length > 0 ? (
         <div className="w-full overflow-x-auto overflow-y-auto max-h-200">
           <table className="w-full text-left border-collapse">

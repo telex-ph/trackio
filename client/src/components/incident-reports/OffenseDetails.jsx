@@ -32,7 +32,6 @@ const OffenseDetails = ({
           </button>
         )}
       </div>
-
       {isViewMode ? (
         <div className="space-y-6">
           {/* Agent Name */}

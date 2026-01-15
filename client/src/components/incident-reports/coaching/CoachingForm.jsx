@@ -34,7 +34,7 @@ const CoachingForm = ({
   const accountName =
     userAccounts.length > 0 ? userAccounts[0].name : "No account";
 
-  const [searchField, setSearchField] = useState(""); // which field is currently being searched
+  const [searchField, setSearchField] = useState(""); //which field is currently being searched
   const [agentQuery, setAgentQuery] = useState("");
   const [coachQuery, setCoachQuery] = useState("");
   const [teamLeaderQuery, setTeamLeaderQuery] = useState("");
