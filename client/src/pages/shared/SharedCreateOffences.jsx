@@ -31,7 +31,7 @@ import CoachingDetails from "../../components/incident-reports/coaching/Coaching
 import { fetchUserById } from "../../store/stores/getUserById";
 import { fetchAccountsById } from "../../store/stores/getAccountById";
 
-// -----------------------------
+// ----------------------------
 // Component
 // -----------------------------
 const SharedCreateOffences = () => {
@@ -659,7 +659,6 @@ const SharedCreateOffences = () => {
 
   const handleIRView = async (off) => {
     if (!off) return;
-
     let agentUser = userMap[off.respondantId];
     if (off.respondantId && !agentUser) {
       agentUser = await fetchUserById(off.respondantId);

@@ -136,7 +136,6 @@ const CaseHistory = ({
                       </span>
                     </td>
                     {/* End of Evidence Column */}
-
                     <td className="p-4 text-sm text-gray-600">
                       <button
                         onClick={() => off && off._id && onView(off)}

@@ -140,7 +140,7 @@ const CoachingDetails = ({
   );
 };
 
-/* ================= SMALL COMPONENTS ================= */
+/* ================= SMALL COMPONENTS ================ */
 
 const Field = ({ label, value }) => (
   <div>

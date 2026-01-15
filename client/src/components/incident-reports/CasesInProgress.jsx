@@ -23,7 +23,6 @@ const CasesInProgress = ({
   const safeOffenses = Array.isArray(offenses)
     ? offenses.filter((offense) => offense && offense._id)
     : [];
-
   return (
     <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/20">
       <div className="flex items-center justify-between mb-6">

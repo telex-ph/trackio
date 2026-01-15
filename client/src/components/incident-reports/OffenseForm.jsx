@@ -35,7 +35,6 @@ const OffenseForm = ({
   const debounceTimer = useRef(null);
 
   const existingEvidence = formData.evidence || [];
-
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
