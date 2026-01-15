@@ -1450,59 +1450,69 @@ const QuizModal = ({
     };
   };
 
-  return (
+ return (
     <Modal onClose={onClose} maxWidth="max-w-4xl">
-      <div className="bg-white rounded-xl shadow-[0_20px_40px_-5px_rgba(0,0,0,0.3)] w-full">
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-red-50 to-white">
-          <div className="flex items-center">
-            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
-              <Award className="w-5 h-5 text-red-600" />
+      {/* Container with Sharp Edges and Maroon Top Line */}
+      <div className="bg-white rounded-none shadow-2xl w-full overflow-hidden border-t-4 border-t-[#800000] border-x border-b border-gray-200 flex flex-col">
+        
+        {/* --- Header Section --- */}
+        <div className="px-8 py-6 flex justify-between items-center bg-white border-b border-gray-100 shrink-0">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-red-50 flex items-center justify-center border border-red-100">
+              <Award className="w-5 h-5 text-[#800000]" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">
-                {showAnalytics ? "📊 Quiz Analytics" : 
-                 activeTab === "take" ? "🎯 Take Quiz" : 
-                 activeTab === "create" ? "📝 Quiz Creator" : 
-                 "📚 Course Quizzes"}
+              <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">
+                {showAnalytics ? "Analytics" : 
+                 activeTab === "take" ? "Examination" : 
+                 activeTab === "create" ? "Quiz Builder" : 
+                 "Curriculum Quizzes"}
               </h2>
-              <p className="text-sm text-gray-600">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">
                 {activeTab === "take" && selectedLesson 
-                  ? `${selectedLesson.title}`
+                  ? selectedLesson.title
                   : courseDetails?.title || course?.title
                 }
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
+
+          <div className="flex items-center gap-3">
             {activeTab === "take" && (
               <button
                 type="button"
                 onClick={() => {
-                  if (onBackToLessons) {
-                    onBackToLessons();
-                  } else {
+                  if (onBackToLessons) onBackToLessons();
+                  else {
                     setSelectedQuiz(null);
                     setSelectedLesson(null);
                     setActiveTab("lessons");
                   }
                 }}
-                className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition flex items-center mr-2"
+                className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all flex items-center border border-gray-200"
               >
                 <ChevronLeft className="w-3 h-3 mr-1" />
-                Back to Lessons
+                Go Back
               </button>
             )}
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition"
+              className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-[#800000] transition-colors"
             >
-              <X className="w-4 h-4" />
+              <X className="w-6 h-6" />
             </button>
           </div>
         </div>
 
-        <div className="p-6 max-h-[70vh] overflow-y-auto">
+        {/* --- Content Area with No Visible Scrollbar --- */}
+        <div className="p-8 max-h-[75vh] overflow-y-auto overflow-x-hidden scrollbar-hide" style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
+          <style>{`
+            .scrollbar-hide::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
+
           {showAnalytics ? (
             <AdminAnalytics course={courseDetails || course} onClose={() => setShowAnalytics(false)} />
           ) : activeTab === "create" ? (
@@ -1534,9 +1544,8 @@ const QuizModal = ({
               }}
               userAttempts={userAttempts}
               returnToLessons={() => {
-                if (onBackToLessons) {
-                  onBackToLessons();
-                } else {
+                if (onBackToLessons) onBackToLessons();
+                else {
                   setSelectedQuiz(null);
                   setSelectedLesson(null);
                   setActiveTab("lessons");
@@ -1545,161 +1554,119 @@ const QuizModal = ({
             />
           ) : (
             <div className="space-y-6">
-              {isAdmin && (
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-bold text-gray-800">
-                    📚 Course Lessons ({lessons.length})
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={() => setShowAnalytics(true)}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center text-sm font-medium"
-                  >
-                    <BarChart className="w-4 h-4 mr-2" />
-                    View Analytics
-                  </button>
-                </div>
-              )}
-
+              
               {!isAdmin && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                  <div className="flex items-center">
-                    <Info className="w-5 h-5 text-blue-600 mr-2" />
-                    <div>
-                      <p className="text-sm text-blue-700 font-medium mb-1">
-                        <span className="font-bold">Note:</span> You can only take quizzes for lessons you have completed watching.
-                      </p>
-                      <p className="text-xs text-blue-600">
-                        Complete a lesson by watching at least 90% of the video. Maximum 3 attempts per quiz.
-                      </p>
-                    </div>
+                <div className="bg-gray-50 border-l-4 border-l-[#800000] p-5 flex items-start gap-4">
+                  <Info className="w-5 h-5 text-[#800000] shrink-0" />
+                  <div>
+                    <p className="text-xs text-gray-600 font-medium leading-relaxed">
+                      To qualify for the quiz, ensure you have watched at least <span className="font-bold text-gray-900">90% of the lesson video</span>. 
+                      You are granted a maximum of <span className="font-bold text-gray-900">3 attempts</span> per module.
+                    </p>
                   </div>
                 </div>
               )}
 
+              {isAdmin && (
+                <div className="flex justify-between items-center border-b border-gray-100 pb-4">
+                  <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest">
+                    Module Management
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowAnalytics(true)}
+                    className="px-4 py-2 bg-[#800000] text-white text-[10px] font-bold uppercase tracking-widest hover:bg-red-900 transition-all shadow-md"
+                  >
+                    <BarChart className="w-3 h-3 inline mr-2" />
+                    Student Data
+                  </button>
+                </div>
+              )}
+
+              {/* --- List Section --- */}
               {lessons.length === 0 ? (
-                <div className="text-center p-8 bg-gray-50 rounded-lg">
-                  <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-600 font-medium">No lessons available yet.</p>
+                <div className="text-center py-16 border border-dashed border-gray-200">
+                  <BookOpen className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+                  <p className="text-gray-400 font-medium text-xs uppercase tracking-widest">No Content Available</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-1">
                   {lessons.map((lesson, index) => {
                     const lessonStatus = getLessonStatus(lesson);
                     const userAttempt = userAttempts.find(attempt => attempt.lessonId === lesson._id);
                     const lessonAttempts = userAttempts.filter(attempt => attempt.lessonId === lesson._id);
                     
                     return (
-                      <div key={`lesson-${lesson._id || index}`} className="bg-white p-4 rounded-lg border border-gray-200 hover:border-red-300 transition">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <h4 className="font-bold text-gray-800">{lesson.title}</h4>
-                              <div className="flex space-x-2">
-                                {lesson.completed ? (
-                                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full flex items-center">
-                                    <CheckCircle className="w-3 h-3 mr-1" />
-                                    Completed
-                                  </span>
-                                ) : (
-                                  <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full flex items-center">
-                                    <Lock className="w-3 h-3 mr-1" />
-                                    Not Completed
-                                  </span>
-                                )}
-                                
-                                {lesson.quiz && (
-                                  <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
-                                    Has Quiz
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            
-                            <p className="text-sm text-gray-600 mb-3">{lesson.description}</p>
-                            
-                            <div className="flex items-center space-x-4">
-                              {lesson.quiz ? (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleTakeQuiz(lesson)}
-                                    disabled={!lessonStatus.canTake}
-                                    className={`px-3 py-1.5 text-sm rounded-lg transition flex items-center font-medium ${
-                                      !lessonStatus.canTake
-                                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                        : lessonStatus.status === "passed"
-                                        ? "bg-green-600 text-white hover:bg-green-700"
-                                        : lessonStatus.status === "failed"
-                                        ? "bg-red-600 text-white hover:bg-red-700"
-                                        : "bg-red-600 text-white hover:bg-red-700"
-                                    }`}
-                                    title={!lessonStatus.canTake ? 
-                                      (lessonStatus.status === "max-attempts" 
-                                        ? "Maximum 3 attempts reached" 
-                                        : lessonStatus.message) 
-                                      : ""}
-                                  >
-                                    {lessonStatus.status === "passed" && <CheckCircle className="w-3 h-3 mr-1" />}
-                                    {lessonStatus.status === "failed" && <AlertCircle className="w-3 h-3 mr-1" />}
-                                    {lessonStatus.status === "available" && <Award className="w-3 h-3 mr-1" />}
-                                    {lessonStatus.status === "max-attempts" ? "Max Attempts Reached" : 
-                                     lessonStatus.status === "passed" ? "Quiz Passed" : 
-                                     lessonStatus.status === "failed" ? "Retake Quiz" : 
-                                     lessonStatus.status === "available" ? "Take Quiz" : 
-                                     lessonStatus.message}
-                                  </button>
-                                  
-                                  {userAttempt && (
-                                    <span className={`text-xs px-2 py-1 rounded-full ${
-                                      userAttempt.passed ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                                    }`}>
-                                      Score: {userAttempt.percentage?.toFixed(1) || 0}% - {userAttempt.passed ? "Passed" : "Failed"}
-                                    </span>
-                                  )}
-                                  
-                                  <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
-                                    Attempt {lessonAttempts.length} of 3
-                                  </span>
-                                  
-                                  {lessonStatus.status === "max-attempts" && (
-                                    <span className="text-xs text-red-600 flex items-center">
-                                      <AlertCircle className="w-3 h-3 mr-1" />
-                                      Max attempts (3) reached
-                                    </span>
-                                  )}
-                                </>
-                              ) : !isAdmin ? (
-                                <span className="text-sm text-gray-500">No quiz available</span>
-                              ) : null}
-                              
-                              {isAdmin && (
-                                <div className="flex items-center space-x-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setSelectedLesson(lesson);
-                                      setActiveTab("create");
-                                    }}
-                                    className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center"
-                                  >
-                                    {lesson.quiz ? "Edit Quiz" : "Add Quiz"}
-                                  </button>
-                                  
-                                  {lesson.quiz && (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDeleteQuiz(lesson._id)}
-                                      className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition flex items-center"
-                                    >
-                                      <Trash2 className="w-3 h-3 mr-1" />
-                                      Delete
-                                    </button>
-                                  )}
+                      <div key={`lesson-${lesson._id || index}`} className="bg-white p-5 border border-gray-100 hover:border-gray-300 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-1">
+                            <span className="text-xs font-bold text-gray-300">{(index + 1).toString().padStart(2, '0')}</span>
+                            <h4 className="font-bold text-gray-800 text-base">{lesson.title}</h4>
+                            {lesson.completed ? (
+                              <CheckCircle className="w-4 h-4 text-green-500" />
+                            ) : (
+                              <Lock className="w-3.5 h-3.5 text-gray-200" />
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 ml-7 line-clamp-1">{lesson.description}</p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-4">
+                          {lesson.quiz ? (
+                            <div className="flex items-center gap-3">
+                              {/* Status Badges */}
+                              {userAttempt && (
+                                <div className="text-right">
+                                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Score</p>
+                                  <p className={`text-xs font-bold ${userAttempt.passed ? 'text-green-600' : 'text-[#800000]'}`}>
+                                    {userAttempt.percentage?.toFixed(1)}%
+                                  </p>
                                 </div>
                               )}
+                              
+                              <div className="text-right px-3 border-l border-gray-100">
+                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Attempt</p>
+                                <p className="text-xs font-bold text-gray-700">{lessonAttempts.length}/3</p>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => handleTakeQuiz(lesson)}
+                                disabled={!lessonStatus.canTake}
+                                className={`px-5 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all ${
+                                  !lessonStatus.canTake
+                                    ? "bg-gray-50 text-gray-300 border border-gray-100 cursor-not-allowed"
+                                    : "bg-[#800000] text-white hover:bg-red-900"
+                                }`}
+                              >
+                                {lessonStatus.status === "passed" ? "Review" : "Start Quiz"}
+                              </button>
                             </div>
-                          </div>
+                          ) : (
+                            !isAdmin && <span className="text-[10px] font-bold text-gray-300 uppercase italic">Locked</span>
+                          )}
+
+                          {isAdmin && (
+                            <div className="flex items-center gap-2 border-l border-gray-100 pl-4">
+                              <button
+                                type="button"
+                                onClick={() => { setSelectedLesson(lesson); setActiveTab("create"); }}
+                                className="text-[10px] font-bold text-blue-600 uppercase hover:underline"
+                              >
+                                {lesson.quiz ? "Edit" : "Add Quiz"}
+                              </button>
+                              {lesson.quiz && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteQuiz(lesson._id)}
+                                  className="p-1.5 text-gray-400 hover:text-red-600"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );

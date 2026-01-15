@@ -3,6 +3,11 @@ import { Label, TextInput } from "flowbite-react";
 import api from "../../utils/axios";
 import { useStore } from "../../store/useStore";
 import toast from "react-hot-toast";
+import {
+  Users,
+  X,
+  ArrowRight,
+} from "lucide-react";
 
 const TeamModal = ({ isOpen, onClose, onConfirm, selectedTeam }) => {
   const user = useStore((state) => state.user);
@@ -45,50 +50,66 @@ const TeamModal = ({ isOpen, onClose, onConfirm, selectedTeam }) => {
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40"></div>
-      <div className="relative bg-white rounded-md p-8 max-w-md w-full shadow-2xl border border-gray-200">
-        {/* Title */}
-        <h3 className="text-2xl font-bold text-gray-800 text-center mb-2">
-          Team Name
-        </h3>
-        {/* Paragraph */}
-        <p className="text-center text-gray-600 mb-6 text-sm sm:text-base">
-          Enter the team name below to create a new team. This will appear in
-          your team management table.
-        </p>
-
-        {/* Flowbite Input Field */}
-        <div className="mb-6">
-          <Label htmlFor="teamName" className="text-gray-700 mb-2 block">
-            Team Name
-          </Label>
-          <TextInput
-            id="teamName"
-            type="text"
-            name="teamName"
-            placeholder="Enter team name"
-            required
-            value={teamName}
-            onChange={handleInputChange}
-          />
-        </div>
-
-        {/* Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4">
+return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden border border-gray-100">
+        <div className="h-[5px] w-full bg-[#800000]"></div>
+        <div className="p-8">
           <button
             onClick={onClose}
-            className="flex-1 bg-gray-200 text-gray-800 p-3 rounded-md font-medium hover:bg-gray-300 transition-colors text-sm sm:text-base cursor-pointer"
+            className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
           >
-            Cancel
+            <X size={20} />
           </button>
-          <button
-            onClick={handleConfirm}
-            className="flex-1 bg-blue-600 text-white p-3 rounded-md font-medium hover:bg-blue-700 transition-colors text-sm sm:text-base cursor-pointer"
-          >
-            Confirm
-          </button>
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-red-50 text-[#800000] mb-4">
+              <Users size={24} />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-800">
+              Team Name
+            </h3>
+            <p className="text-gray-500 text-sm mt-2">
+              Enter the team name below to create a new team. This will appear in your team management table.
+            </p>
+          </div>
+
+          <div className="mb-8">
+            <Label htmlFor="teamName" className="text-gray-700 mb-2 block font-medium">
+              Team Name
+            </Label>
+            <TextInput
+              id="teamName"
+              type="text"
+              name="teamName"
+              placeholder="Enter team name"
+              required
+              value={teamName}
+              onChange={handleInputChange}
+              theme={{
+                field: {
+                  input: {
+                    base: "block w-full border border-gray-200 bg-gray-50 rounded-lg text-gray-900 focus:ring-2 focus:ring-[#800000]/20 focus:border-[#800000] p-3 text-sm transition-all",
+                  }
+                }
+              }}
+            />
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 order-2 sm:order-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirm}
+              className="flex-1 order-1 sm:order-2 bg-[#800000] text-white py-3 rounded-xl font-semibold hover:bg-[#600000] transition-all shadow-lg shadow-red-900/20 active:scale-95 cursor-pointer"
+            >
+              Confirm
+            </button>
+          </div>
         </div>
       </div>
     </div>

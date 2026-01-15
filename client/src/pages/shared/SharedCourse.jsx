@@ -164,87 +164,130 @@ const CourseCard = ({ c, onViewDetails, onOpenUpload, onOpenQuizzes, onOpenCerti
 
   const certificateReady = isCourseFullyCompleted();
 
-  return (
-    <div className="bg-white border-white rounded-xl shadow-lg hover:shadow-xl transition duration-300 overflow-hidden cursor-pointer">
-      <div className="h-32 sm:h-40 bg-white relative">
-        <div className="absolute inset-0 flex items-center justify-center text-4xl font-bold text-red-800">
-          <BookOpen className="w-8 h-8 sm:w-10 sm:h-10" />
-        </div>
-        <div className="absolute bottom-2 right-2 flex items-center bg-red-900/80 text-white text-xs font-semibold px-2 py-1 rounded-full">
-          <Play className="w-3 h-3 mr-1" />
-          {(Math.floor(overAllDuration) / 60).toFixed(1)} minutes
-        </div>
-        {hasQuizzes && (
-          <div className="absolute top-2 left-2">
-            <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center">
-              <Award className="w-3 h-3 mr-1" />
-              {totalQuizzes} Quiz{totalQuizzes !== 1 ? 'zes' : ''}
+return (
+  <div className="relative group p-6 transition-all duration-500">
+    {/* Ultra-Realistic 3D Push Pin - #9B1C1C */}
+    <div className="absolute top-0 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center pointer-events-none">
+      {/* Pin Head */}
+      <div 
+        style={{ backgroundColor: '#9B1C1C' }} 
+        className="w-7 h-5 rounded-[50%/40%] shadow-[inset_0_3px_5px_rgba(255,255,255,0.4),0_2px_4px_rgba(0,0,0,0.3)] relative z-10"
+      />
+      {/* Pin Neck */}
+      <div 
+        style={{ backgroundColor: '#9B1C1C' }} 
+        className="w-4 h-2 -mt-1 shadow-md relative z-10 border-t border-black/10"
+      />
+      {/* Pin Base */}
+      <div 
+        style={{ backgroundColor: '#9B1C1C' }} 
+        className="w-6 h-2.5 rounded-b-full shadow-lg relative z-10 border-t border-white/10"
+      />
+      {/* Pin Needle Shadow */}
+      <div className="w-1 h-2 bg-black/40 blur-[0.5px] -mt-0.5" />
+      {/* Dynamic Long Shadow cast on the background */}
+      <div className="absolute top-8 left-5 w-10 h-3 bg-black/20 blur-[6px] rounded-full -rotate-[30deg]" />
+    </div>
+
+    {/* The Card Container */}
+    <div 
+      className="bg-white rounded-xl p-5 pt-10 flex flex-col h-full relative transition-all duration-500 
+                 border border-gray-100
+                 shadow-[20px_20px_40px_rgba(0,0,0,0.12),-5px_-5px_25px_rgba(255,255,255,0.8)] 
+                 group-hover:shadow-[30px_30px_60px_rgba(155,28,28,0.15)]
+                 group-hover:-translate-y-2 cursor-pointer"
+      style={{ 
+        transform: 'rotate(-1.5deg)', 
+        minHeight: '280px' 
+      }}
+    >
+      <div className="relative z-10 flex flex-col h-full">
+        {/* Header Section */}
+        <div className="mb-3">
+          <div className="flex justify-between items-start">
+            <h4 className="font-extrabold text-lg text-gray-900 leading-tight group-hover:text-red-800 transition-colors line-clamp-1">
+              {c.title}
+            </h4>
+            {certificateReady && (
+              <div className="absolute top-2 right-2">
+                <span className="bg-gradient-to-r from-green-600 to-green-700 text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center animate-pulse shadow-sm">
+                  <GraduationCap className="w-3 h-3 mr-1" />
+                  Certificate Ready
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center mt-1">
+            <User className="w-3 h-3 mr-1 text-red-700" />
+            <span style={{ color: '#9B1C1C' }} className="text-[10px] font-black uppercase tracking-widest">
+              {c.instructor
+                ? c.instructor.charAt(0).toUpperCase() + c.instructor.slice(1)
+                : ""}
             </span>
           </div>
-        )}
-        {certificateReady && (
-          <div className="absolute top-2 right-2">
-            <span className="bg-gradient-to-r from-green-600 to-green-700 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center animate-pulse">
-              <GraduationCap className="w-3 h-3 mr-1" />
-              Certificate Ready
-            </span>
-          </div>
-        )}
-      </div>
-      <div className="p-4">
-        <h4 className="font-semibold text-lg truncate mb-1">{c.title}</h4>
-        <p className="text-sm text-gray-600 mb-2 line-clamp-2">{c.description}</p>
-        <div className="text-sm text-gray-500 flex items-center mb-3">
-          <User className="w-4 h-4 mr-1 text-red-700" />
-          <span className="text-red-800 font-medium">
-            {c.instructor
-              ? c.instructor.charAt(0).toUpperCase() + c.instructor.slice(1)
-              : ""}
-          </span>
         </div>
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-base font-bold text-gray-800 flex items-center">
-            <BookOpenText className="w-4 h-4 mr-1 text-red-600" />
+
+        {/* Description */}
+        <p className="text-xs text-gray-500 mb-4 line-clamp-2 leading-relaxed h-8">
+          {c.description}
+        </p>
+
+        {/* Stats Row */}
+        <div className="flex items-center justify-between mb-4 bg-gray-50/50 p-2 rounded-lg border border-gray-100">
+          <div className="flex items-center text-gray-700 font-bold text-[10px]">
+            <Play className="w-3 h-3 mr-1 text-red-700" />
+            {(Math.floor(overAllDuration) / 60).toFixed(1)}m
+          </div>
+          <div className="flex items-center text-gray-700 font-bold text-[10px]">
+            <BookOpenText className="w-3 h-3 mr-1 text-red-700" />
             {c.lessons.length} Lessons
-          </p>
-          <div className="flex items-center space-x-2">
+          </div>
+          <div className="flex items-center space-x-1">
             {hasQuizzes && (
-              <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
-                {totalQuizzes} Quiz{totalQuizzes !== 1 ? 'zes' : ''}
+              <span className="text-[9px] bg-red-100 text-red-800 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tighter">
+                {totalQuizzes} Q
               </span>
             )}
-            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-              {c.progress || 0}% Complete
+            <span className="text-[9px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full font-bold">
+              {c.progress || 0}%
             </span>
           </div>
         </div>
-        
-        <div className="flex justify-between items-center">
+
+        {/* Progress Bar Mini */}
+        <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden mb-5">
+          <div 
+            className="h-full transition-all duration-1000 ease-out"
+            style={{ width: `${c.progress || 0}%`, backgroundColor: '#9B1C1C' }}
+          />
+        </div>
+
+        {/* Action Buttons - One Line Only */}
+        <div className="mt-auto pt-4 flex items-center gap-2 border-t border-dashed border-gray-100">
           <button
             onClick={(e) => {
               e.stopPropagation();
               onViewDetails(c);
             }}
-            className="px-3 py-1 text-sm bg-red-800 text-white rounded-lg hover:bg-red-700 transition"
+            style={{ backgroundColor: '#9B1C1C' }}
+            className="flex-1 whitespace-nowrap py-2 px-3 text-white text-[10px] font-black uppercase tracking-widest rounded-lg shadow-md hover:brightness-110 active:scale-95 transition-all"
           >
             View Lessons
           </button>
-          
-          <div className="flex space-x-2">
-            {/* Certificate button - for all users (including regular users) */}
+
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             {certificateReady && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onOpenCertificate(c);
                 }}
-                className="px-3 py-1 text-sm bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition flex items-center"
+                className="px-2 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition shadow-sm flex items-center"
               >
-                <GraduationCap className="w-3 h-3 mr-1" />
-                Certificate
+                <GraduationCap className="w-4 h-4" />
               </button>
             )}
-            
+
             {c.createdBy === user._id && (
               <>
                 <button
@@ -252,14 +295,13 @@ const CourseCard = ({ c, onViewDetails, onOpenUpload, onOpenQuizzes, onOpenCerti
                     e.stopPropagation();
                     onOpenQuizzes(c);
                   }}
-                  className={`px-3 py-1 text-sm rounded-lg transition flex items-center ${
+                  className={`p-2 rounded-lg transition border shadow-sm flex items-center ${
                     hasQuizzes
-                      ? "bg-green-100 text-green-800 hover:bg-green-200"
-                      : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                      ? "bg-green-100 text-green-800 hover:bg-green-200 border-green-200"
+                      : "bg-gray-100 text-gray-800 hover:bg-gray-200 border-gray-200"
                   }`}
                 >
-                  <Award className="w-3 h-3 mr-1" />
-                  Quizzes
+                  <Award className="w-4 h-4" />
                 </button>
                 
                 <button
@@ -267,10 +309,9 @@ const CourseCard = ({ c, onViewDetails, onOpenUpload, onOpenQuizzes, onOpenCerti
                     e.stopPropagation();
                     onOpenUpload(c);
                   }}
-                  className="px-3 py-1 text-sm bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition flex items-center"
+                  className="p-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition shadow-sm flex items-center"
                 >
-                  <Video className="w-3 h-3 mr-1" />
-                  Add Lesson
+                  <Video className="w-4 h-4" />
                 </button>
               </>
             )}
@@ -278,7 +319,8 @@ const CourseCard = ({ c, onViewDetails, onOpenUpload, onOpenQuizzes, onOpenCerti
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 const CourseLessonsModal = ({ 
@@ -415,340 +457,254 @@ const CourseLessonsModal = ({
   // Calculate if course is fully completed
   const isCourseFullyCompleted = completionStatus?.fullyCompleted || false;
 
-  return (
+return (
     <Modal onClose={onClose} maxWidth="max-w-4xl">
-      <div className="bg-white rounded-xl shadow-[0_20px_40px_-5px_rgba(0,0,0,0.3)] w-full">
-        <div className="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-center">
+      {/* Container: Sharp Edges, Maroon Top Border, No Rounded Corners */}
+      <div className="bg-white rounded-none shadow-2xl w-full border-t-4 border-t-[#800000] flex flex-col overflow-hidden border-x border-b border-gray-200">
+        
+        {/* --- Header Section --- */}
+        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white">
           <div className="flex items-center">
-            <List className="w-5 h-5 sm:w-6 sm:h-6 mr-3 text-red-800" />
-            <h2 className="text-xl sm:text-2xl font-bold">
-              Lessons: <span className="text-red-800">{courseDetails.title}</span>
-            </h2>
+            <div className="w-10 h-10 bg-red-50 flex items-center justify-center mr-4 border border-red-100">
+              <List className="w-5 h-5 text-[#800000]" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">
+                Lessons: <span className="text-[#800000]">{courseDetails.title}</span>
+              </h2>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Course Curriculum</p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200"
+            className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-[#800000] transition-colors"
           >
-            <X className="w-4 h-4" />
+            <X className="w-6 h-6" />
           </button>
         </div>
-        <div className="flex flex-col md:flex-row max-h-[80vh] overflow-y-auto">
-          <div
-            className={`p-4 sm:p-6 space-y-4 ${
-              selectedLesson ? "md:w-2/3" : "w-full"
-            }`}
-          >
-            <div className="flex justify-between items-center border-b pb-3 mb-4 border-gray-100">
-              <p className="text-sm text-gray-600">
-                {courseDetails.lessons?.length || 0} lessons • Duration:{" "}
-                <span className="text-red-800 font-bold">
-                  {(Math.floor(courseDetails.duration || 0) / 60).toFixed(1)} minutes
-                </span>{" "}
-                • Progress: <span className="text-red-800 font-bold">{completionStatus?.completionPercentage || 0}%</span>
-              </p>
-              <div className="flex items-center space-x-2">
+
+        {/* --- Main Content Area: No Scrollbar --- */}
+        <div 
+          className="flex flex-col md:flex-row max-h-[80vh] overflow-y-auto scrollbar-hide"
+          style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
+        >
+          {/* Internal CSS for hiding scrollbar */}
+          <style>{`.scrollbar-hide::-webkit-scrollbar { display: none; }`}</style>
+
+          <div className={`p-6 space-y-6 ${selectedLesson ? "md:w-2/3" : "w-full"}`}>
+            
+            {/* Stats Bar */}
+            <div className="flex flex-wrap justify-between items-center border-b border-gray-100 pb-4 gap-4">
+              <div className="flex gap-4">
+                <div className="text-center md:text-left">
+                  <p className="text-[9px] font-bold text-gray-400 uppercase">Total Lessons</p>
+                  <p className="text-sm font-bold text-gray-800">{courseDetails.lessons?.length || 0}</p>
+                </div>
+                <div className="text-center md:text-left border-l border-gray-200 pl-4">
+                  <p className="text-[9px] font-bold text-gray-400 uppercase">Duration</p>
+                  <p className="text-sm font-bold text-[#800000]">
+                    {(Math.floor(courseDetails.duration || 0) / 60).toFixed(1)} mins
+                  </p>
+                </div>
+                <div className="text-center md:text-left border-l border-gray-200 pl-4">
+                  <p className="text-[9px] font-bold text-gray-400 uppercase">Progress</p>
+                  <p className="text-sm font-bold text-[#800000]">{completionStatus?.completionPercentage || 0}%</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => onOpenQuizzes(course)}
-                  className="text-sm text-red-600 hover:text-red-800 font-medium flex items-center"
+                  className="px-4 py-2 bg-gray-100 text-[#800000] text-[10px] font-bold uppercase tracking-widest border border-gray-200 hover:bg-gray-200 transition-all flex items-center"
                 >
-                  <Award className="w-4 h-4 mr-1" />
+                  <Award className="w-3.5 h-3.5 mr-2" />
                   View Quizzes
                 </button>
                 
-                {/* Certificate button in lessons modal */}
                 {isCourseFullyCompleted && user.role !== "instructor" && (
                   <button
                     onClick={() => onOpenCertificate(course)}
-                    className="ml-3 px-4 py-2 text-sm bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition flex items-center animate-pulse"
+                    className="px-4 py-2 bg-[#800000] text-white text-[10px] font-bold uppercase tracking-widest hover:bg-red-900 transition-all flex items-center animate-pulse"
                   >
-                    <GraduationCap className="w-4 h-4 mr-2" />
+                    <GraduationCap className="w-3.5 h-3.5 mr-2" />
                     Get Certificate
                   </button>
                 )}
               </div>
             </div>
             
+            {/* Lesson List */}
             {courseDetails.lessons?.length > 0 ? (
-              <ul className="space-y-3">{courseDetails.lessons.map(lessonItem)}</ul>
+              <ul className="space-y-2">
+                {courseDetails.lessons.map(lessonItem)}
+              </ul>
             ) : (
-              <div className="text-center p-8 bg-yellow-50 rounded-lg">
-                <BookOpenText className="w-8 h-8 text-yellow-600 mx-auto mb-3" />
-                <p className="text-lg font-semibold text-yellow-800">
-                  No Lessons Yet.
-                </p>
+              <div className="text-center p-12 border border-dashed border-gray-200">
+                <BookOpenText className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">No Lessons Available</p>
               </div>
             )}
 
-            {/* Completion Status Summary */}
+            {/* Completion Summary Card */}
             {user.role !== "instructor" && completionStatus && (
-              <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
-                  <GraduationCap className="w-5 h-5 mr-2 text-blue-600" />
-                  Course Completion Status
+              <div className="p-5 bg-gray-50 border border-gray-200">
+                <h3 className="text-xs font-bold text-gray-900 mb-4 uppercase tracking-widest flex items-center">
+                  <GraduationCap className="w-4 h-4 mr-2 text-[#800000]" />
+                  Completion Status
                 </h3>
-                <div className="grid grid-cols-2 gap-4 mb-3">
-                  <div className="text-center">
-                    <div className={`text-2xl font-bold ${completionStatus.completedLessons === completionStatus.totalLessons ? 'text-green-600' : 'text-blue-600'}`}>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="bg-white p-3 border border-gray-100">
+                    <div className="text-xl font-black text-gray-800">
                       {completionStatus.completedLessons}/{completionStatus.totalLessons}
                     </div>
-                    <div className="text-sm text-gray-600">Lessons Completed</div>
+                    <div className="text-[10px] font-bold text-gray-400 uppercase">Lessons Done</div>
                   </div>
-                  <div className="text-center">
-                    <div className={`text-2xl font-bold ${completionStatus.passedQuizzes === completionStatus.totalQuizzes ? 'text-green-600' : 'text-red-600'}`}>
+                  <div className="bg-white p-3 border border-gray-100">
+                    <div className="text-xl font-black text-[#800000]">
                       {completionStatus.passedQuizzes}/{completionStatus.totalQuizzes}
                     </div>
-                    <div className="text-sm text-gray-600">Quizzes Passed</div>
+                    <div className="text-[10px] font-bold text-gray-400 uppercase">Quizzes Passed</div>
                   </div>
                 </div>
                 
                 {isCourseFullyCompleted ? (
-                  <div className="p-3 bg-gradient-to-r from-green-100 to-emerald-100 rounded border border-green-300">
-                    <p className="text-sm font-bold text-green-800 flex items-center">
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      🎉 Course Fully Completed! Certificate Available
-                    </p>
+                  <div className="p-3 bg-green-50 border border-green-200 text-green-800 text-xs font-bold flex items-center">
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    COURSE FULLY COMPLETED
                   </div>
                 ) : completionStatus.lessonsNeedingCompletion?.length > 0 && (
-                  <div className="p-3 bg-yellow-50 rounded border border-yellow-200">
-                    <p className="text-sm font-medium text-yellow-800 mb-2">
-                      Remaining Requirements:
-                    </p>
-                    <ul className="text-xs text-yellow-700 space-y-1">
+                  <div className="p-4 bg-white border border-gray-200">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Requirements Remaining:</p>
+                    <ul className="space-y-1">
                       {completionStatus.lessonsNeedingCompletion.slice(0, 3).map((req, idx) => (
-                        <li key={idx} className="flex items-center">
-                          <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
-                          {req}
+                        <li key={idx} className="text-[11px] text-gray-600 flex items-center">
+                          <span className="w-1.5 h-1.5 bg-[#800000] mr-2"></span> {req}
                         </li>
                       ))}
-                      {completionStatus.lessonsNeedingCompletion.length > 3 && (
-                        <li className="text-yellow-600">
-                          + {completionStatus.lessonsNeedingCompletion.length - 3} more
-                        </li>
-                      )}
                     </ul>
                   </div>
                 )}
               </div>
             )}
 
-            {/* Course Quizzes Section */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
+            {/* Quizzes Preview Section */}
+            <div className="mt-8 pt-6 border-t border-gray-100">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-gray-800 flex items-center">
-                  <Award className="w-5 h-5 mr-2 text-red-600" />
-                  Course Quizzes
+                <h3 className="text-xs font-bold text-gray-900 uppercase tracking-[0.2em] flex items-center">
+                  <Award className="w-4 h-4 mr-2 text-[#800000]" />
+                  Quick Access: Quizzes
                 </h3>
-                {courseDetails.lessons?.some(lesson => lesson.quiz) && (
-                  <button
-                    onClick={() => onOpenQuizzes(course)}
-                    className="text-sm text-red-600 hover:text-red-800 font-medium"
-                  >
-                    View All Quizzes →
-                  </button>
-                )}
               </div>
               
               {!courseDetails.lessons?.some(lesson => lesson.quiz) ? (
-                <div className="text-center p-6 bg-gray-50 rounded-lg">
-                  <Award className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-600">No quizzes available for this course yet.</p>
+                <div className="p-6 bg-gray-50 text-center border border-gray-100">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase">No quizzes found</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {courseDetails.lessons
                     ?.filter(lesson => lesson.quiz)
                     .slice(0, 3)
                     .map((lesson) => {
-                      const userAttempt = userQuizAttempts.find(
-                        attempt => attempt.lessonId === lesson._id
-                      );
-                      
+                      const userAttempt = userQuizAttempts.find(a => a.lessonId === lesson._id);
                       return (
-                        <div key={lesson._id} className="bg-white p-4 rounded-lg border border-gray-200 hover:border-red-300 transition">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <h4 className="font-bold text-gray-800">{lesson.quiz.title}</h4>
-                              <div className="flex items-center space-x-3 mt-1">
-                                <span className="text-xs text-gray-500">
-                                  Lesson: {lesson.title}
+                        <div key={lesson._id} className="p-4 bg-white border border-gray-100 flex justify-between items-center group hover:border-[#800000] transition-colors">
+                          <div>
+                            <h4 className="font-bold text-gray-800 text-sm">{lesson.quiz.title}</h4>
+                            <div className="flex gap-3 mt-1">
+                              <span className="text-[9px] font-bold text-gray-400 uppercase">Video: {lesson.progress || 0}%</span>
+                              {userAttempt && (
+                                <span className={`text-[9px] font-bold uppercase ${userAttempt.passed ? 'text-green-600' : 'text-red-600'}`}>
+                                  {userAttempt.passed ? 'Passed' : 'Failed'}
                                 </span>
-                                <span className="text-xs text-gray-500">
-                                  {lesson.quiz.questions?.length || 0} questions
-                                </span>
-                                <span className="text-xs text-gray-500">
-                                  Pass: {lesson.quiz.passingScore}%
-                                </span>
-                              </div>
-                              <div className="mt-2 space-y-1">
-                                <div className="flex items-center space-x-2">
-                                  <span className="text-xs text-gray-600">Video Watched:</span>
-                                  <span className={`text-xs font-bold ${
-                                    lesson.progress >= 90 ? 'text-green-600' : 'text-yellow-600'
-                                  }`}>
-                                    {lesson.progress || 0}%
-                                  </span>
-                                </div>
-                                {userAttempt && (
-                                  <div className="flex items-center space-x-2">
-                                    <span className="text-xs text-gray-600">Quiz Status:</span>
-                                    <span className={`text-xs font-bold ${
-                                      userAttempt.passed ? 'text-green-600' : 'text-red-600'
-                                    }`}>
-                                      {userAttempt.passed ? '✅ Passed' : '❌ Failed'}
-                                    </span>
-                                  </div>
-                                )}
-                                {!userAttempt && lesson.progress >= 90 && (
-                                  <div className="flex items-center space-x-2">
-                                    <span className="text-xs text-gray-600">Status:</span>
-                                    <span className="text-xs font-bold text-blue-600">
-                                      📝 Ready to take quiz
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
+                              )}
                             </div>
-                            <button
-                              onClick={() => onOpenQuizzes(course, lesson._id)}
-                              className={`px-3 py-1.5 text-sm rounded-lg transition ${
-                                lesson.progress < 90
-                                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                  : userAttempt?.passed
-                                  ? "bg-green-600 text-white hover:bg-green-700"
-                                  : "bg-red-600 text-white hover:bg-red-700"
-                              }`}
-                              disabled={lesson.progress < 90}
-                              title={lesson.progress < 90 ? "Watch 90% of video first" : ""}
-                            >
-                              {userAttempt?.passed ? "Quiz Passed" : userAttempt ? "Retake Quiz" : "Take Quiz"}
-                            </button>
                           </div>
+                          <button
+                            onClick={() => onOpenQuizzes(course, lesson._id)}
+                            disabled={lesson.progress < 90}
+                            className={`px-4 py-2 text-[9px] font-bold uppercase tracking-widest transition-all ${
+                              lesson.progress < 90
+                                ? "bg-gray-50 text-gray-300 border border-gray-100"
+                                : "bg-[#800000] text-white hover:bg-red-900"
+                            }`}
+                          >
+                            {userAttempt?.passed ? "Review" : "Take"}
+                          </button>
                         </div>
                       );
                     })}
-                  
-                  {courseDetails.lessons?.filter(lesson => lesson.quiz).length > 3 && (
-                    <div className="text-center pt-2">
-                      <button
-                        onClick={() => onOpenQuizzes(course)}
-                        className="text-sm text-gray-600 hover:text-red-600"
-                      >
-                        + {courseDetails.lessons.filter(lesson => lesson.quiz).length - 3} more quizzes
-                      </button>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
           </div>
 
+          {/* --- Right Sidebar: Lesson Details --- */}
           {selectedLesson && (
-            <div className="w-full md:w-1/3 p-4 sm:p-6 bg-gray-50 flex flex-col justify-between md:border-l border-t md:border-t-0 border-gray-200">
+            <div className="w-full md:w-1/3 p-6 bg-gray-50 flex flex-col justify-between md:border-l border-gray-200">
               <div>
-                <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
-                  <FileText className="w-5 h-5 mr-2 text-red-600" />
-                  Lesson Details
+                <h3 className="text-xs font-bold text-gray-900 uppercase tracking-widest mb-4 flex items-center">
+                  <FileText className="w-4 h-4 mr-2 text-[#800000]" />
+                  Module Details
                 </h3>
-                <p className="text-sm font-semibold text-red-800 mb-2">
-                  {selectedLesson.title}
-                </p>
-                <div className="space-y-3 mb-4">
-                  <p className="text-xs text-gray-600 flex items-center">
-                    <Clock className="w-3 h-3 mr-1" />{" "}
-                    {(Math.floor(selectedLesson.duration) / 60).toFixed(1)}{" "}
-                    minutes
-                  </p>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-600">Video Watched:</span>
-                    <span className={`text-xs font-bold ${
-                      selectedLesson.progress >= 90 ? 'text-green-600' : 'text-yellow-600'
-                    }`}>
-                      {selectedLesson.progress || 0}%
-                    </span>
-                  </div>
-                  
-                  {selectedLesson.quiz && (
-                    <>
-                      <div className="p-2 bg-blue-50 rounded border border-blue-200">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <Award className="w-3 h-3 text-blue-600" />
-                          <span className="text-xs font-medium text-blue-700">
-                            Quiz Required
-                          </span>
-                        </div>
-                        <p className="text-xs text-blue-600">
-                          Must pass quiz to complete lesson
-                        </p>
-                      </div>
-                      
-                      {selectedLesson.progress >= 90 && (
-                        <div className="p-2 bg-green-50 rounded border border-green-200">
-                          <p className="text-xs font-bold text-green-700">
-                            ✅ Video watched 90%+
-                          </p>
-                          <p className="text-xs text-green-600 mt-1">
-                            You can now take the quiz
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-                <div className="p-3 bg-white rounded-lg border border-gray-200">
-                  <p className="text-sm text-gray-600 whitespace-pre-wrap">
-                    {selectedLesson.description ||
-                      "No specific description available."}
-                  </p>
-                </div>
                 
+                <div className="bg-white p-4 border border-gray-200 mb-4">
+                  <h4 className="text-sm font-bold text-[#800000] mb-2 uppercase">{selectedLesson.title}</h4>
+                  <div className="flex items-center text-[10px] font-bold text-gray-400 mb-4">
+                    <Clock className="w-3 h-3 mr-1" />
+                    {(Math.floor(selectedLesson.duration) / 60).toFixed(1)} MINUTES
+                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">
+                    {selectedLesson.description || "No specific description available."}
+                  </p>
+                </div>
+
                 {selectedLesson.quiz && (
-                  <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-sm font-bold text-blue-800 flex items-center">
-                        <Award className="w-4 h-4 mr-1" />
-                        Quiz Available
-                      </h4>
-                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-                        {selectedLesson.quiz.questions?.length || 0} questions
-                      </span>
-                    </div>
-                    <p className="text-xs text-blue-600 mb-3">
-                      {selectedLesson.quiz.description || "Test your knowledge from this lesson"}
+                  <div className={`p-4 border border-blue-200 ${selectedLesson.progress >= 90 ? 'bg-green-50 border-green-200' : 'bg-blue-50'}`}>
+                    <p className="text-[10px] font-black uppercase mb-1 flex items-center">
+                       {selectedLesson.progress >= 90 ? '✅ Ready for Quiz' : '📘 Requirements'}
+                    </p>
+                    <p className="text-[11px] text-gray-600 mb-3">
+                      {selectedLesson.progress >= 90 
+                        ? "You have completed the required watch time." 
+                        : `Watch ${90 - (selectedLesson.progress || 0)}% more to unlock the assessment.`}
                     </p>
                     <button
                       onClick={() => {
                         onOpenQuizzes(course, selectedLesson._id);
                         setSelectedLesson(null);
                       }}
-                      className={`w-full py-2 text-sm rounded-lg transition ${
+                      disabled={selectedLesson.progress < 90}
+                      className={`w-full py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all ${
                         selectedLesson.progress >= 90
                           ? "bg-blue-600 text-white hover:bg-blue-700"
-                          : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                          : "bg-gray-200 text-gray-400 cursor-not-allowed"
                       }`}
-                      disabled={selectedLesson.progress < 90}
                     >
-                      {selectedLesson.progress >= 90 ? "Take Quiz Now" : `Watch ${90 - (selectedLesson.progress || 0)}% more to unlock`}
+                      {selectedLesson.progress >= 90 ? "Enter Quiz Room" : "Locked"}
                     </button>
                   </div>
                 )}
               </div>
+
               <button
                 onClick={() => onPlayLesson(selectedLesson, course)}
-                className="w-full py-2.5 bg-red-800 text-white rounded-lg hover:bg-red-700 transition mt-4"
+                className="w-full py-4 bg-gray-900 text-white text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-black transition-all mt-6"
               >
-                Play Lesson
+                Launch Lesson
               </button>
             </div>
           )}
         </div>
-        <div className="p-4 border-t border-gray-100 flex justify-end">
+
+        {/* --- Footer --- */}
+        <div className="p-4 border-t border-gray-100 flex justify-end bg-gray-50">
           <button
             onClick={() => {
               if (refreshCourses) refreshCourses();
               onClose();
             }}
-            className="px-5 py-2 bg-red-800 text-white rounded-lg hover:bg-red-700"
+            className="px-8 py-2 bg-white text-gray-800 border border-gray-300 text-[10px] font-bold uppercase tracking-widest hover:bg-gray-100 transition-all"
           >
             Close
           </button>

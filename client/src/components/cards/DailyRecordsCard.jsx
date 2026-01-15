@@ -7,129 +7,144 @@ import {
   Utensils,
   LogOut,
   Construction,
+  MonitorCheck,
+  User,
 } from "lucide-react";
 
 const DailyRecordsCard = () => {
-  return (
-    <div className="bg-gradient-to-br from-white via-gray-50/80 to-blue-50/30 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl border border-gray-200/60 relative overflow-hidden backdrop-blur-sm h-fit">
-      {/* Background decorative elements */}
-      <div className="absolute top-0 left-0 w-full h-full">
-        <div className="absolute top-3 sm:top-6 right-3 sm:right-6 w-16 sm:w-32 h-16 sm:h-32 bg-gradient-to-r from-blue-400/20 to-purple-400/15 rounded-full blur-2xl sm:blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-5 sm:bottom-10 left-5 sm:left-10 w-12 sm:w-24 h-12 sm:h-24 bg-gradient-to-r from-green-400/15 to-teal-400/20 rounded-full blur-xl sm:blur-2xl animate-bounce"></div>
-        <div className="absolute top-1/2 left-1/4 w-8 sm:w-16 h-8 sm:h-16 bg-gradient-to-r from-pink-400/10 to-rose-400/15 rounded-full blur-lg sm:blur-xl animate-ping"></div>
-      </div>
+  const PRIMARY_MAROON_HEX = "#850909";
+  const LIGHT_MAROON_HEX = "#fbe6e6";
+  const PRIMARY_BLACK = "text-gray-900";
+ 
+  const shadowLift = "shadow-2xl";
+ 
+  const textSubtle = "text-gray-500";
+ 
+  const statsContainerBg = "bg-white";
+  const statsAccentText = "text-gray-900";
+  const statsAccentIcon = PRIMARY_MAROON_HEX;
+  const customDarkShadow = `shadow-lg shadow-[${PRIMARY_MAROON_HEX}40]`;
+ 
+  const labelStyle = `text-[9px] sm:text-xs font-medium tracking-wide ${textSubtle} uppercase`;
+  const valueStyle = `text-lg xl:text-xl font-bold ${statsAccentText} leading-tight`;
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-50/90 to-blue-50/80 backdrop-blur-sm z-20 flex items-center justify-center rounded-2xl sm:rounded-3xl" />
-      
-      <div className="relative z-30">
-        {/* Header */}
-        <div className="mb-6 sm:mb-8 text-center">
-          <div className="mb-3 sm:mb-4">
-            <div className="inline-flex items-center justify-center w-16 sm:w-20 h-16 sm:h-20 bg-gradient-to-r from-gray-400/30 to-gray-500/20 rounded-xl sm:rounded-2xl mb-3 sm:mb-4 shadow-lg backdrop-blur-sm border border-white/30 relative">
-              <Activity className="w-8 sm:w-10 h-8 sm:h-10 text-gray-500" />
-              <div className="absolute -top-1 -right-1 w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center shadow-lg">
-                <Construction className="w-3 h-3 text-white" />
+  const pendingColor = "text-yellow-600";
+  const pendingBg = "bg-yellow-100";
+ 
+  const validationStatusColor = "text-orange-700";
+  const validationStatusBg = "bg-orange-50";
+
+  return (
+    <div className={`w-full max-w-md bg-white rounded-3xl ${shadowLift} p-4 sm:p-6 relative border border-gray-100`}>
+     
+      <div className="relative z-10 h-full flex flex-col">
+       
+        <div className={`mb-4 pb-2 border-b border-gray-100 flex-shrink-0`}>
+          <div className="flex items-center gap-3">
+            <div className={`inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-white border border-gray-200 rounded-full shadow-sm flex-shrink-0 relative`}
+                style={{ color: PRIMARY_MAROON_HEX }}>
+              <User className={`w-5 h-5 sm:w-6 sm:h-6`} />
+              <div className="absolute top-0 right-0 w-3 h-3 bg-amber-500 rounded-full flex items-center justify-center shadow-sm">
+                <Construction className="w-1.5 h-1.5 text-white" />
               </div>
             </div>
+           
+            <div className="flex-1 min-w-0">
+              <h2 className={`font-semibold text-xs sm:text-sm ${PRIMARY_BLACK} tracking-tight leading-none`}>
+                Employee Daily Log
+              </h2>
+              <p className={`text-xs ${textSubtle} font-normal mt-0.5`}>
+                Record validation pending
+              </p>
+            </div>
           </div>
-          <h2 className="font-bold text-lg sm:text-2xl bg-gradient-to-r from-gray-600 via-gray-500 to-gray-700 bg-clip-text text-transparent mb-1 sm:mb-2">
-            Daily Records
-          </h2>
-          <p className="text-xs sm:text-sm text-gray-500 mb-2 sm:mb-3 font-medium">
-            Feature under development
-          </p>
-          <div className="w-16 sm:w-32 h-0.5 sm:h-1 bg-gradient-to-r from-gray-400 via-gray-300 to-gray-400 rounded-full mx-auto shadow-lg"></div>
         </div>
 
-        {/* Stats Grid - Disabled */}
-        <div className="mt-4 sm:mt-8 pt-4 sm:pt-6 mb-6 sm:mb-8 border-t border-gray-200/60">
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
-            {[
-              { label: "WORKED", icon: Clock },
-              { label: "BREAKS", icon: Coffee },
-              { label: "STATUS", icon: Activity }
-            ].map((stat, i) => (
-              <div key={i} className="group">
-                <div className="bg-white/40 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-gray-200/30 transition-all duration-300 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-gray-300 to-gray-400 opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-xl sm:rounded-2xl"></div>
-                  <div className="relative z-10">
-                    <div className="flex items-center justify-center mb-1 sm:mb-2">
-                      <stat.icon className="w-4 sm:w-5 h-4 sm:h-5 text-gray-400" />
+        <div className="mt-2 mb-2 flex-grow">
+         
+          <div className={`rounded-xl p-3 sm:p-4 border border-gray-200 ${customDarkShadow} ${statsContainerBg}`}>
+            <div className="grid grid-cols-3 text-center">
+              {[
+                { label: "WORKED", icon: Clock },
+                { label: "BREAKS", icon: Coffee },
+                { label: "STATUS", icon: Activity }
+              ].map((stat, i) => (
+                <div key={i} className="group cursor-not-allowed px-1">
+                  <div className={`transition-all duration-300`}>
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="mb-1">
+                        <stat.icon className={`w-4 h-4`} style={{ color: statsAccentIcon }} />
+                      </div>
+                      <p className={labelStyle}>
+                        {stat.label}
+                      </p>
+                      <p className={valueStyle}>
+                        --
+                      </p>
                     </div>
-                    <p className="text-xs font-bold tracking-wider text-gray-400 mb-1 sm:mb-2">
-                      {stat.label}
-                    </p>
-                    <p className="text-xs sm:text-sm font-bold text-gray-500">
-                      --
-                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-1 mt-4">
+            {[
+              { label: "TIME IN", icon: LogIn },
+              { label: "LUNCH BREAK", icon: Utensils },
+              { label: "TIME OUT", icon: LogOut }
+            ].map((record, i) => (
+              <div key={i} className="group cursor-not-allowed">
+                <div className={`rounded-lg py-2 transition-all duration-300 relative bg-white`}>
+                  <div className="flex items-start gap-3 relative">
+                    <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1`}
+                        style={{ backgroundColor: LIGHT_MAROON_HEX, color: PRIMARY_MAROON_HEX }}>
+                      <record.icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4`} />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-[9px] sm:text-xs font-medium tracking-wide ${textSubtle} uppercase`}>
+                        {record.label}
+                      </p>
+                      <p className={`text-base sm:text-lg font-bold`} style={{ color: PRIMARY_MAROON_HEX }}>
+                        --:--
+                      </p>
+                    </div>
+
+                    <div className={`px-2 py-0.5 rounded-full ${pendingBg} ${pendingColor} text-[9px] sm:text-xs font-bold uppercase flex-shrink-0 self-center`}>
+                      PENDING
+                    </div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-        </div>
 
-        {/* Time Records - Disabled */}
-        <div className="grid grid-cols-1 gap-3 sm:gap-5">
-          {[
-            { label: "TIME IN", icon: LogIn, color: "from-gray-400 to-gray-500" },
-            { label: "LUNCH BREAK", icon: Utensils, color: "from-gray-400 to-gray-500" },
-            { label: "TIME OUT", icon: LogOut, color: "from-gray-400 to-gray-500" }
-          ].map((record, i) => (
-            <div key={i} className="group">
-              <div className="bg-white/50 backdrop-blur-md border border-gray-200/40 rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-500 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-gray-300 to-gray-400 opacity-0 group-hover:opacity-5 transition-all duration-500 rounded-xl sm:rounded-2xl"></div>
-
-                <div className="flex items-center gap-3 sm:gap-5 relative z-10">
-                  <div className="w-10 sm:w-14 h-10 sm:h-14 rounded-xl sm:rounded-2xl bg-gray-100 border border-gray-200/50 flex items-center justify-center shadow-lg transition-all duration-300 relative overflow-hidden flex-shrink-0">
-                    <div className="absolute inset-0 bg-gradient-to-r from-gray-300 to-gray-400 opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                    <record.icon className="w-5 sm:w-6 h-5 sm:h-6 text-gray-400 relative z-10" />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 sm:mb-2">
-                      <p className="text-xs font-bold text-gray-400 tracking-wider uppercase">
-                        {record.label}
-                      </p>
+          <div className="mt-6 flex-1 flex flex-col justify-end">
+            <div className={`p-4 sm:p-5 rounded-xl ${validationStatusBg} border border-orange-200`}>
+                <div className="flex items-start gap-3">
+                    <Construction className={`w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 text-amber-600`} />
+                    <div className="flex-1 min-w-0">
+                        <p className={`text-sm sm:text-base font-semibold mb-1 text-amber-700`}>
+                            Development in Progress
+                        </p>
+                        <p className={`text-xs sm:text-sm ${textSubtle}`}>
+                            This section is currently under development. Data shown are placeholders and not yet final.
+                        </p>
                     </div>
-                    <p className="text-base sm:text-lg font-bold text-gray-500">
-                      --:--
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col items-center gap-1 flex-shrink-0">
-                    <div className="w-2.5 sm:w-3 h-8 sm:h-10 rounded-full bg-gray-200 relative overflow-hidden shadow-inner">
-                      <div className="w-full h-1/4 bg-gradient-to-t from-gray-300 to-gray-400 rounded-full"></div>
-                    </div>
-                    <div className="text-xs font-medium text-gray-400">
-                      ○
-                    </div>
-                  </div>
                 </div>
-              </div>
             </div>
-          ))}
+            <div className="flex-grow min-h-[10px] my-2 h-4 sm:h-6"></div>
+          </div>
+         
         </div>
 
-        {/* Development Banner */}
-        <div className="mt-6 sm:mt-8 bg-gradient-to-r from-red-700 to-red-600 rounded-xl p-4 sm:p-5 text-center shadow-lg border border-amber-300/50">
-          <div className="flex items-center justify-center gap-3 sm:gap-4 mb-2">
-            <Construction className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-            <span className="text-white font-bold text-sm sm:text-base">COMMING SOON</span>
-            <Construction className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-          </div>
-          <p className="text-white/90 text-xs sm:text-sm font-medium">
-            Trackio Daily Records features coming soon
-          </p>
-        </div>
-
-        {/* Footer */}
-        <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200/40 text-center">
-          <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-gray-400">
-            <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-            <span className="font-medium">Feature in development</span>
-          </div>
+        <div className={`mt-auto flex-shrink-0`}>
+          <button className={`w-full py-3 sm:py-4 text-white font-semibold rounded-2xl shadow-md flex items-center justify-center gap-2 transition-all duration-300 hover:opacity-90`}
+              style={{ backgroundColor: PRIMARY_MAROON_HEX, boxShadow: `0 4px 6px -1px ${PRIMARY_MAROON_HEX}40, 0 2px 4px -2px ${PRIMARY_MAROON_HEX}40` }}>
+            <Construction className="w-4 h-4 text-white" />
+            <span className="text-sm">Feature Under Development</span>
+          </button>
         </div>
       </div>
     </div>

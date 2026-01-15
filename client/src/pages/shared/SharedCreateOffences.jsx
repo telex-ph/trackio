@@ -5,13 +5,18 @@ import React, {
   useMemo,
   useRef,
 } from "react";
+import { ShieldCheck, FileText } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { DateTime } from "luxon";
 import api from "../../utils/axios";
 import socket from "../../utils/socket";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
-// Components
+// local asset import
+import bgImage from "../../assets/background/bg-004.png";
+
+// components
 import OffenseForm from "../../components/incident-reports/OffenseForm";
 import OffenseDetails from "../../components/incident-reports/OffenseDetails";
 import CasesInProgress from "../../components/incident-reports/CasesInProgress";
@@ -25,7 +30,6 @@ import CoachingHistory from "../../components/incident-reports/coaching/Coaching
 import CoachingDetails from "../../components/incident-reports/coaching/CoachingDetails";
 import { fetchUserById } from "../../store/stores/getUserById";
 import { fetchAccountsById } from "../../store/stores/getAccountById";
-import Roles from "../../constants/roles";
 
 // -----------------------------
 // Component
@@ -350,6 +354,7 @@ const SharedCreateOffences = () => {
     panelMode,
     editingId,
     selectedFile,
+    today,
     resetFormAndPanel,
     fetchTeamOffenses,
     showNotification,
@@ -536,6 +541,7 @@ const SharedCreateOffences = () => {
       setIsUploading(false);
     }
   }, [
+    today,
     formData,
     panelMode,
     editingId,
@@ -640,6 +646,7 @@ const SharedCreateOffences = () => {
       setIsUploading(false);
     }
   }, [
+    today,
     formData,
     panelMode,
     editingId,
@@ -677,7 +684,6 @@ const SharedCreateOffences = () => {
       fileMOM: off.fileMOM || [],
       fileNDA: off.fileNDA || [],
       isAcknowledged: off.isAcknowledged,
-      ackMessage: off.ackMessage,
     });
 
     setEditingId(off._id);
@@ -955,8 +961,8 @@ const SharedCreateOffences = () => {
   // -----------------------------
   // Render
   // -----------------------------
-  return (
-    <div>
+return (
+    <div className="min-h-screen bg-gray-50 pb-12 overflow-x-hidden">
       {notification.isVisible && (
         <Notification
           message={notification.message}
@@ -965,209 +971,124 @@ const SharedCreateOffences = () => {
         />
       )}
 
-      {/* Header + optional Offense Type Toggle */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-        <div>
-          {loggedUser.role === "human-resources" ? (
-            <>
-              <h2 className="text-2xl font-bold text-gray-900">
-                Offense Management
-              </h2>
-              <p className="text-gray-600 mt-1">
-                Create, view, and manage offenses.
-              </p>
-            </>
-          ) : (
-            <>
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-4">
-                Team Offense Management
-                {[
-                  Roles.TEAM_LEADER,
-                  Roles.OM,
-                  Roles.TRAINER_QUALITY_ASSURANCE,
-                  Roles.MANAGER,
-                  Roles.OPERATION_ASSOCIATE,
-                  Roles.BACK_OFFICE_HEAD,
-                ].includes(loggedUser.role) && (
-                  <div className="bg-gray-200 rounded-full p-1 flex shadow-inner">
-                    {["COACHING", "IR"].map((type) => (
-                      <button
-                        key={type}
-                        onClick={() => {
-                          setOffenseType(type);
-                          resetFormAndPanel();
-                        }}
-                        className={`px-4 py-1 rounded-full text-sm font-medium transition-all ${
-                          offenseType === type
-                            ? type === "IR"
-                              ? "bg-red-600 text-white shadow"
-                              : "bg-blue-600 text-white shadow"
-                            : "text-gray-700 hover:bg-gray-300"
-                        }`}
-                      >
-                        {type}
-                      </button>
-                    ))}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2 px-4 md:px-6 pt-10">
+        <div className="w-full md:w-auto">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 flex flex-wrap items-center gap-2 md:gap-4">
+            team offense management
+            {["team-leader", "operations-manager", "trainer-quality-assurance", "manager"].includes(loggedUser?.role) && (
+              <div className="bg-gray-200 p-1 flex shadow-inner scale-90">
+                {["COACHING", "IR"].map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => { setOffenseType(type); resetFormAndPanel(); }}
+                    className={`px-4 md:px-5 py-1 text-[10px] md:text-xs font-black transition-all ${
+                      offenseType === type ? "bg-[#800000] text-white shadow-md" : "text-gray-500 hover:text-gray-800"
+                    }`}
+                  >
+                    {type.toLowerCase()}
+                  </button>
+                ))}
+              </div>
+            )}
+          </h2>
+          <p className="text-gray-500 text-[10px] md:text-xs mt-1">create, view, and manage offenses for your team.</p>
+        </div>
+      </div>
+
+      <div className="hidden md:block px-6 lg:px-10 mb-10 lg:mb-16 mt-6 relative">
+        <div className="flex flex-col lg:flex-row justify-between items-center lg:h-[160px] gap-8 relative">
+          
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-full lg:w-[450px] h-[180px] bg-gray-200/20 blur-[100px] rounded-full -z-10" />
+
+          {/* updated image container using local asset */}
+          <div className="flex-1 w-full lg:max-w-[62%] ml-0 lg:ml-[-10px] overflow-hidden rounded-[2rem] h-44 flex items-center shadow-lg border-2 border-white bg-white relative">
+             <motion.img
+                initial={{ opacity: 0, scale: 1.02 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8 }}
+                src={bgImage}
+                alt="corporate incident investigation"
+                className="w-full h-full object-cover brightness-100 contrast-100"
+             />
+             <div className="absolute inset-0 bg-[#800000]/10 mix-blend-multiply pointer-events-none" />
+          </div>
+
+          <div className="hidden lg:flex items-center gap-12 pr-10">
+            <div className="flex gap-2 items-end h-24 border-r border-gray-100 pr-10 relative filter drop-shadow-[0_8px_6px_rgba(0,0,0,0.1)]">
+              {[...Array(6)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  animate={{ height: i % 2 === 0 ? [25, 85, 25] : [45, 65, 45] }}
+                  transition={{ repeat: Infinity, duration: 1.8, delay: i * 0.15, ease: "easeInOut" }}
+                  className={`w-2.5 rounded-t-sm ${i % 3 === 0 ? "bg-[#800000]" : "bg-gray-300"}`}
+                />
+              ))}
+            </div>
+
+            <div className="relative">
+              <motion.div animate={{ y: [0, -12, 0] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}>
+                <div className="w-60 h-36 bg-white rounded-2xl border border-gray-100 p-6 flex flex-col justify-between transform -rotate-1 shadow-[0_30px_60px_rgba(0,0,0,0.12)]">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center opacity-30">
+                       <span className="text-[7px] font-black text-gray-500">audit link</span>
+                       <div className="h-3 w-3 rounded-full border border-gray-400" />
+                    </div>
+                    <div className="h-1.5 w-full bg-gray-50 rounded-full" />
+                    <div className="h-1.5 w-5/6 bg-gray-50 rounded-full" />
                   </div>
-                )}
-              </h2>
-              <p className="text-gray-600 mt-1">
-                Create, view, and manage offenses for your team.
-              </p>
-            </>
+                  <div className="flex gap-3">
+                    <div className="h-4 w-8 bg-[#800000]/5 rounded-sm" />
+                    <div className="h-4 w-4 bg-gray-50 rounded-sm" />
+                  </div>
+                </div>
+
+                <motion.div
+                  animate={{ x: [-20, 50, -20] }}
+                  transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+                  className="absolute -top-8 -right-6 w-36 h-14 bg-[#800000] rounded-2xl border-2 border-white flex items-center px-4 gap-3 z-30 shadow-[10px_20px_40px_rgba(0,0,0,0.4)]"
+                >
+                  <div className="h-2 w-2 bg-white rounded-full animate-ping" />
+                  <div className="h-[2px] w-full bg-white/20 rounded-full relative overflow-hidden">
+                    <motion.div animate={{ left: ["-100%", "100%"] }} transition={{ repeat: Infinity, duration: 2.5, ease: "linear" }} className="absolute h-full w-1/2 bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+                  </div>
+                </motion.div>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 px-4 md:px-6 gap-6 md:gap-10 mb-12 items-start">
+        <div className="bg-white shadow-xl border-t-4 border-[#800000] overflow-hidden rounded-none">
+          {panelMode === "create" || panelMode === "edit" ? (
+             <OffenseForm formData={formData} setFormData={setFormData} isEditMode={panelMode === "edit"} resetForm={resetFormAndPanel} showNotification={showNotification} loggedUser={loggedUser} />
+          ) : (
+             <OffenseDetails formData={formData} onClose={resetFormAndPanel} formatDisplayDate={formatDisplayDate} loggedUser={loggedUser} />
           )}
         </div>
-      </div>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
-        <div>
-          {/* Define forms based on role + offenseType */}
-          {(() => {
-            const isTLOrOM = [
-              Roles.TEAM_LEADER,
-              Roles.OM,
-              Roles.TRAINER_QUALITY_ASSURANCE,
-              Roles.MANAGER,
-              Roles.OPERATION_ASSOCIATE,
-              Roles.BACK_OFFICE_HEAD,
-            ].includes(loggedUser.role);
-
-            // If not TL/OM → always IR
-            const effectiveType = isTLOrOM ? offenseType : "IR";
-
-            const FormComponent =
-              effectiveType === "IR" ? OffenseForm : CoachingForm;
-
-            const DetailComponent =
-              effectiveType === "IR" ? OffenseDetails : CoachingDetails;
-
-            if (panelMode === "create" || panelMode === "edit") {
-              return (
-                <FormComponent
-                  formData={formData}
-                  setFormData={setFormData}
-                  selectedFile={selectedFile}
-                  setSelectedFile={setSelectedFile}
-                  isDragOver={isDragOver}
-                  setIsDragOver={setIsDragOver}
-                  isEditMode={panelMode === "edit"}
-                  resetForm={resetFormAndPanel}
-                  showNotification={showNotification}
-                  isUploading={isUploading}
-                  userMap={userMap}
-                  accountsMap={accountsMap}
-                  loggedUser={loggedUser}
-                  selectedType={selectedType}
-                  setSelectedType={setSelectedType}
-                  {...(effectiveType === "IR"
-                    ? { handleIRSubmit }
-                    : { handleCoachingSubmit, handleVidaCoachingSubmit })}
-                />
-              );
-            } else {
-              return (
-                <DetailComponent
-                  isViewMode={true}
-                  formData={formData}
-                  onClose={resetFormAndPanel}
-                  onDelete={handleDelete}
-                  formatDisplayDate={formatDisplayDate}
-                  onEditClick={() => handleEditClick(formData)}
-                  loggedUser={loggedUser}
-                  onFormChange={handleFormChange}
-                  onAddEvidence={handleAddEvidence}
-                  onSubmitEdit={handleEdit}
-                  isUploading={isUploading}
-                  coachingRef={coachingRef}
-                  exportPDF={exportPDF}
-                  accountsMap={accountsMap}
-                />
-              );
-            }
-          })()}
-        </div>
-
-        {/* Cases In Progress */}
-        {(() => {
-          const isTLOrOM = [
-            Roles.TEAM_LEADER,
-            Roles.OM,
-            Roles.TRAINER_QUALITY_ASSURANCE,
-            Roles.MANAGER,
-            Roles.OPERATION_ASSOCIATE,
-            Roles.BACK_OFFICE_HEAD,
-          ].includes(loggedUser.role);
-
-          // Force IR for non-TL/OM
-          const effectiveType = isTLOrOM ? offenseType : "IR";
-
-          // Component selection
-          const CasesComponent =
-            effectiveType === "IR" ? CasesInProgress : CoachingInProgress;
-
-          return (
-            <CasesComponent
-              offenses={
-                effectiveType === "IR"
-                  ? filteredOffensesList
-                  : filteredCoachingList
-              }
-              searchQuery={searchQuery}
-              onSearchChange={(e) => setSearchQuery(e.target.value)}
-              onView={
-                effectiveType === "IR" ? handleIRView : handleCoachingView
-              }
-              isLoading={isLoading}
-              formatDisplayDate={formatDisplayDate}
-              userMap={userMap}
-            />
-          );
-        })()}
-      </div>
-
-      {/* Case History */}
-      {(() => {
-        const isTLOrOM = [
-          Roles.TEAM_LEADER,
-          Roles.OM,
-          Roles.TRAINER_QUALITY_ASSURANCE,
-          Roles.MANAGER,
-          Roles.OPERATION_ASSOCIATE,
-          Roles.BACK_OFFICE_HEAD,
-        ].includes(loggedUser.role);
-
-        const effectiveType = isTLOrOM ? offenseType : "IR";
-
-        const HistoryComponent =
-          effectiveType === "IR" ? CaseHistory : CoachingHistory;
-
-        return (
-          <HistoryComponent
-            offenses={
-              effectiveType === "IR"
-                ? resolvedOffensesHistory
-                : resolvedCoachingHistory
-            }
-            filters={{
-              searchQuery: historySearchQuery,
-              startDate: historyStartDate,
-              endDate: historyEndDate,
-            }}
-            setFilters={{
-              setSearchQuery: setHistorySearchQuery,
-              setStartDate: setHistoryStartDate,
-              setEndDate: setHistoryEndDate,
-            }}
-            onDateReset={handleHistoryDateReset}
-            isLoading={isLoading}
+        <div className="bg-white shadow-xl border-t-4 border-[#800000] overflow-hidden rounded-none">
+          <CasesInProgress
+            offenses={offenseType === "IR" ? filteredOffensesList : filteredCoachingList}
+            searchQuery={searchQuery}
+            onSearchChange={(e) => setSearchQuery(e.target.value)}
+            onView={offenseType === "IR" ? handleIRView : handleCoachingView}
             formatDisplayDate={formatDisplayDate}
-            today={today}
-            onView={effectiveType === "IR" ? handleIRView : handleCoachingView}
-            userMap={userMap}
           />
-        );
-      })()}
+        </div>
+      </div>
+
+      <div className="px-4 md:px-6 pb-20">
+        <div className="bg-white shadow-xl border-t-4 border-[#800000] overflow-hidden rounded-none">
+          <CaseHistory
+            offenses={offenseType === "IR" ? resolvedOffensesHistory : resolvedCoachingHistory}
+            filters={{ searchQuery: historySearchQuery || "", startDate: historyStartDate || "", endDate: historyEndDate || "" }}
+            setFilters={{ setSearchQuery: setHistorySearchQuery, setStartDate: setHistoryStartDate, setEndDate: setHistoryEndDate }}
+            onDateReset={handleHistoryDateReset} formatDisplayDate={formatDisplayDate} today={today}
+            onView={offenseType === "IR" ? handleIRView : handleCoachingView}
+          />
+        </div>
+      </div>
     </div>
   );
 };

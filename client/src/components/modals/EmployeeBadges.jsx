@@ -59,21 +59,44 @@ const EmployeeBadges = ({ allPosts, currentUser }) => {
 
   return (
     <>
+      <style dangerouslySetInnerHTML={{ __html: `
+        /* 1. Target lahat ng elements na pwedeng mag-scroll */
+        *::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+          background: transparent !important;
+        }
+
+        /* 2. Target para sa Firefox */
+        * {
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+        }
+
+        /* 3. Force target sa div na tinukoy mo kanina */
+        .overflow-y-auto {
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+        }
+        
+        .overflow-y-auto::-webkit-scrollbar {
+          display: none !important;
+        }
+      `}} />
+
       <button
         onClick={handleOpenAchievements}
         className="relative flex items-center gap-4 p-1.5 pr-4 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 hover:border-indigo-200 transition-all duration-300 group overflow-hidden"
       >
-        {/* Animated Background Glow on Hover */}
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-50 to-purple-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
         <div className="relative flex items-center gap-3">
-          {/* Badge Icon Container */}
           <div className="relative">
             <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200 group-hover:scale-105 group-hover:rotate-3 transition-transform duration-300">
               <Award className="w-6 h-6 text-white" />
             </div>
             
-            {/* Notification Badge Count */}
             {badgeCounts.total > 0 && (
               <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-sm animate-bounce">
                 {badgeCounts.total}
@@ -81,10 +104,9 @@ const EmployeeBadges = ({ allPosts, currentUser }) => {
             )}
           </div>
 
-          {/* Text Content */}
           <div className="text-left relative z-10">
             <div className="flex items-center gap-1">
-              <span className="text-[10px] uppercase tracking-[0.1em] font-black text-indigo-500">
+              <span className="text-[10px] uppercase font-black text-indigo-500">
                 Milestones
               </span>
               <Sparkles className="w-2.5 h-2.5 text-yellow-500 opacity-0 group-hover:opacity-100 transition-all" />
@@ -97,11 +119,9 @@ const EmployeeBadges = ({ allPosts, currentUser }) => {
           </div>
         </div>
 
-        {/* Arrow Icon */}
         <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all ml-auto relative z-10" />
       </button>
 
-      {/* My Achievements Modal */}
       {showAchievementsModal && currentUserData && (
         <MyAchievementsModal
           isOpen={showAchievementsModal}

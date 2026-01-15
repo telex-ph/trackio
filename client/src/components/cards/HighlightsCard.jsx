@@ -18,10 +18,10 @@ const HighlightsCard = ({ posts, currentMonth }) => {
 
   return (
     <div className="relative overflow-hidden bg-white rounded-[2rem] border border-slate-100 shadow-xl shadow-blue-900/5 p-6 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-900/10">
-      
+     
       {/* Background Decorative Gradient */}
       <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-50 rounded-full blur-3xl opacity-50" />
-      
+     
       {/* Header */}
       <div className="relative flex items-center justify-between mb-8">
         <div>
@@ -39,7 +39,7 @@ const HighlightsCard = ({ posts, currentMonth }) => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-4">
-        
+       
         {/* Total Recognitions */}
         <div className="group p-4 rounded-[1.5rem] bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100/50 transition-all hover:scale-[1.03]">
           <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center mb-3 group-hover:rotate-6 transition-transform">

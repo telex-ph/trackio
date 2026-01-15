@@ -2,53 +2,42 @@ import { ObjectId } from "mongodb";
 import connectDB from "../../config/db.js";
 import { DateTime } from "luxon";
 import PDFDocument from 'pdfkit';
+import fs from 'fs';
+import path from 'path';
 
 class Course {
   static #collection = "courses";
   static #certificateCollection = "certificates";
 
-  // 🎯 HELPER FUNCTION: Ensure question IDs are properly formatted
   static #generateQuestionId(q) {
     try {
-      // If ID exists and is valid ObjectId string, use it
-      if (q._id && ObjectId.isValid(q._id)) {
-        return q._id.toString(); // Keep as string
-      }
-      // If ID is string but not ObjectId, keep as string for frontend compatibility
-      if (q._id && typeof q._id === 'string') {
-        return q._id;
-      }
-      // Otherwise generate new string ID (compatible with frontend)
+      if (q._id && ObjectId.isValid(q._id)) return q._id.toString();
+      if (q._id && typeof q._id === 'string') return q._id;
       return `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    } catch (error) {
-      console.error("Error generating question ID:", error);
+    } catch {
       return `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     }
   }
-  // 🎯 COURSE METHODS
+
   static async add(newCourse) {
     const db = await connectDB();
-    const collection = await db.collection(this.#collection);
-
-    const lessons = newCourse.lessons?.map(lesson => {
-      // Process quiz questions with consistent ID format
+    const collection = db.collection(this.#collection);
+    const lessons = (newCourse.lessons || []).map(lesson => {
       let quiz = null;
       if (lesson.quiz) {
-        const questionsWithIds = lesson.quiz.questions?.map(q => ({
+        const questions = (lesson.quiz.questions || []).map(q => ({
           ...q,
-          _id: this.#generateQuestionId(q), // Keep as string for consistency
+          _id: this.#generateQuestionId(q),
           correctAnswer: Number(q.correctAnswer) || 0
-        })) || [];
-
+        }));
         quiz = {
           ...lesson.quiz,
           _id: new ObjectId().toString(),
-          questions: questionsWithIds,
+          questions,
           createdAt: DateTime.utc().toJSDate(),
           attempts: []
         };
       }
-
       return {
         _id: new ObjectId().toString(),
         title: lesson.title,
@@ -56,972 +45,594 @@ class Course {
         url: lesson.url,
         duration: lesson.duration,
         createdAt: DateTime.utc().toJSDate(),
-        quiz: quiz
+        quiz
       };
-    }) || [];
-
-    const newRecord = {
+    });
+    const record = {
       title: newCourse.title,
       description: newCourse.description,
       instructor: newCourse.instructor,
-      duration: lessons.reduce((sum, lesson) => sum + (lesson.duration || 0), 0),
+      duration: lessons.reduce((sum, l) => sum + (l.duration || 0), 0),
       progress: 0,
       completed: false,
-      lessons: lessons,
+      lessons,
       createdBy: new ObjectId(newCourse.createdBy),
       createdAt: DateTime.utc().toJSDate(),
       updatedAt: DateTime.utc().toJSDate(),
       videoProgress: []
     };
-
-    const result = await collection.insertOne(newRecord);
-    return { _id: result.insertedId, ...newRecord };
+    const { insertedId } = await collection.insertOne(record);
+    return { _id: insertedId, ...record };
   }
 
   static async getAll(category) {
     const db = await connectDB();
-    const collection = await db.collection(this.#collection);
-
-    const query = {};
-    if (category) query.category = category;
-
-    const result = await collection.find(query).toArray();
-    return result;
+    const query = category ? { category } : {};
+    return await db.collection(this.#collection).find(query).toArray();
   }
 
   static async get(id) {
     const db = await connectDB();
-    const collection = await db.collection(this.#collection);
-    const course = await collection.findOne({ _id: new ObjectId(id) });
-    
-    return course;
+    return await db.collection(this.#collection).findOne({ _id: new ObjectId(id) });
   }
 
-  static async update(id, newCourse) {
+  static async update(id, updates) {
     const db = await connectDB();
-    const collection = await db.collection(this.#collection);
-
-    newCourse.updatedAt = DateTime.utc().toJSDate();
-
+    const collection = db.collection(this.#collection);
+    updates.updatedAt = DateTime.utc().toJSDate();
     const result = await collection.updateOne(
       { _id: new ObjectId(id) },
-      { $set: newCourse }
+      { $set: updates }
     );
-
-    if (result.matchedCount === 0) return null;
-    return await collection.findOne({ _id: new ObjectId(id) });
+    return result.matchedCount ? await this.get(id) : null;
   }
 
-  static async addLesson(id, newLesson) {
+  static async addLesson(courseId, newLesson) {
     const db = await connectDB();
-    const collection = await db.collection(this.#collection);
-
-    // Process quiz questions with consistent ID format
+    const collection = db.collection(this.#collection);
     let quiz = null;
     if (newLesson.quiz) {
-      const questionsWithIds = newLesson.quiz.questions?.map(q => ({
+      const questions = (newLesson.quiz.questions || []).map(q => ({
         ...q,
-        _id: this.#generateQuestionId(q), // Keep as string
+        _id: this.#generateQuestionId(q),
         correctAnswer: Number(q.correctAnswer) || 0
-      })) || [];
-
+      }));
       quiz = {
         ...newLesson.quiz,
         _id: new ObjectId().toString(),
-        questions: questionsWithIds,
+        questions,
         createdAt: DateTime.utc().toJSDate(),
         attempts: []
       };
     }
-
-    const lessonWithId = {
+    const lesson = {
       _id: new ObjectId().toString(),
       title: newLesson.title,
       description: newLesson.description,
       url: newLesson.url,
       duration: newLesson.duration,
       createdAt: DateTime.utc().toJSDate(),
-      quiz: quiz
+      quiz
     };
-
-    const result = await collection.findOneAndUpdate(
-      { _id: new ObjectId(id) },
-      { 
-        $push: { lessons: lessonWithId },
+    return await collection.findOneAndUpdate(
+      { _id: new ObjectId(courseId) },
+      {
+        $push: { lessons: lesson },
         $inc: { duration: newLesson.duration },
         $set: { updatedAt: DateTime.utc().toJSDate() }
       },
       { returnDocument: "after" }
     );
-
-    return result;
   }
 
-  static async updateLesson(id, lessonId, updatedLesson) {
+  static async updateLesson(courseId, lessonId, updates) {
     const db = await connectDB();
-    const collection = await db.collection(this.#collection);
-
-    // Process quiz questions with consistent ID format
+    const collection = db.collection(this.#collection);
     let quiz = null;
-    if (updatedLesson.quiz) {
-      const questionsWithIds = updatedLesson.quiz.questions?.map(q => ({
+    if (updates.quiz) {
+      const questions = (updates.quiz.questions || []).map(q => ({
         ...q,
-        _id: this.#generateQuestionId(q), // Keep as string
+        _id: this.#generateQuestionId(q),
         correctAnswer: Number(q.correctAnswer) || 0
-      })) || [];
-
-      quiz = {
-        ...updatedLesson.quiz,
-        questions: questionsWithIds,
-        updatedAt: DateTime.utc().toJSDate()
-      };
+      }));
+      quiz = { ...updates.quiz, questions, updatedAt: DateTime.utc().toJSDate() };
     }
-
-    const result = await collection.findOneAndUpdate(
-      { 
-        _id: new ObjectId(id),
-        "lessons._id": lessonId // String ID
-      },
+    return await collection.findOneAndUpdate(
+      { _id: new ObjectId(courseId), "lessons._id": lessonId },
       {
         $set: {
-          "lessons.$.title": updatedLesson.title,
-          "lessons.$.description": updatedLesson.description,
-          "lessons.$.duration": updatedLesson.duration,
-          "lessons.$.url": updatedLesson.url,
+          "lessons.$.title": updates.title,
+          "lessons.$.description": updates.description,
+          "lessons.$.duration": updates.duration,
+          "lessons.$.url": updates.url,
           "lessons.$.quiz": quiz,
-          "lessons.$.updatedAt": DateTime.utc().toJSDate()
+          "lessons.$.updatedAt": DateTime.utc().toJSDate(),
+          updatedAt: DateTime.utc().toJSDate()
         }
       },
       { returnDocument: "after" }
     );
-
-    return result;
   }
 
   static async updateVideoProgress(courseId, userId, lessonId, progress, completed = false) {
     const db = await connectDB();
-    const collection = await db.collection(this.#collection);
-
-    try {
-      const course = await collection.findOne({ _id: new ObjectId(courseId) });
-      
-      if (!course) {
-        throw new Error("Course not found");
-      }
-
-      // Check if lesson has quiz
-      const lesson = course.lessons?.find(l => l._id === lessonId);
-      const hasQuiz = lesson?.quiz ? true : false;
-      
-      // If lesson has quiz, check if user passed it
-      let canComplete = true;
-      if (hasQuiz && lesson.quiz.attempts) {
-        const userAttempts = lesson.quiz.attempts.filter(attempt => 
-          attempt.userId.toString() === userId
-        );
-        
-        // User must pass quiz to complete lesson
-        const passedQuiz = userAttempts.some(attempt => attempt.passed);
-        canComplete = passedQuiz;
-        
-        console.log("Quiz check - User passed quiz:", passedQuiz, "Total attempts:", userAttempts.length);
-      }
-
-      const existingProgressIndex = course.videoProgress?.findIndex(
-        p => p.userId.toString() === userId && p.lessonId === lessonId
-      ) || -1;
-
-      if (existingProgressIndex >= 0) {
-        const updateQuery = {
-          $set: {
-            [`videoProgress.${existingProgressIndex}.progress`]: progress,
-            [`videoProgress.${existingProgressIndex}.completed`]: canComplete && completed,
-            [`videoProgress.${existingProgressIndex}.lastWatched`]: DateTime.utc().toJSDate(),
-            "updatedAt": DateTime.utc().toJSDate()
-          }
-        };
-
-        const result = await collection.findOneAndUpdate(
-          { _id: new ObjectId(courseId) },
-          updateQuery,
-          { returnDocument: "after" }
-        );
-        return result;
-      } else {
-        const newProgress = {
-          userId: new ObjectId(userId),
-          lessonId: lessonId,
-          progress: progress,
-          completed: canComplete && completed,
-          lastWatched: DateTime.utc().toJSDate()
-        };
-
-        const result = await collection.findOneAndUpdate(
-          { _id: new ObjectId(courseId) },
-          {
-            $push: { videoProgress: newProgress },
-            $set: { updatedAt: DateTime.utc().toJSDate() }
-          },
-          { returnDocument: "after" }
-        );
-        return result;
-      }
-    } catch (error) {
-      console.error("Error updating video progress:", error);
-      throw error;
+    const collection = db.collection(this.#collection);
+    const course = await this.get(courseId);
+    if (!course) throw new Error("Course not found");
+    const lesson = course.lessons.find(l => l._id === lessonId);
+    const hasQuiz = !!lesson?.quiz;
+    let canComplete = true;
+    if (hasQuiz) {
+      const passed = lesson.quiz.attempts?.some(a => a.userId.toString() === userId && a.passed);
+      canComplete = passed ?? true;
     }
+    const idx = course.videoProgress?.findIndex(p => p.userId.toString() === userId && p.lessonId === lessonId) ?? -1;
+    if (idx >= 0) {
+      return await collection.findOneAndUpdate(
+        { _id: new ObjectId(courseId) },
+        {
+          $set: {
+            [`videoProgress.${idx}.progress`]: progress,
+            [`videoProgress.${idx}.completed`]: canComplete && completed,
+            [`videoProgress.${idx}.lastWatched`]: DateTime.utc().toJSDate(),
+            updatedAt: DateTime.utc().toJSDate()
+          }
+        },
+        { returnDocument: "after" }
+      );
+    }
+    return await collection.findOneAndUpdate(
+      { _id: new ObjectId(courseId) },
+      {
+        $push: {
+          videoProgress: {
+            userId: new ObjectId(userId),
+            lessonId,
+            progress,
+            completed: canComplete && completed,
+            lastWatched: DateTime.utc().toJSDate()
+          }
+        },
+        $set: { updatedAt: DateTime.utc().toJSDate() }
+      },
+      { returnDocument: "after" }
+    );
   }
 
   static async getVideoProgress(courseId, userId) {
-    const db = await connectDB();
-    const collection = await db.collection(this.#collection);
-
-    const course = await collection.findOne({ _id: new ObjectId(courseId) });
-    return course?.videoProgress?.filter(prog => 
-      prog.userId.toString() === userId
-    ) || [];
+    const course = await this.get(courseId);
+    return course?.videoProgress?.filter(p => p.userId.toString() === userId) || [];
   }
 
   static async checkLessonCompletion(courseId, userId, lessonId) {
-    const db = await connectDB();
-    const collection = await db.collection(this.#collection);
-
-    const course = await collection.findOne({ _id: new ObjectId(courseId) });
-    const progress = course?.videoProgress?.find(prog => 
-      prog.userId.toString() === userId && prog.lessonId === lessonId
-    );
-
+    const progress = (await this.getVideoProgress(courseId, userId)).find(p => p.lessonId === lessonId);
     return progress?.completed || false;
   }
 
   static async getLessonStatus(courseId, userId, lessonId) {
-    const db = await connectDB();
-    const collection = await db.collection(this.#collection);
-
-    try {
-      const course = await collection.findOne({ _id: new ObjectId(courseId) });
-      if (!course) return { completed: false, passedQuiz: false };
-
-      const lesson = course.lessons?.find(l => l._id === lessonId);
-      if (!lesson) return { completed: false, passedQuiz: false };
-
-      const progress = course?.videoProgress?.find(prog => 
-        prog.userId.toString() === userId && prog.lessonId === lessonId
-      );
-
-      let passedQuiz = false;
-      let hasQuiz = false;
-      
-      if (lesson.quiz && lesson.quiz.attempts) {
-        hasQuiz = true;
-        const userAttempts = lesson.quiz.attempts.filter(attempt => 
-          attempt.userId.toString() === userId
-        );
-        passedQuiz = userAttempts.some(attempt => attempt.passed);
-      }
-
-      return {
-        completed: progress?.completed || false,
-        passedQuiz,
-        hasQuiz,
-        progress: progress?.progress || 0,
-        videoWatched: progress?.progress >= 90 // 90% video watched
-      };
-    } catch (error) {
-      console.error("Error getting lesson status:", error);
-      return { completed: false, passedQuiz: false };
+    const course = await this.get(courseId);
+    if (!course) return { completed: false, passedQuiz: false };
+    const lesson = course.lessons.find(l => l._id === lessonId);
+    const progress = course.videoProgress?.find(p => p.userId.toString() === userId && p.lessonId === lessonId);
+    let passedQuiz = false;
+    let hasQuiz = false;
+    if (lesson?.quiz?.attempts) {
+      hasQuiz = true;
+      passedQuiz = lesson.quiz.attempts.some(a => a.userId.toString() === userId && a.passed);
     }
+    return {
+      completed: progress?.completed || false,
+      passedQuiz,
+      hasQuiz,
+      progress: progress?.progress || 0,
+      videoWatched: (progress?.progress || 0) >= 90
+    };
   }
 
   static async addQuizToLesson(courseId, lessonId, quiz) {
     const db = await connectDB();
-    const collection = await db.collection(this.#collection);
-
-    try {
-      // Generate question IDs as strings for consistency
-      const questionsWithIds = quiz.questions?.map(q => ({
-        ...q,
-        _id: q._id || `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        correctAnswer: Number(q.correctAnswer) || 0
-      })) || [];
-
-      const quizWithId = {
-        ...quiz,
-        _id: new ObjectId().toString(),
-        questions: questionsWithIds,
-        createdAt: DateTime.utc().toJSDate(),
-        updatedAt: DateTime.utc().toJSDate(),
-        attempts: []
-      };
-
-      const result = await collection.findOneAndUpdate(
-        { 
-          _id: new ObjectId(courseId),
-          "lessons._id": lessonId
-        },
-        {
-          $set: {
-            "lessons.$.quiz": quizWithId,
-            "lessons.$.updatedAt": DateTime.utc().toJSDate(),
-            "updatedAt": DateTime.utc().toJSDate()
-          }
-        },
-        { returnDocument: "after" }
-      );
-
-      return result;
-    } catch (error) {
-      console.error("Error adding quiz to lesson:", error);
-      throw error;
-    }
+    const collection = db.collection(this.#collection);
+    const questions = (quiz.questions || []).map(q => ({
+      ...q,
+      _id: q._id || `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      correctAnswer: Number(q.correctAnswer) || 0
+    }));
+    const quizObj = {
+      ...quiz,
+      _id: new ObjectId().toString(),
+      questions,
+      createdAt: DateTime.utc().toJSDate(),
+      updatedAt: DateTime.utc().toJSDate(),
+      attempts: []
+    };
+    return await collection.findOneAndUpdate(
+      { _id: new ObjectId(courseId), "lessons._id": lessonId },
+      {
+        $set: {
+          "lessons.$.quiz": quizObj,
+          "lessons.$.updatedAt": DateTime.utc().toJSDate(),
+          updatedAt: DateTime.utc().toJSDate()
+        }
+      },
+      { returnDocument: "after" }
+    );
   }
 
   static async updateLessonQuiz(courseId, lessonId, quizData) {
     const db = await connectDB();
-    const collection = await db.collection(this.#collection);
-
-    try {
-      // Ensure question IDs are strings
-      const questionsWithIds = quizData.questions?.map(q => ({
-        ...q,
-        _id: q._id || `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        correctAnswer: Number(q.correctAnswer) || 0
-      })) || [];
-
-      const result = await collection.findOneAndUpdate(
-        { 
-          _id: new ObjectId(courseId),
-          "lessons._id": lessonId
-        },
-        {
-          $set: {
-            "lessons.$.quiz.title": quizData.title,
-            "lessons.$.quiz.description": quizData.description,
-            "lessons.$.quiz.questions": questionsWithIds,
-            "lessons.$.quiz.passingScore": quizData.passingScore,
-            "lessons.$.quiz.timeLimit": quizData.timeLimit,
-            "lessons.$.quiz.updatedAt": DateTime.utc().toJSDate(),
-            "updatedAt": DateTime.utc().toJSDate()
-          }
-        },
-        { returnDocument: "after" }
-      );
-
-      return result;
-    } catch (error) {
-      console.error("Error updating quiz:", error);
-      throw error;
-    }
+    const collection = db.collection(this.#collection);
+    const questions = (quizData.questions || []).map(q => ({
+      ...q,
+      _id: q._id || `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      correctAnswer: Number(q.correctAnswer) || 0
+    }));
+    return await collection.findOneAndUpdate(
+      { _id: new ObjectId(courseId), "lessons._id": lessonId },
+      {
+        $set: {
+          "lessons.$.quiz.title": quizData.title,
+          "lessons.$.quiz.description": quizData.description,
+          "lessons.$.quiz.questions": questions,
+          "lessons.$.quiz.passingScore": quizData.passingScore,
+          "lessons.$.quiz.timeLimit": quizData.timeLimit,
+          "lessons.$.quiz.updatedAt": DateTime.utc().toJSDate(),
+          updatedAt: DateTime.utc().toJSDate()
+        }
+      },
+      { returnDocument: "after" }
+    );
   }
 
   static async deleteLessonQuiz(courseId, lessonId) {
     const db = await connectDB();
-    const collection = await db.collection(this.#collection);
-
-    try {
-      const result = await collection.findOneAndUpdate(
-        { 
-          _id: new ObjectId(courseId),
-          "lessons._id": lessonId
-        },
-        {
-          $set: {
-            "lessons.$.quiz": null,
-            "lessons.$.updatedAt": DateTime.utc().toJSDate(),
-            "updatedAt": DateTime.utc().toJSDate()
-          }
-        },
-        { returnDocument: "after" }
-      );
-
-      return result;
-    } catch (error) {
-      console.error("Error deleting quiz:", error);
-      throw error;
-    }
+    return await db.collection(this.#collection).findOneAndUpdate(
+      { _id: new ObjectId(courseId), "lessons._id": lessonId },
+      {
+        $set: {
+          "lessons.$.quiz": null,
+          "lessons.$.updatedAt": DateTime.utc().toJSDate(),
+          updatedAt: DateTime.utc().toJSDate()
+        }
+      },
+      { returnDocument: "after" }
+    );
   }
 
   static async submitQuizAttempt(courseId, lessonId, userId, attemptData) {
     const db = await connectDB();
-    const collection = await db.collection(this.#collection);
-
-    try {
-      // Get course and lesson
-      const course = await collection.findOne({ _id: new ObjectId(courseId) });
-      if (!course) {
-        throw new Error("Course not found");
-      }
-
-      const lesson = course.lessons?.find(l => l._id === lessonId);
-      if (!lesson) {
-        throw new Error("Lesson not found");
-      }
-
-      if (!lesson.quiz) {
-        throw new Error("Quiz not found for this lesson");
-      }
-
-      const quiz = lesson.quiz;
-      
-      // Check if user has reached maximum attempts (3 attempts)
-      const userAttempts = quiz.attempts?.filter(attempt => 
-        attempt.userId.toString() === userId
-      ) || [];
-      
-      if (userAttempts.length >= 3) {
-        // Check if 24 hours have passed since last attempt
-        const lastAttempt = userAttempts[userAttempts.length - 1];
-        const lastAttemptTime = new Date(lastAttempt.submittedAt).getTime();
-        const now = DateTime.utc().toJSDate().getTime();
-        const hoursSinceLastAttempt = (now - lastAttemptTime) / (1000 * 60 * 60);
-        
-        if (hoursSinceLastAttempt < 24) {
-          throw new Error("Maximum attempts (3) reached. Please wait 24 hours before retaking.");
-        }
-      }
-
-      // Calculate score
-      let score = 0;
-      let totalPoints = 0;
-      const results = [];
-      
-      // First calculate total possible points
-      quiz.questions?.forEach(q => {
-        totalPoints += Number(q.points) || 1;
-      });
-
-      // Process each answer
-      attemptData.answers?.forEach(answer => {
-        // Find question by ID - compare as strings
-        const question = quiz.questions?.find(q => {
-          const questionId = String(q._id);
-          const answerId = String(answer.questionId);
-          return questionId === answerId;
-        });
-
-        if (!question) {
-          console.error("Question not found for ID:", answer.questionId);
-          return;
-        }
-        
-        const isCorrect = Number(question.correctAnswer) === Number(answer.selectedAnswer);
-        
-        if (isCorrect) {
-          score += Number(question.points) || 1;
-        }
-        
-        results.push({
-          questionId: answer.questionId,
-          selectedAnswer: answer.selectedAnswer,
-          isCorrect,
-          correctAnswer: question.correctAnswer,
-          points: question.points || 1
-        });
-      });
-
-      const percentage = totalPoints > 0 ? (score / totalPoints) * 100 : 0;
-      const passed = percentage >= (Number(quiz.passingScore) || 70);
-
-      const attempt = {
-        _id: new ObjectId(),
-        userId: new ObjectId(userId),
-        score,
-        totalPoints,
-        totalQuestions: quiz.questions?.length || 0,
-        percentage,
-        passed,
-        results,
-        submittedAt: DateTime.utc().toJSDate(),
-        timeSpent: attemptData.timeSpent || 0
-      };
-
-      // Add attempt to quiz
-      const result = await collection.findOneAndUpdate(
-        { 
-          _id: new ObjectId(courseId),
-          "lessons._id": lessonId
-        },
-        {
-          $push: {
-            "lessons.$.quiz.attempts": attempt
-          },
-          $set: {
-            "updatedAt": DateTime.utc().toJSDate()
-          }
-        },
-        { returnDocument: "after" }
-      );
-
-      // If passed quiz, update video progress to mark lesson as completed
-      if (passed) {
-        await this.updateVideoProgress(courseId, userId, lessonId, 100, true);
-      }
-
-      return { attempt, quiz };
-    } catch (error) {
-      console.error("Error submitting quiz attempt:", error);
-      throw error;
+    const collection = db.collection(this.#collection);
+    const course = await this.get(courseId);
+    if (!course) throw new Error("Course not found");
+    const lesson = course.lessons.find(l => l._id === lessonId);
+    if (!lesson?.quiz) throw new Error("Quiz not found");
+    const attempts = lesson.quiz.attempts?.filter(a => a.userId.toString() === userId) || [];
+    if (attempts.length >= 3) {
+      const last = attempts[attempts.length - 1];
+      const hoursSince = (Date.now() - new Date(last.submittedAt).getTime()) / (3600000);
+      if (hoursSince < 24) throw new Error("Maximum attempts reached. Wait 24 hours.");
     }
+    let score = 0, totalPoints = 0;
+    const results = [];
+    lesson.quiz.questions.forEach(q => totalPoints += Number(q.points) || 1);
+    attemptData.answers?.forEach(ans => {
+      const q = lesson.quiz.questions.find(q => String(q._id) === String(ans.questionId));
+      if (!q) return;
+      const correct = Number(q.correctAnswer) === Number(ans.selectedAnswer);
+      if (correct) score += Number(q.points) || 1;
+      results.push({
+        questionId: ans.questionId,
+        selectedAnswer: ans.selectedAnswer,
+        isCorrect: correct,
+        correctAnswer: q.correctAnswer,
+        points: q.points || 1
+      });
+    });
+    const percentage = totalPoints ? (score / totalPoints) * 100 : 0;
+    const passed = percentage >= (Number(lesson.quiz.passingScore) || 70);
+    const attempt = {
+      _id: new ObjectId(),
+      userId: new ObjectId(userId),
+      score,
+      totalPoints,
+      totalQuestions: lesson.quiz.questions.length,
+      percentage,
+      passed,
+      results,
+      submittedAt: DateTime.utc().toJSDate(),
+      timeSpent: attemptData.timeSpent || 0
+    };
+    const result = await collection.findOneAndUpdate(
+      { _id: new ObjectId(courseId), "lessons._id": lessonId },
+      {
+        $push: { "lessons.$.quiz.attempts": attempt },
+        $set: { updatedAt: DateTime.utc().toJSDate() }
+      },
+      { returnDocument: "after" }
+    );
+    if (passed) await this.updateVideoProgress(courseId, userId, lessonId, 100, true);
+    return { attempt, quiz: lesson.quiz };
   }
 
   static async getUserQuizAttempts(courseId, userId) {
-    const db = await connectDB();
-    const collection = await db.collection(this.#collection);
-
-    try {
-      const course = await collection.findOne({ _id: new ObjectId(courseId) });
-      
-      if (!course) return [];
-
-      const allAttempts = [];
-      course.lessons?.forEach(lesson => {
-        if (lesson.quiz?.attempts) {
-          const userAttempts = lesson.quiz.attempts.filter(attempt => 
-            attempt.userId?.toString() === userId
-          );
-          userAttempts.forEach(attempt => {
-            allAttempts.push({
-              ...attempt,
-              lessonTitle: lesson.title,
-              lessonId: lesson._id,
-              quizTitle: lesson.quiz.title,
-              lessonCompleted: lesson.completed || false
-            });
-          });
-        }
-      });
-
-      // Sort attempts by submission time (newest first)
-      return allAttempts.sort((a, b) => 
-        new Date(b.submittedAt) - new Date(a.submittedAt)
-      );
-    } catch (error) {
-      console.error("Error getting user attempts:", error);
-      throw error;
-    }
+    const course = await this.get(courseId);
+    if (!course) return [];
+    const attempts = [];
+    course.lessons.forEach(lesson => {
+      lesson.quiz?.attempts
+        ?.filter(a => a.userId.toString() === userId)
+        .forEach(a => attempts.push({
+          ...a,
+          lessonTitle: lesson.title,
+          lessonId: lesson._id,
+          quizTitle: lesson.quiz.title
+        }));
+    });
+    return attempts.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
   }
 
   static async getLessonQuizStats(courseId, lessonId) {
-    const db = await connectDB();
-    const collection = await db.collection(this.#collection);
-
-    try {
-      const course = await collection.findOne({ _id: new ObjectId(courseId) });
-      const lesson = course?.lessons?.find(l => l._id === lessonId);
-      
-      if (!lesson || !lesson.quiz) return null;
-
-      const quiz = lesson.quiz;
-      const stats = {
-        totalAttempts: quiz.attempts?.length || 0,
-        avgScore: 0,
-        passRate: 0,
-        topScore: 0,
-        questionStats: []
-      };
-
-      if (quiz.attempts?.length > 0) {
-        const totalPercentage = quiz.attempts.reduce((sum, attempt) => sum + (attempt.percentage || 0), 0);
-        const passedCount = quiz.attempts.filter(attempt => attempt.passed).length;
-        
-        stats.avgScore = totalPercentage / quiz.attempts.length;
-        stats.passRate = (passedCount / quiz.attempts.length) * 100;
-        stats.topScore = Math.max(...quiz.attempts.map(a => a.percentage || 0));
-
-        // Calculate question statistics
-        if (quiz.questions?.length > 0) {
-          quiz.questions.forEach((question) => {
-            const correctCount = quiz.attempts.reduce((count, attempt) => {
-              const result = attempt.results?.find(r => 
-                String(r.questionId) === String(question._id)
-              );
-              return count + (result?.isCorrect ? 1 : 0);
-            }, 0);
-            
-            stats.questionStats.push({
-              questionId: question._id,
-              questionText: question.text,
-              correctPercentage: (correctCount / quiz.attempts.length) * 100
-            });
-          });
-        }
-      }
-
-      return stats;
-    } catch (error) {
-      console.error("Error getting lesson stats:", error);
-      throw error;
-    }
+    const course = await this.get(courseId);
+    const quiz = course?.lessons.find(l => l._id === lessonId)?.quiz;
+    if (!quiz) return null;
+    const stats = { totalAttempts: quiz.attempts?.length || 0, avgScore: 0, passRate: 0, topScore: 0, questionStats: [] };
+    if (!stats.totalAttempts) return stats;
+    const totalPerc = quiz.attempts.reduce((s, a) => s + (a.percentage || 0), 0);
+    const passed = quiz.attempts.filter(a => a.passed).length;
+    stats.avgScore = totalPerc / stats.totalAttempts;
+    stats.passRate = (passed / stats.totalAttempts) * 100;
+    stats.topScore = Math.max(...quiz.attempts.map(a => a.percentage || 0));
+    quiz.questions.forEach(q => {
+      const correct = quiz.attempts.reduce((c, a) => c + (a.results?.find(r => String(r.questionId) === String(q._id))?.isCorrect ? 1 : 0), 0);
+      stats.questionStats.push({
+        questionId: q._id,
+        questionText: q.text,
+        correctPercentage: (correct / stats.totalAttempts) * 100
+      });
+    });
+    return stats;
   }
 
   static async getCourseQuizStats(courseId) {
-    const db = await connectDB();
-    const collection = await db.collection(this.#collection);
-
-    try {
-      const course = await collection.findOne({ _id: new ObjectId(courseId) });
-      
-      if (!course) return null;
-
-      const stats = {
-        totalQuizzes: 0,
-        totalAttempts: 0,
-        avgScore: 0,
-        passRate: 0,
-        lessonStats: []
-      };
-
-      let totalPercentage = 0;
-      let totalPassed = 0;
-
-      course.lessons?.forEach(lesson => {
-        if (lesson.quiz) {
-          stats.totalQuizzes++;
-          const lessonAttempts = lesson.quiz.attempts?.length || 0;
-          stats.totalAttempts += lessonAttempts;
-          
-          let lessonPercentage = 0;
-          let lessonPassed = 0;
-          
-          lesson.quiz.attempts?.forEach(attempt => {
-            lessonPercentage += attempt.percentage || 0;
-            totalPercentage += attempt.percentage || 0;
-            if (attempt.passed) {
-              lessonPassed++;
-              totalPassed++;
-            }
-          });
-
-          stats.lessonStats.push({
-            lessonId: lesson._id,
-            lessonTitle: lesson.title,
-            quizTitle: lesson.quiz.title,
-            attempts: lessonAttempts,
-            avgScore: lessonAttempts > 0 ? lessonPercentage / lessonAttempts : 0,
-            passRate: lessonAttempts > 0 ? (lessonPassed / lessonAttempts) * 100 : 0
-          });
-        }
+    const course = await this.get(courseId);
+    if (!course) return null;
+    const stats = { totalQuizzes: 0, totalAttempts: 0, avgScore: 0, passRate: 0, lessonStats: [] };
+    let totalPerc = 0, totalPassed = 0;
+    course.lessons.forEach(lesson => {
+      if (!lesson.quiz) return;
+      stats.totalQuizzes++;
+      const attempts = lesson.quiz.attempts?.length || 0;
+      stats.totalAttempts += attempts;
+      let lessonPerc = 0, lessonPassed = 0;
+      lesson.quiz.attempts?.forEach(a => {
+        lessonPerc += a.percentage || 0;
+        totalPerc += a.percentage || 0;
+        if (a.passed) { lessonPassed++; totalPassed++; }
       });
-
-      if (stats.totalAttempts > 0) {
-        stats.avgScore = totalPercentage / stats.totalAttempts;
-        stats.passRate = (totalPassed / stats.totalAttempts) * 100;
-      }
-
-      return stats;
-    } catch (error) {
-      console.error("Error getting course stats:", error);
-      throw error;
+      stats.lessonStats.push({
+        lessonId: lesson._id,
+        lessonTitle: lesson.title,
+        quizTitle: lesson.quiz.title,
+        attempts,
+        avgScore: attempts ? lessonPerc / attempts : 0,
+        passRate: attempts ? (lessonPassed / attempts) * 100 : 0
+      });
+    });
+    if (stats.totalAttempts) {
+      stats.avgScore = totalPerc / stats.totalAttempts;
+      stats.passRate = (totalPassed / stats.totalAttempts) * 100;
     }
+    return stats;
   }
 
   static async checkQuizExists(courseId, lessonId) {
     const db = await connectDB();
-    const collection = await db.collection(this.#collection);
-
-    const course = await collection.findOne(
-      { 
-        _id: new ObjectId(courseId),
-        "lessons._id": lessonId,
-        "lessons.quiz": { $exists: true, $ne: null }
-      }
-    );
-
-    return !!course;
+    return !!(await db.collection(this.#collection).findOne({
+      _id: new ObjectId(courseId),
+      "lessons._id": lessonId,
+      "lessons.quiz": { $exists: true, $ne: null }
+    }));
   }
 
   static async getUserLessonAttempts(courseId, lessonId, userId) {
-    const db = await connectDB();
-    const collection = await db.collection(this.#collection);
-
-    try {
-      const course = await collection.findOne({ _id: new ObjectId(courseId) });
-      
-      if (!course) return [];
-
-      const lesson = course.lessons?.find(l => l._id === lessonId);
-      
-      if (!lesson || !lesson.quiz) return [];
-
-      const userAttempts = lesson.quiz.attempts?.filter(attempt => 
-        attempt.userId?.toString() === userId
-      ) || [];
-
-      return userAttempts.sort((a, b) => 
-        new Date(b.submittedAt) - new Date(a.submittedAt)
-      );
-    } catch (error) {
-      console.error("Error getting user lesson attempts:", error);
-      throw error;
-    }
+    const course = await this.get(courseId);
+    const attempts = course?.lessons.find(l => l._id === lessonId)?.quiz?.attempts
+      ?.filter(a => a.userId.toString() === userId) || [];
+    return attempts.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
   }
 
   static async getCourseCompletionStatus(courseId, userId) {
-    const db = await connectDB();
-    const collection = await db.collection(this.#collection);
-
-    try {
-      const course = await collection.findOne({ _id: new ObjectId(courseId) });
-      
-      if (!course) {
-        throw new Error("Course not found");
-      }
-
-      const lessonsWithStatus = await Promise.all(
-        course.lessons?.map(async (lesson) => {
-          const lessonStatus = await this.getLessonStatus(courseId, userId, lesson._id);
-          
-          return {
-            lessonId: lesson._id,
-            title: lesson.title,
-            hasQuiz: !!lesson.quiz,
-            completed: lessonStatus.completed,
-            passedQuiz: lessonStatus.passedQuiz,
-            videoWatched: lessonStatus.videoWatched
-          };
-        }) || []
-      );
-
-      // A lesson is fully completed if:
-      // 1. Video is watched (90%+)
-      // 2. If lesson has quiz, quiz must be passed
-      const fullyCompletedLessons = lessonsWithStatus.filter(lesson => {
-        if (!lesson.videoWatched) return false;
-        if (lesson.hasQuiz && !lesson.passedQuiz) return false;
-        return true;
-      });
-
-      // Course is fully completed when all lessons are fully completed
-      const fullyCompleted = fullyCompletedLessons.length === lessonsWithStatus.length;
-
-      // Find lessons that still need completion
-      const lessonsNeedingCompletion = lessonsWithStatus
-        .filter(lesson => !fullyCompletedLessons.some(l => l.lessonId === lesson.lessonId))
-        .map(lesson => {
-          if (!lesson.videoWatched) return `Watch "${lesson.title}" video`;
-          if (lesson.hasQuiz && !lesson.passedQuiz) return `Pass quiz for "${lesson.title}"`;
-          return `Complete "${lesson.title}"`;
-        });
-
-      return {
-        fullyCompleted,
-        completionPercentage: Math.round((fullyCompletedLessons.length / lessonsWithStatus.length) * 100),
-        totalLessons: lessonsWithStatus.length,
-        completedLessons: lessonsWithStatus.filter(l => l.completed).length,
-        totalQuizzes: lessonsWithStatus.filter(l => l.hasQuiz).length,
-        passedQuizzes: lessonsWithStatus.filter(l => l.passedQuiz).length,
-        fullyCompletedLessons: fullyCompletedLessons.length,
-        lessonsNeedingCompletion,
-        lessons: lessonsWithStatus
-      };
-    } catch (error) {
-      console.error("Error getting completion status:", error);
-      throw error;
-    }
+    const course = await this.get(courseId);
+    if (!course) throw new Error("Course not found");
+    const lessonStatuses = await Promise.all(
+      course.lessons.map(async lesson => {
+        const status = await this.getLessonStatus(courseId, userId, lesson._id);
+        return {
+          lessonId: lesson._id,
+          title: lesson.title,
+          hasQuiz: !!lesson.quiz,
+          completed: status.completed,
+          passedQuiz: status.passedQuiz,
+          videoWatched: status.videoWatched
+        };
+      })
+    );
+    const fullyCompleted = lessonStatuses.filter(l =>
+      l.videoWatched && (!l.hasQuiz || l.passedQuiz)
+    );
+    const needing = lessonStatuses
+      .filter(l => !fullyCompleted.some(f => f.lessonId === l.lessonId))
+      .map(l => l.videoWatched ? `Pass quiz for "${l.title}"` : `Watch "${l.title}" video`);
+    return {
+      fullyCompleted: fullyCompleted.length === lessonStatuses.length,
+      completionPercentage: Math.round((fullyCompleted.length / lessonStatuses.length) * 100),
+      totalLessons: lessonStatuses.length,
+      completedLessons: lessonStatuses.filter(l => l.completed).length,
+      totalQuizzes: lessonStatuses.filter(l => l.hasQuiz).length,
+      passedQuizzes: lessonStatuses.filter(l => l.passedQuiz).length,
+      fullyCompletedLessons: fullyCompleted.length,
+      lessonsNeedingCompletion: needing,
+      lessons: lessonStatuses
+    };
   }
 
   static async getUserCertificate(courseId, userId) {
     const db = await connectDB();
-    const collection = await db.collection(this.#certificateCollection);
-
-    try {
-      const certificate = await collection.findOne({
-        courseId: new ObjectId(courseId),
-        userId: new ObjectId(userId)
-      });
-
-      return certificate;
-    } catch (error) {
-      console.error("Error getting user certificate:", error);
-      throw error;
-    }
+    return await db.collection(this.#certificateCollection).findOne({
+      courseId: new ObjectId(courseId),
+      userId: new ObjectId(userId)
+    });
   }
 
   static async generateCertificate(courseId, userId, userName = null) {
     const db = await connectDB();
-    const certificatesCollection = await db.collection(this.#certificateCollection);
-    const coursesCollection = await db.collection(this.#collection);
-    const usersCollection = await db.collection("users");
-
-    try {
-      // Get course details
-      const course = await coursesCollection.findOne({ _id: new ObjectId(courseId) });
-      if (!course) {
-        throw new Error("Course not found");
-      }
-
-      // Get user details - look for firstName and lastName fields
-      const user = await usersCollection.findOne({ 
-        _id: new ObjectId(userId) 
-      }, {
-        projection: { 
-          firstName: 1, 
-          lastName: 1, 
-          name: 1, 
-          email: 1 
-        }
-      });
-
-      if (!user) {
-        throw new Error("User not found");
-      }
-
-      // Get user's full name properly
-      let certificateUserName = userName;
-      
-      if (!certificateUserName || certificateUserName.trim() === '') {
-        // Priority: firstName + lastName > name > email formatting
-        if (user.firstName && user.lastName) {
-          certificateUserName = `${user.firstName} ${user.lastName}`.trim();
-        } 
-        // Then check for name field
-        else if (user.name) {
-          certificateUserName = user.name.trim();
-        } 
-        // Finally fallback to email formatting (but we should avoid this)
-        else if (user.email) {
-          const emailPrefix = user.email.split('@')[0];
-          certificateUserName = emailPrefix
+    const certColl = db.collection(this.#certificateCollection);
+    const courseColl = db.collection(this.#collection);
+    const userColl = db.collection("users");
+    const course = await courseColl.findOne({ _id: new ObjectId(courseId) });
+    if (!course) throw new Error("Course not found");
+    const user = await userColl.findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { firstName: 1, lastName: 1, name: 1, email: 1 } }
+    );
+    if (!user) throw new Error("User not found");
+    let name = userName?.trim();
+    if (!name) {
+      name = user.firstName && user.lastName
+        ? `${user.firstName} ${user.lastName}`.trim()
+        : user.name?.trim()
+        || user.email?.split('@')[0]
             .replace(/[._-]/g, ' ')
             .split(' ')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-            .join(' ');
-        }
-      }
-
-      // Ensure we have a valid name (not email)
-      if (!certificateUserName || certificateUserName.trim() === '' || certificateUserName.includes('@')) {
-        certificateUserName = "Student";
-      }
-
-      // Generate certificate number
-      const certificateNumber = `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
-      
-      // Calculate dates
-      const issuedAt = DateTime.utc().toJSDate();
-      const expiryDate = DateTime.utc().plus({ years: 2 }).toJSDate();
-      const completionDate = issuedAt; // Same as issued date
-
-      const certificate = {
-        _id: new ObjectId(),
-        certificateNumber,
-        courseId: new ObjectId(courseId),
-        userId: new ObjectId(userId),
-        courseTitle: course.title,
-        courseDescription: course.description,
-        courseDuration: course.duration,
-        userName: certificateUserName, // Use the properly formatted name
-        userEmail: user.email,
-        instructor: course.instructor || "Learning Platform",
-        issuedAt,
-        expiryDate,
-        completionDate,
-        createdAt: DateTime.utc().toJSDate(),
-        updatedAt: DateTime.utc().toJSDate(),
-        status: "active",
-        verificationUrl: `https://example.com/verify/${certificateNumber}`,
-        metadata: {
-          totalLessons: course.lessons?.length || 0,
-          platform: "Learning Management System"
-        }
-      };
-
-      await certificatesCollection.insertOne(certificate);
-      return certificate;
-    } catch (error) {
-      console.error("Error generating certificate:", error);
-      throw error;
+            .map(w => w[0].toUpperCase() + w.slice(1).toLowerCase())
+            .join(' ')
+        || "Student";
     }
+    const certNum = `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+    const now = DateTime.utc();
+    const cert = {
+      _id: new ObjectId(),
+      certificateNumber: certNum,
+      courseId: new ObjectId(courseId),
+      userId: new ObjectId(userId),
+      courseTitle: course.title,
+      courseDescription: course.description,
+      courseDuration: course.duration,
+      userName: name,
+      userEmail: user.email,
+      instructor: course.instructor || "Learning Platform",
+      issuedAt: now.toJSDate(),
+      expiryDate: now.plus({ years: 2 }).toJSDate(),
+      completionDate: now.toJSDate(),
+      createdAt: now.toJSDate(),
+      updatedAt: now.toJSDate(),
+      status: "active",
+      verificationUrl: `https://example.com/verify/${certNum}`,
+      metadata: { totalLessons: course.lessons?.length || 0, platform: "Learning Management System" }
+    };
+    await certColl.insertOne(cert);
+    return cert;
   }
 
   static async generateCertificatePDF(certificate) {
     return new Promise((resolve, reject) => {
       try {
-        const doc = new PDFDocument({
-          layout: 'landscape',
-          size: 'A4',
-          margin: 50
+        const doc = new PDFDocument({ 
+          layout: 'landscape', 
+          size: 'A4', 
+          margin: 0,
+          bufferPages: true 
         });
-
         const buffers = [];
-        doc.on('data', buffers.push.bind(buffers));
-        doc.on('end', () => {
-          const pdfBuffer = Buffer.concat(buffers);
-          resolve(pdfBuffer);
-        });
+        doc.on('data', chunk => buffers.push(chunk));
+        doc.on('end', () => resolve(Buffer.concat(buffers)));
 
-        // Background
-        doc.rect(0, 0, doc.page.width, doc.page.height).fill('#f8f9fa');
-        
-        // Decorative border
-        doc.lineWidth(2)
-          .strokeColor('#dc2626')
-          .rect(30, 30, doc.page.width - 60, doc.page.height - 60)
-          .stroke();
-        
-        // Header
-        doc.fillColor('#dc2626').fontSize(36).font('Helvetica-Bold').text('CERTIFICATE OF COMPLETION', {
-          align: 'center',
-          underline: true
-        });
-        
-        doc.moveDown(2);
-        doc.fillColor('#374151').fontSize(18).font('Helvetica').text('This is to certify that', { align: 'center' });
-        
-        // FIXED: Show user's name (not email) - use proper name formatting
-        doc.moveDown(0.5);
-        doc.fillColor('#1e293b').fontSize(32).font('Helvetica-Bold').text(certificate.userName, { align: 'center' });
-        
-        doc.moveDown();
-        doc.fillColor('#374151').fontSize(16).text('has successfully completed the course', { align: 'center' });
-        
-        doc.moveDown();
-        doc.fillColor('#dc2626').fontSize(24).font('Helvetica-Bold').text(certificate.courseTitle, { align: 'center' });
-        
-        doc.moveDown(2);
-        
-        // Course description
-        if (certificate.courseDescription) {
-          doc.fillColor('#4b5563').fontSize(12).font('Helvetica')
-            .text(certificate.courseDescription, { align: 'center', width: 500 });
-          doc.moveDown();
+        const width = doc.page.width;
+        const height = doc.page.height;
+        const maroon = '#6b0000'; 
+        const lightGray = '#888888';
+
+        doc.fillColor(maroon);
+        const barSize = 40; const thick = 8;
+        doc.rect(0, 0, barSize, thick).fill(); doc.rect(0, 0, thick, barSize).fill();
+        doc.rect(width - barSize, 0, barSize, thick).fill(); doc.rect(width - thick, 0, thick, barSize).fill();
+        doc.rect(0, height - thick, barSize, thick).fill(); doc.rect(0, height - barSize, thick, barSize).fill();
+        doc.rect(width - barSize, height - thick, barSize, thick).fill(); doc.rect(width - thick, height - barSize, thick, barSize).fill();
+        doc.strokeColor(maroon).lineWidth(1.5).rect(20, 20, width - 40, height - 40).stroke();
+        doc.lineWidth(3).rect(32, 32, width - 64, height - 64).stroke();
+
+        const iconY = 75;
+        doc.save();
+        doc.translate(width / 2, iconY);
+        doc.fillColor(maroon);
+        doc.path('M -12 0 L 12 0 L 12 15 Q 0 24 -12 15 Z').fill();
+        doc.strokeColor('white').lineWidth(1.5).moveTo(-4, 8).lineTo(-1, 11).lineTo(5, 5).stroke();
+        doc.restore();
+
+        doc.font('Helvetica-Bold').fontSize(38).fillColor('black');
+        const text1 = "CERTIFICATE "; const w1 = doc.widthOfString(text1);
+        doc.font('Helvetica-Oblique').fontSize(22);
+        const wOf = doc.widthOfString("of ");
+        doc.font('Helvetica-Bold').fontSize(38);
+        const text2 = "COMPLETION";
+        const totalW = w1 + wOf + doc.widthOfString(text2);
+        const startX = (width - totalW) / 2;
+        doc.font('Helvetica-Bold').fontSize(38).fillColor('black').text("CERTIFICATE", startX, 135);
+        doc.font('Helvetica-Oblique').fontSize(20).fillColor(maroon).text("of", startX + w1, 148);
+        doc.font('Helvetica-Bold').fontSize(38).fillColor('black').text("COMPLETION", startX + w1 + wOf, 135);
+
+        doc.fillColor(lightGray).font('Helvetica-Bold').fontSize(10)
+           .text('PROFESSIONAL ACCREDITATION AUTHORITY', 0, 190, { align: 'center', width, characterSpacing: 1 });
+
+        doc.fillColor('#666666').font('Helvetica-Oblique').fontSize(14).text('This is to officially certify that', 0, 245, { align: 'center', width });
+        doc.fillColor('black').font('Helvetica-Bold').fontSize(32).text(certificate.userName.toUpperCase(), 0, 275, { align: 'center', width });
+        doc.fillColor('#999999').font('Helvetica').fontSize(10).text(`(${certificate.userEmail})`, 0, 315, { align: 'center', width });
+
+        doc.fillColor('#666666').font('Helvetica').fontSize(12).text('has successfully completed all required modules, practical applications, and', 0, 355, { align: 'center', width });
+        doc.text('rigorous assessments for', 0, 372, { align: 'center', width });
+        doc.fillColor(maroon).font('Helvetica-Bold').fontSize(22).text(certificate.courseTitle.toUpperCase(), 0, 405, { align: 'center', width });
+
+        const issued = new Date(certificate.issuedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
+        const valid = new Date(certificate.expiryDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
+        doc.fillColor(lightGray).font('Helvetica-Bold').fontSize(9);
+        const footerText = `ISSUED ON: ${issued}    •    VALID UNTIL: ${valid}    •    CERTIFICATE ID: ${certificate.certificateNumber}`;
+        doc.text(footerText, 0, 455, { align: 'center', width });
+
+        const sigY = 525; const sigWidth = 170;
+        doc.strokeColor('black').lineWidth(1).moveTo(120, sigY).lineTo(120 + sigWidth, sigY).stroke();
+        doc.fillColor('black').font('Helvetica-Bold').fontSize(9).text('COMPLIANCE HEAD', 120, sigY + 10, { width: sigWidth, align: 'center' });
+        doc.strokeColor('black').lineWidth(1).moveTo(width - 120 - sigWidth, sigY).lineTo(width - 120, sigY).stroke();
+        doc.fillColor('black').font('Helvetica-Bold').fontSize(9).text('PRESIDENT & CEO', width - 120 - sigWidth, sigY + 10, { width: sigWidth, align: 'center' });
+
+        const logoX = width / 2;
+        const logoY = sigY - 10;
+
+        try {
+          const logoPath = path.resolve(process.cwd(), '..', 'client', 'src', 'assets', 'logos', 'telexlogo.png');
+          
+          if (fs.existsSync(logoPath)) {
+            const logoW = 85; 
+            const logoH = 60; 
+            doc.image(logoPath, logoX - (logoW / 2), logoY - 45, { width: logoW, height: logoH });
+          } else {
+            doc.save();
+            doc.translate(logoX, logoY);
+            doc.strokeColor(maroon).lineWidth(1.5).circle(0, 0, 32).stroke();
+            doc.strokeColor(maroon).lineWidth(2).circle(0, 0, 28).stroke();
+            doc.fillColor('white').circle(0, 0, 27).fill();
+            doc.fillColor(maroon);
+            doc.path('M -8 -10 L 8 -10 L 8 9 Q 0 15 -8 9 Z').fill();
+            doc.restore();
+          }
+        } catch (imgErr) {
+          console.error("PDF Logo Generation Error:", imgErr.message);
         }
-        
-        // Certificate details
-        const detailsY = doc.y;
-        doc.fontSize(12).fillColor('#4b5563');
-        
-        doc.text('Certificate Number:', 100, detailsY);
-        doc.text(certificate.certificateNumber, 250, detailsY, { bold: true });
-        
-        doc.text('Issue Date:', 100, detailsY + 30);
-        doc.text(new Date(certificate.issuedAt).toLocaleDateString(), 250, detailsY + 30);
-        
-        doc.text('Expiry Date:', 100, detailsY + 60);
-        doc.text(new Date(certificate.expiryDate).toLocaleDateString(), 250, detailsY + 60);
-        
-        doc.text('Course Duration:', 100, detailsY + 90);
-        doc.text(`${Math.floor(certificate.courseDuration / 60)}h ${certificate.courseDuration % 60}m`, 250, detailsY + 90);
-        
-        // Signatures
-        const signatureY = detailsY + 150;
-        doc.text('Instructor Signature', 150, signatureY, { align: 'left' });
-        doc.text('Platform Signature', 500, signatureY, { align: 'right' });
-        
-        doc.moveTo(150, signatureY + 40).lineTo(300, signatureY + 40).stroke();
-        doc.moveTo(450, signatureY + 40).lineTo(600, signatureY + 40).stroke();
-        
-        // Footer
-        doc.fontSize(10).fillColor('#6b7280');
-        doc.text(`This certificate can be verified at: ${certificate.verificationUrl}`, 
-          0, doc.page.height - 50, { align: 'center' });
-        
-        doc.text(`Certificate ID: ${certificate.certificateNumber}`, 0, doc.page.height - 30, { align: 'center' });
-        
+
+        const pillW = 100; const pillH = 18;
+        doc.fillColor(maroon).roundedRect(logoX - (pillW/2), logoY + 15, pillW, pillH, 9).fill();
+        doc.fillColor('white').font('Helvetica-Bold').fontSize(7.5).text('VERIFIED & ACTIVE', logoX - (pillW/2), logoY + 21, { width: pillW, align: 'center' });
+
         doc.end();
-      } catch (error) {
-        reject(error);
-      }
+      } catch (err) { reject(err); }
     });
   }
 }

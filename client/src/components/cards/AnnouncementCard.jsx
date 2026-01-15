@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
 import {
-  Calendar,
   User,
   Eye,
   Heart,
@@ -9,9 +8,9 @@ import {
   ArrowUpRight,
   Paperclip,
   FileText,
-  Download,
-  Clock,
   AlertCircle,
+  X,
+  Maximize2
 } from "lucide-react";
 import { DateTime } from "luxon";
 
@@ -19,38 +18,20 @@ const FileAttachment = ({ file, onView }) => {
   const getFileIcon = (fileName) => {
     const extension = fileName.split(".").pop().toLowerCase();
     switch (extension) {
-      case "pdf":
-        return <FileText className="w-4 h-4 text-red-500" />;
+      case "pdf": return <FileText className="w-4 h-4 text-rose-500" />;
       case "doc":
-      case "docx":
-        return <FileText className="w-4 h-4 text-blue-500" />;
-      case "xls":
-      case "xlsx":
-        return <FileText className="w-4 h-4 text-green-500" />;
-      case "jpg":
-      case "jpeg":
-      case "png":
-      case "gif":
-        return <FileText className="w-4 h-4 text-purple-500" />;
-      default:
-        return <Paperclip className="w-4 h-4 text-gray-500" />;
+      case "docx": return <FileText className="w-4 h-4 text-indigo-500" />;
+      default: return <Paperclip className="w-4 h-4 text-slate-400" />;
     }
   };
 
-  const canPreview = (fileName) => {
-    const extension = fileName.split(".").pop().toLowerCase();
-    return ["pdf", "jpg", "jpeg", "png", "gif", "txt"].includes(extension);
-  };
-
   const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return '0 BYTES';
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + ['B', 'KB', 'MB', 'GB'][i];
   };
 
-  // ✅ FIXED: Extract filename from different possible properties
   const getFileName = () => {
     if (file.fileName) return file.fileName;
     if (file.name) return file.name;
@@ -58,65 +39,53 @@ const FileAttachment = ({ file, onView }) => {
       const urlParts = file.url.split('/');
       return urlParts[urlParts.length - 1].split('?')[0];
     }
-    return 'Attachment';
+    return 'ATTACHMENT';
   };
 
   const fileName = getFileName();
 
   return (
-    <div className="flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded-lg mt-2">
-      <div className="flex items-center gap-2 flex-1 min-w-0">
+    <div
+      onClick={(e) => { e.stopPropagation(); onView(file); }}
+      className="flex items-center gap-2 p-1.5 bg-slate-50 border border-slate-100 rounded-lg mt-2 hover:bg-white hover:border-indigo-200 transition-all cursor-pointer group/file"
+    >
+      <div className="p-1 bg-white rounded shadow-sm">
         {getFileIcon(fileName)}
-        <div className="flex-1 min-w-0">
-          <span className="text-xs font-medium text-gray-700 truncate block">
-            {fileName}
-          </span>
-          <span className="text-xs text-gray-500">
-            {formatFileSize(file.size || 0)}
-          </span>
-        </div>
       </div>
-      <div className="flex gap-1 ml-2">
-        {canPreview(fileName) && (
-          <button
-            onClick={() => onView(file)}
-            className="p-1 text-green-600 hover:text-green-800 hover:bg-green-100 rounded transition-colors"
-            title="View file"
-          >
-            <Eye className="w-3 h-3" />
-          </button>
-        )}
-
+      <div className="flex-1 min-w-0">
+        <p className="text-[9px] font-bold text-slate-700 truncate uppercase tracking-tight">
+          {fileName}
+        </p>
+        <p className="text-[8px] text-slate-400 font-medium uppercase">
+          {formatFileSize(file.size || 0)}
+        </p>
       </div>
+      <ArrowUpRight className="w-3 h-3 text-slate-300" />
     </div>
   );
 };
 
-const AnnouncementCard = ({ 
-    announcement, 
-    onReadMore, 
-    onFileView, 
+const AnnouncementCard = ({
+    announcement,
+    onReadMore,
+    onFileView,
     onTogglePin,
     canPinMore,
     onLike,
     hasLiked,
     currentUserId,
-    socket, 
+    socket,
 }) => {
+    const [isImageOpen, setIsImageOpen] = useState(false);
+
     const formatDisplayDate = (isoDateStr) => {
       if (!isoDateStr) return "";
-      const date = DateTime.fromISO(isoDateStr);
-      return date.toLocaleString({ 
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric' 
-      });
+      return DateTime.fromISO(isoDateStr).toLocaleString({ month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase();
     };
 
     const formatDisplayTime = (isoDateStr) => {
       if (!isoDateStr) return "";
-      const time = DateTime.fromISO(isoDateStr);
-      return time.toLocaleString(DateTime.TIME_SIMPLE);
+      return DateTime.fromISO(isoDateStr).toLocaleString(DateTime.TIME_SIMPLE).toUpperCase();
     };
 
     const getTimeAgo = (isoDateStr) => {
@@ -124,226 +93,177 @@ const AnnouncementCard = ({
       const date = DateTime.fromISO(isoDateStr);
       const now = DateTime.local();
       const diff = now.diff(date, ['days', 'hours', 'minutes']);
-      
-      if (diff.days > 0) {
-        return `${Math.floor(diff.days)}d ago`;
-      } else if (diff.hours > 0) {
-        return `${Math.floor(diff.hours)}h ago`;
-      } else {
-        return `${Math.floor(diff.minutes)}m ago`;
-      }
+      if (diff.days > 0) return `${Math.floor(diff.days)}D AGO`;
+      if (diff.hours > 0) return `${Math.floor(diff.hours)}H AGO`;
+      return `${Math.floor(diff.minutes)}M AGO`;
     };
 
     const isUrgent = () => {
       const announcementDate = DateTime.fromISO(announcement.dateTime);
       const now = DateTime.local();
       const hoursDiff = announcementDate.diff(now, 'hours').hours;
-      
       return announcement.priority === "High" && hoursDiff <= 24;
     };
 
-    const placeholderImage = "https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80";
-
-    const getViewCount = (announcement) => {
-      if (!announcement.views) return 0;
-      return Array.isArray(announcement.views) ? announcement.views.length : 0;
-    };
-
-    const getLikeCount = (announcement) => {
-      if (!announcement.acknowledgements) return 0;
-      return Array.isArray(announcement.acknowledgements) ? announcement.acknowledgements.length : 0;
-    };
-
-    const viewCount = getViewCount(announcement);
-    const likeCount = getLikeCount(announcement);
-    
+    const placeholderImage = "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1000&q=80";
+    const imageUrl = announcement.attachment?.type?.startsWith('image/') ? (announcement.attachment.url || announcement.attachment.data) : placeholderImage;
+    const viewCount = announcement.views?.length || 0;
+    const likeCount = announcement.acknowledgements?.length || 0;
     const isLiked = hasLiked(announcement, currentUserId);
     const isAnnouncementUrgent = isUrgent();
 
-    // Handle Read More with socket view emission
     const handleReadMore = () => {
-      console.log('📖 Read More clicked for announcement:', announcement._id);
-      
-      // Emit view event via socket when user clicks Read More
       if (socket && currentUserId) {
-        const viewData = {
-          announcementId: announcement._id,
-          userId: currentUserId
-        };
-        console.log('🔌 Emitting view from AnnouncementCard:', viewData);
+        const viewData = { announcementId: announcement._id, userId: currentUserId };
         socket.emit('view-announcement', viewData);
         socket.emit('add-view', viewData);
       }
-      
       onReadMore(announcement);
     };
 
     const handleLike = (e) => {
       e.stopPropagation();
-      
       if (!currentUserId) return;
-      
-      console.log('❤️ Like clicked for announcement:', announcement._id);
-      
-
       if (socket) {
-        const likeData = {
-          announcementId: announcement._id,
-          userId: currentUserId,
-          liked: !isLiked
-        };
-        console.log('🔌 Emitting like from AnnouncementCard:', likeData);
+        const likeData = { announcementId: announcement._id, userId: currentUserId, liked: !isLiked };
         socket.emit('like-announcement', likeData);
         socket.emit('toggle-like', likeData);
       }
-      
       onLike(announcement._id, currentUserId);
     };
 
     return (
-      <div className={`group bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden h-full flex flex-col relative`}>
-        
-        {/* Urgent Badge */}
-        {isAnnouncementUrgent && (
-          <div className="absolute top-2 right-2 z-10">
-            <div className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-              <AlertCircle className="w-3 h-3" />
-              URGENT
+      <>
+        <div className="group bg-white rounded-[2.5rem] border border-slate-100 shadow-[0_15px_40px_-15px_rgba(0,0,0,0.3)] hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] transition-all duration-500 flex flex-col h-[480px] w-full overflow-hidden relative mb-6">
+          <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-20">
+            <div>
+              {isAnnouncementUrgent && (
+                <div className="bg-rose-500 text-white px-3 py-1 rounded-full text-[8px] font-black tracking-widest flex items-center gap-1 shadow-lg shadow-rose-500/20">
+                  <AlertCircle className="w-3 h-3" />
+                  URGENT
+                </div>
+              )}
             </div>
-          </div>
-        )}
-
-        <div className="relative h-40 overflow-hidden">
-          {/* ✅ FIXED: Use .url property for Cloudinary images */}
-          {announcement.attachment && announcement.attachment.type && announcement.attachment.type.startsWith('image/') ? (
-            <img
-              src={announcement.attachment.url || announcement.attachment.data} // ✅ Uses .url for Cloudinary
-              alt={announcement.title}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              onError={(e) => {
-                e.target.src = placeholderImage;
-              }}
-            />
-          ) : (
-            <img
-              src={placeholderImage}
-              alt="Announcement"
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-          
-          {/* Pin Button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onTogglePin(announcement);
-            }}
-            disabled={!canPinMore && !announcement.isPinned}
-            className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 transition-all duration-300 backdrop-blur-sm ${
-              announcement.isPinned 
-                ? 'bg-yellow-500 text-white hover:bg-yellow-600' 
-                : !canPinMore
-                ? 'bg-gray-400 text-white cursor-not-allowed'
-                : 'bg-gray-500/80 text-white hover:bg-gray-600'
-            }`}
-          >
-            {announcement.isPinned ? <PinOff className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
-            {announcement.isPinned ? 'Pinned' : 'Pin'}
-          </button>
-        </div>
-
-        <div className="flex-1 p-4 flex flex-col">
-          {/* Header with Priority */}
-          <div className="mb-3">
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <h3 className="font-bold text-gray-800 text-sm leading-tight line-clamp-2 flex-1">
-                {announcement.title}
-              </h3>
-        
-            </div>
-            
-            <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
-              <Calendar className="w-3 h-3 flex-shrink-0" />
-              <span>{formatDisplayDate(announcement.dateTime)}</span>
-              <span>•</span>
-              <Clock className="w-3 h-3 flex-shrink-0" />
-              <span>{formatDisplayTime(announcement.dateTime)}</span>
-              <span>•</span>
-              <span className="text-gray-400">{getTimeAgo(announcement.dateTime)}</span>
-            </div>
-          </div>
-
-          {/* Agenda */}
-          <p className="text-xs text-gray-600 leading-relaxed line-clamp-3 mb-4 flex-1">
-            {announcement.agenda}
-          </p>
-
-          {/* Posted By */}
-          <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
-            <User className="w-3 h-3" />
-            <span className="font-medium">By: {announcement.postedBy}</span>
-          </div>
-
-          {/* ✅ FIXED: File Attachment - UNCOMMENTED and updated */}
-          {announcement.attachment && announcement.attachment.url && !(announcement.attachment.type && announcement.attachment.type.startsWith('image/')) && (
-            <div className="mb-3">
-              <FileAttachment
-                file={announcement.attachment}
-                onView={onFileView}
-              />
-            </div>
-          )}
-          
-          {/* Footer with Stats and Actions */}
-          <div className="flex items-center justify-between mt-auto">
-            <div className="flex items-center gap-4">
-              {/* Views */}
-              <div className="flex items-center gap-1 text-gray-600 text-sm" title={`${viewCount} views`}>
-                <Eye className="w-4 h-4" />
-                <span>{viewCount} views</span>
-              </div>
-              
-              {/* Likes Button */}
-              <button
-                onClick={handleLike}
-                disabled={!currentUserId}
-                className="flex items-center gap-1 text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed group/like"
-                title={
-                  !currentUserId 
-                    ? "Please log in to like announcements" 
-                    : isLiked 
-                      ? "You liked this announcement" 
-                      : "Like this announcement"
-                }
-              >
-                <Heart 
-                  className={`w-4 h-4 transition-all ${
-                    isLiked 
-                      ? 'text-red-500 fill-current scale-110' 
-                      : 'text-gray-500 group-hover/like:text-red-500 group-hover/like:scale-110'
-                  }`} 
-                  fill={isLiked ? "currentColor" : "none"}
-                />
-                <span className={isLiked ? 'text-red-500 font-medium' : 'text-gray-600'}>
-                  {likeCount} likes</span>
-              </button>
-            </div>
-
+           
             <button
-              onClick={handleReadMore}
-              className="w-auto bg-gradient-to-r from-[#ff0b0b] 
-              via-[#c11112] to-[#60020c] text-white py-2 px-4 
-              rounded-[20px] text-sm font-medium hover:from-[#c11112] 
-              hover:via-[#ff0b0b] hover:to-[#c11112] transition-all 
-              duration-300 hover:shadow-lg flex items-center gap-2 group/readmore"
+              onClick={(e) => { e.stopPropagation(); onTogglePin(announcement); }}
+              disabled={!canPinMore && !announcement.isPinned}
+              className={`p-2 rounded-full border transition-all cursor-pointer ${
+                announcement.isPinned
+                  ? 'bg-amber-500 border-amber-400 text-white shadow-md'
+                  : 'bg-white/90 border-slate-100 text-slate-400 hover:text-amber-500'
+              } ${(!canPinMore && !announcement.isPinned) ? 'opacity-30' : ''}`}
             >
-              <span>Read More</span>
-              <ArrowUpRight className="w-4 h-4 group-hover/readmore:translate-x-0.5 group-hover/readmore:-translate-y-0.5 transition-transform" />
+              {announcement.isPinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
             </button>
           </div>
+          <div
+            onClick={() => setIsImageOpen(true)}
+            className="relative h-48 flex-shrink-0 bg-slate-100 overflow-hidden cursor-zoom-in group/img"
+          >
+            <img
+              src={imageUrl}
+              alt={announcement.title}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-110"
+              onError={(e) => { e.target.src = placeholderImage; }}
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover/img:opacity-100">
+               <Maximize2 className="text-white w-8 h-8" />
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent opacity-60" />
+          </div>
+
+          <div className="px-5 pb-4 flex flex-col flex-1 min-h-0 -mt-6 relative z-10">
+            <div className="bg-white rounded-[2rem] p-5 shadow-sm border border-slate-50 flex flex-col min-h-0 overflow-hidden flex-1">
+             
+              <div className="flex items-center gap-2 mb-3 overflow-hidden whitespace-nowrap">
+                <div className="bg-indigo-50 px-2.5 py-1 rounded-md">
+                  <span className="text-[9px] font-black text-indigo-600 uppercase tracking-tighter">
+                    {formatDisplayDate(announcement.dateTime)}
+                  </span>
+                </div>
+                <span className="text-slate-300 font-light">•</span>
+                <div className="bg-slate-50 px-2.5 py-1 rounded-md border border-slate-100">
+                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">
+                    {formatDisplayTime(announcement.dateTime)}
+                  </span>
+                </div>
+                <span className="text-slate-300 font-light">•</span>
+                <span className="text-[9px] font-black text-indigo-400 lowercase italic uppercase">
+                  {getTimeAgo(announcement.dateTime)}
+                </span>
+              </div>
+
+              <h3 className="text-[14px] font-black text-slate-800 leading-tight mb-2 line-clamp-2 uppercase tracking-tight">
+                {announcement.title}
+              </h3>
+
+              <p className="text-[11px] text-slate-500 font-medium leading-relaxed line-clamp-2 mb-3 border-l-4 border-indigo-100 pl-3 uppercase">
+                {announcement.agenda}
+              </p>
+
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
+                  <User className="w-3 h-3 text-slate-400" />
+                </div>
+                <span className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-tight">
+                  BY: <span className="text-slate-600">{announcement.postedBy}</span>
+                </span>
+              </div>
+
+              <div className="min-h-0">
+                {announcement.attachment?.url && !announcement.attachment.type?.startsWith('image/') && (
+                    <FileAttachment file={announcement.attachment} onView={onFileView} />
+                )}
+              </div>
+            </div>
+           
+            <div className="mt-4 flex items-center justify-between px-2 flex-shrink-0">
+              <div className="flex gap-4">
+                <div className="flex items-center gap-1.5 text-slate-400">
+                  <Eye className="w-4 h-4" />
+                  <span className="text-[10px] font-black">{viewCount}</span>
+                </div>
+               
+                <button
+                  onClick={handleLike}
+                  disabled={!currentUserId}
+                  className={`flex items-center gap-1.5 transition-all cursor-pointer ${isLiked ? 'text-rose-500' : 'text-slate-400 hover:text-rose-500'}`}
+                >
+                  <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
+                  <span className="text-[10px] font-black">{likeCount}</span>
+                </button>
+              </div>
+
+              <button
+                onClick={handleReadMore}
+                className="h-11 w-35 px-5 bg-[#800000] rounded-full hover:bg-[#600000] transition-all active:scale-95 flex items-center gap-2 shadow-lg cursor-pointer"
+              >
+                <span className="text-[10px] font-black text-white uppercase tracking-widest">
+                  VIEW DETAILS
+                </span>
+                <ArrowUpRight className="w-3 h-3 text-white" />
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+        {isImageOpen && (
+          <div
+            className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-in fade-in duration-300"
+            onClick={() => setIsImageOpen(false)}
+          >
+            <button className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors cursor-pointer">
+              <X className="w-10 h-10" />
+            </button>
+            <img
+              src={imageUrl}
+              className="max-w-full max-h-[90vh] rounded-2xl shadow-2xl animate-in zoom-in-95 duration-300 object-contain"
+              alt="EXPANDED VIEW"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        )}
+      </>
     );
 };
 
