@@ -11,8 +11,7 @@ import {
   X as ClearIcon,
   Users,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { DateTime } from "luxon";
+import { DateTime } from "luxon"; // Import DateTime
 import api from "../../utils/axios";
 import socket from "../../utils/socket";
 import CaseHistory from "../../components/incident-reports/my-offences/CaseHistory";
@@ -24,8 +23,6 @@ import MyCoachingInProgress from "../../components/incident-reports/coaching/my-
 import MyCoachingHistory from "../../components/incident-reports/coaching/my-coaching/MyCoachingHistory";
 import { fetchUserById } from "../../store/stores/getUserById";
 
-// local asset import - Updated from bg-005 to bg-006
-import bgImage from "../../assets/background/bg-006.png";
 const Notification = ({ message, type, onClose }) => {
   const [isVisible, setIsVisible] = useState(true);
 
@@ -65,41 +62,6 @@ const Notification = ({ message, type, onClose }) => {
       <button onClick={() => setIsVisible(false)} className="ml-auto">
         <X className="w-4 h-4 text-white" />
       </button>
-    </div>
-  );
-};
-
-const ConfirmationModal = ({ isOpen, onClose, onConfirm, message }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
-      <div className="relative bg-white rounded-3xl p-6 sm:p-8 max-w-xs sm:max-w-sm w-full shadow-2xl border border-gray-200">
-        <div className="flex justify-center mb-4">
-          <Bell className="w-12 h-12 text-blue-500" />
-        </div>
-        <h3 className="text-xl font-bold text-gray-800 text-center mb-2">
-          Confirm Action
-        </h3>
-        <p className="text-center text-gray-600 mb-6 text-sm sm:text-base">
-          {message}
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <button
-            onClick={onClose}
-            className="flex-1 bg-gray-200 text-gray-800 p-3 rounded-xl font-medium hover:bg-gray-300 transition-colors text-sm sm:text-base"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className="flex-1 bg-red-600 text-white p-3 rounded-xl font-medium hover:bg-red-700 transition-colors text-sm sm:text-base"
-          >
-            Confirm
-          </button>
-        </div>
-      </div>
     </div>
   );
 };
@@ -564,7 +526,14 @@ const SharedMyOffences = () => {
       off.witnesses?.some((witness) => witness._id === loggedUser._id);
 
     if (!isInvolved) return false;
-    if (["Pending Review", "Invalid", "Acknowledged"].includes(off.status))
+    if (
+      [
+        "Pending Review",
+        "Escalated to Compliance",
+        "Invalid",
+        "Acknowledged",
+      ].includes(off.status)
+    )
       return false;
     if (off.type !== "IR") return false;
 
@@ -620,14 +589,10 @@ const SharedMyOffences = () => {
   const resolvedOffensesForHistory = useMemo(() => {
     return safeOffenses.filter((off) => {
       const isResolved =
-        (loggedUser &&
-          off.reportedById === loggedUser._id &&
-          ["Invalid", "Acknowledged"].includes(off.status) &&
-          off.type !== "COACHING") ||
-        (loggedUser &&
-          off.respondantId === loggedUser._id &&
-          ["Invalid", "Acknowledged"].includes(off.status) &&
-          off.type !== "COACHING");
+        loggedUser &&
+        off.respondantId === loggedUser._id &&
+        ["Invalid", "Acknowledged"].includes(off.status) &&
+        off.type !== "COACHING";
       if (!isResolved) return false;
 
       const textMatch = [
@@ -701,8 +666,11 @@ const SharedMyOffences = () => {
     loggedUser,
   ]);
 
-return (
-    <div className="min-h-screen bg-gray-50 pb-12 overflow-x-hidden">
+  const unreadMyOffenses = useStore((state) => state.unreadMyOffenses);
+  const unreadMyCoaching = useStore((state) => state.unreadMyCoaching);
+
+  return (
+    <div>
       {notification.isVisible && (
         <Notification
           message={notification.message}
@@ -711,273 +679,162 @@ return (
         />
       )}
 
-      {/* header section */}
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-4 px-4 md:px-6 pt-10 gap-4">
-        <div className="w-full md:w-auto">
-          <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900">
-            offense management
+      {/* Header + Offense Type Toggle */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-4">
+            Offense Management
+            {/* Offense Type Toggle */}
+            <div className="bg-gray-200 rounded-full p-1 flex gap-1 shadow-inner flex-wrap">
+              {[
+                { type: "COACHING", count: unreadMyCoaching },
+                { type: "IR", count: unreadMyOffenses },
+              ].map(({ type, count }) => (
+                <button
+                  key={type}
+                  onClick={() => {
+                    setOffenseType(type);
+                    resetForm();
+                  }}
+                  className={`relative px-3 py-1 rounded-full text-xs sm:text-sm font-medium transition-all flex items-center ${
+                    offenseType === type
+                      ? type === "IR"
+                        ? "bg-red-600 text-white shadow"
+                        : "bg-blue-600 text-white shadow"
+                      : "text-gray-700 hover:bg-gray-300"
+                  }`}
+                >
+                  {type}
+
+                  {/* Badge */}
+                  {count > 0 && (
+                    <span
+                      className={`absolute -top-1 -right-1 w-4 h-4 text-[10px] flex items-center justify-center rounded-full font-semibold
+            ${
+              type === "IR" ? "bg-red-700 text-white" : "bg-blue-700 text-white"
+            }`}
+                    >
+                      {count}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
           </h2>
-          <p className="text-gray-500 text-[11px] md:text-xs mt-1 font-medium">
-            {offenseType === "COACHING"
-              ? "view and manage your coaching offenses."
-              : "view and manage your ir offenses."}
+          <p className="text-gray-600 mt-1">
+            View and manage your {offenseType} offenses.
           </p>
         </div>
-
-        <div className="bg-gray-200/70 p-1.5 flex rounded-full shadow-inner backdrop-blur-sm self-start md:self-auto">
-          {["COACHING", "IR"].map((type) => (
-            <button
-              key={type}
-              onClick={() => {
-                setOffenseType(type);
-                resetForm();
-              }}
-              className={`relative px-6 py-2 text-[10px] md:text-xs font-bold transition-all duration-300 rounded-full ${
-                offenseType === type
-                  ? "bg-[#800000] text-white shadow-lg scale-105"
-                  : "text-gray-500 hover:text-gray-800 hover:bg-gray-300/50"
-              }`}
-            >
-              <span className="relative z-10">{type.toLowerCase()}</span>
-              {offenseType === type && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute inset-0 rounded-full bg-[#800000]"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                />
-              )}
-            </button>
-          ))}
-        </div>
       </div>
 
-      {/* animation section */}
-      <div className="hidden md:block px-6 lg:px-10 mb-10 lg:mb-16 mt-6 relative">
-        <div className="flex flex-col lg:flex-row justify-between items-center lg:h-[160px] gap-4 relative">
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-full lg:w-[450px] h-[180px] bg-gray-200/20 blur-[100px] rounded-full -z-10" />
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 p-2 sm:p-6 md:p-3 gap-6 md:gap-10 mb-12 max-w-9xl mx-auto">
+        {offenseType === "IR" ? (
+          <OffenseDetails
+            isViewMode={isViewMode}
+            resetForm={resetForm}
+            formData={formData}
+            formatDisplayDate={formatDisplayDate}
+            handleInputChange={handleInputChange}
+            originalExplanation={originalExplanation}
+            handleSubmit={handleIRSubmit}
+            showAcknowledgeModal={showAcknowledgeModal}
+            setShowAcknowledgeModal={setShowAcknowledgeModal}
+            ackMessage={ackMessage}
+            setAckMessage={setAckMessage}
+            handleAcknowledge={handleIRAcknowledge}
+            loggedUser={loggedUser}
+            userMap={userMap}
+            isUploading={isUploading}
+          />
+        ) : (
+          <MyCoachingDetails
+            isViewMode={isViewMode}
+            onClose={resetForm}
+            formData={formData}
+            formatDisplayDate={formatDisplayDate}
+            originalExplanation={originalExplanation}
+            originalActionPlan={originalActionPlan}
+            handleInputChange={handleInputChange}
+            handleSubmit={handleCoachingSubmit}
+            showAcknowledgeModal={showAcknowledgeModal}
+            setShowAcknowledgeModal={setShowAcknowledgeModal}
+            ackMessage={ackMessage}
+            setAckMessage={setAckMessage}
+            handleAcknowledge={handleCoachingAcknowledge}
+            loggedUser={loggedUser}
+            isUploading={isUploading}
+          />
+        )}
 
-          {/* updated image container using bg-006.png */}
-          <div className="flex-1 w-full lg:max-w-[55%] ml-0 lg:ml-[-10px] overflow-hidden rounded-[2rem] h-44 flex items-center shadow-lg border-2 border-white bg-white relative">
-            <AnimatePresence mode="wait">
-              <motion.img
-                key={offenseType}
-                initial={{ opacity: 0, scale: 1.1 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.5 }}
-                src={bgImage}
-                alt="incident management background"
-                className="w-full h-full object-cover"
-              />
-            </AnimatePresence>
-            <div className="absolute inset-0 bg-[#800000]/10 mix-blend-multiply pointer-events-none" />
-          </div>
-
-          <div className="hidden lg:flex items-center justify-center w-[500px] h-44">
-            <div className="w-full h-full flex items-center justify-center">
-              {offenseType === "COACHING" ? (
-                <div className="flex items-end gap-2.5 h-32 w-full justify-center relative">
-                  {[...Array(12)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ scaleY: 1 }}
-                      animate={{ scaleY: [1, 1.2, 1], translateY: [0, -8, 0] }}
-                      transition={{
-                        repeat: Infinity,
-                        duration: 2.5,
-                        delay: i * 0.15,
-                        ease: "easeInOut",
-                      }}
-                      style={{
-                        height: `${50 + (i % 5) * 15}px`,
-                        width: "32px",
-                        transformOrigin: "bottom",
-                      }}
-                      className={`rounded-t-md shadow-md border border-gray-200 relative ${
-                        i % 3 === 0
-                          ? "bg-[#800000] border-none"
-                          : i % 3 === 1
-                          ? "bg-[#FAF9F6] border-gray-300"
-                          : "bg-gray-300 border-gray-400"
-                      }`}
-                    >
-                      <div
-                        className={`absolute top-2 left-1/2 -translate-x-1/2 w-4 h-[1px] ${
-                          i % 3 === 1 ? "bg-gray-300" : "bg-white/20"
-                        }`}
-                      />
-                    </motion.div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex items-center justify-center w-full relative h-44 px-4">
-                  <div className="flex items-center justify-center -space-x-20 w-full">
-                    {[...Array(3)].map((_, i) => (
-                      <motion.div
-                        key={i}
-                        animate={{
-                          opacity: i === 1 ? 1 : 0.6,
-                          scale: i === 1 ? 1 : 0.85,
-                          rotate: i === 0 ? -10 : i === 2 ? 10 : 0,
-                          y: i === 1 ? [-5, 5, -5] : 0,
-                        }}
-                        transition={{
-                          y: { repeat: Infinity, duration: 4, ease: "easeInOut" },
-                          duration: 0.5,
-                        }}
-                        className={`w-72 h-40 bg-white rounded-md border-t-[14px] p-6 shadow-2xl relative overflow-hidden border border-gray-100 ${
-                          i === 1 ? "border-[#800000] z-20" : "border-gray-300 z-10"
-                        }`}
-                      >
-                        <div className="space-y-3">
-                          <div
-                            className={`h-2 w-1/2 rounded ${
-                              i === 1 ? "bg-[#800000]/20" : "bg-gray-200"
-                            }`}
-                          />
-                          <div className="h-1.5 w-full bg-gray-100 rounded" />
-                        </div>
-                        {i === 1 && (
-                          <motion.div
-                            animate={{ top: ["0%", "100%", "0%"] }}
-                            transition={{
-                              repeat: Infinity,
-                              duration: 3,
-                              ease: "linear",
-                            }}
-                            className="absolute left-0 w-full h-[3px] bg-[#800000] shadow-[0_0_15px_#800000] z-30 opacity-60"
-                          />
-                        )}
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        {/* --- CASES IN PROGRESS --- */}
+        {offenseType === "IR" ? (
+          <CasesInProgress
+            offenses={filteredIROffenses}
+            searchQuery={searchQuery}
+            onSearchChange={(e) => setSearchQuery(e.target.value)}
+            onView={handleIRView}
+            isLoading={isLoading}
+            formatDisplayDate={formatDisplayDate}
+            loggedUser={loggedUser}
+            userMap={userMap}
+          />
+        ) : (
+          <MyCoachingInProgress
+            offenses={filteredCoachingOffenses}
+            searchQuery={searchQuery}
+            onSearchChange={(e) => setSearchQuery(e.target.value)}
+            onView={handleCoachingView}
+            isLoading={isLoading}
+            formatDisplayDate={formatDisplayDate}
+            loggedUser={loggedUser}
+            userMap={userMap}
+          />
+        )}
       </div>
 
-      {/* grid section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 px-4 md:px-6 gap-6 md:gap-10 mb-12 items-stretch auto-rows-fr">
-        {/* left side: details */}
-        <div className="relative flex flex-col h-full">
-          <div className="absolute top-0 left-0 w-full h-1 bg-[#800000] z-10 rounded-t-sm" />
-          {offenseType === "IR" ? (
-            <OffenseDetails
-              isViewMode={isViewMode}
-              resetForm={resetForm}
-              formData={formData}
-              formatDisplayDate={formatDisplayDate}
-              handleInputChange={handleInputChange}
-              originalExplanation={originalExplanation}
-              handleSubmit={handleIRSubmit}
-              showAcknowledgeModal={showAcknowledgeModal}
-              setShowAcknowledgeModal={setShowAcknowledgeModal}
-              ackMessage={ackMessage}
-              setAckMessage={setAckMessage}
-              handleAcknowledge={handleIRAcknowledge}
-              loggedUser={loggedUser}
-              userMap={userMap}
-              isUploading={isUploading}
-            />
-          ) : (
-            <MyCoachingDetails
-              isViewMode={isViewMode}
-              onClose={resetForm}
-              formData={formData}
-              formatDisplayDate={formatDisplayDate}
-              originalExplanation={originalExplanation}
-              originalActionPlan={originalActionPlan}
-              handleInputChange={handleInputChange}
-              handleSubmit={handleCoachingSubmit}
-              showAcknowledgeModal={showAcknowledgeModal}
-              setShowAcknowledgeModal={setShowAcknowledgeModal}
-              ackMessage={ackMessage}
-              setAckMessage={setAckMessage}
-              handleAcknowledge={handleCoachingAcknowledge}
-              loggedUser={loggedUser}
-              isUploading={isUploading}
-            />
-          )}
-        </div>
-
-        {/* right side: progress */}
-        <div className="relative flex flex-col h-full">
-          <div className="absolute top-0 left-0 w-full h-1 bg-[#800000] z-10 rounded-t-sm" />
-          {offenseType === "IR" ? (
-            <CasesInProgress
-              offenses={filteredIROffenses}
-              searchQuery={searchQuery}
-              onSearchChange={(e) => setSearchQuery(e.target.value)}
-              onView={handleIRView}
-              isLoading={isLoading}
-              formatDisplayDate={formatDisplayDate}
-              loggedUser={loggedUser}
-              userMap={userMap}
-            />
-          ) : (
-            <MyCoachingInProgress
-              offenses={filteredCoachingOffenses}
-              searchQuery={searchQuery}
-              onSearchChange={(e) => setSearchQuery(e.target.value)}
-              onView={handleCoachingView}
-              isLoading={isLoading}
-              formatDisplayDate={formatDisplayDate}
-              loggedUser={loggedUser}
-              userMap={userMap}
-            />
-          )}
-        </div>
-      </div>
-
-      {/* history section */}
-      <div className="px-4 md:px-6 pb-20">
-        <div className="relative overflow-hidden bg-white shadow-xl rounded-b-lg">
-          <div className="absolute top-0 left-0 w-full h-1 bg-[#800000] z-10" />
-          {offenseType === "IR" ? (
-            <CaseHistory
-              offenses={resolvedOffensesForHistory}
-              filters={{
-                searchQuery: historySearchQuery,
-                startDate: historyStartDate,
-                endDate: historyEndDate,
-              }}
-              setFilters={{
-                setSearchQuery: setHistorySearchQuery,
-                setStartDate: setHistoryStartDate,
-                setEndDate: setHistoryEndDate,
-              }}
-              onDateReset={handleHistoryDateReset}
-              isLoading={isLoading}
-              formatDisplayDate={formatDisplayDate}
-              today={today}
-              onView={handleIRView}
-              userMap={userMap}
-            />
-          ) : (
-            <MyCoachingHistory
-              offenses={resolvedCoachingForHistory}
-              filters={{
-                searchQuery: historySearchQuery,
-                startDate: historyStartDate,
-                endDate: historyEndDate,
-              }}
-              setFilters={{
-                setSearchQuery: setHistorySearchQuery,
-                setStartDate: setHistoryStartDate,
-                setEndDate: setHistoryEndDate,
-              }}
-              onDateReset={handleHistoryDateReset}
-              isLoading={isLoading}
-              formatDisplayDate={formatDisplayDate}
-              today={today}
-              onView={handleCoachingView}
-              userMap={userMap}
-            />
-          )}
-        </div>
-      </div>
+      {/* --- CASE HISTORY --- */}
+      {offenseType === "IR" ? (
+        <CaseHistory
+          offenses={resolvedOffensesForHistory}
+          filters={{
+            searchQuery: historySearchQuery,
+            startDate: historyStartDate,
+            endDate: historyEndDate,
+          }}
+          setFilters={{
+            setSearchQuery: setHistorySearchQuery,
+            setStartDate: setHistoryStartDate,
+            setEndDate: setHistoryEndDate,
+          }}
+          onDateReset={handleHistoryDateReset}
+          isLoading={isLoading}
+          formatDisplayDate={formatDisplayDate}
+          today={today}
+          onView={handleIRView}
+          userMap={userMap}
+        />
+      ) : (
+        <MyCoachingHistory
+          offenses={resolvedCoachingForHistory}
+          filters={{
+            searchQuery: historySearchQuery,
+            startDate: historyStartDate,
+            endDate: historyEndDate,
+          }}
+          setFilters={{
+            setSearchQuery: setHistorySearchQuery,
+            setStartDate: setHistoryStartDate,
+            setEndDate: setHistoryEndDate,
+          }}
+          onDateReset={handleHistoryDateReset}
+          isLoading={isLoading}
+          formatDisplayDate={formatDisplayDate}
+          today={today}
+          onView={handleCoachingView}
+          userMap={userMap}
+        />
+      )}
     </div>
   );
 };
