@@ -236,7 +236,7 @@ const OffenseDetails = ({
 
           {/* Buttons */}
           <div className="flex gap-4">
-            {formData.status === "NTE" && (
+            {formData.status === "NTE" || !formData.respondantExplanation && (
               <button
                 onClick={handleSubmit}
                 disabled={isUploading}
