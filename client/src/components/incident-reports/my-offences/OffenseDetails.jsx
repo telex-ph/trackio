@@ -187,7 +187,7 @@ const OffenseDetails = ({
           <FileDisplay files={formData.fileNTE} title="Notice to Explain" />
 
           {/* Respondant Explanation */}
-          {formData.fileNTE?.length > 0 && (
+          {formData.fileNTE?.length > 0 && formData.status === "NTE" && (
             <div className="space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
                 Explanation
@@ -236,7 +236,7 @@ const OffenseDetails = ({
 
           {/* Buttons */}
           <div className="flex gap-4">
-            {formData.status === "NTE" || !formData.respondantExplanation && (
+            {formData.status === "NTE" && (
               <button
                 onClick={handleSubmit}
                 disabled={isUploading}
