@@ -110,7 +110,7 @@ const Login = () => {
                   id="email"
                   type="email"
                   name="email"
-                  placeholder="HDOMINGO@TELEXPH.COM"
+                  placeholder="hello@telexph.com"
                   required
                   onChange={handleInputChange}
                   value={data.email}
