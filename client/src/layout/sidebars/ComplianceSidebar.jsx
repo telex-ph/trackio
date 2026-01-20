@@ -20,6 +20,8 @@ import {
   CalendarClock,
   CalendarPlus,
   FileCheck,
+  BarChart2,
+  ClipboardList,
 } from "lucide-react";
 import SidebarLink from "./SidebarLink";
 import CustomCollapse from "./CustomCollapse";
@@ -113,12 +115,28 @@ const ComplianceSidebar = ({
         label="Announcement"
         isCollapsed={isCollapsed}
       />
-      <SidebarLink
-        to="/compliance/ticket"
-        icon={Ticket}
+      <CustomCollapse
+        icon={<ClipboardList className="w-5 h-5" />}
         label="Ticket"
         isCollapsed={isCollapsed}
-      />
+        open={activeDropdown === "tickets"}
+        onToggle={() =>
+          setActiveDropdown(activeDropdown === "tickets" ? null : "tickets")
+        }
+      >
+        <SidebarLink
+          to="/compliance/ticket/list"
+          icon={List}
+          label="List"
+          isCollapsed={isCollapsed}
+        />
+        <SidebarLink
+          to={`/compliance/ticket/analytics`}
+          icon={BarChart2}
+          label="Analytics"
+          isCollapsed={isCollapsed}
+        />
+      </CustomCollapse>
       <SidebarLink
         to="/compliance/courses"
         icon={Book}

@@ -29,6 +29,9 @@ import SharedCourse from "../pages/shared/SharedCourse";
 import EscalatedOffenses from "../pages/compliance/EscalatedOffenses";
 import SharedCreateApplyLeave from "../pages/shared/SharedCreateApplyLeave";
 import SharedMyTeamLeave from "../pages/shared/SharedMyTeamLeave";
+import SharedTicketList from "../pages/shared/SharedTicketList";
+import SharedTicketAnalytics from "../pages/shared/SharedTicketAnalytics";
+import TicketLayout from "../layout/TicketLayout";
 
 const COMPLIANCE_ROUTES = [
   { index: true, element: <Navigate to="dashboard" replace /> },
@@ -84,13 +87,21 @@ const COMPLIANCE_ROUTES = [
     path: "offenses-monitoring",
     element: <OffenseMonitoring />,
   },
-    {
+  {
     path: "apply-leave",
     element: <SharedCreateApplyLeave />,
   },
   {
     path: "my-team-requests",
     element: <SharedMyTeamLeave />,
+  },
+  {
+    path: "ticket",
+    element: <TicketLayout role={Roles.COMPLIANCE} />,
+    children: [
+      { path: "list", element: <SharedTicketList /> },
+      { path: "analytics", element: <SharedTicketAnalytics /> },
+    ],
   },
 ];
 
